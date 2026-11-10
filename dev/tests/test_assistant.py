@@ -161,6 +161,32 @@ def test_the_panel_says_what_is_missing_before_anything_is_sent(qapp, monkeypatc
     panel.deleteLater()
 
 
+def test_a_provider_that_asks_the_network_is_asked_off_the_gui_thread(qapp, monkeypatch) -> None:
+    from app.plugin_api.ai.provider import AIProvider
+    from app.widgets import assistant_panel
+
+    class Slow(AIProvider):
+        Name = "Slow"
+        KEY_NAME = ""
+        SENDS_DATA = False
+        CHECKS_NETWORK = True
+
+        def unavailable(self) -> str:
+            time.sleep(0.3)
+            return "Not running."
+
+    monkeypatch.setattr(assistant_panel, "_load_provider", lambda name: Slow())
+    started = time.monotonic()
+    panel = assistant_panel.AssistantPanel(None, repo=lambda: None, current_figure=lambda: None)
+    assert time.monotonic() - started < 0.25 and not panel._send_button.isEnabled()
+    deadline = time.monotonic() + 5
+    while panel._note.text() != "Not running." and time.monotonic() < deadline:
+        qapp.processEvents()
+        time.sleep(0.01)
+    assert panel._note.text() == "Not running." and not panel._send_button.isEnabled()
+    panel.deleteLater()
+
+
 def _converse(qapp, assistant: Assistant, text: str) -> tuple[list[str], str, list]:
     """Ask *text*; the tools used, the answer streamed, what answered (or failed)."""
     used, streamed, ended = [], [], []

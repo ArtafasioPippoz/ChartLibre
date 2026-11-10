@@ -11,6 +11,7 @@ provider says how to install it, and the rest of the application is the same.
 """
 from __future__ import annotations
 
+import importlib.util
 import threading
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any
@@ -140,9 +141,8 @@ class ClaudeProvider(AIProvider):
     KEY_NAME = "anthropic_api_key"
 
     def unavailable(self) -> str:
-        try:
-            _sdk()
-        except ImportError:
+        # Looked for, not imported: the package takes seconds to load, and this is asked when the window opens.
+        if importlib.util.find_spec("anthropic") is None:
             return "Install Anthropic's package to use Claude: pip install anthropic"
         return ""
 

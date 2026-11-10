@@ -401,6 +401,13 @@ SMOOTHING_PARAMS = (
 # PySide6 dialog
 # ---------------------------------------------------------------------------
 
+def _grid_cells(values: np.ndarray, shape: tuple[int, ...]) -> np.ndarray:
+    """The cells of *values* the axes reach, flattened; an axis longer than the grid is an error."""
+    if any(have < want for have, want in zip(values.shape, shape, strict=True)):
+        raise IndexError(f"a grid of {values.shape} for axes of {shape}")
+    return values[tuple(slice(0, want) for want in shape)].reshape(-1)
+
+
 class SeriesSmoothingDialog(DataOperationDialogBase):
     """Smoothing dialog that follows the shared operation-dialog pattern."""
 
@@ -712,108 +719,48 @@ class SeriesSmoothingDialog(DataOperationDialogBase):
 
     @staticmethod
     def results_to_dataframe(results: Sequence[SmoothResult]) -> pd.DataFrame:
-        """Flatten smoothing results into a DataFrame for export/storage."""
-        rows: list[dict[str, Any]] = []
+        """Flatten smoothing results into a DataFrame for export/storage.
 
-        for result in results:
-            if result.values is not None and result.z is not None:
-                SeriesSmoothingDialog._append_3d_rows(rows, result)
-            elif result.z is not None:
-                SeriesSmoothingDialog._append_2d_rows(rows, result)
+        One frame per result, built from whole arrays: a grid was a dictionary per cell, seconds for a
+        100 x 100 x 100 volume. Columns as the rows of the curves, the surfaces and the volumes come.
+        """
+        frames = [SeriesSmoothingDialog._result_frame(result) for result in results]
+        if not frames:
+            return pd.DataFrame()
+        return pd.concat(frames, ignore_index=True, sort=False)
+
+    @staticmethod
+    def _result_frame(result: SmoothResult) -> pd.DataFrame:
+        x = np.asarray(result.x, dtype=float).reshape(-1)
+        y = np.asarray(result.y, dtype=float).reshape(-1)
+        columns: dict[str, np.ndarray]
+        if result.values is not None and result.z is not None:
+            z = np.asarray(result.z, dtype=float).reshape(-1)
+            values = np.asarray(result.values, dtype=float)
+            if values.ndim == 3:
+                # z, then y, then x: the order of the volume's own axes.
+                zz, yy, xx = np.meshgrid(z, y, x, indexing="ij")
+                columns = {"x": xx.reshape(-1), "y": yy.reshape(-1), "z": zz.reshape(-1),
+                           "value": _grid_cells(values, (z.size, y.size, x.size))}
             else:
-                for x_value, y_value in zip(result.x, result.y, strict=False):
-                    rows.append(
-                        {
-                            "result_name": result.result_name,
-                            "source_name": result.source_name,
-                            "method": result.method,
-                            "x": float(x_value),
-                            "y": float(y_value),
-                        }
-                    )
-
-        return pd.DataFrame(rows)
-
-    @staticmethod
-    def _append_2d_rows(rows: list[dict[str, Any]], result: SmoothResult) -> None:
-        z_values = np.asarray(result.z, dtype=float)
-        x_values = np.asarray(result.x, dtype=float).reshape(-1)
-        y_values = np.asarray(result.y, dtype=float).reshape(-1)
-
-        if z_values.ndim == 2:
-            for y_index, y_value in enumerate(y_values):
-                for x_index, x_value in enumerate(x_values):
-                    rows.append(
-                        {
-                            "result_name": result.result_name,
-                            "source_name": result.source_name,
-                            "method": result.method,
-                            "x": float(x_value),
-                            "y": float(y_value),
-                            "z": float(z_values[y_index, x_index]),
-                        }
-                    )
-            return
-
-        for x_value, y_value, z_value in zip(
-            x_values,
-            y_values,
-            z_values.reshape(-1),
-            strict=False,
-        ):
-            rows.append(
-                {
-                    "result_name": result.result_name,
-                    "source_name": result.source_name,
-                    "method": result.method,
-                    "x": float(x_value),
-                    "y": float(y_value),
-                    "z": float(z_value),
-                }
-            )
-
-    @staticmethod
-    def _append_3d_rows(rows: list[dict[str, Any]], result: SmoothResult) -> None:
-        values = np.asarray(result.values, dtype=float)
-        x_values = np.asarray(result.x, dtype=float).reshape(-1)
-        y_values = np.asarray(result.y, dtype=float).reshape(-1)
-        z_values = np.asarray(result.z, dtype=float).reshape(-1)
-
-        if values.ndim == 3:
-            for z_index, z_value in enumerate(z_values):
-                for y_index, y_value in enumerate(y_values):
-                    for x_index, x_value in enumerate(x_values):
-                        rows.append(
-                            {
-                                "result_name": result.result_name,
-                                "source_name": result.source_name,
-                                "method": result.method,
-                                "x": float(x_value),
-                                "y": float(y_value),
-                                "z": float(z_value),
-                                "value": float(values[z_index, y_index, x_index]),
-                            }
-                        )
-            return
-
-        for x_value, y_value, z_value, scalar_value in zip(
-            x_values,
-            y_values,
-            z_values,
-            values.reshape(-1),
-            strict=False,
-        ):
-            rows.append(
-                {
-                    "result_name": result.result_name,
-                    "source_name": result.source_name,
-                    "method": result.method,
-                    "x": float(x_value),
-                    "y": float(y_value),
-                    "z": float(z_value),
-                    "value": float(scalar_value),
-                }
-            )
+                n = min(x.size, y.size, z.size, values.size)  # paired points: the shortest list ends them
+                columns = {"x": x[:n], "y": y[:n], "z": z[:n], "value": values.reshape(-1)[:n]}
+        elif result.z is not None:
+            z = np.asarray(result.z, dtype=float)
+            if z.ndim == 2:
+                yy, xx = np.meshgrid(y, x, indexing="ij")
+                columns = {"x": xx.reshape(-1), "y": yy.reshape(-1), "z": _grid_cells(z, (y.size, x.size))}
+            else:
+                z = z.reshape(-1)
+                n = min(x.size, y.size, z.size)
+                columns = {"x": x[:n], "y": y[:n], "z": z[:n]}
+        else:
+            n = min(x.size, y.size)
+            columns = {"x": x[:n], "y": y[:n]}
+        size = len(next(iter(columns.values())))
+        labels = {key: np.full(size, getattr(result, key), dtype=object)
+                  for key in ("result_name", "source_name", "method")}
+        return pd.DataFrame({**labels, **columns})
 
     def how_to_read(self, results: Sequence[Any]) -> list[str]:
         """The method and how many points it ran over."""

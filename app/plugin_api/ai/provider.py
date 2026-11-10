@@ -105,6 +105,8 @@ class AIProvider:
     KEY_NAME: str = ""
     #: Whether the questions and the data leave the computer: then nothing is sent before the user consents.
     SENDS_DATA: bool = True
+    #: Whether unavailable() asks over the network (and so is asked off the GUI thread).
+    CHECKS_NETWORK: bool = False
     #: Whether it may only read the project, whatever the permission chosen: too small a model for more.
     READ_ONLY: bool = False
     #: The longest tool result its model can take, in characters; 0: the application's own limit.

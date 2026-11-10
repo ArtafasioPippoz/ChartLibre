@@ -478,7 +478,8 @@ class ChartPanel(ChartToolsMixin, QFrame):
         self._main_layout.addWidget(self._canvas, 1)
 
         self._notes_html = ""
-        self._notes_view = HtmlResultsView(self)
+        # Made when the notes are first shown: most charts' never are, and each pane is a web view.
+        self._notes_view = HtmlResultsView(self, lazy=True)
         self._notes_view.link_requested.connect(self.next_step_requested)
         self._notes_view.setObjectName("chartNotesView")
         self._notes_view.setMinimumHeight(NOTES_MIN_HEIGHT)
@@ -1452,7 +1453,7 @@ class ChartPanel(ChartToolsMixin, QFrame):
                 if abs(float(location) - position) < 0.5 and label:
                     return str(label)
         except Exception:
-            pass
+            pass  # ticks not laid out yet: the axis' own text below
         return axis_text(axis, position)
 
     # ------------------------------------------------------------------
@@ -1814,7 +1815,7 @@ class ChartPanel(ChartToolsMixin, QFrame):
             try:
                 self._hover_annotation.remove()
             except Exception:
-                pass
+                pass  # removed already, with its axes
             # The annotation was part of the old axes' contents, so the cached
             # background no longer matches what is on screen.
             self._hover_background = None

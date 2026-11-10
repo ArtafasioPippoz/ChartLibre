@@ -75,7 +75,7 @@ from PySide6.QtWidgets import (
 )
 
 from app.utils.i18n import _
-from app.widgets import mpl_cursors
+from app.widgets import mpl_cursors  # noqa: F401 - imported for its effect: native cursors before any canvas
 
 # ---------------------------------------------------------------------------
 # Optional external helpers (graceful fallbacks)
@@ -199,7 +199,7 @@ def _rc_enum_choices(key: str) -> tuple[list[str], bool] | None:
             try:
                 choices = sorted(plt.gcf().canvas.get_supported_filetypes().keys()) or choices
             except Exception:
-                pass
+                pass  # no canvas to ask: the built-in list of formats
         return choices, False
     if lower in _KEY_CHOICES:
         return list(_KEY_CHOICES[lower]), False
@@ -1091,7 +1091,7 @@ class MplStyleEditorDialog(SettingsTableDialog):
         try:
             self.styleApplied.emit(temp_path)
         except Exception:
-            pass
+            pass  # the dialog's receiver is gone (the window closed): nothing to tell
 
         # Call user callback with path
         if callable(self.apply_callback):

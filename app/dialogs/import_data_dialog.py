@@ -824,7 +824,7 @@ class ImportDataDialog(SettingsTableDialog):
                 if ss.eq("").all():
                     empties.append(str(col))
             except Exception:
-                pass
+                pass  # a column that cannot be read as text is not an empty one
         return empties
 
     # ------------------------------------------------------------------
@@ -904,7 +904,7 @@ class ImportDataDialog(SettingsTableDialog):
             if pd.api.types.is_datetime64_any_dtype(s):
                 return "DATETIME"
         except Exception:
-            pass
+            pass  # a dtype pandas cannot classify: stored as text
         return "TEXT"
 
     def _selected_types(self) -> dict[str, str]:

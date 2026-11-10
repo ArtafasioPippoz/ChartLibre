@@ -14,12 +14,58 @@ from __future__ import annotations
 
 import ast
 import importlib.util
+import json
+import os
 import sys
 from functools import cache
 from pathlib import Path
 from typing import Any
 
 from app.logs.logger import applogger
+
+# ----------------------------------------------------------------------
+# What the last scan read from each file, kept between runs
+# ----------------------------------------------------------------------
+# Parsing every plugin file took a quarter of a second of each start, to find what it found the
+# time before. A file is read again only when its date or size changed; the cache is a file in the
+# user's cache folder, and losing it costs one full scan.
+_SCAN_CACHE_VERSION = 1
+_scan_cache: dict[str, Any] | None = None
+
+
+def _scan_cache_path() -> Path:
+    from app.utils.config import user_cache_dir
+
+    return user_cache_dir() / "plugin-scan.json"
+
+
+def _load_scan_cache() -> dict[str, Any]:
+    global _scan_cache
+    if _scan_cache is None:
+        _scan_cache = {}
+        try:
+            stored = json.loads(_scan_cache_path().read_text(encoding="utf-8"))
+            if stored.get("version") == _SCAN_CACHE_VERSION and isinstance(stored.get("files"), dict):
+                _scan_cache = stored["files"]
+        except (OSError, ValueError, AttributeError):
+            pass  # none yet, or unreadable: scanned in full
+    return _scan_cache
+
+
+def _save_scan_cache() -> None:
+    """Write the cache, without the files that are gone; a failure only means the next start scans again."""
+    cache = _load_scan_cache()
+    for key in [key for key in cache if not os.path.exists(key.partition("|")[0])]:
+        del cache[key]
+    target = _scan_cache_path()
+    try:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        # Written whole and renamed: another process starting now reads the old file or the new one.
+        temporary = target.with_name(f"{target.name}.{os.getpid()}.tmp")
+        temporary.write_text(json.dumps({"version": _SCAN_CACHE_VERSION, "files": cache}), encoding="utf-8")
+        os.replace(temporary, target)
+    except OSError:
+        applogger.debug("The plugin scan cache could not be written.", exc_info=True)
 
 
 @cache
@@ -320,58 +366,98 @@ def discover_classes(
     if not root.is_dir():
         return discovered
 
+    cache = _load_scan_cache()
+    # What is read from a class is part of the key: two families may scan the same file.
+    wanted = repr((base_class_name, value_attr, string_attrs, string_list_attrs, int_attrs, number_list_attrs,
+                   require_value_attr))
+    changed = False
     for path in root.rglob("*.py"):
         if skip_init and path.name == "__init__.py":
             continue
 
-        src = path.read_text(encoding="utf-8", errors="replace")
-
         try:
-            tree = ast.parse(src, filename=str(path))
-        except SyntaxError:
+            status = path.stat()
+        except OSError:
+            continue
+        key, stamp = f"{path.as_posix()}|{wanted}", [status.st_mtime_ns, status.st_size]
+        known = cache.get(key)
+        if isinstance(known, dict) and known.get("stamp") == stamp:
+            discovered.extend(dict(entry) for entry in known["entries"])
+            continue
+        found = _discover_in_file(
+            path, base_class_name=base_class_name, value_attr=value_attr, string_attrs=string_attrs,
+            string_list_attrs=string_list_attrs, int_attrs=int_attrs, number_list_attrs=number_list_attrs,
+            require_value_attr=require_value_attr)
+        cache[key] = {"stamp": stamp, "entries": found}
+        changed = True
+        discovered.extend(dict(entry) for entry in found)
+
+    if changed:
+        _save_scan_cache()
+    return discovered
+
+
+def _discover_in_file(
+    path: Path,
+    *,
+    base_class_name: str | tuple[str, ...],
+    value_attr: str | None,
+    string_attrs: tuple[str, ...],
+    string_list_attrs: tuple[str, ...],
+    int_attrs: tuple[str, ...],
+    number_list_attrs: tuple[str, ...],
+    require_value_attr: bool,
+) -> list[dict[str, Any]]:
+    """The entries of one file's classes (discover_classes); none when it does not parse."""
+    discovered: list[dict[str, Any]] = []
+    src = path.read_text(encoding="utf-8", errors="replace")
+
+    try:
+        tree = ast.parse(src, filename=str(path))
+    except SyntaxError:
+        return discovered
+
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.ClassDef):
             continue
 
-        for node in ast.walk(tree):
-            if not isinstance(node, ast.ClassDef):
+        if not directly_inherits_from(node, base_class_name):
+            continue
+
+        value = None
+
+        if value_attr is not None:
+            value = extract_class_string_attr(node, value_attr)
+
+            if require_value_attr and value is None:
                 continue
 
-            if not directly_inherits_from(node, base_class_name):
-                continue
+        entry: dict[str, Any] = {
+            "name": node.name,
+            "path": path.as_posix(),
+            "value": value if value is not None else node.name,
+            "base": inherited_base(node, base_class_name),
+        }
 
-            value = None
+        for attr_name in string_attrs:
+            entry[attr_name_to_key(attr_name)] = extract_class_string_attr(
+                node,
+                attr_name,
+            )
 
-            if value_attr is not None:
-                value = extract_class_string_attr(node, value_attr)
+        for attr_name in string_list_attrs:
+            entry[attr_name_to_key(attr_name)] = extract_class_string_list_attr(
+                node,
+                attr_name,
+            )
 
-                if require_value_attr and value is None:
-                    continue
+        for attr_name in int_attrs:
+            entry[attr_name_to_key(attr_name)] = extract_class_int_attr(node, attr_name)
 
-            entry: dict[str, Any] = {
-                "name": node.name,
-                "path": path.as_posix(),
-                "value": value if value is not None else node.name,
-                "base": inherited_base(node, base_class_name),
-            }
+        for attr_name in number_list_attrs:
+            entry[attr_name_to_key(attr_name)] = extract_class_number_list_attr(node, attr_name)
 
-            for attr_name in string_attrs:
-                entry[attr_name_to_key(attr_name)] = extract_class_string_attr(
-                    node,
-                    attr_name,
-                )
-
-            for attr_name in string_list_attrs:
-                entry[attr_name_to_key(attr_name)] = extract_class_string_list_attr(
-                    node,
-                    attr_name,
-                )
-
-            for attr_name in int_attrs:
-                entry[attr_name_to_key(attr_name)] = extract_class_int_attr(node, attr_name)
-
-            for attr_name in number_list_attrs:
-                entry[attr_name_to_key(attr_name)] = extract_class_number_list_attr(node, attr_name)
-
-            discovered.append(entry)
+        discovered.append(entry)
 
     return discovered
 

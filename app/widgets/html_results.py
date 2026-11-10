@@ -224,8 +224,14 @@ class HtmlResultsView(QWidget):
     _watched_window: QWidget | None = None
     _parked = False
 
-    def __init__(self, parent: QWidget | None = None) -> None:
-        """Build the pane: the viewer and a small custom context menu."""
+    def __init__(self, parent: QWidget | None = None, *, lazy: bool = False) -> None:
+        """Build the pane: the viewer and a small custom context menu.
+
+        *lazy*: no viewer until the pane is first shown. For a pane a window builds and may never show
+        (every chart's notes): a web view costs a tenth of a second and a Chromium page. Not for a
+        dialog's report: its web view must go with the dialog, in the order _park_viewer keeps, and one
+        made late changed that order (a window deleted twice when the test suite closed them all).
+        """
         super().__init__(parent)
         self.setMinimumHeight(0)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Ignored)
@@ -235,13 +241,21 @@ class HtmlResultsView(QWidget):
         root = QVBoxLayout(self)
         stdSizeAndlayout(root)
 
-        self._viewer = self._create_viewer()
-        mark_editor_panel(self._viewer)
-        root.addWidget(self._viewer, 1)
+        self._view: QWidget | None = None
         self._watched_window: QWidget | None = None
-        self._parked = False
+        self._parked = True
 
-        self._install_context_menu()
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self._show_context_menu)
+        if not lazy:
+            self._unpark_viewer()
+
+    @property
+    def _viewer(self) -> QWidget:
+        """The viewer, made when first needed; once parked, the deleted one until the pane is shown again."""
+        if self._view is None:
+            self._unpark_viewer()
+        return cast(QWidget, self._view)
 
     # ------------------------------------------------------------------
     # A closed window's web view goes at once, from the event loop
@@ -273,9 +287,9 @@ class HtmlResultsView(QWidget):
     def _park_viewer(self) -> None:
         # Parked already: hidden again before this pane was shown (a window shown again with the
         # pane on another tab, then closed) - its view is gone, deleted by the loop.
-        if self._parked or not shiboken6.isValid(self._viewer):
+        if self._parked or self._view is None or not shiboken6.isValid(self._view):
             return
-        view = self._viewer
+        view = self._view
         page = view.page() if hasattr(view, "page") else None
         if page is None:
             return  # a QTextBrowser needs none of this
@@ -288,27 +302,18 @@ class HtmlResultsView(QWidget):
         _PARKED[:] = [item for item in _PARKED if shiboken6.isValid(item)]
 
     def _unpark_viewer(self) -> None:
+        # The viewer's own menu too: QWebEngineView and QTextBrowser both have a standard one, and
+        # CustomContextMenu on the viewer itself is what leaves only Copy and the two exports.
         self._parked = False
-        self._viewer = self._create_viewer()
-        mark_editor_panel(self._viewer)
+        view = self._view = self._create_viewer()
+        mark_editor_panel(view)
         layout = self.layout()
         if layout is not None:
-            layout.addWidget(self._viewer, 1)
-        self._viewer.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self._viewer.customContextMenuRequested.connect(self._show_context_menu)
+            layout.addWidget(view, 1)
+        view.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        view.customContextMenuRequested.connect(self._show_context_menu)
         if self._html:
             self.setHtml(self._html, plain_source=self._plain_text)
-
-    def _install_context_menu(self) -> None:
-        """Install the same custom menu on the wrapper and the concrete viewer.
-
-        QWebEngineView and QTextBrowser both provide their own standard context
-        menu. Setting CustomContextMenu on the actual viewer suppresses that
-        standard menu and guarantees that users only see Save, Clear and Copy.
-        """
-        for widget in (self, self._viewer):
-            widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-            widget.customContextMenuRequested.connect(self._show_context_menu)
 
     def _show_context_menu(self, pos: QPoint) -> None:
         """Show the HTML results context menu."""

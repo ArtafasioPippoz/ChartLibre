@@ -39,6 +39,8 @@ stale copy of the whole document.
 from __future__ import annotations
 
 import json
+import os
+import sys
 import time
 from pathlib import Path
 from typing import Any
@@ -71,6 +73,21 @@ USER_CONTENT_DIR = _repo_root().parent / "user"
 USER_CHARTS_DIR = USER_CONTENT_DIR / "charts"
 USER_DATA_OPERATIONS_DIR = USER_CONTENT_DIR / "data_operations"
 USER_FUNCTIONS_DIR = USER_CONTENT_DIR / "functions"
+
+
+def user_cache_dir() -> Path:
+    """The application's folder in the user's cache: what it holds can always be made again.
+
+    ~/Library/Caches on macOS, %LOCALAPPDATA% on Windows, $XDG_CACHE_HOME (or ~/.cache) elsewhere - a
+    folder the system may empty, and never the repository.
+    """
+    if sys.platform == "darwin":
+        base = Path.home() / "Library" / "Caches"
+    elif sys.platform == "win32":
+        base = Path(os.environ.get("LOCALAPPDATA") or Path.home() / "AppData" / "Local")
+    else:
+        base = Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache")
+    return base / "ChartLibre"
 
 #: The only top-level keys ``config.json`` owns.  Closed on purpose: a key
 #: that is not in here and is found in config.json is a setting left over from

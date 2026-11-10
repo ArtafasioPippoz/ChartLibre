@@ -130,5 +130,5 @@ def _shown(value: Any) -> str:
         if isinstance(value, sympy.Basic | sympy.MatrixBase):
             return sympy.pretty(value, use_unicode=True)
     except Exception:
-        pass
+        pass  # SymPy cannot print it: its plain text
     return str(value)

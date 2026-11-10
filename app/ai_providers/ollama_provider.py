@@ -221,6 +221,8 @@ class OllamaProvider(AIProvider):
     def SENDS_DATA(self) -> bool:
         return (urllib.parse.urlparse(self.address).hostname or "") not in _LOCAL_HOSTS
 
+    CHECKS_NETWORK = True
+
     def unavailable(self) -> str:
         # Asked when the panel is shown: quickly, so it says so before a question is typed.
         try:

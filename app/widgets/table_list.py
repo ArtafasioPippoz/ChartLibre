@@ -572,8 +572,17 @@ class TableListPanel(QWidget):
         selected_sources = self.selected_sources()
         has_query = any(kind != "table" for _name, kind in selected_sources)
 
-        # New Chart, Edit, Rename and Delete are the buttons beside the Tables title: not repeated here.
+        # New Chart, Edit and Delete are the buttons beside the Tables title: not repeated here.
         items: list[MenuItem | None] = []
+        if len(selected_sources) == 1:
+            items.append(
+                MenuItem(
+                    text=_("Rename"),
+                    tooltip=_("Rename the selected table, saved query or stored function"),
+                    callback=self._rename_table,
+                    icon="rename",
+                )
+            )
         if len(selected_sources) == 1 and not has_query:
             items.append(
                 MenuItem(

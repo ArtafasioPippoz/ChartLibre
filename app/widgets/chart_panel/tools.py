@@ -959,7 +959,7 @@ class ChartToolsMixin(_Host):
             try:
                 artist.remove()
             except Exception:
-                pass
+                pass  # removed already, with its axes
         self._ruler_artists = []
         self._ruler_start = None
         self._canvas.draw_idle()

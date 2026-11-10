@@ -568,6 +568,11 @@ def _create_sf_symbol_icon(symbol: str, *, size: int = 20) -> QIcon:
     if cached is not None:
         return cached
 
+    stored = _load_sf_symbol_file(cache_key)
+    if stored is not None:
+        _SF_SYMBOL_ICON_CACHE[cache_key] = stored
+        return stored
+
     appkit = _sf_symbol_bridge()
     if appkit is None:
         return QIcon()
@@ -618,9 +623,9 @@ def _create_sf_symbol_icon(symbol: str, *, size: int = 20) -> QIcon:
         if qimage.isNull():
             raise ValueError("Qt could not read the PNG data")
 
-        icon = QIcon(
-            _tinted_pixmap(QPixmap.fromImage(qimage), size, tint, ratio=ratio)
-        )
+        tinted = _tinted_pixmap(QPixmap.fromImage(qimage), size, tint, ratio=ratio)
+        icon = QIcon(tinted)
+        _save_sf_symbol_file(cache_key, tinted)
     except Exception as error:
         applogger.warning(
             "SF Symbol %r could not be rendered (%s); using the SVG icon instead.",
@@ -633,6 +638,47 @@ def _create_sf_symbol_icon(symbol: str, *, size: int = 20) -> QIcon:
     # will fail every time, and this runs for every button on every menu.
     _SF_SYMBOL_ICON_CACHE[cache_key] = icon
     return icon
+
+
+# ----------------------------------------------------------------------
+# Drawn symbols kept on disk
+# ----------------------------------------------------------------------
+# Importing AppKit and drawing the hundred-odd symbols of the menus took from a third of a second to
+# two seconds of every start. A symbol drawn once is kept as a PNG in the user's cache folder, under
+# the macOS version (a new release may draw it differently) and the tint, size and density it was
+# drawn for, so a theme switch draws and keeps its own.
+def _sf_symbol_cache_file(key: tuple[str, int, str, float]) -> Path:
+    import platform
+
+    from app.utils.config import user_cache_dir
+
+    name, size, tint, ratio = key
+    return (user_cache_dir() / "sf-symbols" / (platform.mac_ver()[0] or "unknown")
+            / f"{name}-{size}-{tint.lstrip('#')}-{ratio:g}.png")
+
+
+def _load_sf_symbol_file(key: tuple[str, int, str, float]) -> QIcon | None:
+    """The symbol drawn by an earlier run, or None; a damaged file is drawn again."""
+    path = _sf_symbol_cache_file(key)
+    if not path.is_file():
+        return None
+    pixmap = QPixmap(str(path))
+    if pixmap.isNull():
+        return None
+    pixmap.setDevicePixelRatio(key[3])
+    return QIcon(pixmap)
+
+
+def _save_sf_symbol_file(key: tuple[str, int, str, float], pixmap: QPixmap) -> None:
+    path = _sf_symbol_cache_file(key)
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        # Written beside and renamed: another instance starting now reads a whole file or none.
+        partial = path.with_name(f"{path.stem}.partial.png")
+        if pixmap.save(str(partial), "PNG"):
+            partial.replace(path)
+    except OSError:
+        applogger.debug("Could not keep the SF Symbol %s on disk.", key[0], exc_info=True)
 
 
 def _icon_device_pixel_ratio() -> float:

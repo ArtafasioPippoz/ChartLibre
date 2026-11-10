@@ -39,10 +39,8 @@ from __future__ import annotations
 
 import functools
 import json
-import os
 import re
 import shutil
-import sys
 import threading
 import time
 import urllib.error
@@ -196,19 +194,10 @@ class DeepLTranslator:
 
 
 def argos_models_dir() -> Path:
-    """Where Argos models are kept: the user's cache folder, never the repository.
+    """Where Argos models are kept: the user's cache folder (config.user_cache_dir), which costs only a new download."""
+    from app.utils.config import user_cache_dir
 
-    ~/Library/Caches on macOS, %LOCALAPPDATA% on Windows, $XDG_CACHE_HOME
-    (or ~/.cache) elsewhere - a folder the system may empty, which costs
-    only a new download.
-    """
-    if sys.platform == "darwin":
-        base = Path.home() / "Library" / "Caches"
-    elif sys.platform == "win32":
-        base = Path(os.environ.get("LOCALAPPDATA") or Path.home() / "AppData" / "Local")
-    else:
-        base = Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache")
-    return base / "ChartLibre" / "argos-models"
+    return user_cache_dir() / "argos-models"
 
 
 class ArgosTranslator:

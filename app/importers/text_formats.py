@@ -235,10 +235,16 @@ def _pzfx_tables(path: str) -> dict[str, pd.DataFrame]:
         if columns:
             length = max(len(values) for values in columns.values())
             frame = pd.DataFrame({name: values + [""] * (length - len(values)) for name, values in columns.items()})
-            tables[title] = frame.apply(lambda s: to_numbers(s)
-                                        if to_numbers(s.replace("", np.nan)).notna().sum()
-                                        == s.replace("", np.nan).notna().sum() else s.replace("", np.nan))
+            tables[title] = frame.apply(_numbers_or_text)
     return tables
+
+
+def _numbers_or_text(column: pd.Series) -> pd.Series:
+    """A column as numbers when every filled cell is one; else as text, its empty cells missing."""
+    filled = column.replace("", np.nan)
+    if to_numbers(filled).notna().sum() == filled.notna().sum():
+        return to_numbers(column)
+    return filled
 
 
 class PrismImporter(FileImporter):

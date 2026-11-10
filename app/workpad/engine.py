@@ -94,11 +94,22 @@ class Workpad:
         self._repo = repo
         self._changed = changed
         self.safe = safe
-        self.namespace: dict[str, Any] = {}
-        self.reset()
+        self._namespace: dict[str, Any] | None = None
+        self._default_names: dict[str, Any] = {}
 
     def reset(self) -> None:
         """Forget every name: a new session."""
+        self._namespace = None
+
+    @property
+    def namespace(self) -> dict[str, Any]:
+        """The session's names, built when first read: SymPy takes half a second to import."""
+        if self._namespace is None:
+            self._namespace = self._new_namespace()
+            self._builtins_namespace()
+        return self._namespace
+
+    def _new_namespace(self) -> dict[str, Any]:
         import sympy
 
         namespace: dict[str, Any] = {name: getattr(sympy, name) for name in sympy.__all__}
@@ -113,8 +124,10 @@ class Workpad:
             maximum=lambda data: float(np.nanmax(_numbers(data))),
             count=lambda data: len(_values(data)),
         )
-        self.namespace = namespace
-        self._builtins_namespace()
+        # What the session starts with, to tell the user's own names from: of this session, since
+        # the words made here (mean, get...) are new objects at every reset.
+        self._default_names = dict(namespace)
+        return namespace
 
     def _builtins_namespace(self) -> None:
         if self.safe:
@@ -124,7 +137,9 @@ class Workpad:
 
     def names(self) -> dict[str, str]:
         """The names the user defined, each with a short view of its value."""
-        defaults = self._defaults()
+        if self._namespace is None:
+            return {}  # nothing run yet
+        defaults = self._default_names
         shown = {}
         for name, value in self.namespace.items():
             if name.startswith("_") or (name in defaults and defaults[name] is value):
@@ -133,17 +148,11 @@ class Workpad:
             shown[name] = text if len(text) <= 60 else text[:57] + "..."
         return shown
 
-    def _defaults(self) -> dict[str, Any]:
-        if not hasattr(self, "_default_names"):
-            self._default_names = dict(self.namespace)
-        return self._default_names
-
     def run(self, source: str) -> tuple[str, Any]:
         """Run *source*; return what it printed and the value of its last line when that is an expression.
 
         Raises UnsafeCommand when the filter refuses it, or the command's own error.
         """
-        self._defaults()
         self._builtins_namespace()
         tree = check(source) if self.safe else ast.parse(source, mode="exec")
         last = tree.body.pop() if tree.body and isinstance(tree.body[-1], ast.Expr) else None

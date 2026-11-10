@@ -125,7 +125,7 @@ def _linear_pvalues(data: pd.DataFrame, response: str, factors: list[str],
             if numeric[name]:
                 slopes[name] = float(model.params.get(alias, float("nan")))
     except Exception:
-        pass
+        pass  # a model statsmodels cannot fit: no p-value, as for a factor it could not measure
     return pvalues, slopes
 
 

@@ -15,6 +15,7 @@ where it belongs.
 from __future__ import annotations
 
 import importlib
+import sys
 import threading
 
 from app.logs.logger import applogger
@@ -47,6 +48,10 @@ _started = threading.Event()
 
 def _import_all() -> None:
     for name in MODULES:
+        # The process may end first (a short test run, a quick quit): an import then fails, and its log
+        # record finds the handlers already closed.
+        if sys.is_finalizing():
+            return
         try:
             importlib.import_module(name)
         except Exception as exc:

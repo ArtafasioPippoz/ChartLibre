@@ -9,9 +9,9 @@ Settings > Assistant's; the panel says what is missing before anything is sent.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Signal, Slot
 from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QComboBox,
@@ -30,6 +30,7 @@ from app.ai import settings
 from app.ai.assistant import Assistant
 from app.ai.tools import AssistantTools
 from app.styles.style import create_action_button, stdSizeAndlayout
+from app.utils.background import run_in_background
 from app.utils.i18n import _
 from app.widgets.nav_bar import NavPanel
 
@@ -125,11 +126,36 @@ class AssistantPanel(NavPanel):
     def refresh(self) -> None:
         """Say what is missing before the assistant can be used: the provider's package, the consent, the key."""
         provider = _load_provider(settings.provider_name())
+        self._checking = provider
+        if provider is not None and provider.CHECKS_NETWORK:
+            # Up to two seconds when the server is not there: asked off the GUI thread, the panel
+            # unusable meanwhile.
+            self._note.setText("")
+            self._settings_button.setVisible(False)
+            self._ready = False
+            self._send_button.setEnabled(False)
+            run_in_background(lambda _cancel: (provider, provider.unavailable()), self._on_checked,
+                              self._on_check_failed)
+            return
+        self._finish_refresh(provider, provider.unavailable() if provider is not None else "")
+
+    @Slot(object)
+    def _on_checked(self, answer: object) -> None:
+        provider, unavailable = cast(tuple[Any, str], answer)
+        if provider is self._checking:  # else a later refresh asked again
+            self._finish_refresh(provider, unavailable)
+
+    @Slot(object)
+    def _on_check_failed(self, error: object) -> None:
+        if self._checking is not None:
+            self._finish_refresh(self._checking, str(error))
+
+    def _finish_refresh(self, provider: Any, unavailable: str) -> None:
         problem = ""
         if provider is None:
             problem = _("No assistant provider is installed.")
-        elif provider.unavailable():
-            problem = _(provider.unavailable())
+        elif unavailable:
+            problem = _(unavailable)
         elif provider.SENDS_DATA and not settings.consented():
             problem = _("The assistant sends questions and data from the project to {provider}. Allow it in "
                         "Settings > Assistant.").format(provider=provider.Name)

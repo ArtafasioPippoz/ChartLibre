@@ -667,17 +667,16 @@ class MainWindow(QMainWindow):
         self._clipboard_transposed.setToolTip(
             _("For data copied one series per row: the clipboard is read with rows and columns exchanged.")
         )
+        # Five, so the title beside them is whole at the panel's width: Import from clipboard is in the
+        # plus button's menu, Rename in the last one's.
         tables_bar = self._title_buttons([
             ("add", _("New table: blank, from a file, the clipboard, the web or a database"),
              lambda button: self._new_table_menu().exec(button.mapToGlobal(button.rect().bottomLeft()))),
-            ("paste", _("Import from clipboard"), lambda _button: self._on_import_clipboard()),
             ("delete", _("Delete the selected tables"), lambda _button: self._table_panel._delete_selected()),
             ("chart_from_columns", _("A new chart of this table"),
              lambda _button: self._table_panel._on_new_plot_tab()),
             ("column_info", _("The table's columns, types and cells; a function's formula; a query's SQL"),
              lambda _button: self._table_panel.edit_selected()),
-            ("rename", _("Rename the selected table, saved query or stored function"),
-             lambda _button: self._table_panel._rename_table()),
             ("table_more", _("More"), lambda button: self._table_panel.show_menu_at(
                 button.mapToGlobal(button.rect().bottomLeft()))),
         ])

@@ -216,7 +216,8 @@ class FunctionScanner:
             )
             for entry in library.entries(ndim=self.NDIM)
         ]
-        entries = self._family().discover()
+        family = self._family()
+        entries = family.discover()
         seen: set[tuple[str, str]] = set()
 
         for entry in entries:
@@ -231,7 +232,7 @@ class FunctionScanner:
             # a literal there (a p0 computed in code).
             cls = None
             if entry.get("p0") is None:
-                cls = self._family().load(entry)
+                cls = family.load(entry)
                 if cls is None:
                     continue
                 if not callable(getattr(cls, "execute", None)):
