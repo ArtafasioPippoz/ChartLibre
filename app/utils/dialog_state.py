@@ -20,7 +20,7 @@ and a renamed attribute simply forgets its old value instead of crashing.
 
 Widgets are read and written through :data:`_ACCESSORS`; anything not listed
 there is ignored, which is what keeps a table view or a chart canvas from
-ending up in config.json.
+ending up in user.json.
 """
 from __future__ import annotations
 
@@ -205,7 +205,7 @@ def save_window_geometry(window: QWidget, key: str) -> None:
     """Remember the position, size and maximised state of a window.
 
     Stored as plain numbers rather than as Qt's ``saveGeometry()`` blob so the
-    values stay readable and editable in config.json.  While maximised the
+    values stay readable and editable in user.json.  While maximised the
     restored size is read from ``normalGeometry`` instead, so closing a
     maximised window still records somewhere sensible to come back to.
     """

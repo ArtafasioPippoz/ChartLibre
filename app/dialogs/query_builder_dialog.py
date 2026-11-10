@@ -53,7 +53,7 @@ from app.widgets.table_preview import DataFrameTableModel
 # that pressing Run on a full-table select is not a mistake.
 PREVIEW_ROW_LIMIT: int = get_constant("query_builder_preview_row_limit", 500)
 
-# config.json key for the remembered entries and geometry of this dialog.
+# user.json key for the remembered entries and geometry of this dialog.
 STATE_KEY: str = "query_builder_dialog"
 
 # Snippet id -> (button label, tooltip).  The order here is the order of the

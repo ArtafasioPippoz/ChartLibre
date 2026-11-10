@@ -180,7 +180,7 @@ class TableListPanel(QWidget):
         self._reloading = False
         # Generated tables are hidden by default: a project with a few fits has
         # more of them than imported tables, and they are not what the user is
-        # looking for in this list.  The choice is remembered in config.json.
+        # looking for in this list.  The choice is remembered in user.json.
         self._show_generated = bool(
             get_section(CONFIG_SECTION).get(CONFIG_SHOW_GENERATED, False)
         )

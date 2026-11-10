@@ -4,7 +4,8 @@ Everything visual that more than one dialog needs lives here so it is defined
 once:
 
 * platform stylesheet loading (Fluent on Windows, native-leaning on macOS);
-* icon lookup by convention from ``app/icons/{win11,macOs,common}``;
+* icons drawn from the system: SF Symbols on macOS, Fluent glyphs on Windows,
+  the icon theme elsewhere;
 * factories for buttons, menus, cards, and section titles that set the dynamic
   properties the stylesheets key on;
 * one layout scale (``SPACING_*``, ``MARGIN_*``) and one ``DIALOG_SIZES`` table.

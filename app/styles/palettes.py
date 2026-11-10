@@ -109,8 +109,8 @@ class Palette:
 
 
 #: The light palette, matching what the sheets were written against: an accent
-#: over near-white surfaces - the logo's blue since the sheets were written
-#: against Fluent's #0078d4, which it is close enough to that nothing else changes.  Named "light" rather than "fluent"
+#: over near-white surfaces. The accent is the logo's blue, close enough to the
+#: Fluent #0078d4 the sheets were written against that nothing else changes. Named "light" rather than "fluent"
 #: because the same palette serves the macOS sheet, which differs in metrics
 #: and radii rather than in colour.
 LIGHT = Palette(

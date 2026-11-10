@@ -99,9 +99,11 @@ from app.utils import column_summary
 from app.utils.coercion import column_of, to_numbers
 from app.utils.config import (
     clear_recent_databases,
+    forget_database,
     get_constant,
     get_recent_databases,
     get_section,
+    is_untitled_database,
     set_last_database,
     set_section,
 )
@@ -112,7 +114,7 @@ from app.utils.data_sources import (
 )
 from app.utils.dialog_state import restore_window_geometry, save_window_geometry
 from app.utils.i18n import _
-from app.utils.messages import ask, show_message
+from app.utils.messages import ask, message, show_message
 from app.utils.screen_fit import fit_on_show
 from app.utils.startup import PROJECT_FILE_FILTER
 from app.widgets.analysis_panel import AnalysisPanel, plot_operation, plugin_icon
@@ -137,7 +139,7 @@ from app.widgets.table_preview import TablePreviewPanel
 if TYPE_CHECKING:
     from app.data.sqlite_repo import SqliteRepo
 
-# config.json keys for the remembered window layout.
+# user.json keys for the remembered window layout.
 STATE_KEY: str = "main_window"
 SPLITTERS_SECTION: str = "main_window_splitters"
 LOG_VIEWER_STATE_KEY: str = "log_viewer"
@@ -550,7 +552,7 @@ class MainWindow(QMainWindow):
             self._status_project.setText(project)
             self._status_project.setToolTip(str(self._db_path) if self._db_path else "")
 
-    #: config.json key remembering whether the rail is collapsed to icons.
+    #: user.json key remembering whether the rail is collapsed to icons.
     NAV_COMPACT_KEY: str = "navigation_compact"
 
     def set_navigation_compact(self, compact: bool) -> None:
@@ -1957,6 +1959,13 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event: QCloseEvent) -> None:
         """Persist the window layout, then collect resources and close."""
         applogger.info("Closing main window")
+        settled = self._settle_untitled_project()
+        if settled == "cancel":
+            event.ignore()
+            return
+        if settled in ("discard", "empty") and self._db_path is not None:
+            self._repo.close()
+            self._delete_project_file(self._db_path, to_trash=settled == "discard")
         try:
             self._sql_workpad_panel.discard()  # its copy, never kept unasked
             self._remember_layout()
@@ -1968,7 +1977,7 @@ class MainWindow(QMainWindow):
     # Window layout persistence
     # ------------------------------------------------------------------
     def _remember_layout(self) -> None:
-        """Write size, position and splitter sizes to config.json.
+        """Write size, position and splitter sizes to user.json.
 
         Saved on close rather than on every resize: a splitter drag emits
         hundreds of events and each one would rewrite the file.
@@ -3469,8 +3478,66 @@ class MainWindow(QMainWindow):
         if ask_to_trust(self, self._repo):
             self._reload_function_charts()
 
+    # ------------------------------------------------------------------
+    # The untitled project a start with nothing to reopen made
+    # ------------------------------------------------------------------
+    def _project_is_empty(self) -> bool:
+        """No table and no figure: nothing anyone would miss."""
+        try:
+            return self._repo.list_user_tables().empty and not self._repo.load_figures_from_db()
+        except Exception:
+            return False  # cannot tell: ask rather than throw away
+
+    def _settle_untitled_project(self) -> str:
+        """Before the open project is left: "" when it is a named one, else what to do with the untitled one.
+
+        As a document app does with an untitled document: an empty one goes without a word ("empty"); one
+        with work in it asks Save, Don't Save ("discard": to the Trash) or Cancel. Save asks the name (Save as) - and the untitled
+        file is deleted once the copy is made ("saved"); Cancel, here or in the name dialog, keeps the
+        project open ("cancel").
+        """
+        path = self._db_path
+        if not is_untitled_database(path):
+            return ""
+        if self._project_is_empty():
+            return "empty"
+        title, text = message("project.save_untitled").translated(name=path.stem if path else "")
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Icon.Warning)
+        box.setWindowTitle(title)
+        box.setText(text)
+        box.setStandardButtons(QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard
+                               | QMessageBox.StandardButton.Cancel)
+        box.setDefaultButton(QMessageBox.StandardButton.Save)
+        answer = box.exec()
+        if answer == QMessageBox.StandardButton.Discard:
+            return "discard"
+        if answer == QMessageBox.StandardButton.Save:
+            self._on_save_as()
+            return "cancel" if self._db_path == path else "saved"
+        return "cancel"
+
+    def _delete_project_file(self, path: Path, *, to_trash: bool = False) -> None:
+        """Delete a closed project's file and its SQLite side files, and forget it.
+
+        *to_trash*: the project goes to the system's Trash (Recycle Bin), where Don't Save can still be undone;
+        if the system has none, the file is left where it is rather than deleted for good. An empty project
+        is simply deleted: there is nothing in it to get back.
+        """
+        from PySide6.QtCore import QFile
+
+        if to_trash and path.exists() and not QFile.moveToTrash(str(path)):
+            applogger.warning("Could not move %s to the Trash; it is left where it is.", path)
+            return
+        for leftover in (path, path.with_name(path.name + "-wal"), path.with_name(path.name + "-shm")):
+            try:
+                leftover.unlink(missing_ok=True)
+            except OSError:
+                applogger.warning("Could not delete %s", leftover)
+        forget_database(path)
+
     def _switch_database(
-        self, db_path: Path, prepare: Callable[[], object] | None = None
+        self, db_path: Path, prepare: Callable[[], object] | None = None, *, settle: bool = True
     ) -> None:
         """Switch the UI to another database and rebind all dependent widgets.
 
@@ -3479,7 +3546,20 @@ class MainWindow(QMainWindow):
         safely be replaced (Load demo, reloading the demo already open). If
         it fails, the database that was open is opened again and the error
         goes to the caller.
+
+        An untitled project being left is settled first (_settle_untitled_project) unless *settle* is
+        False - Save as, which has just named it.
         """
+        leaving = self._db_path
+        settled = self._settle_untitled_project() if settle and db_path != leaving else ""
+        if settled == "cancel":
+            return
+        self._switch_to(db_path, prepare)
+        if settled in ("discard", "empty") and leaving is not None and leaving != self._db_path:
+            self._delete_project_file(leaving, to_trash=settled == "discard")
+
+    def _switch_to(self, db_path: Path, prepare: Callable[[], object] | None = None) -> None:
+        """The switch itself: see _switch_database."""
         applogger.info("Switching database to %s", db_path)
         # Updates are held on the window's contents, never on the window
         # itself: on macOS, turning a top-level window's updates off and on
@@ -3550,6 +3630,10 @@ class MainWindow(QMainWindow):
             return
 
         db_path = SqliteRepo.ensure_dhub_extension(Path(file_path))
+        leaving = self._db_path
+        settled = self._settle_untitled_project() if db_path != leaving else ""
+        if settled == "cancel":
+            return
         applogger.info("Creating new database: %s", db_path)
 
         self._tabs.clear()
@@ -3575,6 +3659,8 @@ class MainWindow(QMainWindow):
             self._table_panel.reload()
             self._reload_tabs()
             self._select_navigation("tables")
+            if settled in ("discard", "empty") and leaving is not None:
+                self._delete_project_file(leaving, to_trash=settled == "discard")
         except Exception as exc:
             applogger.exception("Failed to create database: %s", exc)
             show_message(self, "database.create_failed", error=exc)
@@ -3590,7 +3676,7 @@ class MainWindow(QMainWindow):
         demo and seeing it, for a file whose name already says what it is and
         that nobody is expected to keep - the same reasoning that lets a first
         run open straight into a fixed, well-known path with no dialog of its
-        own (see app.utils.startup.DEFAULT_DATABASE_NAME). The copy lands in
+        own (see app.utils.startup._new_database_path). The copy lands in
         ``projects/`` beside the application (demos.PROJECTS_DIR), not
         loose in the home directory: the copies are throwaway and one folder
         holds all of them. Loading the same demo again overwrites its previous
@@ -3703,13 +3789,16 @@ class MainWindow(QMainWindow):
 
         applogger.info("Saving database as: %s", target)
         self._ask_for_missing_project_info()
+        untitled = self._db_path if is_untitled_database(self._db_path) else None
         try:
             saved_path = self._repo.save_as(target)
-            self._switch_database(saved_path)
+            self._switch_database(saved_path, settle=False)
         except Exception as exc:
             applogger.exception("Failed to save database as: %s", exc)
             show_message(self, "database.save_as_failed", error=exc)
             return
+        if untitled is not None and untitled != self._db_path:
+            self._delete_project_file(untitled)  # named now: the untitled file was its draft
         # The copy has its own name, so its own preview.
         self._refresh_project_preview()
 

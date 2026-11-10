@@ -104,17 +104,7 @@ def top_level_from(sql: str) -> re.Match[str] | None:
 
 def select_alias_from_expression(expression: str) -> str:
     """Extract the alias name from an expression ending with AS alias."""
-    match = re.search(
-        r'\bAS\s+(?:"([^"]+)"|\[([^\]]+)\]|`([^`]+)`|([A-Za-z_][A-Za-z0-9_]*))\s*$',
-        str(expression).strip(),
-        flags=re.IGNORECASE,
-    )
-    if match is None:
-        return ""
-    for group in match.groups():
-        if group:
-            return str(group)
-    return ""
+    return projection_alias(expression)
 
 
 def replace_select_projection_by_alias(
@@ -224,7 +214,7 @@ def projection_alias(projection: str) -> str:
 def has_projection_alias(sql_query: str, alias: str) -> bool:
     """True when the SELECT list of *sql_query* already projects something AS *alias*."""
     sql = str(sql_query).strip().rstrip(";")
-    from_match = re.search(r"\bFROM\b", sql, flags=re.IGNORECASE)
+    from_match = top_level_from(sql)  # not a FROM inside a subquery of the select list
     select_part = sql[: from_match.start()] if from_match else sql
     match = re.match(r"(?is)^\s*SELECT\s+", select_part)
     if match is None:

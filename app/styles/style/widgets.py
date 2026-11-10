@@ -63,8 +63,7 @@ def create_section_title(text: str, parent: QWidget | None = None) -> QtWidgets.
 class CardFrame(QFrame):
     """A rounded ``[card="true"]`` surface with its own layout pre-margined.
 
-    What two separate calls used to do
-    separate calls - the QSS side (the "card" property, no frame shape, an
+    What used to take two separate calls - the QSS side (the "card" property, no frame shape, an
     expanding size policy) and the layout side (margins, spacing) - always
     had to travel together, and a call site that built its own layout with
     ``stdSizeAndlayout`` instead of the card's own by mistake got a
@@ -561,7 +560,7 @@ def apply_toolbox_header_metrics(
         button.setToolTip(button.text())
 
 
-#: What a QToolBox page inset from its edges: enough for the white cards
+#: How far a QToolBox page is inset from its edges: enough for the white cards
 #: inside it to read as floating on the page rather than as filling it,
 #: which is the whole point of a grey ground behind them. Top is taller
 #: than the other three: the page sits directly under the toolbox's own
@@ -846,13 +845,6 @@ def stdSizeAndlayout(
         return
 
     if isinstance(obj, QLineEdit):
-        obj.setSizePolicy(
-            QSizePolicy.Policy.Expanding,
-            QSizePolicy.Policy.Fixed,
-        )
-        return
-
-    if isinstance(obj, QPlainTextEdit):
         obj.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Fixed,

@@ -153,13 +153,14 @@ class GroupAggregateDialog(SettingsTableDialog):
         self._repo = repo
         self._table = str(table)
 
-        schema = [(name, kind) for name, kind in repo._schema(self._table) if name != "Hide"]
+        full_schema = repo._schema(self._table)
+        schema = [(name, kind) for name, kind in full_schema if name != "Hide"]
         self._columns = [name for name, _kind in schema]
         self._numeric = {
             name for name, kind in schema
             if any(word in kind.upper() for word in ("INT", "REAL", "FLOA", "DOUB", "NUM"))
         }
-        self._has_hide = "Hide" in {name for name, _kind in repo._schema(self._table)}
+        self._has_hide = "Hide" in {name for name, _kind in full_schema}
 
         groups_card = self.add_settings_card(_("Group by"))
         side = groups_card.layout()

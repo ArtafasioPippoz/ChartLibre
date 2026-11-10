@@ -68,9 +68,14 @@ def _renderer_keys(chart_type: str) -> frozenset[str]:
     return frozenset({*getattr(renderer, "Kwargs", {}), *getattr(renderer, "Options", {})})
 
 
-def series_look(style: dict[str, Any], chart_type: str) -> dict[str, Any]:
-    """The part of a series' style that is its look."""
-    keys = (SERIES_LOOK_KEYS | _renderer_keys(chart_type)) - SERIES_CONTENT_KEYS
+def _series_look_keys(chart_type: str) -> frozenset[str]:
+    return (SERIES_LOOK_KEYS | _renderer_keys(chart_type)) - SERIES_CONTENT_KEYS
+
+
+def series_look(style: dict[str, Any], chart_type: str, *, keys: frozenset[str] | None = None) -> dict[str, Any]:
+    """The part of a series' style that is its look; *keys* when the caller already has them (each lookup
+    imports the renderer)."""
+    keys = _series_look_keys(chart_type) if keys is None else keys
     return {key: value for key, value in (style or {}).items() if key in keys}
 
 
@@ -89,9 +94,11 @@ def template_from_figure(descriptor: FigureDescriptor) -> dict[str, Any]:
             {
                 "chart_type": axis.name,
                 "options": axis_look(axis.options or {}),
-                "series": [series_look(series.options or {}, axis.name) for series in sorted(axis.series, key=lambda s: s.index)],
+                "series": [series_look(series.options or {}, axis.name, keys=keys)
+                           for series in sorted(axis.series, key=lambda s: s.index)],
             }
             for axis in sorted(descriptor.axes, key=lambda a: a.index)
+            for keys in (_series_look_keys(axis.name),)
         ],
     }
 
@@ -135,7 +142,8 @@ def apply_template(repo: SqliteRepo, figure_id: int, template: dict[str, Any]) -
         if source is None:
             continue
         same_type = source.get("chart_type") == axis.name
-        foreign = set() if same_type else _renderer_keys(str(source.get("chart_type") or "")) - _renderer_keys(axis.name)
+        own_keys = _renderer_keys(axis.name)
+        foreign = set() if same_type else _renderer_keys(str(source.get("chart_type") or "")) - own_keys
         new_options = {key: value for key, value in (axis.options or {}).items() if key in AXIS_CONTENT_KEYS}
         new_options.update({key: value for key, value in dict(source.get("options") or {}).items() if key not in foreign})
         if not same_type and "projection" in (axis.options or {}):
@@ -147,10 +155,11 @@ def apply_template(repo: SqliteRepo, figure_id: int, template: dict[str, Any]) -
 
         styles = [style for style in source.get("series", []) if isinstance(style, dict)]
         # Series past the template's own keep their look.
+        look_keys = (SERIES_LOOK_KEYS | own_keys) - SERIES_CONTENT_KEYS
         for series, style in zip(sorted(axis.series, key=lambda s: s.index), styles):
-            wanted = series_look(style, axis.name)
+            wanted = series_look(style, axis.name, keys=look_keys)
             current = dict(series.options or {})
-            kept = {key: value for key, value in current.items() if key not in series_look(current, axis.name)}
+            kept = {key: value for key, value in current.items() if key not in look_keys}
             repo.update_series_style(int(series.id), {**kept, **wanted})
             changed += 1
     return changed

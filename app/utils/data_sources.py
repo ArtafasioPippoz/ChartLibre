@@ -223,27 +223,28 @@ def read_excel_file(
     return df
 
 
+def _trim(df: pd.DataFrame, skiprows: int, skipfooter: int) -> pd.DataFrame:
+    """*df* without its first *skiprows* and last *skipfooter* rows, for the readers that cannot skip them."""
+    if skiprows:
+        df = df.iloc[int(skiprows) :]
+    if skipfooter:
+        df = df.iloc[: max(0, len(df) - int(skipfooter))]
+    return df
+
+
 def read_json_file(path: str, *, skiprows: int = 0, skipfooter: int = 0) -> pd.DataFrame:
     try:
         df = pd.read_json(path)
     except ValueError:
         df = pd.read_json(path, lines=True)
 
-    if skiprows:
-        df = df.iloc[int(skiprows) :]
-    if skipfooter:
-        df = df.iloc[: max(0, len(df) - int(skipfooter))]
-    return df
+    return _trim(df, skiprows, skipfooter)
 
 
 def read_xml_file(path: str, *, skiprows: int = 0, skipfooter: int = 0) -> pd.DataFrame:
     # Python's own parser: pandas' default, lxml, is a package of its own, not installed.
     df = pd.read_xml(path, parser="etree")
-    if skiprows:
-        df = df.iloc[int(skiprows) :]
-    if skipfooter:
-        df = df.iloc[: max(0, len(df) - int(skipfooter))]
-    return df
+    return _trim(df, skiprows, skipfooter)
 
 
 def file_importer(path: str | Path) -> FileImporter | None:
@@ -370,11 +371,7 @@ def read_sqlite_table(
     finally:
         conn.close()
 
-    if skiprows:
-        df = df.iloc[int(skiprows) :]
-    if skipfooter:
-        df = df.iloc[: max(0, len(df) - int(skipfooter))]
-    return df.reset_index(drop=True)
+    return _trim(df, skiprows, skipfooter).reset_index(drop=True)
 
 
 def read_sqlite_query(
@@ -401,11 +398,7 @@ def read_sqlite_query(
     finally:
         conn.close()
 
-    if skiprows:
-        df = df.iloc[int(skiprows) :]
-    if skipfooter:
-        df = df.iloc[: max(0, len(df) - int(skipfooter))]
-    return df.reset_index(drop=True)
+    return _trim(df, skiprows, skipfooter).reset_index(drop=True)
 
 
 # -----------------------------------------------------------------------------
@@ -586,11 +579,7 @@ def read_postgres_table(
     finally:
         connection.close()
 
-    if skiprows:
-        df = df.iloc[int(skiprows) :]
-    if skipfooter:
-        df = df.iloc[: max(0, len(df) - int(skipfooter))]
-    return df.reset_index(drop=True)
+    return _trim(df, skiprows, skipfooter).reset_index(drop=True)
 
 
 def _server_session_read_only(connection, statement: str) -> None:
@@ -631,11 +620,7 @@ def read_postgres_query(
     finally:
         connection.close()
 
-    if skiprows:
-        df = df.iloc[int(skiprows) :]
-    if skipfooter:
-        df = df.iloc[: max(0, len(df) - int(skipfooter))]
-    return df.reset_index(drop=True)
+    return _trim(df, skiprows, skipfooter).reset_index(drop=True)
 
 
 def list_mysql_tables(conn: DatabaseConnection) -> list[str]:
@@ -679,11 +664,7 @@ def read_mysql_table(
     finally:
         connection.close()
 
-    if skiprows:
-        df = df.iloc[int(skiprows) :]
-    if skipfooter:
-        df = df.iloc[: max(0, len(df) - int(skipfooter))]
-    return df.reset_index(drop=True)
+    return _trim(df, skiprows, skipfooter).reset_index(drop=True)
 
 
 def read_mysql_query(
@@ -710,11 +691,7 @@ def read_mysql_query(
     finally:
         connection.close()
 
-    if skiprows:
-        df = df.iloc[int(skiprows) :]
-    if skipfooter:
-        df = df.iloc[: max(0, len(df) - int(skipfooter))]
-    return df.reset_index(drop=True)
+    return _trim(df, skiprows, skipfooter).reset_index(drop=True)
 
 
 #: kind -> (list_tables(conn), read_table(conn, table, **kwargs)), one shape
@@ -971,6 +948,14 @@ def _web_fetch_ssl_context() -> ssl.SSLContext | None:
     return ssl.create_default_context(cafile=certifi.where())
 
 
+#: What a fetch says when the server's certificate cannot be verified.
+_UNVERIFIED_CERTIFICATE: str = (
+    "The server's TLS certificate could not be verified. This usually means a corporate proxy or firewall is "
+    "inspecting HTTPS traffic with its own certificate - ask whoever manages that network for its CA "
+    "certificate, or try a different network; it is not something this fetch can work around on its own."
+)
+
+
 def read_web_url(
     url: str,
     *,
@@ -1001,24 +986,10 @@ def read_web_url(
         )
     except urllib.error.URLError as exc:
         if isinstance(exc.reason, ssl.SSLCertVerificationError):
-            raise ValueError(
-                "The server's TLS certificate could not be verified. This "
-                "usually means a corporate proxy or firewall is inspecting "
-                "HTTPS traffic with its own certificate - ask whoever "
-                "manages that network for its CA certificate, or try a "
-                "different network; it is not something this fetch can "
-                "work around on its own."
-            ) from exc
+            raise ValueError(_UNVERIFIED_CERTIFICATE) from exc
         raise
     except ssl.SSLCertVerificationError as exc:
-        raise ValueError(
-            "The server's TLS certificate could not be verified. This "
-            "usually means a corporate proxy or firewall is inspecting "
-            "HTTPS traffic with its own certificate - ask whoever manages "
-            "that network for its CA certificate, or try a different "
-            "network; it is not something this fetch can work around on "
-            "its own."
-        ) from exc
+        raise ValueError(_UNVERIFIED_CERTIFICATE) from exc
 
     with response:
         content_type = response.headers.get_content_type()

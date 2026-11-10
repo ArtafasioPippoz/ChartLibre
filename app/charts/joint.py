@@ -135,10 +135,12 @@ class JointAxisRenderer(BaseAxisRenderer):
             ax.scatter(x[mask], y[mask], color=colour, edgecolors="white", linewidths=0.4,
                        label=name if not single else sd.name, zorder=3, **kwargs)
             if kind == "density" and mask.sum() > 2 and np.ptp(x[mask]) > 0 and np.ptp(y[mask]) > 0:
-                top.fill_between(x_grid, gaussian_kde(x[mask])(x_grid), color=colour, alpha=fill_alpha * 0.4, linewidth=0)
-                top.plot(x_grid, gaussian_kde(x[mask])(x_grid), color=colour, linewidth=1.2)
-                right.fill_betweenx(y_grid, gaussian_kde(y[mask])(y_grid), color=colour, alpha=fill_alpha * 0.4, linewidth=0)
-                right.plot(gaussian_kde(y[mask])(y_grid), y_grid, color=colour, linewidth=1.2)
+                x_density = gaussian_kde(x[mask])(x_grid)  # each density once: filled, then outlined
+                y_density = gaussian_kde(y[mask])(y_grid)
+                top.fill_between(x_grid, x_density, color=colour, alpha=fill_alpha * 0.4, linewidth=0)
+                top.plot(x_grid, x_density, color=colour, linewidth=1.2)
+                right.fill_betweenx(y_grid, y_density, color=colour, alpha=fill_alpha * 0.4, linewidth=0)
+                right.plot(y_density, y_grid, color=colour, linewidth=1.2)
             else:
                 alpha = fill_alpha if single else fill_alpha * 0.7
                 top.hist(x[mask], bins=x_edges, color=colour, alpha=alpha, density=as_density,

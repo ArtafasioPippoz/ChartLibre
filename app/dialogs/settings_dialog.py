@@ -5,7 +5,7 @@ it by hand - which meant that in practice they were never changed, and that a
 typo in one of them showed up as an unstyled window or an untranslated menu
 with nothing to point at.
 
-Everything here is machine-level and so belongs in config.json rather than in
+Everything here is machine-level and so belongs in user.json rather than in
 a .dhub file: it describes this installation, not any particular figure.
 
 Nothing here applies live, and the dialog says so rather than leaving the user
@@ -183,7 +183,7 @@ def _tile_icon(icon_id: str, colour: str, size: int = 24) -> QIcon:
 
 
 class SettingsDialog(PanelDialog):
-    """Read and write the machine-level preferences in config.json.
+    """Read and write the machine-level preferences in user.json.
 
     Nothing is written until Save, and nothing is applied until the next
     start: a dialog that persisted on every keystroke would make Cancel a lie,
@@ -392,7 +392,7 @@ class SettingsDialog(PanelDialog):
 
         The stored value is carried as item data rather than being recovered
         from the label, so translating a label cannot change what is written
-        to config.json.
+        to user.json.
         """
         combo = QComboBox(parent)
         for choice in choices:
@@ -543,15 +543,17 @@ class SettingsDialog(PanelDialog):
                 self._assistant_check.setEnabled(True)
                 self._grow_to_fit()
 
-        if provider.unavailable() or (provider.KEY_NAME and not key):
-            say(tr(provider.unavailable()) if provider.unavailable() else tr("Type the key first."))
+        # Asked once, and off the GUI thread when the answer comes from the network (a local server).
+        problem = "" if provider.CHECKS_NETWORK else provider.unavailable()
+        if problem or (provider.KEY_NAME and not key):
+            say(tr(problem) if problem else tr("Type the key first."))
             return
         self._assistant_check.setEnabled(False)
         self._assistant_check_result.setText(tr("Trying the key...") if provider.KEY_NAME else tr("Trying..."))
         self._assistant_check_result.show()
         self._grow_to_fit()
         self._assistant_check_task = run_in_background(
-            lambda _cancel: provider.check(key),
+            lambda _cancel: (provider.CHECKS_NETWORK and provider.unavailable()) or provider.check(key),
             lambda problem: say(tr(problem) if problem else (
                 tr("The key works: {provider} answered.") if provider.KEY_NAME else tr("{provider} answered.")
             ).format(provider=name)),
@@ -596,7 +598,7 @@ class SettingsDialog(PanelDialog):
         Written one key at a time through ``set_value``, which re-reads and
         re-writes the whole document each time.  That is slower than assembling
         one write and entirely deliberate: this dialog is not the only writer
-        of config.json - dialog geometry is saved on close - and a single
+        of user.json - dialog geometry is saved on close - and a single
         blind write would drop whatever else changed while it was open.
         """
         style_key = self._value(self._style_combo)

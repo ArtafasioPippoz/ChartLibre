@@ -39,7 +39,7 @@ LOCALES_DIR: Path = Path(__file__).resolve().parent.parent / "locales"
 DOMAIN: str = "ChartLibre"
 DEFAULT_LANGUAGE: str = "en"
 
-#: Stored in config.json to mean "whatever this machine is set to".  A
+#: Stored in user.json to mean "whatever this machine is set to".  A
 #: sentinel rather than an empty string, because empty already means "the key
 #: was never written" everywhere else in the config, and the two want
 #: different answers: an unset key is a fresh install, which should follow the
@@ -379,7 +379,7 @@ def language() -> str:
 
     Always a real code: ``set_language(AUTO_LANGUAGE)`` resolves before it
     stores, so a caller that wants to know what is *shown* asks here and one
-    that wants to know what was *chosen* reads config.json.
+    that wants to know what was *chosen* reads user.json.
     """
     return _language
 
@@ -407,9 +407,10 @@ def platform_language() -> str:
     that knows better.  They are a Unix convention that Windows and macOS do
     not follow, which is why they cannot be asked first.
     """
+    available = available_languages()  # a directory listing: once, not per candidate
     for candidate in _platform_language_candidates():
         code = _language_subtag(candidate)
-        if code and code in available_languages():
+        if code and code in available:
             return code
 
     applogger.info(
@@ -504,10 +505,10 @@ def _language_subtag(name: str) -> str:
 def set_language(code: str) -> str:
     """Set the active language and return the code actually selected.
 
-    ``AUTO_LANGUAGE`` - and an empty value, which is a config.json that has
+    ``AUTO_LANGUAGE`` - and an empty value, which is a user.json that has
     never been written - resolve through :func:`platform_language`.  An
     unknown code is refused rather than silently accepted, so a typo in
-    config.json shows up in the log instead of as an untranslated interface.
+    user.json shows up in the log instead of as an untranslated interface.
     """
     global _language
     clean = str(code or "").strip().lower()

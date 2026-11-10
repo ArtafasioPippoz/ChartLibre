@@ -410,6 +410,33 @@ def remember_recent_database(db_path: Path) -> None:
     )
 
 
+#: The projects the application made itself, untitled, at a start with nothing to reopen: asked a name
+#: (or thrown away) when they are closed.
+UNTITLED_PROJECTS_KEY = "untitled_projects"
+
+
+def remember_untitled_database(db_path: Path) -> None:
+    """Note *db_path* as a project the application made untitled (app.utils.startup)."""
+    known = [str(entry) for entry in get_value(UNTITLED_PROJECTS_KEY, []) or [] if str(entry) != str(db_path)]
+    set_value(UNTITLED_PROJECTS_KEY, [*known, str(db_path)])
+
+
+def is_untitled_database(db_path: Path | None) -> bool:
+    """True when *db_path* is a project the application made untitled and nobody has named yet."""
+    return db_path is not None and str(db_path) in [str(entry) for entry in get_value(UNTITLED_PROJECTS_KEY, []) or []]
+
+
+def forget_database(db_path: Path) -> None:
+    """Drop *db_path* from the untitled projects, the recent list and the one to reopen: it is gone."""
+    path = str(db_path)
+    set_value(UNTITLED_PROJECTS_KEY, [str(entry) for entry in get_value(UNTITLED_PROJECTS_KEY, []) or []
+                                      if str(entry) != path])
+    set_value(CONFIG_RECENT_DATABASES, [str(entry) for entry in get_value(CONFIG_RECENT_DATABASES, []) or []
+                                        if str(entry) != path])
+    if str(get_value("last_database") or "") == path:
+        set_value("last_database", "")
+
+
 def clear_recent_databases() -> None:
     """Forget every recent database. The current one is not reopened by it."""
     set_value(CONFIG_RECENT_DATABASES, [])

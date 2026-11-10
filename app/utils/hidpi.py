@@ -52,7 +52,7 @@ def canvas_pixel_ratio(canvas: Any | None) -> float:
 def apply_configured_dpi(figure: Any, canvas: Any, configured_dpi: float) -> float:
     """Write a configured dpi onto *figure*, scaled for the display.
 
-    Use this for every dpi that came from config.json, rcParams or a spin box.
+    Use this for every dpi that came from the figure's options, rcParams or a spin box.
     Writing such a value with ``figure.set_dpi`` directly breaks the invariant
     the Qt backend maintains, and the figure is then mis-sized against its
     canvas for the rest of the session - reloading a chart or editing a figure
@@ -77,7 +77,7 @@ def configured_dpi(figure: Any, canvas: Any) -> float:
     """Return *figure*'s dpi with the display's ratio taken back out.
 
     The inverse of :func:`apply_configured_dpi`, for the places that need to
-    show or persist a dpi: what belongs in config.json is the number the user
+    show or persist a dpi: what is stored is the number the user
     chose, not one that doubles on a Retina screen and doubles again next time
     it is read back.
     """

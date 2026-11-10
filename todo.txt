@@ -1,6 +1,6 @@
 # ChartLibre — Prioritized Roadmap
 
-**State:** `app/` has 116,286 lines of code in 328 Python files; `dev/tests` has 28,927 lines in 243 files (measured at this commit).
+**State:** `app/` has 116,356 lines of code in 328 Python files; `dev/tests` has 28,981 lines in 244 files (measured at this commit).
 
 **Audience:** engineers, scientists, and students who need an affordable desktop workflow from raw data to analysed, documented figures and reports.
 
@@ -38,7 +38,6 @@ The order is a single recommended backlog. Related items have been merged, and c
 | ID23 | 23 | 2 | **Data-operation tools for the AI assistant** (AI-01) | Let the assistant execute approved data operations, not only analyses. | **Core / AI assistants**; useful after operation safety is clear. |
 | ID24 | 24 | 2 | **Signal and scientific modelling** (AN-13, G-31) | Add uneven-sampling spectra, resampling, filter response, deconvolution, ODE kinetics, dose response, and peak deconvolution. | **SciPy / Origin**; specialist scientific workflows. |
 | ID26 | 26 | 2 | **Importer plugin system** (I-02) | Let labs build, test, install, and manage importers for custom formats. | **Core / Origin**; scalable solution for long-tail formats. |
-| ID27 | 27 | 2 | **Project notebook export** (H-07) | Export charts, notes, and reports as shareable HTML. | **JMP / notebooks**; collaboration without requiring the app. |
 | ID28 | 28 | 1 | **Advanced clustering** (G-23) | Add HDBSCAN (DBSCAN, OPTICS, Birch and spectral clustering are in Clustering). | **scikit-learn**; moderate specialist gap. |
 | ID29 | 29 | 2 | **Spatial and circular analysis** (G-33, G-34) | Add spatial geometry/interpolation and circular statistics. | **SciPy**; niche scientific coverage. |
 | ID30 | 30 | 3 | **Live instrument data** (H-06) | Watch folders, append CSV/serial data, and feed live charts. | **Lab software**; requires clear device and reliability scope. |

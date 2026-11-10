@@ -1,8 +1,8 @@
 """What has to be decided before the main window can be built.
 
 One question: which database is this run about?  Three answers, in order -
-the one named on the command line, the one the last run left behind, or a new
-empty one in the home directory.
+the one named on the command line, the one the last run left behind if it is
+still there, or a new empty one in the home directory.
 
 No question is asked for any of them.  A first run used to offer to build the
 demo projects and, when that was declined, fall back to an open dialog: two
@@ -26,22 +26,16 @@ from PySide6.QtWidgets import QFileDialog, QWidget
 from app import APP_NAME
 from app.data.sqlite_repo import DatabaseError, SqliteRepo
 from app.logs.logger import applogger
-from app.utils.config import get_last_database
+from app.utils.config import get_last_database, remember_untitled_database
 from app.utils.i18n import _
 from app.utils.messages import show_message
 
-#: What a run with nothing remembered opens.  The home directory, because it
-#: is the one place every desktop platform agrees the user can write to, and a
-#: fixed name, because the point is to have something to open rather than to
-#: name it well - Save as renames it later.
-DEFAULT_DATABASE_NAME: str = f"{APP_NAME}.dhub"
-
-#: What that file was called before the application was renamed.  Kept, and
-#: preferred when it is the one that actually exists, because the whole point
-#: of the default path is "return the user to their work": someone whose
-#: settings were reset would otherwise land in an empty ChartLibre.dhub with
-#: their tables sitting untouched in a Data Hub.dhub next to it.
-LEGACY_DEFAULT_DATABASE_NAME: str = "Data Hub.dhub"
+#: What a run with nothing remembered opens: a new, empty project, as macOS
+#: and Windows applications start on a new untitled document.  In the home
+#: directory, the one place every desktop platform agrees the user can write
+#: to; "Untitled.dhub", then "Untitled 2.dhub" and on, never an existing file -
+#: Save as names it later.  The name is translated (a literal in
+#: _new_database_path, so the catalogue sweep finds it).
 
 #: The project file's own filter line, for the New/Open/Save-as dialogs in
 #: the main window.  One definition rather than four: it was written out by
@@ -77,78 +71,62 @@ def select_database(
     if remembered is not None:
         return remembered
 
-    # Nothing remembered: a first run, or config.json was reset.
+    # Nothing remembered: a first run, user.json was reset, or the last project is gone.
     return _default_database(parent)
 
 
 def _remembered_database() -> Path | None:
-    """Return the database the last run left behind, creating it if gone."""
-    last_database = get_last_database()
+    """Return the database the last run left behind, or None when there is none or it is gone.
+
+    A project that was moved, renamed or deleted counts as nothing remembered: the run starts as a first
+    run does, on a new database, as macOS and Windows applications start on a new document. No empty
+    file is made under the lost project's name.
+    """
+    last_database = get_last_database()  # None for a file that no longer exists
     if not last_database:
         return None
-
-    path = Path(last_database).expanduser().resolve()
-    if path.exists():
-        return path
-
-    # Moved, renamed or deleted.  An empty database in its place rather than
-    # a file dialog: the dialog can only *open* something, so the user whose
-    # only project just disappeared is shown a list with nothing in it, and
-    # cancelling it exits the application.
-    applogger.warning(
-        "Last database not found: %s. Creating an empty one in its place.",
-        path,
-    )
-    try:
-        return SqliteRepo.create_empty(path)
-    except (OSError, DatabaseError, ValueError) as exc:
-        # Unwritable directory, read-only volume, a name that is now a folder.
-        applogger.exception("Could not create a database at %s: %s", path, exc)
-        return None
+    return Path(last_database).expanduser().resolve()
 
 
 def _default_database(parent: QWidget | None) -> Path | None:
-    """Return an empty database in the home directory, created if it is not there.
+    """Return a new, empty database in the home directory.
 
     Nothing is asked, which is the whole point: the alternative was offering
     to build the demo set and then, on "no", an open dialog with nothing in it
     to open.  An empty project is a legitimate way to start, and the demo is
     still reachable from File, Load demo once the window is up.
 
-    An existing file at that path is opened rather than replaced.
-    ``create_empty`` only connects, and connecting to a database that already
-    has tables in it leaves them exactly as they are - so running twice with a
-    reset config.json returns the user to their work rather than to a blank
-    file where it used to be.
+    Always a file of its own, never one already there: a run that finds
+    nothing to reopen starts on a blank project, not on whatever an earlier
+    first run left in the home directory - that is in Open recent.
 
     The open dialog survives as the fallback for the one case that cannot be
     solved by writing a file: a home directory that is not writable.
     """
-    path = _default_database_path()
-    applogger.info("No database remembered; starting on %s", path)
+    path = _new_database_path()
+    applogger.info("No database remembered; starting on a new one, %s", path)
     try:
-        return SqliteRepo.create_empty(path)
+        created = SqliteRepo.create_empty(path)
     except (OSError, DatabaseError, ValueError) as exc:
         # Read-only home, a full disk, or that name taken by a folder.
         applogger.exception("Could not create a database at %s: %s", path, exc)
         show_message(parent, "startup.default_database_failed", error=exc)
         return _ask_for_a_database(parent)
+    # Untitled until it is named: the window asks for a name when it closes (or throws it away if empty).
+    remember_untitled_database(created)
+    return created
 
 
-def _default_database_path() -> Path:
-    """Return the home-directory database a fresh run should open.
-
-    ``ChartLibre.dhub`` normally; the pre-rename ``Data Hub.dhub`` when that
-    is the one already on disk and the new name is not, so the rename does
-    not quietly leave someone's work behind under the old filename.
-    """
-    home = Path.home()
-    current = home / DEFAULT_DATABASE_NAME
-    legacy = home / LEGACY_DEFAULT_DATABASE_NAME
-    if not current.exists() and legacy.exists():
-        applogger.info("Opening the pre-rename default database %s", legacy)
-        return legacy
-    return current
+def _new_database_path(folder: Path | None = None) -> Path:
+    """The first free "Untitled" name in *folder* (the home directory): Untitled.dhub, Untitled 2.dhub..."""
+    folder = folder or Path.home()
+    stem = _("Untitled")
+    candidate = folder / f"{stem}.dhub"
+    number = 2
+    while candidate.exists():
+        candidate = folder / f"{stem} {number}.dhub"
+        number += 1
+    return candidate
 
 
 def _ask_for_a_database(parent: QWidget | None) -> Path | None:

@@ -1249,7 +1249,7 @@ class ChartToolsMixin(_Host):
         self._fixed_scroll_area.raise_()
 
     def set_zoom_percent(self, percent: int) -> None:
-        """Set FIXED-mode zoom and persist it to config.json."""
+        """Set FIXED-mode zoom and persist it to user.json."""
         new_value = self._clamp_zoom(percent)
         if new_value == self._zoom_percent:
             return
@@ -1698,7 +1698,7 @@ class ChartToolsMixin(_Host):
         ``_set_device_pixel_ratio`` multiplies the dpi by the display's ratio
         and only revisits it when the ratio itself changes.
 
-        rcParams and config.json hold the dpi the user asked for, with no
+        rcParams and the figure's options hold the dpi the user asked for, with no
         ratio in it.  Writing that straight onto the figure - which this used
         to do on every reload - silently breaks the invariant for the rest of
         the session, and the figure comes out at the wrong size against the

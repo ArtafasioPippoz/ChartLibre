@@ -22,11 +22,14 @@ from app.plugin_api.functions.base import (
 )
 
 
-def _value(name: str, x: np.ndarray, p: np.ndarray) -> np.ndarray:
-    """The library function *name* at x - for an estimator that compares its candidates."""
+def _function(name: str) -> Callable[..., np.ndarray]:
+    """The library function *name* as f(x, p) - for an estimator that compares its candidates.
+
+    Built once per estimate: each build is a SymPy lambdify.
+    """
     from app.functions import library
 
-    return library.numeric(library.get(name))(x, p)
+    return library.numeric(library.get(name))
 
 
 def constant(x: np.ndarray, y: np.ndarray) -> list[float] | None:
@@ -163,8 +166,10 @@ def power_law(x: np.ndarray, y: np.ndarray) -> list[float] | None:
     if not candidates:
         return None
 
+    curve = _function("power_law")
+
     def misfit(guess: list[float]) -> float:
-        values = _value("power_law", x, np.asarray(guess, dtype=float))
+        values = curve(x, np.asarray(guess, dtype=float))
         residual = y - values
         return float(np.sum(residual * residual)) if np.all(np.isfinite(residual)) else np.inf
 

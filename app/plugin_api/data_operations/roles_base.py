@@ -163,7 +163,8 @@ class RolesOperationDialogBase(DataOperationDialogBase):
     def report_subtitle(self, result: Any) -> str:
         """The line under the title: the table, then the columns of SUBTITLE_ROLES."""
         del result
-        named = " / ".join(", ".join(self.columns(role)) for role in self.SUBTITLE_ROLES if self.columns(role))
+        casting = self.roles_widget.casting()  # read once: each role asks the widget again
+        named = " / ".join(", ".join(columns) for role in self.SUBTITLE_ROLES if (columns := casting.columns(role)))
         return f"{self.table} · {named}" if named else str(self.table)
 
     def report_document(self, result: Any) -> str:

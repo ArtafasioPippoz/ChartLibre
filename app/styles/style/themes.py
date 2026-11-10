@@ -59,8 +59,9 @@ APP_STYLE_QSS: dict[str, tuple[str, str]] = {
 # Any other sheet dropped into app/styles/ is a theme too, on the light
 # palette: the Settings dropdown lists the .qss files shipped here and
 # "Automatic", nothing else.
+_NAMED_SHEETS = {name for name, _palette in APP_STYLE_QSS.values()}
 for _sheet in sorted(_STYLES_DIR.glob("*.qss")):
-    if _sheet.name not in {name for name, _palette in APP_STYLE_QSS.values()}:
+    if _sheet.name not in _NAMED_SHEETS:
         APP_STYLE_QSS[_sheet.stem] = (_sheet.name, "light")
 
 CONFIG_APP_STYLE: str = "app_style"
