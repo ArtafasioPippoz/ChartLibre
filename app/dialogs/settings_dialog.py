@@ -339,9 +339,13 @@ class SettingsDialog(PanelDialog):
         """A section: a row of the sidebar, and its page - a heading with its icon and sentence, then the form."""
         del collapsible, collapsed  # a page of its own now: nothing to fold
         sidebar, stack = self._pages()
+        # The section by its English name: the callers pass the title translated (so the catalogue sweep
+        # finds it), and looked up as given every section of a translated interface fell back to the gear
+        # and lost its sentence.
+        name = tr(title)
+        title = next((key for key in self.SECTIONS if title in (key, tr(key))), title)
         icon_id, colour, sentence = self.SECTIONS.get(title, ("settings", "#8a8f98", ""))
         tile = _tile_icon(icon_id, colour)
-        name = tr(title)
         item = QListWidgetItem(tile, name)
         item.setSizeHint(QSize(180, 36))
         sidebar.addItem(item)
