@@ -84,17 +84,27 @@ def test_the_import_button_does_not_open_a_file_called_false(qapp, tmp_path: Pat
         repo.close()
 
 
-def test_the_workspace_row_stays_selected_while_the_panels_are_hidden(qapp, tmp_path: Path) -> None:
+def test_the_workspace_house_is_pressed_while_the_panels_are_hidden(qapp, tmp_path: Path) -> None:
+    """ID47: Workspace is the house beside the sidebar button; no row of the bar is selected while it is on."""
     repo, window = _window(qapp, tmp_path)
     try:
         bar = window._left_panel
+        house = window._custom_title_bar.workspace_button
+        if house is None:  # no title strip of its own here: Workspace is still a row of the bar
+            assert bar.button("workspace") is not None
+            return
+        assert bar.button("workspace") is None
+        assert list(bar.sections())[:3] == ["Project", "Charts and analysis", "Tools"]
         bar.select("tables")
-        assert bar.button("tables").isChecked() and not bar.button("workspace").isChecked()
-        bar.select("workspace")  # the action row: hides the panels
+        assert bar.button("tables").isChecked() and not house.isChecked()
+        house.click()  # hides the panels: the charts alone
         assert not bar.panel_visible
-        assert bar.button("workspace").isChecked() and not bar.button("tables").isChecked()
-        bar.select("tables")  # shows them again
-        assert bar.button("tables").isChecked() and not bar.button("workspace").isChecked()
+        assert house.isChecked() and not bar.button("tables").isChecked()
+        house.click()  # and back, on the panel that was shown
+        assert bar.panel_visible and bar.button("tables").isChecked() and not house.isChecked()
+        house.click()
+        bar.select("tables")  # a row shows the panels again too
+        assert bar.panel_visible and bar.button("tables").isChecked() and not house.isChecked()
     finally:
         window.close()
         repo.close()

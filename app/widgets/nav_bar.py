@@ -240,6 +240,8 @@ class NavigationBar(QWidget):
     #: The bar was hidden (True) or shown again (False) - by the caller, or by
     #: the bar itself when hiding the panels would otherwise leave nothing.
     bar_hidden_changed = Signal(bool)
+    #: The panels were shown (True) or hidden (False): what a Workspace button outside the bar follows.
+    panel_visible_changed = Signal(bool)
 
     def __init__(
         self,
@@ -394,6 +396,14 @@ class NavigationBar(QWidget):
         self._row_widgets[key] = widget
         self._rebuild()
 
+    def set_top_widget(self, widget: QWidget) -> None:
+        """Put *widget* at the top of the rail, above the first section (a search field); shown while the
+        rail has its labels."""
+        self.set_row_widget(self.TOP, widget)
+
+    #: The key of the widget above the first section (set_top_widget): no row has it.
+    TOP = ""
+
     @property
     def compact(self) -> bool:
         return self._compact
@@ -451,6 +461,7 @@ class NavigationBar(QWidget):
         self._apply_width_limits()
         self._resize_in_splitter(self._restore_width if visible else self.visible_bar_width)
         self._sync_hidden_panels_row()
+        self.panel_visible_changed.emit(visible)
 
     def set_hidden_panels_key(self, key: str | None) -> None:
         """Make the action row *key* the one that is selected while the panels are hidden."""
@@ -462,6 +473,15 @@ class NavigationBar(QWidget):
         """Select the hidden-panels row while they are hidden, else the shown panel's row."""
         key = self._hidden_panels_key
         button = self._buttons.get(key) if key else None
+        if key is None:
+            # No row stands for "panels hidden" (a Workspace button outside the bar does): no row is
+            # selected while they are, and the shown panel's row again afterwards.
+            selected = self._buttons.get(self._selected_key or "")
+            if selected is not None and selected.isChecked() != self.panel_visible:
+                self._button_group.setExclusive(False)
+                selected.setChecked(self.panel_visible)
+                self._button_group.setExclusive(True)
+            return
         if button is None or not button.isCheckable():
             return
         if self.panel_visible:
@@ -618,6 +638,11 @@ class NavigationBar(QWidget):
 
         new_panels: set[QWidget] = set()
         keys_seen: set[str] = set()
+        top = self._row_widgets.get(self.TOP)
+        if top is not None:
+            top.setParent(self._section_widget)
+            self._section_layout.addWidget(top)
+            top.setVisible(not self._compact)
         for section_title, items in self._sections.items():
             if section_title:
                 label = QLabel(_(section_title), self._section_widget)

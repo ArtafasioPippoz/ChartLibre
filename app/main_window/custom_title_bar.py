@@ -136,6 +136,8 @@ class CustomTitleBar(QFrame):
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.title_label: QLabel | None = None
         self.sidebar_button: QToolButton | None = None
+        #: The house beside the sidebar button: Workspace - the panels hidden, the charts alone.
+        self.workspace_button: QToolButton | None = None
         self._caption_ink = "#000000"
         self._lights_spacer: QSpacerItem | None = None
 
@@ -156,6 +158,7 @@ class CustomTitleBar(QFrame):
         icon_label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
         layout.addWidget(icon_label)
         layout.addWidget(self._build_sidebar_button())
+        layout.addWidget(self._build_workspace_button())
         self.title_label = QLabel(self._window.windowTitle(), self)
         self.title_label.setObjectName("titleBarTitle")
         self.title_label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
@@ -207,6 +210,8 @@ class CustomTitleBar(QFrame):
         self._lights_spacer = QSpacerItem(0, 0, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
         row.addSpacerItem(self._lights_spacer)
         row.addWidget(self._build_sidebar_button(), 0, Qt.AlignmentFlag.AlignVCenter)
+        row.addSpacing(2)
+        row.addWidget(self._build_workspace_button(), 0, Qt.AlignmentFlag.AlignVCenter)
         row.addStretch(1)
         self.refresh_lights_inset()
 
@@ -256,16 +261,37 @@ class CustomTitleBar(QFrame):
         button.setAutoRaise(True)
         button.setCheckable(True)
         button.setIcon(action_presentation("sidebar_toggle")[0])
-        # A little larger than a toolbar glyph: it sits beside the traffic
-        # lights and is read against them. 24 tall in a 32 strip centres it
-        # on their line (y = 16).
-        button.setIconSize(QSize(18, 18))
-        button.setFixedSize(28, 24)
+        # Larger than a toolbar glyph, and a little taller than it was (ID47): it sits beside the traffic
+        # lights and is read against them, as the one in Claude's own window. 26 tall in a 32 strip
+        # centres it on their line (y = 16).
+        button.setIconSize(QSize(21, 21))
+        button.setFixedSize(30, 26)
         button.setCursor(Qt.CursorShape.ArrowCursor)
         button.setToolTip(self._sidebar_tooltip(False))
         button.toggled.connect(self._on_sidebar_toggled)
         self.sidebar_button = button
         return button
+
+    def _build_workspace_button(self) -> QToolButton:
+        """Workspace, as a plain house beside the sidebar button: hides the panels, the charts alone; again,
+        and they are back. Checked while they are hidden (the window keeps it so: set_workspace_shown)."""
+        button = QToolButton(self)
+        button.setObjectName("titleBarSidebarButton")  # the same quiet square as its neighbour
+        button.setAutoRaise(True)
+        button.setCheckable(True)
+        button.setIcon(action_presentation("nav_workspace")[0])
+        button.setIconSize(QSize(19, 19))
+        button.setFixedSize(30, 26)
+        button.setCursor(Qt.CursorShape.ArrowCursor)
+        button.setToolTip(_("Workspace: hide the panel, or show it again"))
+        button.clicked.connect(lambda _checked=False: self._window.toggle_workspace())
+        self.workspace_button = button
+        return button
+
+    def set_workspace_shown(self, shown: bool) -> None:
+        """The house pressed while the workspace is shown - the panels hidden."""
+        if self.workspace_button is not None and self.workspace_button.isChecked() != bool(shown):
+            self.workspace_button.setChecked(bool(shown))
 
     def _sidebar_tooltip(self, collapsed: bool) -> str:
         if self._is_macos:

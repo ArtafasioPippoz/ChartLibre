@@ -1048,12 +1048,18 @@ class MainWindow(QMainWindow):
         sql_panel = self._sql_workpad_panel = SqlWorkpadPanel(self, repo=lambda: self._repo)
         sql_panel.project_changed.connect(self._on_assistant_changed)
 
+        # Workspace is the house beside the sidebar button where the window has its own title strip
+        # (macOS, Windows); elsewhere it stays a row of the bar (ID47).
+        workspace_row: dict[str, NavBarItem] = {} if (IS_MACOS or IS_WINDOWS) else {
+            "workspace": NavBarItem(
+                _("Workspace"), self._rail_icon("nav_workspace"), None,
+                _("Hide the panel"),
+            ),
+        }
+        # Three sections (ID47): the project and its data, what is made of them, the expert tools.
         sections: dict[str, dict[str, NavBarItem]] = {
-            "Tools": {
-                "workspace": NavBarItem(
-                    _("Workspace"), self._rail_icon("nav_workspace"), None,
-                    _("Hide the panel"),
-                ),
+            "Project": {
+                **workspace_row,
                 "file": NavBarItem(
                     _("File"), self._rail_icon("nav_file"), file_panel,
                     _("New, open, import and save"),
@@ -1062,6 +1068,12 @@ class MainWindow(QMainWindow):
                     _("Tables"), self._rail_icon("nav_data"), tables_panel,
                     _("Show data tables"),
                 ),
+                "developer": NavBarItem(
+                    _("Project"), self._rail_icon("database_info"), developer_panel,
+                    _("The project's information, history, database and log"),
+                ),
+            },
+            "Charts and analysis": {
                 "chart_properties": NavBarItem(
                     _("Chart properties"), self._rail_icon("nav_chart_options"),
                     chart_properties_panel, _("Edit the current chart"),
@@ -1076,6 +1088,8 @@ class MainWindow(QMainWindow):
                     _("Guided analysis"), self._rail_icon("nav_guided"),
                     guided_panel, _("Find the function for what you want to find out"),
                 ),
+            },
+            "Tools": {
                 "assistant": NavBarItem(
                     _("Assistant"), self._rail_icon("nav_assistant"), assistant_panel,
                     _("Ask an AI about the project's data - and, as Settings allow, have it run analyses or change "
@@ -1088,10 +1102,6 @@ class MainWindow(QMainWindow):
                 "sql_workpad": NavBarItem(
                     _("SQL workpad"), self._rail_icon("nav_sql_workpad"), sql_panel,
                     _("SQL on the project's tables; changes are made on a copy and kept only with Apply"),
-                ),
-                "developer": NavBarItem(
-                    _("Project"), self._rail_icon("database_info"), developer_panel,
-                    _("The project's information, history, database and log"),
                 ),
             },
         }
@@ -1125,14 +1135,28 @@ class MainWindow(QMainWindow):
             else (SPACING_DEFAULT, 4, SPACING_DEFAULT, 4),
             panel_min_width=PANEL_MIN_WIDTH,
         )
-        # The search sits in the rail under Workspace; its matches list under it while typing.
-        navigation.set_row_widget("workspace", self._rail_search)
-        navigation.set_hidden_panels_key("workspace")
+        # The search sits at the top of the rail (under Workspace where that is a row); its matches list
+        # under it while typing.
+        if workspace_row:
+            navigation.set_row_widget("workspace", self._rail_search)
+            navigation.set_hidden_panels_key("workspace")
+        else:
+            navigation.set_top_widget(self._rail_search)
+            navigation.panel_visible_changed.connect(self._on_panels_shown_or_hidden)
         navigation.set_item_hidden("assistant", not assistant_settings.in_navigation())
         navigation.action_clicked.connect(self._on_navigation_action)
         navigation.panel_changed.connect(self._on_navigation_panel_changed)
         navigation.bar_hidden_changed.connect(self._on_bar_hidden_changed)
         return navigation
+
+    def toggle_workspace(self) -> None:
+        """The title strip's house: the panels hidden - the charts alone - or back as they were."""
+        self._left_panel.set_panel_visible(not self._left_panel.panel_visible)
+
+    def _on_panels_shown_or_hidden(self, visible: bool) -> None:
+        title_bar = self._custom_title_bar
+        if title_bar is not None:
+            title_bar.set_workspace_shown(not visible)
 
     def _on_navigation_action(self, key: str) -> None:
         """Handle rows that intentionally have no associated panel."""
