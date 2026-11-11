@@ -12,9 +12,14 @@ import csv
 import os
 import shlex
 import sys
+from typing import Any
 import xml.etree.ElementTree as ET
-from collections.abc import Callable
+from collections.abc import Buffer, Callable
 from pathlib import Path
+
+from numpy import dtype
+from numpy._typing._array_like import _SupportsArray
+from numpy._typing._nested_sequence import _NestedSequence
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -225,7 +230,8 @@ class DeveloperWindow(QMainWindow):
     def _read(self) -> None:
         if self._process is None:
             return
-        text = bytes(self._process.readAllStandardOutput()).decode("utf-8", "replace")
+        data = self._process.readAllStandardOutput()
+        text = data.data().decode("utf-8", "replace") # pyright: ignore[reportAttributeAccessIssue]
         self._log.moveCursor(QTextCursor.MoveOperation.End)
         self._log.insertPlainText(text)
         self._log.moveCursor(QTextCursor.MoveOperation.End)
@@ -312,6 +318,7 @@ class DeveloperWindow(QMainWindow):
         test_lines, test_files = count("dev/tests")
         lines = [f"Now: app/ {app_lines:,} lines in {app_files} files; dev/tests {test_lines:,} lines in "
                  f"{test_files} files.", ""]
+        rows: list[dict[str, str]] = []
         table = ROOT / "dev" / "appsize.csv"
         if table.exists():
             with table.open(newline="") as handle:
@@ -332,11 +339,11 @@ class DeveloperWindow(QMainWindow):
         from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
         from matplotlib.figure import Figure
 
-        dates = [datetime.strptime(row["date"], "%Y-%m-%d %H:%M") for row in rows]
+        dates: list[datetime] = [datetime.strptime(row["date"], "%Y-%m-%d %H:%M") for row in rows]
         figure = Figure(figsize=(8, 4.5), layout="constrained")
         axes = figure.add_subplot()
         for key, label in (("lines", "app/ lines"), ("code_lines", "app/ code lines"), ("test_lines", "test lines")):
-            axes.plot(dates, [int(row[key]) for row in rows], label=label, linewidth=1.6)
+            axes.plot(dates, [int(row[key]) for row in rows], label=label, linewidth=1.6) # pyright: ignore[reportArgumentType]
         axes.set_ylabel("lines")
         axes.set_title(f"ChartLibre's size, {len(rows)} commits")
         axes.grid(alpha=0.3)
