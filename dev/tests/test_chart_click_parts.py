@@ -130,7 +130,8 @@ def test_a_series_style_edit_shows_on_its_lines_without_a_render(panel: ChartPan
 
 
 def test_a_time_series_edit_restyles_its_rolling_line_only_where_it_follows(qapp, tmp_path: Path) -> None:
-    """S-01: the rolling mean takes the series' colour, not its line style."""
+    """S-01: the rolling mean takes the series' colour as drawn; a line style, which may be the rolling mean's
+    too, is for a render to show (603d948)."""
     from matplotlib.colors import to_hex
 
     ids = create_renderer_showcase_db(tmp_path / "ts.dhub", n_points=20)
@@ -140,9 +141,12 @@ def test_a_time_series_edit_restyles_its_rolling_line_only_where_it_follows(qapp
         widget.ensure_rendered()
         axes = next(a for a in widget._canvas.figure.axes if getattr(a, "_chartlibre_axis_id", None) is not None)
         raw, rolling = (l for l in axes.lines if getattr(l, "_chartlibre_series", None) == "second")
-        assert widget.preview_series_style(axes._chartlibre_axis_id, "second", {"color": "#ff0000", "linestyle": ":"})
+        rolling_style = rolling.get_linestyle()
+        assert widget.preview_series_style(axes._chartlibre_axis_id, "second", {"color": "#ff0000"})
         assert to_hex(raw.get_color()) == to_hex(rolling.get_color()) == "#ff0000"
-        assert raw.get_linestyle() == ":" and rolling.get_linestyle() == "--"
+        # The line style is not restyled in place: nothing changes until the chart is rendered.
+        assert not widget.preview_series_style(axes._chartlibre_axis_id, "second", {"linestyle": ":"})
+        assert rolling.get_linestyle() == rolling_style
     finally:
         widget.close()
         repo.close()

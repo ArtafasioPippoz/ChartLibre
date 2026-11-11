@@ -29,6 +29,7 @@ from app.styles.style import (
     TitledCard,
     apply_dialog_shell,
     create_action_button,
+    repolish_widget,
     stdSizeAndlayout,
 )
 
@@ -51,6 +52,7 @@ class PanelDialog(QDialog):
         stdSizeAndlayout(self.action_row)
         self.action_row.addStretch(1)
         self.root_layout.addLayout(self.action_row)
+        self._has_primary_action = False
 
     def add_card(self, title: str, object_name: str | None = None, *, stretch: int = 0,
                  collapsible: bool = False, collapsed: bool = False) -> CardFrame:
@@ -75,6 +77,13 @@ class PanelDialog(QDialog):
             self.action_row.insertWidget(0, button)
         if default:
             button.setDefault(True)
+        # The dialog's main action reads as one: the default button, else its OK or Save (Save in Settings,
+        # Export in a report). By the action, not by its words - a label is translated. Another button of
+        # the row (Save as table, Copy, Clear) is not it.
+        if not left and (default or (action_id in ("apply", "save") and not self._has_primary_action)):
+            self._has_primary_action = True
+            button.setProperty("primary", True)
+            repolish_widget(button)
         return button
 
 

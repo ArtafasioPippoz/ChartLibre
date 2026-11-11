@@ -88,3 +88,23 @@ def test_every_data_operation_fits_a_laptop(qapp, repo: SqliteRepo) -> None:
                 qapp.processEvents()
                 assert dialog.minimumSizeHint().height() <= LAPTOP_CLIENT_HEIGHT - 150, value.__name__
                 dialog.close()
+
+
+def test_a_dialog_s_main_action_is_marked_by_its_action_not_its_words(qapp, repo: SqliteRepo) -> None:
+    """Save in Settings and Export in a report are the primary button, as OK is elsewhere; Close never is."""
+    from PySide6.QtWidgets import QPushButton
+
+    from app.dialogs.credits_dialog import CreditsDialog
+    from app.dialogs.log_viewer_dialog import LogViewerDialog
+    from app.dialogs.project_report_dialog import ProjectReportDialog
+    from app.dialogs.settings_dialog import SettingsDialog
+
+    def primary(dialog) -> list[str]:
+        found = [button.text() for button in dialog.findChildren(QPushButton) if button.property("primary")]
+        dialog.close()
+        return found
+
+    assert primary(SettingsDialog()) == ["Save"]
+    assert primary(ProjectReportDialog(repo)) == ["Export…"]
+    assert primary(CreditsDialog()) == []
+    assert primary(LogViewerDialog(None)) == []

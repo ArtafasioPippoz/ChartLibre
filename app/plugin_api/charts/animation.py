@@ -186,6 +186,14 @@ def axes_limits(figure: Any) -> list[tuple[tuple[float, float], tuple[float, flo
     return [(tuple(ax.get_xlim()), tuple(ax.get_ylim())) for ax in figure.axes]
 
 
+def widest_limits(known: Any, current: Sequence[tuple[tuple[float, float], tuple[float, float]]]) -> Any:
+    """*known* limits widened to hold *current* too, axes by axes; *current* when they do not match."""
+    if not known or len(known) != len(current):
+        return list(current)
+    return [((min(kx[0], cx[0]), max(kx[1], cx[1])), (min(ky[0], cy[0]), max(ky[1], cy[1])))
+            for (kx, ky), (cx, cy) in zip(known, current)]
+
+
 def finish_frame(figure: Any, settings: AnimationSettings, text: str,
                  limits: Sequence[tuple[tuple[float, float], tuple[float, float]]] | None) -> None:
     """After a frame is drawn: the whole data's limits back on its axes (Hold), and its caption."""
@@ -255,20 +263,12 @@ def export_gif(path: Any, descriptor: Any, repo: Any, settings: AnimationSetting
 
 
 def _family_limits(figure: Any, descriptor: Any, repo: Any, settings: AnimationSettings,
-                   values: Sequence[Any]) -> list[tuple[tuple[float, float], tuple[float, float]]] | None:
-    """The limits that hold every frame of a parameter animation: the union of each frame's own."""
-    union: list[list[float]] | None = None
+                   values: Sequence[Any]) -> Any:
+    """The limits that hold every frame of a parameter animation: the widest of each frame's own."""
+    quiet = AnimationSettings(**{**settings.to_options(), "hold": False, "caption": False})
+    union: Any = None
     for index in range(len(values)):
-        quiet = AnimationSettings(**{**settings.to_options(), "hold": False, "caption": False})
         render_frame(figure, descriptor, repo, quiet, values, index)
         figure.canvas.draw()
-        current = axes_limits(figure)
-        if union is None:
-            union = [[*xlim, *ylim] for xlim, ylim in current]
-            continue
-        if len(current) != len(union):
-            return None
-        for box, ((x0, x1), (y0, y1)) in zip(union, current):
-            box[0], box[1] = min(box[0], x0), max(box[1], x1)
-            box[2], box[3] = min(box[2], y0), max(box[3], y1)
-    return [((box[0], box[1]), (box[2], box[3])) for box in union] if union else None
+        union = widest_limits(union, axes_limits(figure))
+    return union

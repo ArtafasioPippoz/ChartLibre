@@ -443,6 +443,7 @@ class FillMissingDialog(PanelDialog):
         self.codes.setToolTip(_("Values that stand for \"no value\", separated by commas: filled like the empty "
                                 "cells. Text is matched whatever its case (na is NA); a number by its value "
                                 "(-999 is -999.0). Empty cells - NULL and blank text - are always filled."))
+        self.codes.setCursorPosition(0)  # the list from its start, not its last codes
         form.addRow(_("Also missing:"), self.codes)
         self.method.currentIndexChanged.connect(self._follow_method)
         self._follow_method()

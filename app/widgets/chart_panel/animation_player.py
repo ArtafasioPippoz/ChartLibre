@@ -36,6 +36,8 @@ class AnimationPlayer(QObject):
         #: The frame shown; len(values) is "All", the whole data.
         self._index = 0
         self._limits: Any = None
+        #: A parameter animation's limits: the widest of the frames drawn so far.
+        self._family_limits: Any = None
         self._ticking = False
 
         self._timer = QTimer(self)
@@ -83,6 +85,7 @@ class AnimationPlayer(QObject):
             self._values = []
         if changed or self._index > len(self._values):
             self._index = len(self._values)  # a new animation starts on all the data
+            self._family_limits = None
             self._timer.stop()
         self._timer.setInterval(int(round(1000.0 / settings.fps)))
         self.changed.emit()
@@ -100,7 +103,11 @@ class AnimationPlayer(QObject):
         if self._index >= len(self._values):
             self._limits = anim.axes_limits(figure)
             return
-        limits = self._limits if self._settings.source == anim.COLUMN else None
+        limits = self._limits
+        if self._settings.source == anim.PARAMETER and self._settings.hold:
+            # A family of curves has no "whole data": the axes keep the widest limits met so far, so they
+            # settle within the first pass instead of jumping at every frame.
+            limits = self._family_limits = anim.widest_limits(self._family_limits, anim.axes_limits(figure))
         anim.finish_frame(figure, self._settings, anim.caption(self._settings, self._values, self._index), limits)
 
     # ------------------------------------------------------------------
@@ -127,8 +134,10 @@ class AnimationPlayer(QObject):
 
     def _tick(self) -> None:
         settings = self._settings
-        if settings is None or not self._values:
+        if settings is None or not self._values or not self._panel.isVisible():
+            # Nothing to play - or nobody watching: a chart on another tab does not go on redrawing.
             self._timer.stop()
+            self.changed.emit()
             return
         following = self._index + 1
         if following >= len(self._values):

@@ -162,7 +162,9 @@ class _AddWebSourceDialog(PanelDialog):
     """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        super().__init__(parent, title=_("Add source"), size="small")
+        # Its own height: three fields in a 360 px window left half of it empty.
+        super().__init__(parent, title=_("Add source"), size=None)
+        self.setMinimumWidth(460)
         self.name = ""
         self.url = ""
         self.description = ""

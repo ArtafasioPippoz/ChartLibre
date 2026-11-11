@@ -11,8 +11,6 @@ from typing import Any
 from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QSize, Qt
 from PySide6.QtGui import QGuiApplication, QIcon, QImage, QPixmap
 from PySide6.QtWidgets import (
-    QDialog,
-    QDialogButtonBox,
     QFileDialog,
     QFormLayout,
     QHBoxLayout,
@@ -27,6 +25,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app.dialogs.two_panels_dialog_base import PanelDialog
+from app.styles.style import stdSizeAndlayout
 from app.utils.i18n import _
 
 _THUMB = 48
@@ -57,36 +57,38 @@ def _rect(side: int, size: QSize):
     return QRectF((side - size.width()) / 2, (side - size.height()) / 2, size.width(), size.height())
 
 
-class ImagesDialog(QDialog):
+class ImagesDialog(PanelDialog):
     """The pictures of *repo*, with their source and licence."""
 
     def __init__(self, repo: Any, parent: QWidget | None = None) -> None:
-        super().__init__(parent)
+        super().__init__(parent, title=_("Pictures"), size=None)
         self._repo = repo
-        self.setWindowTitle(_("Pictures"))
-        self.resize(560, 420)
+        self.resize(600, 460)
 
-        root = QVBoxLayout(self)
+        card = self.add_card(_("Pictures"), "picturesCard", stretch=1)
+        root = card.layout()
         intro = QLabel(_("Pictures kept in the project, for markers drawn as pictures. SVG stays sharp at any "
-                         "size; a single-colour icon takes the series' colour."), self)
+                         "size; a single-colour icon takes the series' colour."), card)
         intro.setWordWrap(True)
+        intro.setProperty("muted", True)
         root.addWidget(intro)
 
         body = QHBoxLayout()
-        self._list = QListWidget(self)
+        self._list = QListWidget(card)
         self._list.setIconSize(QSize(_THUMB, _THUMB))
         self._list.currentItemChanged.connect(lambda *_a: self._show_current())
         body.addWidget(self._list, 1)
 
         side = QVBoxLayout()
-        self._preview = QLabel(self)
+        self._preview = QLabel(card)
         self._preview.setFixedSize(160, 160)
         self._preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
         side.addWidget(self._preview)
         details = QFormLayout()
-        self._kind = QLabel(self)
-        self._source = QLineEdit(self)
-        self._license = QLineEdit(self)
+        stdSizeAndlayout(details)
+        self._kind = QLabel(card)
+        self._source = QLineEdit(card)
+        self._license = QLineEdit(card)
         self._license.setPlaceholderText(_("e.g. MIT, CC BY 4.0, own work"))
         self._source.editingFinished.connect(self._save_details)
         self._license.editingFinished.connect(self._save_details)
@@ -99,16 +101,15 @@ class ImagesDialog(QDialog):
         root.addLayout(body, 1)
 
         buttons = QHBoxLayout()
+        stdSizeAndlayout(buttons)
         for text, slot in ((_("Add from file…"), self._add_files), (_("Paste"), self._paste),
                            (_("Rename…"), self._rename), (_("Remove"), self._remove)):
-            button = QPushButton(text, self)
+            button = QPushButton(text, card)
             button.clicked.connect(slot)
             buttons.addWidget(button)
         buttons.addStretch(1)
         root.addLayout(buttons)
-        close = QDialogButtonBox(QDialogButtonBox.StandardButton.Close, self)
-        close.rejected.connect(self.reject)
-        root.addWidget(close)
+        self.add_action("dismiss", self.reject)
         self._fill()
 
     # ------------------------------------------------------------------ list
