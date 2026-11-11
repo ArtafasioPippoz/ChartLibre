@@ -125,6 +125,7 @@ from app.utils import recent_analyses
 from app.widgets.catalog_search import CatalogSearch
 from app.widgets.chart_jump_bar import ChartJumpBar
 from app.widgets.chart_panel import ChartPanel
+from app.widgets.chart_properties.animation_properties import AnimationPropertiesWidget
 from app.widgets.chart_properties.axis_properties import AxisPropertiesWidget
 from app.widgets.chart_properties.figure_properties import FigurePropertiesWidget
 from app.widgets.chart_properties.overlay_properties import OverlayPropertiesWidget
@@ -249,6 +250,7 @@ class MainWindow(QMainWindow):
     _axis_widget: AxisPropertiesWidget
     _series_widget: SeriesPropertiesWidget
     _overlay_widget: OverlayPropertiesWidget
+    _animation_widget: AnimationPropertiesWidget
 
     def __init__(self, repo: SqliteRepo, db_path: Path) -> None:
         super().__init__()
@@ -2530,6 +2532,7 @@ class MainWindow(QMainWindow):
         self._axis_widget = AxisPropertiesWidget(self)
         self._series_widget = SeriesPropertiesWidget(self)
         self._overlay_widget = OverlayPropertiesWidget(self)
+        self._animation_widget = AnimationPropertiesWidget(self)
 
         control = QTabWidget(self)
         control.setObjectName("propertiesTabs")
@@ -2543,6 +2546,7 @@ class MainWindow(QMainWindow):
             (self._figure_widget, _("Figure"), _("Figure properties")),
             (self._axis_widget, _("Axis"), _("Axis properties")),
             (self._series_widget, _("Series"), _("Series properties")),
+            (self._animation_widget, _("Animation"), _("Play the figure along a column or a parameter")),
             (self._overlay_widget, _("Overlays"), _("Overlay properties")),
         ):
             # The ground and the room a toolbox page had: the window grey on
@@ -2584,6 +2588,7 @@ class MainWindow(QMainWindow):
         self._overlay_widget.overlay_options_requested.connect(
             self._on_overlay_options_requested
         )
+        self._animation_widget.animation_changed.connect(self._on_animation_changed)
 
     def _configure_properties_control(self) -> None:
         """Keep the properties control shrink-friendly.
@@ -2652,6 +2657,7 @@ class MainWindow(QMainWindow):
             self._axis_widget,
             self._series_widget,
             self._overlay_widget,
+            self._animation_widget,
         ):
             widget.set_connected_figure(
                 repo=self._repo,
@@ -2663,6 +2669,7 @@ class MainWindow(QMainWindow):
             self._figure_widget.set_resize_mode_control(
                 panel.resize_mode, panel.set_resize_mode
             )
+        self._animation_widget.set_player(getattr(panel, "animation_player", None))
         current_axis_id = self._axis_widget.current_axis_id()
         self._series_widget.set_current_axis_id(current_axis_id)
         self._overlay_widget.set_axis(current_axis_id)
@@ -2680,6 +2687,7 @@ class MainWindow(QMainWindow):
         self._axis_widget.clear_connected_figure()
         self._series_widget.clear_connected_figure()
         self._overlay_widget.clear_connected_figure()
+        self._animation_widget.clear_connected_figure()
         self._axis_widget.rebuild_kwargs_editor(None)
 
     def _redraw_properties_chart(self) -> None:
@@ -2708,6 +2716,7 @@ class MainWindow(QMainWindow):
             self._axis_widget,
             self._series_widget,
             self._overlay_widget,
+            self._animation_widget,
         ):
             widget.set_connected_figure(
                 repo=self._repo,
@@ -2904,6 +2913,21 @@ class MainWindow(QMainWindow):
             ],
         )
         self._reload_property_widgets()
+        self._redraw_properties_chart()
+
+    def _on_animation_changed(self, settings: dict[str, Any] | None) -> None:
+        """Store what the Animation page says (None: not animated) and redraw the chart with its play bar."""
+        if self._properties_figure_id is None:
+            return
+        options = self._properties_figure_options()
+        if options.get("animation") == settings:
+            return
+        self._snapshot_descriptors(_("Animation"))
+        if settings is None:
+            options.pop("animation", None)
+        else:
+            options["animation"] = settings
+        self._repo.set_figure_options(self._properties_figure_id, options)
         self._redraw_properties_chart()
 
     def _on_figure_options_requested(self, payload: dict[str, Any]) -> None:

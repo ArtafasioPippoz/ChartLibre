@@ -40,7 +40,7 @@ from PySide6.QtWidgets import (
 
 from app.data.sqlite_repo import SqliteRepo
 from app.logs.logger import applogger
-from app.plugin_api.charts.render_figure import render_figure_from_descriptor
+from app.plugin_api.charts.render_figure import animation_frame, render_figure_from_descriptor
 from app.styles.style import (
     CONTEXT_MENU_ICONS,
     SPLITTER_HANDLE_WIDTH,
@@ -476,6 +476,10 @@ class ChartPanel(ChartToolsMixin, QFrame):
         self._main_layout.addWidget(self._top_row, 0)
         self._main_layout.addWidget(self._filter_note, 0)
         self._main_layout.addWidget(self._canvas, 1)
+        # Plays the figure when it is animated; its controls are on Chart properties > Animation.
+        from app.widgets.chart_panel.animation_player import AnimationPlayer
+
+        self.animation_player = AnimationPlayer(self)
 
         self._notes_html = ""
         # Made when the notes are first shown: most charts' never are, and each pane is a web view.
@@ -873,11 +877,15 @@ class ChartPanel(ChartToolsMixin, QFrame):
             self._prepare_canvas_geometry_before_render()
             original_descriptor = descriptor
             descriptor = self._descriptor_prepared_for_render(original_descriptor)
-            render_figure_from_descriptor(
-                figure=self._figure,
-                descriptor=descriptor,
-                repo=self._repo,
-            )
+            self.animation_player.prepare(original_descriptor)
+            # One frame of the animation, when one is shown; all the data otherwise.
+            with animation_frame(self.animation_player.frame_filter()):
+                render_figure_from_descriptor(
+                    figure=self._figure,
+                    descriptor=descriptor,
+                    repo=self._repo,
+                )
+            self.animation_player.after_render(self._figure)
             self._make_data_artists_pickable()
             self._draw_selected_rows()
             self._update_filter_note()

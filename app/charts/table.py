@@ -53,6 +53,7 @@ class TableAxisRenderer(BaseAxisRenderer):
     """
 
     Name: str = "Table"
+    Animatable: bool = False  # one structure of the whole table: no frames to play
     WhenToUse: str = "Use it to show exact values beside or instead of a chart."
     Category: str = "Specialized charts"
     Description: str = "A data table, rows and columns of text rather than a plot."

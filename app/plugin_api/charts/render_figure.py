@@ -14,8 +14,9 @@ P2-17, without a ``pd.DataFrame`` built on the way: see
 from __future__ import annotations
 
 import math
-from collections.abc import Generator
+from collections.abc import Callable, Generator, Iterator
 from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import replace
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -112,6 +113,20 @@ def default_style_text() -> str:
 # ----------------------------------------------------------------------
 # Public renderer entry point
 # ----------------------------------------------------------------------
+#: While an animation draws one of its frames: what each series' query becomes (SqliteRepo.sql_animation_frame).
+_frame_filter: ContextVar[Callable[[str], str] | None] = ContextVar("animation_frame", default=None)
+
+
+@contextmanager
+def animation_frame(sql_filter: Callable[[str], str] | None) -> Iterator[None]:
+    """Render inside this to draw one frame of an animation: every series' query goes through *sql_filter*."""
+    token = _frame_filter.set(sql_filter)
+    try:
+        yield
+    finally:
+        _frame_filter.reset(token)
+
+
 def render_figure_from_descriptor(
     *,
     figure: Figure,
@@ -904,6 +919,9 @@ def _load_series_df(
     try:
         # Show only Selected on the series' table: its other rows out of view (R-07).
         sql = repo.sql_selected_only(sql)
+        frame_filter = _frame_filter.get()
+        if frame_filter is not None:  # one frame of an animation: its rows only
+            sql = frame_filter(sql)
         if downsample_threshold > 0:
             total = repo.series_row_count(sql)  # cached: the count the thinning sizes its stride by
             if total > downsample_threshold:

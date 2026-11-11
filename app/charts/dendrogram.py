@@ -27,6 +27,7 @@ class DendrogramAxisRenderer(BaseAxisRenderer):
     """Hierarchical clustering of the rows as a tree."""
 
     Name: str = "Dendrogram"
+    Animatable: bool = False  # one structure of the whole table: no frames to play
     WhenToUse: str = "Use it to show how observations group together in a hierarchical clustering."
     Category: str = "Diagnostic plots"
     Description: str = (

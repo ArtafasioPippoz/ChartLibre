@@ -1558,6 +1558,58 @@ class TablesMixin(_Host):
         chosen = f'SELECT rowid FROM {_quote_ident(table)} WHERE "Selected" = 1'
         return f"SELECT * FROM ({sql}) WHERE {_quote_ident(ROW_ID)} IN ({chosen})"
 
+    # ------------------------------------------------------------------
+    # Animation: a chart drawn one value of a column at a time
+    # ------------------------------------------------------------------
+    @ensure_connection_wrapper
+    def animation_frames(self, tables: Sequence[str], column: str) -> list[Any]:
+        """The values of *column* across *tables*: the frames of an animation along it, in their order.
+
+        Numbers and dates by value (a year, a time); anything else - categories - in the order the rows
+        first have them. Empty cells are no frame. A table without the column adds nothing.
+        """
+        assert self._con is not None
+        first_seen: dict[Any, None] = {}
+        column_sql = _quote_ident(column)
+        for table in dict.fromkeys(str(name) for name in tables):
+            if not table or not self.has_column(table, column):
+                continue
+            rows = self._con.execute(
+                f"SELECT {column_sql} FROM {_quote_ident(table)} WHERE {column_sql} IS NOT NULL "
+                f"GROUP BY {column_sql} ORDER BY MIN(rowid)"
+            ).fetchall()
+            first_seen.update((row[0], None) for row in rows)
+        values = list(first_seen)
+        if not values:
+            return []
+        from app.utils.coercion import coerce_axis
+
+        keys, _temporal = coerce_axis(pd.Series(values, dtype=object))
+        if bool(keys.notna().all()):
+            order = sorted(range(len(values)), key=lambda index: keys.iloc[index])
+            values = [values[index] for index in order]
+        return values
+
+    def sql_animation_frame(self, sql_query: str, column: str, values: Sequence[Any]) -> str:
+        """*sql_query* keeping only the rows whose *column* is one of *values*: one frame of an animation.
+
+        Like Show only Selected, by the row id the series' query names, so the column need not be one it
+        selects; a query naming no row id has the rows it reads filtered instead. A series whose table has
+        no such column is drawn whole: the animation runs along the others.
+        """
+        from app.data.sql_builders import literal
+
+        sql = str(sql_query or "").strip().rstrip(";")
+        table = self.row_table(sql)
+        if not table or not self.has_column(table, column):
+            return sql
+        listed = ", ".join(literal(value) for value in values) or "NULL"
+        test = f"{_quote_ident(column)} IN ({listed})"
+        if not has_projection_alias(sql, ROW_ID):
+            return self._sql_with_where_clause(sql, test) if self.is_table_backed_sql(sql) else sql
+        chosen = f"SELECT rowid FROM {_quote_ident(table)} WHERE {test}"
+        return f"SELECT * FROM ({sql}) WHERE {_quote_ident(ROW_ID)} IN ({chosen})"
+
     @ensure_connection_wrapper
     def select_rows(self, table_name: str, row_ids: Sequence[int], *, add: bool = False) -> int:
         """Mark exactly *row_ids* Selected - with *add*, as well as those already; how many are."""

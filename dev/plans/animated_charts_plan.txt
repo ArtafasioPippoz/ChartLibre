@@ -36,3 +36,12 @@ Risks
 - Live updates and an animation on the same chart: the animation pauses while the live timer redraws.
 
 Strings listed for translation, not translated. Order: A, B (one commit: usable), C, D, E alongside.
+
+Done (2026-11-10): A as a Chart properties page, "Animation", after Series - with the player on it too (play,
+a frame back or forward, the frames' slider ending on All, Save as GIF), by the user's choice, instead of a bar
+under the chart. Besides a column, a function's parameter can vary from a value to another (the figure's
+stored-function series redrawn at each). C as GIF only. D (Animatable = False: Sankey, treemap, table,
+fishbone, dendrogram). E (dev/tests/test_animation.py). Code: app/plugin_api/charts/animation.py,
+widgets/chart_panel/animation_player.py, widgets/chart_properties/animation_properties.py.
+Missing: MP4 (with ffmpeg); artists updated in place - each frame is a full render, so a big scatter plays slowly;
+pausing while live updates redraw.

@@ -266,6 +266,9 @@ class BaseAxisRenderer:
     #: One sentence on when this chart is the right one, shown by New plot.
     WhenToUse: str = ""
     Link:str=""
+    #: Whether the chart can be played along a column (Animation): False for a chart that draws the whole
+    #: table as one structure - a Sankey, a treemap, a table - where one value at a time says nothing.
+    Animatable: bool = True
     RequiredRoles: ClassVar[list[str]] = []
     OptionalRoles: ClassVar[list[str]] = []
     Kwargs: ClassVar[dict[str, Any]] = {}

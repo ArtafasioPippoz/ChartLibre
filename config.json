@@ -1362,6 +1362,11 @@
       "title": "Delete",
       "text": "Delete {count} selected items?\n\n{sources}\n\nCharts built on a saved query will stop finding their data."
     },
+    "chart.animation_export_failed": {
+      "level": "error",
+      "title": "Save animation",
+      "text": "The animation could not be saved:\n{error}"
+    },
     "project.save_untitled": {
       "level": "question",
       "title": "Save project",

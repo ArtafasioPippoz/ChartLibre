@@ -93,6 +93,7 @@ class TreemapAxisRenderer(BaseAxisRenderer):
     """Tiles whose areas are the values, grouped and coloured by group."""
 
     Name: str = "Treemap"
+    Animatable: bool = False  # one structure of the whole table: no frames to play
     WhenToUse: str = "Use it to show the parts of a total, especially when there are many."
     Category: str = "Specialized charts"
     Description: str = (
