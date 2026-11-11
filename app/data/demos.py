@@ -633,6 +633,18 @@ DEMO_PROJECTS: tuple[DemoProject, ...] = (
         category="Curves",
     ),
     DemoProject(
+        "Animated charts - a column and a function's parameter played",
+        "Figures that move: CO2 at Mauna Loa one year at a time, the seasonal cycle climbing; the global "
+        "temperature record as it grew, decade by decade; made-up countries, income against life expectancy "
+        "over thirty years; a damped oscillation with its decay varied and a Gaussian with its width varied. "
+        "Open a figure and press Play on Chart properties > Animation - Save as GIF is there too.",
+        (),
+        builder="dev.demo.demo_animation:build_animation_demo",
+        preview="CO2",
+        references=(REF_CO2, REF_GISTEMP),
+        category="Graph",
+    ),
+    DemoProject(
         "SymPy functions - stored formulas differentiated, integrated and fitted",
         "Formulas kept with the project (Tables panel, marked F) and drawn as live series: a damped "
         "oscillation and its exact derivative, logistic growth and its exact integral - Calculus works on "
