@@ -1013,6 +1013,11 @@ class DataOperationDialogBase(QDialog):
             except Exception as exc:
                 self._job_failed(exc)
 
+        # The libraries the calculation may need are imported here, on the GUI thread, before the worker
+        # starts: a first import on a worker thread can crash PySide6 (app/utils/warm_up.py).
+        from app.utils import warm_up
+
+        warm_up.finish_now()
         task = self._job = run_in_background(work, finished, self._job_failed)
         return True
 

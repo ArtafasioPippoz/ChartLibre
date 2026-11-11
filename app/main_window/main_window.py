@@ -292,12 +292,12 @@ class MainWindow(QMainWindow):
         self.resize(1200, 800)
         # 800 is taller than many laptops leave free: fitted when shown.
         fit_on_show(self)
-        # The scientific libraries the data operations need, imported in
-        # the background once the window is up, so the first operation of
-        # the session opens at once (app/utils/warm_up.py).
-        from app.utils.warm_up import warm_up_in_background
+        # The scientific libraries the data operations need, imported a module
+        # at a time once the window is up, so the first operation of the
+        # session opens at once - on this thread, never another (app/utils/warm_up.py).
+        from app.utils.warm_up import warm_up_gradually
 
-        QTimer.singleShot(3_000, warm_up_in_background)
+        QTimer.singleShot(3_000, warm_up_gradually)
 
         # Debounce for property-driven chart reloads (see _redraw_properties_chart).
         self._properties_redraw_callback: Any | None = None
