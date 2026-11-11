@@ -31,8 +31,10 @@ def test_the_default_chart_style_is_grouped_by_folder() -> None:
     assert choices[1] == ("", "Matplotlib default")
     assert choices[2] is None
     values = [choice[0] for choice in choices if choice is not None]
-    apps = [value for value in values if value.startswith("Apps/")]
-    journals = [value for value in values if value.startswith("journals/")]
+    # Whatever the folders' case: the settings sort them by their lower-case name, and a disk that ignores
+    # case can hold "Journals" where the repository says "journals".
+    apps = [value for value in values if value.lower().startswith("apps/")]
+    journals = [value for value in values if value.lower().startswith("journals/")]
     assert apps and journals and values.index(apps[0]) < values.index(journals[0])
     assert choices[choices.index(None, 3)] is None  # a separator between Apps and Journals
     on_disk = {p.relative_to(MPLSTYLES_DIR).with_suffix("").as_posix() for p in MPLSTYLES_DIR.rglob("*.mplstyle")}
