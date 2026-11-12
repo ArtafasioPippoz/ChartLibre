@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import Any, ClassVar, Final, TypeAlias, cast
 
-from PySide6.QtCore import QEvent, QObject, QSignalBlocker, Qt, Signal
+from PySide6.QtCore import QEvent, QObject, QSignalBlocker, QSize, Qt, Signal
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -648,6 +648,9 @@ class AxisPropertiesWidget(BaseProperties):
             Qt.TextInteractionFlag.TextSelectableByMouse
         )
         mark_destructive_button(self._btn_delete)  # red, as every delete of the app
+        for _button in (self._btn_move_up, self._btn_move_down, self._btn_delete):
+            _button.setIconSize(QSize(14, 14))  # a small icon, so a short word keeps room beside it
+            _button.setMinimumWidth(78)
         self._renderer_value.hide()
         return section
 

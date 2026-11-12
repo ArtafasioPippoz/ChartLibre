@@ -10,7 +10,7 @@ from functools import cache
 from typing import Any
 
 from matplotlib import rcParams
-from PySide6.QtCore import QPointF, Qt, Signal
+from PySide6.QtCore import QPointF, QSize, Qt, Signal
 from PySide6.QtGui import QBrush, QColor, QIcon, QPainter, QPen, QTextOption
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -278,6 +278,9 @@ class SeriesPropertiesWidget(BaseProperties):
             layout=row_layout,
         )
         mark_destructive_button(self._btn_delete)  # red, as every delete of the app
+        for _button in (self._btn_move_up, self._btn_move_down, self._btn_delete):
+            _button.setIconSize(QSize(14, 14))  # a small icon, so a short word keeps room beside it
+            _button.setMinimumWidth(78)
         # No Apply button: every style control applies itself a short moment
         # after it changes (see _connect_auto_apply). Up / Down / Delete stay
         # - they reorder and remove series, not commit the form.
