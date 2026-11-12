@@ -87,7 +87,9 @@ def _type_code(decl_type: str | None) -> str:
             return 'F'
         case 'BOOLEAN':
             return 'B'
-        case 'DATE'|'DATETIME':
+        case 'DATE'|'DATETIME'|'TIMESTAMP'|'TIME':
+            return 'DT'  # Column Info says TIMESTAMP for these: the header agrees
+        case other if other.startswith(('TIMESTAMP', 'DATETIME')):  # TIMESTAMP WITH TIME ZONE...
             return 'DT'
         case _ :
             return 'S'

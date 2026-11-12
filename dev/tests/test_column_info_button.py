@@ -28,3 +28,10 @@ def test_the_button_opens_the_first_column_when_no_cell_is_current(qapp, tmp_pat
         assert len(opened) == 1
     finally:
         window.close()
+
+
+def test_a_timestamp_column_is_a_date_in_the_header_as_in_column_info() -> None:
+    from app.widgets.table_preview import _type_code
+
+    assert {_type_code(kind) for kind in ("TIMESTAMP", "timestamp", "DATE", "DATETIME", "TIMESTAMP WITH TIME ZONE")} == {"DT"}
+    assert _type_code("TEXT") == "S" and _type_code("REAL") == "F"
