@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
 )
 
 from app.styles.style import IS_MACOS, action_presentation
+from app.utils.i18n import _ as tr
 
 #: A little taller than the macOS traffic lights' strip, so the 28 px
 #: arrow buttons have room above and below them.
@@ -42,6 +43,43 @@ def jump_arrow(parent: QWidget, action_id: str, callback, *, tooltip: str = "") 
     button.setFixedSize(28, 28)
     button.clicked.connect(callback)
     return button
+
+
+class AxisStepper(QWidget):
+    """‹ › to the previous and the next axis, drawn as the charts' own arrows: on the Axis, Series and Overlays
+    pages, whichever is shown moves the axis of all three."""
+
+    step = Signal(int)  # -1 the previous axis, +1 the next
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        row = QHBoxLayout(self)
+        row.setContentsMargins(0, 0, 0, 0)
+        row.setSpacing(2)
+        self._previous = jump_arrow(self, "chart_previous", lambda: self.step.emit(-1), tooltip=tr("Previous axis"))
+        self._next = jump_arrow(self, "chart_next", lambda: self.step.emit(1), tooltip=tr("Next axis"))
+        row.addWidget(self._previous)
+        row.addWidget(self._next)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+
+    def set_position(self, index: int, count: int) -> None:
+        """Enable only the arrows that have somewhere to go."""
+        self._previous.setEnabled(index > 0)
+        self._next.setEnabled(0 <= index < count - 1)
+
+    @staticmethod
+    def beside(title: QWidget, stepper: AxisStepper) -> None:
+        """Put *stepper* at the right end of *title*'s line, in the layout that holds the title."""
+        layout = title.parentWidget().layout() if title.parentWidget() is not None else None
+        if layout is None:
+            return
+        index = layout.indexOf(title)
+        layout.removeWidget(title)
+        line = QHBoxLayout()
+        line.setContentsMargins(0, 0, 0, 0)
+        line.addWidget(title, 1)
+        line.addWidget(stepper)
+        layout.insertLayout(index, line)
 
 
 class ChartJumpBar(QFrame):

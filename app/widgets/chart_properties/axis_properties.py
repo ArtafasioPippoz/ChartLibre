@@ -49,6 +49,7 @@ from app.styles.style import (
     stdSizeAndlayout,
 )
 from app.utils.messages import ask
+from app.widgets.chart_jump_bar import AxisStepper
 from app.widgets.inspector import InspectorForm, InspectorSection, SegmentedControl
 from app.widgets.chart_properties.base_properties import BaseProperties
 from app.widgets.dictionary_editor import DictEditorPanel
@@ -198,9 +199,10 @@ class AxisPropertiesWidget(BaseProperties):
         outer.addWidget(scroll, 1)
         self._on_coordinate_chosen(0)
 
-    def _new_section(self, title: str, key: str, *, collapsed: bool = False, fixed: bool = False) -> InspectorSection:
+    def _new_section(self, title: str, key: str, *, collapsed: bool = False, fixed: bool = False,
+                     foldable: bool = True) -> InspectorSection:
         """An inspector section of this page with a vertical body, remembered under "axis.<key>"."""
-        section = InspectorSection(title, self, key="axis." + key, collapsed=collapsed, fixed=fixed)
+        section = InspectorSection(title, self, key="axis." + key, collapsed=collapsed, fixed=fixed, foldable=foldable)
         body = QVBoxLayout(section.body)
         body.setContentsMargins(0, 0, 0, 0)
         body.setSpacing(6)
@@ -609,7 +611,14 @@ class AxisPropertiesWidget(BaseProperties):
             lambda index: self.axis_picked.emit(int(self._axis_combo.itemData(index)))
             if self._axis_combo.itemData(index) is not None else None
         )
-        layout.addWidget(self._axis_combo)
+        # The menu with the arrows to the previous and the next axis: the one place that steps all three pages.
+        self.axis_stepper = AxisStepper(section)
+        combo_row = QHBoxLayout()
+        combo_row.setContentsMargins(0, 0, 0, 0)
+        combo_row.setSpacing(6)
+        combo_row.addWidget(self._axis_combo, 1)
+        combo_row.addWidget(self.axis_stepper)
+        layout.addLayout(combo_row)
 
         action_row = QWidget(section)
         action_layout = QHBoxLayout(action_row)

@@ -290,8 +290,13 @@ class InspectorSection(QWidget):
         if not self._foldable and not fixed:  # a title, but no chevron and no fold: always open
             self._header.setChecked(True)
             self._forced_open = True
-            self._header.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
-            self._header.setCursor(Qt.CursorShape.ArrowCursor)
+            # A caption label, left-aligned: a tool button with no icon centres its text.
+            caption = QLabel(title.upper(), self)
+            caption.setObjectName("inspectorSectionCaption")
+            caption.setFont(self._header.font())
+            caption.setContentsMargins(4, 3, 0, 3)
+            layout.replaceWidget(self._header, caption)
+            self._header.hide()
         if fixed:  # no title, no fold: the card is always there (its own first row says what it is)
             self._header.hide()
             self._header.setChecked(True)

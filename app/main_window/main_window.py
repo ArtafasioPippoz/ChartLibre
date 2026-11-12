@@ -2596,6 +2596,19 @@ class MainWindow(QMainWindow):
         self._clear_property_widgets()
         return control
 
+    def _step_axis(self, delta: int) -> None:
+        """The previous (-1) or next (+1) axis: the Axis page's menu moves, and Series and Overlays follow."""
+        combo = self._axis_widget._axis_combo
+        index = combo.currentIndex() + delta
+        if 0 <= index < combo.count():
+            combo.setCurrentIndex(index)
+            combo.activated.emit(index)  # as a choice from the menu: the chart flashes the axis
+
+    def _refresh_axis_steppers(self) -> None:
+        combo = self._axis_widget._axis_combo
+        for page in (self._axis_widget, self._series_widget, self._overlay_widget):
+            page.axis_stepper.set_position(combo.currentIndex(), combo.count())
+
     def _filter_properties(self, text: str) -> None:
         """Apply the find box to the five pages (inspector.filter_page)."""
         for page in (self._figure_widget, self._axis_widget, self._series_widget, self._animation_widget,
@@ -2628,6 +2641,14 @@ class MainWindow(QMainWindow):
             self._on_overlay_options_requested
         )
         self._animation_widget.animation_changed.connect(self._on_animation_changed)
+        # ‹ › on the Axis, Series and Overlays pages: the previous / next axis, for all three at once.
+        combo = self._axis_widget._axis_combo
+        for page in (self._axis_widget, self._series_widget, self._overlay_widget):
+            page.axis_stepper.step.connect(self._step_axis)
+        model = combo.model()
+        for signal in (combo.currentIndexChanged, model.rowsInserted, model.rowsRemoved, model.modelReset):
+            signal.connect(lambda *_a: self._refresh_axis_steppers())
+        self._refresh_axis_steppers()
 
     def _configure_properties_control(self) -> None:
         """Keep the properties control shrink-friendly.

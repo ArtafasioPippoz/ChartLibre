@@ -49,6 +49,7 @@ from app.styles.style import (
 )
 from app.utils.config import get_constant
 from app.utils.i18n import _
+from app.widgets.chart_jump_bar import AxisStepper
 from app.widgets.inspector import SegmentedControl
 from app.widgets.chart_properties.base_properties import BaseProperties
 from app.widgets.drop_down_controls.color_combo import MatplotlibColorCombo
@@ -207,7 +208,13 @@ class OverlayPropertiesWidget(BaseProperties):
         title.setProperty("sectionTitle", True)
         title.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self._axis_heading = title
-        return title
+        self.axis_stepper = AxisStepper(self)
+        holder = QWidget(self)
+        line = QHBoxLayout(holder)
+        line.setContentsMargins(0, 0, 0, 0)
+        line.addWidget(title, 1)
+        line.addWidget(self.axis_stepper)
+        return holder
 
     def _add_tab(
         self,

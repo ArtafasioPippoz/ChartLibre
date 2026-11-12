@@ -43,6 +43,7 @@ from app.utils.config import get_constant
 from app.utils.i18n import _
 from app.utils.messages import ask
 from app.widgets.chart_properties.base_properties import BaseProperties
+from app.widgets.chart_jump_bar import AxisStepper
 from app.widgets.inspector import InspectorCard, InspectorForm, InspectorSection
 from app.widgets.chart_properties.series_style_editors import (
     LineStyleEditor,
@@ -235,6 +236,8 @@ class SeriesPropertiesWidget(BaseProperties):
             QSizePolicy.Policy.Preferred,
         )
         self._series_title = section.title_label
+        self.axis_stepper = AxisStepper(section)
+        AxisStepper.beside(section.title_label, self.axis_stepper)
 
         layout = section.card.layout()
 
