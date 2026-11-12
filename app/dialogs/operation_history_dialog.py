@@ -18,9 +18,10 @@ from PySide6.QtWidgets import QWidget
 from app.data.repo.project import OperationRecord
 from app.data.sqlite_repo import SqliteRepo
 from app.dialogs.two_panels_dialog_base import PanelDialog
-from app.styles.style import load_icon
+from app.styles.style import load_icon, mark_destructive_button
 from app.utils import report_html
 from app.utils.i18n import _
+from app.utils.messages import ask
 from app.widgets.html_results import HtmlResultsView, looks_like_html, plain_to_html
 
 
@@ -30,11 +31,32 @@ class OperationHistoryDialog(PanelDialog):
     def __init__(self, repo: SqliteRepo, table: str | None, parent: QWidget | None = None) -> None:
         super().__init__(parent, title=_("History of {table}").format(table=table) if table else _("Project history"),
                          icon=load_icon("operation_history"))
+        self._repo = repo
+        self._table = table
         card = self.add_card(_("History"), "operationHistoryCard", stretch=1)
         self._view = HtmlResultsView(card)
-        self._view.setContent(history_html(table, repo.operations(table=table)))
         card.layout().addWidget(self._view, 1)
+        self._reload()
+        # Red and alone at the left: what it forgets cannot be brought back.
+        self._delete_button = self.add_action(
+            "delete", self._delete_history, left=True,
+            presentation=(load_icon("delete"), _("Delete"), _("Forget the operations listed here")),
+        )
+        mark_destructive_button(self._delete_button)
         self.add_action("dismiss", self.reject)
+
+    def _reload(self) -> None:
+        self._records = self._repo.operations(table=self._table)
+        self._view.setContent(history_html(self._table, self._records))
+        if hasattr(self, "_delete_button"):
+            self._delete_button.setEnabled(bool(self._records))
+
+    def _delete_history(self) -> None:
+        """Forget the listed operations, after asking; the tables they made stay."""
+        if not self._records or not ask(self, "history.confirm_delete", count=len(self._records)):
+            return
+        self._repo.delete_operations([record.id for record in self._records])
+        self._reload()
 
 
 def _local_time(stamp: str) -> str:

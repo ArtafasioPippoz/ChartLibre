@@ -1572,6 +1572,19 @@ class ProjectMixin(_Host):
             return records
         return [record for record in records if _touches(record, table)]
 
+    @ensure_connection_wrapper
+    def delete_operations(self, ids: Sequence[int]) -> int:
+        """Forget the recorded operations *ids*; returns how many were removed. The tables they wrote stay."""
+        assert self._con is not None
+        self.create_operations_table()
+        wanted = [int(i) for i in ids]
+        if not wanted:
+            return 0
+        marks = ",".join("?" for _ in wanted)
+        cursor = self._con.execute(f"DELETE FROM {OPERATIONS_TABLE} WHERE id IN ({marks})", wanted)
+        self._commit()
+        return int(cursor.rowcount or 0)
+
     # ==================================================================
     # ProjectInfo: The ``__project_info__`` entries.
     # ==================================================================

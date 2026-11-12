@@ -992,6 +992,11 @@
       "title": "Delete axis",
       "text": "Delete the axis '{axis}'?"
     },
+    "history.confirm_delete": {
+      "level": "question",
+      "title": "Delete history",
+      "text": "Forget {count} recorded operation(s)? The tables they made stay, but how they were made cannot be read again."
+    },
     "log.confirm_clear": {
       "level": "question",
       "title": "Clear the log",
