@@ -977,9 +977,6 @@ class MainWindow(QMainWindow):
                          object_name="projectImagesCard")
         self._database_info_panel = DatabaseInfoPanel(self._repo, page, optimize_action=self._on_optimize_db)
         page.add_widget(self._database_info_panel)
-        page.add_buttons(action_presentation("log_viewer")[1],
-                         [NavButton("log_viewer", self._show_log_viewer, described=True)],
-                         object_name="log_viewerCard")
         return page
 
     def _navigation_icon(action_id: str) -> QIcon:

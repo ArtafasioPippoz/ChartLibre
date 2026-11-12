@@ -285,11 +285,19 @@ class SettingsDialog(PanelDialog):
         self._sql_guard_check.setChecked(sql_guard_enabled())
         form.addRow(tr("SQL guard"), self._sql_guard_check)
 
+        # The application log: read here (it was a page of the Project panel), emptied at start if wanted.
+        form = self._section(tr("Log"), forms)
         self._clear_log_check = QCheckBox(tr("Clear the log at start"), card)
         self._clear_log_check.setToolTip(tr("The log file is emptied each time the application starts, so it holds "
                                             "the current session only."))
         self._clear_log_check.setChecked(clear_log_at_start())
-        form.addRow(tr("Log"), self._clear_log_check)
+        form.addRow(tr("At start"), self._clear_log_check)
+        from PySide6.QtWidgets import QPushButton
+
+        view_log = QPushButton(tr("View the log…"), card)
+        view_log.setToolTip(tr("Read the application log, copy it or empty it."))
+        view_log.clicked.connect(self._view_log)
+        form.addRow("", view_log)
 
         note = QLabel(tr("The style and the language are applied the next time the app starts."), self)
         note.setProperty("muted", True)
@@ -306,7 +314,8 @@ class SettingsDialog(PanelDialog):
         "Charts": ("chart_from_columns", "#22a06b", "How new charts look and how they are exported."),
         "Reports": ("project_report", "#e8860c", "What every analysis report adds to its results."),
         "Assistant": ("nav_assistant", "#8b5cf6", "The AI assistant: its provider, its key and what it may do."),
-        "Advanced": ("settings", "#8a8f98", "The SQL guard and the log."),
+        "Advanced": ("settings", "#8a8f98", "The SQL guard."),
+        "Log": ("log_viewer", "#6b7280", "The application log: read it, copy it or empty it."),
     }
 
     def _pages(self) -> tuple[QListWidget, QStackedWidget]:
@@ -422,6 +431,12 @@ class SettingsDialog(PanelDialog):
     # ------------------------------------------------------------------
     # Behaviour
     # ------------------------------------------------------------------
+    def _view_log(self) -> None:
+        """The log viewer, over this dialog (it also opens from the status bar)."""
+        from app.dialogs.log_viewer_dialog import LogViewerDialog
+
+        LogViewerDialog(self).exec()
+
     def _build_assistant_section(self, card: QWidget, forms: list[QFormLayout]) -> None:
         """The assistant: its provider, the key (kept by the system), what it may do and what it may send."""
         from app.ai import settings as assistant
