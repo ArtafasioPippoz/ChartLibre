@@ -61,20 +61,24 @@ class StyleChooser(QWidget):
         column = QVBoxLayout(self)
         column.setContentsMargins(0, 0, 0, 0)
         column.setSpacing(4)
-        # The choices as one segmented control, and under it only the chosen one's editor: a line a choice with
-        # its editor beside it left the editors too narrow ("Default" cut to "Def").
-        from app.widgets.inspector import SegmentedControl
+        # The choices as radio buttons two to a line, and under them only the chosen one's editor: a line a
+        # choice with its editor beside it left the editors too narrow, and four segments cut their words.
+        from PySide6.QtWidgets import QButtonGroup, QGridLayout
 
-        self._segments = SegmentedControl(self)
-        self._buttons: dict[str, QRadioButton] = {}  # the segments' buttons: checkable, toggled, as radio buttons
+        self._group = QButtonGroup(self)
+        self._buttons: dict[str, QRadioButton] = {}
         choices = [(STANDARD, _("Standard")), (CUSTOM, _("Custom"))] + ([(SYMBOL, _("Symbol"))] if symbols else []) \
             + ([(PICTURE, _("Picture"))] if pictures is not None else [])
-        for key, label in choices:
-            index = self._segments.add_segment(label)
-            button = self._segments.button(index)
+        radios = QGridLayout()
+        radios.setHorizontalSpacing(12)
+        radios.setVerticalSpacing(4)
+        for index, (key, label) in enumerate(choices):
+            button = QRadioButton(label, self)
+            self._group.addButton(button)
             self._buttons[key] = button
             button.toggled.connect(lambda on, k=key: on and self._show(k))
-        column.addWidget(self._segments)
+            radios.addWidget(button, index // 2, index % 2)
+        column.addLayout(radios)
 
         self._text = QLineEdit(self)
         self._text.setPlaceholderText(hint)

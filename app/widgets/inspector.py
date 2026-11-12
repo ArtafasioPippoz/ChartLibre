@@ -250,7 +250,7 @@ class InspectorSection(QWidget):
     toggled = Signal(bool)
 
     def __init__(self, title: str, parent: QWidget | None = None, *, key: str, collapsed: bool = False,
-                 card: bool = True, fixed: bool = False) -> None:
+                 card: bool = True, fixed: bool = False, foldable: bool = True) -> None:
         super().__init__(parent)
         self.setObjectName("inspectorSection")
         self._key = key
@@ -286,6 +286,12 @@ class InspectorSection(QWidget):
         layout.setSpacing(5)
         layout.addWidget(self._header)
         layout.addWidget(self.body)
+        self._foldable = foldable and not fixed
+        if not self._foldable and not fixed:  # a title, but no chevron and no fold: always open
+            self._header.setChecked(True)
+            self._forced_open = True
+            self._header.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+            self._header.setCursor(Qt.CursorShape.ArrowCursor)
         if fixed:  # no title, no fold: the card is always there (its own first row says what it is)
             self._header.hide()
             self._header.setChecked(True)
@@ -305,7 +311,9 @@ class InspectorSection(QWidget):
         from app.styles.style.widgets import _chevron_icon
 
         # A thin chevron before the title: right when closed, down when open (as Claude's own sections).
-        self._header.setIcon(_chevron_icon(down=is_open, color=self._header.palette().color(QPalette.ColorRole.PlaceholderText)))
+        if getattr(self, "_foldable", True):
+            self._header.setIcon(_chevron_icon(down=is_open, color=self._header.palette().color(
+                QPalette.ColorRole.PlaceholderText)))
         self.body.setVisible(is_open or self._forced_open)
 
     def changeEvent(self, event) -> None:  # noqa: N802 - Qt override

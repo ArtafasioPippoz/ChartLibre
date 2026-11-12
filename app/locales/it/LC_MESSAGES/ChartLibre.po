@@ -3065,7 +3065,7 @@ msgid "Left: every left row"
 msgstr "Left: tutte le righe di sinistra"
 
 msgid "Legend"
-msgstr "La leggenda"
+msgstr "Legenda"
 
 msgid "Length"
 msgstr "Lunghezza"

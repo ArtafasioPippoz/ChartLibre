@@ -455,9 +455,10 @@ class SeriesPropertiesWidget(BaseProperties):
 
         self._group_forms: dict[str, InspectorForm] = {}
 
-        def group(title: str, name: str, rows: list[tuple[str, QWidget]], *, collapsed: bool = False) -> InspectorSection:
+        def group(title: str, name: str, rows: list[tuple[str, QWidget]], *, collapsed: bool = False,
+                  foldable: bool = False) -> InspectorSection:
             # An inspector section: a title row with a chevron over one label/control grid, no box.
-            card = InspectorSection(title, self, key="series." + name, collapsed=collapsed)
+            card = InspectorSection(title, self, key="series." + name, collapsed=collapsed, foldable=foldable)
             card.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)  # never below its height
             box_form = InspectorForm(card.body)
             body_layout = QVBoxLayout(card.body)
@@ -472,7 +473,8 @@ class SeriesPropertiesWidget(BaseProperties):
             group(_("Legend"), "legend", [(_("Label"), self._legend_label_edit), ("", flags_row)]),
             group(_("Line"), "line", [("", self._line_editor)]),
             group(_("Marker"), "marker", [("", self._marker_editor)]),
-            group(_("Query"), "query", [("", self._sql_query_edit), ("", self._sort_x_check)], collapsed=True),
+            group(_("Query"), "query", [("", self._sql_query_edit), ("", self._sort_x_check)], collapsed=True,
+              foldable=True),
         ]
 
         raw_layout = section.card.layout()

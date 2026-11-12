@@ -15,7 +15,7 @@ from collections.abc import Callable, Mapping
 from typing import Any
 
 from matplotlib import rcParams
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QCheckBox, QDoubleSpinBox, QFormLayout, QSizePolicy, QSpinBox, QWidget
 
 from app.plugin_api.charts import dashes, markers
@@ -60,6 +60,9 @@ class _StyleEditor(QWidget):
         self._loading = False
         self._kept: dict[str, tuple[Any, int]] = {}  # key -> (stored value, the combo index it showed as)
         self.form = QFormLayout(self)
+        # The fields take the row's width (the macOS default leaves them at their natural size), labels on the left.
+        self.form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
+        self.form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         # A little room above and below: folded to its check box, the macOS box (with its focus ring) was cut.
         self.form.setContentsMargins(0, 4, 0, 4)
         self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
@@ -71,6 +74,8 @@ class _StyleEditor(QWidget):
 
     # -- building
     def _row(self, label: str, widget: QWidget) -> None:
+        if isinstance(widget, (QDoubleSpinBox, QSpinBox)) or hasattr(widget, "setCurrentIndex"):
+            widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.form.addRow(label, widget) if label else self.form.addRow(widget)
         self._fields.append(widget)
 
