@@ -33,7 +33,7 @@ from app.data.sqlite_repo import (
     parse_references,
 )
 from app.logs.logger import applogger
-from app.styles.style import TitledCard, create_action_button, stdSizeAndlayout
+from app.styles.style import TitledCard, create_action_button, mark_editor_panel, stdSizeAndlayout
 from app.utils.config import get_value, set_value
 from app.utils.i18n import _
 
@@ -128,6 +128,8 @@ class ProjectInfoPanel(QWidget):
         self.references_table.verticalHeader().setVisible(False)
         self.references_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.references_table.setMinimumHeight(110)
+        mark_editor_panel(self.references_table)
+        self.references_table.setAlternatingRowColors(True)
         refs_layout.addWidget(self.references_table, 1)
         reference_buttons = QHBoxLayout()
         stdSizeAndlayout(reference_buttons)

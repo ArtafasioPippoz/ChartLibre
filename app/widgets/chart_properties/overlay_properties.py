@@ -25,6 +25,7 @@ from PySide6.QtGui import QFontDatabase
 from PySide6.QtWidgets import (
     QComboBox,
     QHBoxLayout,
+    QAbstractItemView,
     QHeaderView,
     QLabel,
     QPushButton,
@@ -43,6 +44,7 @@ from app.plugin_api.charts.kwarg_spec import DEFAULT
 from app.styles.style import (
     MARGIN_PANEL,
     mark_destructive_button,
+    mark_editor_panel,
     stdSizeAndlayout,
 )
 from app.utils.config import get_constant
@@ -160,7 +162,6 @@ class OverlayPropertiesWidget(BaseProperties):
         root.addWidget(self._build_axis_card(), 0)
 
         self._choice = SegmentedControl(self)
-        self._choice.setObjectName("overlayPropertiesChoice")
         self._stack = QStackedWidget(self)
         self._stack.setMinimumHeight(0)
         self._stack.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
@@ -240,6 +241,11 @@ class OverlayPropertiesWidget(BaseProperties):
         )
         table.setMinimumHeight(TABLE_MIN_HEIGHT)
         table.setToolTip(tooltip)
+        # As the app's other tables: the shared panel look, striped rows, no row numbers, whole rows selected.
+        mark_editor_panel(table)
+        table.setAlternatingRowColors(True)
+        table.verticalHeader().setVisible(False)
+        table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
 
         # Every column to its content, the JSON kwargs (last) takes the rest,
         # the fixed-width widget columns are sized once and left alone.
