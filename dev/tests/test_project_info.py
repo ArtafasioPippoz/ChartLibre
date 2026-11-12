@@ -43,19 +43,20 @@ def test_an_older_project_gets_the_table_on_opening_and_hides_it(tmp_path: Path)
     repo.close()
 
 
-def test_the_window_saves_the_entries_and_remembers_the_author(qapp, tmp_path: Path) -> None:
-    from app.dialogs import project_info_dialog
+def test_the_panel_saves_the_entries_and_remembers_the_author(qapp, tmp_path: Path) -> None:
     from app.utils.config import get_value
+    from app.widgets import project_info_panel
 
     repo = SqliteRepo(db_path=tmp_path / "p.dhub")
-    dialog = project_info_dialog.ProjectInfoDialog(repo)
-    assert dialog.created_label.text() != ""
-    dialog.author_edit.setText("Grace Hopper")
-    dialog.notes_edit.setPlainText("Calibration runs, March")
-    dialog.accept()
+    panel = project_info_panel.ProjectInfoPanel(repo)
+    assert panel.created_label.text() != ""
+    panel.author_edit.setText("Grace Hopper")
+    panel.author_edit.textEdited.emit("Grace Hopper")
+    panel.notes_edit.setPlainText("Calibration runs, March")
+    panel.save()  # the timer does it a moment after a change
     assert repo.project_info()["notes"] == "Calibration runs, March"
-    assert get_value(project_info_dialog.AUTHOR_SETTING) == "Grace Hopper"
-    assert project_info_dialog.default_author() == "Grace Hopper"
+    assert get_value(project_info_panel.AUTHOR_SETTING) == "Grace Hopper"
+    assert project_info_panel.default_author() == "Grace Hopper"
     repo.close()
 
 

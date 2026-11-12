@@ -132,6 +132,7 @@ from app.widgets.chart_properties.figure_properties import FigurePropertiesWidge
 from app.widgets.chart_properties.overlay_properties import OverlayPropertiesWidget
 from app.widgets.chart_properties.series_properties import SeriesPropertiesWidget
 from app.widgets.database_info_panel import DatabaseInfoPanel
+from app.widgets.project_info_panel import ProjectInfoPanel
 from app.widgets.guided_panel import GuidedAnalysisPanel
 from app.widgets.inspector import InspectorPages, filter_page
 from app.widgets.nav_bar import NavBarItem, NavButton, NavigationBar, NavPanel
@@ -969,8 +970,9 @@ class MainWindow(QMainWindow):
         contributors are in dev/ChartLibreDeveloper.py.
         """
         page = NavPanel(self)
-        page.add_buttons(_("Project information"), [NavButton("project_info", self._on_project_info, described=True)],
-                         object_name="projectInfoCard")
+        self._project_info_panel = ProjectInfoPanel(self._repo, page)
+        self._project_info_panel.saved.connect(lambda: self._database_info_panel.set_repo(self._repo))
+        page.add_widget(self._project_info_panel)
         page.add_buttons(_("History"), [NavButton("project_history", self._on_project_history)],
                          object_name="projectHistoryCard")
         page.add_buttons(_("Pictures"), [NavButton("project_images", self._on_project_images, described=True)],
@@ -3347,14 +3349,11 @@ class MainWindow(QMainWindow):
         self._reload_property_widgets()
 
     def _on_project_info(self) -> None:
-        """Author, creation date and notes of the open project."""
+        """Author, creation date and notes of the open project: the Project panel, the cursor on the author."""
         if self._repo is None:
             return
-        from app.dialogs.project_info_dialog import ProjectInfoDialog
-
-        if ProjectInfoDialog(self._repo, cast(QWidget, self)).exec():
-            self._database_info_panel.set_repo(self._repo)
-            self.statusBar().showMessage(_("Project info saved."), 4_000)
+        self._select_navigation("developer")
+        self._project_info_panel.focus_author()
 
     def _on_project_report(self) -> None:
         from app.dialogs.project_report_dialog import ProjectReportDialog
@@ -3645,19 +3644,21 @@ class MainWindow(QMainWindow):
                     self._repo = SqliteRepo(db_path=self._db_path)
                     self._table_panel.set_repo(self._repo)
                     self._database_info_panel.set_repo(self._repo)
+                    self._project_info_panel.set_repo(self._repo)
                     self._table_panel.reload()
                     self._reload_tabs()
                     raise
 
             self._repo = SqliteRepo(db_path=db_path)
             self._db_path = db_path
-            from app.dialogs.project_info_dialog import default_author
+            from app.widgets.project_info_panel import default_author
 
             if default_author():
                 # A new project carries the author this computer remembers.
                 self._repo.set_project_info({"author": default_author()})
             self._table_panel.set_repo(self._repo)
             self._database_info_panel.set_repo(self._repo)
+            self._project_info_panel.set_repo(self._repo)
             self._update_window_title()
             set_last_database(db_path)
 
@@ -3714,6 +3715,7 @@ class MainWindow(QMainWindow):
             self._db_path = db_path
             self._table_panel.set_repo(self._repo)
             self._database_info_panel.set_repo(self._repo)
+            self._project_info_panel.set_repo(self._repo)
             self._update_window_title()
             set_last_database(db_path)
             self._table_panel.reload()

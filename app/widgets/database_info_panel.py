@@ -1,13 +1,11 @@
-"""Database Info: path, size, tables and import links, in one place.
+"""Database Info: the few facts about the file that the project's own information does not give.
 
-A read-only overview that puts the whole database's shape (how many tables,
-how big, which ones are fed by a link) on screen at once. Exporting,
-renaming and refreshing a table's link are the Tables page's, in its
-list's menu - one place for each action (todo H-14).
+Its size on disk and how many tables and rows it holds, with the Optimize DB action. Path, author and dates are
+in Project information; the inventory of tables (the app's own included) with a preview of their rows is a
+developer's tool (dev/developer/tables_inventory.py), and the person's own tables are on the Tables page.
 
-A plain embeddable QWidget, not a QDialog: it sits at the top of
-MainWindow's Project page (see main_window._create_developer_page), with
-its own Optimize DB action, rather than opening as its own modal window.
+A plain embeddable QWidget, not a QDialog: it sits in MainWindow's Project page (see
+main_window._create_developer_page), with its own Optimize DB action.
 """
 from __future__ import annotations
 
@@ -15,13 +13,9 @@ from collections.abc import Callable
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QAbstractItemView,
     QFormLayout,
     QHBoxLayout,
-    QHeaderView,
     QLabel,
-    QTableWidget,
-    QTableWidgetItem,
     QVBoxLayout,
     QWidget,
 )
@@ -31,7 +25,6 @@ from app.logs.logger import applogger
 from app.styles.style import (
     TitledCard,
     create_action_button,
-    mark_editor_panel,
     stdSizeAndlayout,
 )
 from app.utils.i18n import _
@@ -48,7 +41,7 @@ def _human_size(num_bytes: int) -> str:
 
 
 class DatabaseInfoPanel(QWidget):
-    """Path, size, tables and import links for the connected database."""
+    """Size and contents of the connected database, with Optimize DB."""
 
     def __init__(
         self,
@@ -73,20 +66,6 @@ class DatabaseInfoPanel(QWidget):
         self._card_layout.addWidget(self._form_host)
         self._build_form()
 
-        self._table = QTableWidget(0, 3, self._card)
-        self._table.setHorizontalHeaderLabels([_("Table"), _("Rows"), _("Linked")])
-        header = self._table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
-        self._table.verticalHeader().setVisible(False)
-        self._table.setAlternatingRowColors(True)
-        self._table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        self._table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        self._table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
-        mark_editor_panel(self._table)
-        self._card_layout.addWidget(self._table, 1)
-
         if optimize_action is not None:
             # Below the list of tables, right-aligned: the last thing in the
             # card, after what it acts on - the file's figures above and the
@@ -103,31 +82,36 @@ class DatabaseInfoPanel(QWidget):
             )
             self._card_layout.addLayout(optimize_row)
 
-        root.addWidget(self._titled_card, 1)
-
-        self._reload_tables()
+        root.addWidget(self._titled_card, 0)
 
     def set_repo(self, repo: SqliteRepo) -> None:
         """Point the panel at a newly-opened database and refresh everything."""
         self._repo = repo
         self._build_form()
-        self._reload_tables()
 
     def _build_form(self) -> None:
-        """(Re)build the path/size/pragma rows for the current repo."""
+        """(Re)build the rows for the current repo: size, and what it holds."""
         while self._form_layout.rowCount():
             self._form_layout.removeRow(0)
-
-        self._form_layout.addRow(_("Path:"), self._selectable_label(str(self._repo.db_path)))
-        info = self._repo.project_info()
-        if info.get("author"):
-            self._form_layout.addRow(_("Author:"), self._selectable_label(info["author"]))
-        if info.get("created"):
-            from app.dialogs.project_info_dialog import readable_date
-
-            self._form_layout.addRow(_("Created:"), self._selectable_label(readable_date(info["created"])))
         self._form_layout.addRow(_("Size on disk:"), self._selectable_label(self._db_size_text()))
-        self._add_pragma_rows()
+        try:
+            info = self._repo.database_pragma_info()
+        except Exception:
+            applogger.exception("Could not read database PRAGMA info.")
+            return
+        self._form_layout.addRow(
+            _("Tables:"),
+            self._selectable_label(
+                _("{tables} table(s), {rows} row(s) total").format(
+                    tables=f"{info.table_count:,}", rows=f"{info.total_rows:,}"
+                )
+            ),
+        )
+        if info.reclaimable_bytes:
+            self._form_layout.addRow(
+                _("Reclaimable:"),
+                self._selectable_label(_("{amount} by Optimize DB").format(amount=_human_size(info.reclaimable_bytes))),
+            )
 
     def _selectable_label(self, text: str) -> QLabel:
         label = QLabel(text, self)
@@ -140,89 +124,3 @@ class DatabaseInfoPanel(QWidget):
             return _human_size(self._repo.db_path.stat().st_size)
         except OSError:
             return _("unknown")
-
-    def _add_pragma_rows(self) -> None:
-        """Add everything SQLite and the filesystem themselves can say.
-
-        A best effort, not a hard requirement of building this panel - a
-        PRAGMA failing (a very old or unusual SQLite build) loses this
-        section, not the whole panel.
-        """
-        try:
-            info = self._repo.database_pragma_info()
-        except Exception:
-            applogger.exception("Could not read database PRAGMA info.")
-            return
-
-        form = self._form_layout
-        form.addRow(
-            _("Tables:"),
-            self._selectable_label(
-                _("{tables} table(s), {rows} row(s) total").format(
-                    tables=f"{info.table_count:,}", rows=f"{info.total_rows:,}"
-                )
-            ),
-        )
-        if info.reclaimable_bytes:
-            pages_text = _(
-                "{count:,} x {size} B, {amount} reclaimable by Optimize DB"
-            ).format(
-                count=info.page_count,
-                size=info.page_size,
-                amount=_human_size(info.reclaimable_bytes),
-            )
-        else:
-            pages_text = _("{count:,} x {size} B").format(
-                count=info.page_count, size=info.page_size
-            )
-        form.addRow(_("Pages:"), self._selectable_label(pages_text))
-        form.addRow(
-            _("Encoding:"), self._selectable_label(f"{info.encoding} · {info.journal_mode}")
-        )
-        form.addRow(_("SQLite version:"), self._selectable_label(info.sqlite_version))
-        if info.file_created is not None:
-            form.addRow(
-                _("File created:"),
-                self._selectable_label(info.file_created.strftime("%Y-%m-%d %H:%M")),
-            )
-        if info.file_modified is not None:
-            form.addRow(
-                _("Last modified:"),
-                self._selectable_label(info.file_modified.strftime("%Y-%m-%d %H:%M")),
-            )
-
-    def _reload_tables(self) -> None:
-        """Repopulate the table list, keeping the current selection by name.
-
-        include_internal=True: this list is the database's own inventory,
-        so the app's "__..._descriptors__" tables belong in it same as any
-        other - unlike list_user_tables()'s other callers (the chart
-        data-source picker, the pragma row-count total), which only ever
-        want tables a user could plot.
-        """
-        selected = self._selected_table()
-        frame = self._repo.list_user_tables(include_internal=True)
-
-        self._table.setRowCount(len(frame.index))
-        for row, record in enumerate(frame.to_dict("records")):
-            name = str(record.get("Table", ""))
-            has_link = bool(record.get("has_link", False))
-            rows = self._repo.row_count(name)
-
-            self._table.setItem(row, 0, QTableWidgetItem(name))
-            rows_item = QTableWidgetItem(f"{rows:,}")
-            rows_item.setTextAlignment(
-                Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
-            )
-            self._table.setItem(row, 1, rows_item)
-            self._table.setItem(row, 2, QTableWidgetItem(_("Yes") if has_link else ""))
-
-            if name == selected:
-                self._table.selectRow(row)
-
-    def _selected_table(self) -> str | None:
-        row = self._table.currentRow()
-        if row < 0:
-            return None
-        item = self._table.item(row, 0)
-        return item.text() if item else None

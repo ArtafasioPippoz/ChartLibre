@@ -268,7 +268,7 @@ class FigurePropertiesWidget(BaseProperties):
         self._show_dates(desc)
 
     def _show_dates(self, desc: Any) -> None:
-        from app.dialogs.project_info_dialog import readable_date
+        from app.widgets.project_info_panel import readable_date
 
         created = str(getattr(desc, "created", "") or "")
         modified = str(getattr(desc, "last_modified", "") or "")

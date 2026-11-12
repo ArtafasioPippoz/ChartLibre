@@ -133,6 +133,9 @@ class DeveloperWindow(QMainWindow):
             NavButton("data_operation_builder", lambda: DataOperationBuilderDialog(self).exec(), described=True),
             NavButton("function_creator", lambda: FunctionCreatorDialog(self).exec(), described=True),
             NavButton("renderer_helper", lambda: RendererHelperDialog(self).exec(), described=True),
+            NavButton("database_info", self._tables_inventory, text="Project tables",
+                      tooltip="Every table of a project file, the app's own included, with a preview of its rows.",
+                      described=True),
             NavButton("settings", self._qss_editor, text="Qt style editor",
                       tooltip="Edit one of app/styles/*.qss and try it live on the app's widgets, light or dark.",
                       described=True),
@@ -151,6 +154,11 @@ class DeveloperWindow(QMainWindow):
         email.editingFinished.connect(lambda: set_value(MYMEMORY_EMAIL_SETTING, email.text().strip()))
         page.add_frame("MyMemory e-mail", email)
         return page
+
+    def _tables_inventory(self) -> None:
+        from dev.developer.tables_inventory import TablesInventoryDialog
+
+        TablesInventoryDialog(self).exec()
 
     def _qss_editor(self) -> None:
         from dev.developer.qss_editor import QssEditorDialog

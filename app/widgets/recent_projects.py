@@ -271,7 +271,7 @@ class RecentProjectsView(ProjectListView):
     def describe(self, data: object) -> tuple[bytes | None, str, str, bool]:
         """Picture and information of the project at *data*, read without opening it."""
         from app.data.sqlite_repo import parse_references, read_project_info
-        from app.dialogs.project_info_dialog import readable_date
+        from app.widgets.project_info_panel import readable_date
         from app.utils.project_preview import project_preview_bytes
 
         path = Path(str(data))
