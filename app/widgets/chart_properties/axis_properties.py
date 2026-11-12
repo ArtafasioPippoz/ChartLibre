@@ -160,7 +160,7 @@ class AxisPropertiesWidget(BaseProperties):
         title_section, position_section, appearance_section = self._build_shared_properties_frame()
 
         # One coordinate page, shown for the X, Y or Z chosen in the segmented control.
-        scales = self._new_section(_("Scales and limits"), "scales")
+        scales = self._new_section("", "scales", fixed=True)  # X / Y / Z is its title; it never folds
         self._coordinate_choice = SegmentedControl(scales.body)
         for axis in axis_options.AXES:
             self._coordinate_choice.add_segment(axis.upper())
@@ -195,9 +195,9 @@ class AxisPropertiesWidget(BaseProperties):
         outer.addWidget(scroll, 1)
         self._on_coordinate_chosen(0)
 
-    def _new_section(self, title: str, key: str, *, collapsed: bool = False) -> InspectorSection:
+    def _new_section(self, title: str, key: str, *, collapsed: bool = False, fixed: bool = False) -> InspectorSection:
         """An inspector section of this page with a vertical body, remembered under "axis.<key>"."""
-        section = InspectorSection(title, self, key="axis." + key, collapsed=collapsed)
+        section = InspectorSection(title, self, key="axis." + key, collapsed=collapsed, fixed=fixed)
         body = QVBoxLayout(section.body)
         body.setContentsMargins(0, 0, 0, 0)
         body.setSpacing(6)
@@ -597,9 +597,6 @@ class AxisPropertiesWidget(BaseProperties):
         layout = raw_layout
 
         # The axis' name above its menu, as the Series page does.
-        self._axis_title = QLabel(_("Axis"), section)  # the name is in the menu below: not said twice
-        self._axis_title.setProperty("sectionTitle", True)
-        layout.addWidget(self._axis_title)
         self._axis_combo = QComboBox(section)
         self._configure_combo_width(self._axis_combo, minimum_contents_length=24)
         # The tooltip that keeps the elided name readable is wired by

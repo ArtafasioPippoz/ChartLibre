@@ -250,12 +250,12 @@ class InspectorSection(QWidget):
     toggled = Signal(bool)
 
     def __init__(self, title: str, parent: QWidget | None = None, *, key: str, collapsed: bool = False,
-                 card: bool = True) -> None:
+                 card: bool = True, fixed: bool = False) -> None:
         super().__init__(parent)
         self.setObjectName("inspectorSection")
         self._key = key
         remembered = config.get_section(SECTIONS_KEY).get(key)
-        is_open = remembered if isinstance(remembered, bool) else not collapsed
+        is_open = True if fixed else (remembered if isinstance(remembered, bool) else not collapsed)
         self._header = QToolButton(self)
         self._header.setObjectName("inspectorSectionTitle")
         self._title = title
@@ -286,6 +286,10 @@ class InspectorSection(QWidget):
         layout.setSpacing(5)
         layout.addWidget(self._header)
         layout.addWidget(self.body)
+        if fixed:  # no title, no fold: the card is always there (its own first row says what it is)
+            self._header.hide()
+            self._header.setChecked(True)
+            self._forced_open = True
         self._apply(is_open)
 
     def title(self) -> str:
