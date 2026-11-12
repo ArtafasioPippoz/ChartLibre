@@ -162,6 +162,14 @@ class AnimationPlayer(QObject):
             self._panel.reload()
         finally:
             self._ticking = False
+        # The whole chart repainted, not the dirty corner a frame leaves: macOS kept a grey rectangle of the
+        # canvas (the scroll area's viewport) where a frame's partial repaint never reached.
+        area = getattr(self._panel, "_fixed_scroll_area", None)
+        if area is not None:
+            area.viewport().update()
+        canvas = getattr(self._panel, "_canvas", None)
+        if canvas is not None:
+            canvas.update()
 
     def _sync_controls(self) -> None:
         self.changed.emit()
