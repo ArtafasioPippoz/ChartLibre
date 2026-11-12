@@ -61,7 +61,7 @@ from app.utils.hidpi import apply_configured_dpi
 from app.utils.i18n import _
 from app.widgets.chart_panel import RESIZE_MODE_CHOICES
 from app.widgets.chart_properties.base_properties import BaseProperties
-from app.widgets.inspector import InspectorSection
+from app.widgets.inspector import InspectorCard
 from app.widgets.font_scale_control import FontScaleControl
 from app.widgets.pair_grid import PairGrid
 
@@ -88,27 +88,6 @@ JOURNAL_WIDTHS: tuple[tuple[str, float], ...] = (
     ("APS - one column (8.6 cm)", 8.6), ("APS - two columns (17.8 cm)", 17.8),
     ("A4 page width, 2 cm margins (17.0 cm)", 17.0),
 )
-
-
-
-class _Section(InspectorSection):
-    """What the page's cards were, as an inspector section: a title row over a body, no frame.
-
-    ``card`` is the body, so the builders keep using ``section.card.layout()`` as they did on a TitledCard;
-    open or closed is remembered under "figure.<object name>".
-    """
-
-    def __init__(self, parent: QWidget | None, title: str, object_name: str, *, collapsible: bool = False,
-                 collapsed: bool = False) -> None:
-        super().__init__(title, parent, key="figure." + object_name, collapsed=collapsed)
-        self.setObjectName(object_name)
-        layout = QVBoxLayout(self.body)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(6)
-
-    @property
-    def card(self) -> QWidget:
-        return self.body
 
 
 class FigurePropertiesWidget(BaseProperties):
@@ -377,7 +356,7 @@ class FigurePropertiesWidget(BaseProperties):
         # Notes are saved on their own, a moment after typing stops: they
         # change nothing drawn, so they do not go through the panel's apply
         # and its redraw.
-        name_section = _Section(self, _("Name and notes"), "figureNameCard")
+        name_section = InspectorCard(self, _("Name and notes"), "figureNameCard")
         name_section_lay = name_section.card.layout()
 
         self._name_edit = QLineEdit(name_section)
@@ -408,7 +387,7 @@ class FigurePropertiesWidget(BaseProperties):
         """The View card."""
         # How the panel shows this figure: the first thing to change when a
         # chart does not fit, so on its own above the style.
-        view_section = _Section(self, _("View"), "figureViewCard")
+        view_section = InspectorCard(self, _("View"), "figureViewCard")
         self._resize_mode_combo = QComboBox(view_section)
         self._configure_combo_width(self._resize_mode_combo, minimum_contents_length=14)
         for value, label, tooltip in RESIZE_MODE_CHOICES:
@@ -426,7 +405,7 @@ class FigurePropertiesWidget(BaseProperties):
 
     def _build_style_section(self) -> QWidget:
         """The Style card."""
-        style_section = _Section(self, _("Style"), "figureStyleCard")
+        style_section = InspectorCard(self, _("Style"), "figureStyleCard")
         style_section_lay = style_section.card.layout()
 
         # The style's name, shown, not typed: Browse… picks it. Drawn as plain text, not as a field.
@@ -479,7 +458,7 @@ class FigurePropertiesWidget(BaseProperties):
 
     def _build_grid_section(self) -> QWidget:
         """The Grid card."""
-        grid_section = _Section(self, _("Grid"), "figureGridCard", collapsible=True)
+        grid_section = InspectorCard(self, _("Grid"), "figureGridCard", collapsible=True)
         grid_section_lay = grid_section.card.layout()
 
         self._nrows_combo = QComboBox(grid_section)
@@ -590,7 +569,7 @@ class FigurePropertiesWidget(BaseProperties):
 
     def _build_panel_letters_section(self) -> QWidget:
         """Letters for the panels, for a paper's text to refer to: a card of its own, closed like Grid."""
-        section = _Section(self, _("Panel letters"), "figurePanelLettersCard", collapsible=True, collapsed=True)
+        section = InspectorCard(self, _("Panel letters"), "figurePanelLettersCard", collapsible=True, collapsed=True)
         self._panel_labels_combo = QComboBox(section)
         self._configure_combo_width(self._panel_labels_combo, minimum_contents_length=10)
         for value, text in panel_labels.STYLES:
@@ -613,7 +592,7 @@ class FigurePropertiesWidget(BaseProperties):
 
     def _build_options_section(self) -> QWidget:
         """The Figure options card."""
-        opts_section = _Section(self, _("Figure options"), "figureOptionsCard")
+        opts_section = InspectorCard(self, _("Figure options"), "figureOptionsCard")
         opts_section_lay = opts_section.card.layout()
 
         self._fig_dpi = QSpinBox(opts_section)
@@ -739,7 +718,7 @@ class FigurePropertiesWidget(BaseProperties):
         controls are disabled rather than silently ignored.
         """
         # Closed: it applies only under the Manual layout, which few figures use.
-        section = _Section(self, _("Manual spacing"), "figureMarginsCard", collapsible=True, collapsed=True)
+        section = InspectorCard(self, _("Manual spacing"), "figureMarginsCard", collapsible=True, collapsed=True)
         section_lay = section.card.layout()
 
         # Two fields per row - the natural pairs an edge or a gap already

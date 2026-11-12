@@ -29,10 +29,10 @@ from PySide6.QtWidgets import (
     QLabel,
     QPushButton,
     QSizePolicy,
+    QStackedWidget,
     QSpinBox,
     QTableWidget,
     QTableWidgetItem,
-    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -47,6 +47,7 @@ from app.styles.style import (
 )
 from app.utils.config import get_constant
 from app.utils.i18n import _
+from app.widgets.inspector import SegmentedControl
 from app.widgets.chart_properties.base_properties import BaseProperties
 from app.widgets.drop_down_controls.color_combo import MatplotlibColorCombo
 from app.widgets.drop_down_controls.line_combo import LineStyleCombo
@@ -158,13 +159,12 @@ class OverlayPropertiesWidget(BaseProperties):
         root.setSpacing(14)
         root.addWidget(self._build_axis_card(), 0)
 
-        self._tabs = QTabWidget(self)
-        self._tabs.setObjectName("overlayPropertiesTabs")
-        self._tabs.setDocumentMode(True)
-        self._tabs.setMinimumHeight(0)
-        self._tabs.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
-        )
+        self._choice = SegmentedControl(self)
+        self._choice.setObjectName("overlayPropertiesChoice")
+        self._stack = QStackedWidget(self)
+        self._stack.setMinimumHeight(0)
+        self._stack.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self._choice.current_changed.connect(self._stack.setCurrentIndex)
 
         self._annotations_table = self._add_tab(
             _("Annotations"), "overlayAnnotationsCard", "axisAnnotationsTable",
@@ -197,7 +197,8 @@ class OverlayPropertiesWidget(BaseProperties):
                 "JSON."
             ),
         )
-        root.addWidget(self._tabs, 1)
+        root.addWidget(self._choice, 0)
+        root.addWidget(self._stack, 1)
 
     def _build_axis_card(self) -> QWidget:
         """Name the axis being edited without an empty card body."""
@@ -223,7 +224,7 @@ class OverlayPropertiesWidget(BaseProperties):
         around the table, whose frame is enough - a card made a frame inside
         a frame with the tab bar stuck to its top edge (B-11).
         """
-        card = QWidget(self._tabs)
+        card = QWidget(self._stack)
         card.setObjectName(card_name)
         card.setProperty("toolboxPage", True)
         card.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
@@ -281,7 +282,8 @@ class OverlayPropertiesWidget(BaseProperties):
         else:
             self._btn_add_measurement, self._btn_delete_measurement = buttons
 
-        self._tabs.addTab(card, title)
+        self._choice.add_segment(title)
+        self._stack.addWidget(card)
         return table
 
     # ------------------------------------------------------------------

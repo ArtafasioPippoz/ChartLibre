@@ -26,7 +26,8 @@ from PySide6.QtWidgets import (
 )
 
 from app.plugin_api.charts import animation as anim
-from app.styles.style import MARGIN_TOOLBOX_PAGE, TitledCard, fit_spin_width, stdSizeAndlayout
+from app.widgets.inspector import InspectorCard
+from app.styles.style import MARGIN_TOOLBOX_PAGE, fit_spin_width, stdSizeAndlayout
 from app.utils.i18n import _
 from app.widgets.chart_properties.base_properties import BaseProperties
 
@@ -64,7 +65,7 @@ class AnimationPropertiesWidget(BaseProperties):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(*MARGIN_TOOLBOX_PAGE)
 
-        what = TitledCard(self, _("Play along"))
+        what = InspectorCard(self, _("Play along"), "animationPlay", prefix="animation")
         form = QFormLayout()
         stdSizeAndlayout(form)
         self._enabled = QCheckBox(_("Animate this figure"), what.card)
@@ -114,7 +115,7 @@ class AnimationPropertiesWidget(BaseProperties):
         what.card.layout().addWidget(self._note)
         layout.addWidget(what)
 
-        how = TitledCard(self, _("Playing"))
+        how = InspectorCard(self, _("Playing"), "animationPlaying", prefix="animation")
         how_form = QFormLayout()
         stdSizeAndlayout(how_form)
         self._fps = QDoubleSpinBox(how.card)
