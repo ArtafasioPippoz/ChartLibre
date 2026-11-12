@@ -1626,6 +1626,8 @@ def _apply_spines(ax: Any, options: dict[str, Any]) -> None:
         key = f"hide_spine_{name}"
         if key not in options:
             continue
+        if name not in spines:  # a polar axes has other spines, a 3D one none: nothing to hide there
+            continue
         try:
             spines[name].set_visible(not bool(options.get(key)))
         except Exception:

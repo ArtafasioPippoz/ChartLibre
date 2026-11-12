@@ -5,6 +5,8 @@ participation), ordering, deletion, and the series SQL query.
 """
 from __future__ import annotations
 
+import sys
+
 import re
 from functools import cache
 from typing import Any
@@ -281,6 +283,8 @@ class SeriesPropertiesWidget(BaseProperties):
         for _button in (self._btn_move_up, self._btn_move_down, self._btn_delete):
             _button.setIconSize(QSize(14, 14))  # a small icon, so a short word keeps room beside it
             _button.setMinimumWidth(78)
+            if sys.platform == "darwin":  # a Mac button is its word
+                _button.setIcon(QIcon())
         # No Apply button: every style control applies itself a short moment
         # after it changes (see _connect_auto_apply). Up / Down / Delete stay
         # - they reorder and remove series, not commit the form.

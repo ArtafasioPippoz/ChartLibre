@@ -11,8 +11,11 @@ that used to apply an edit per widget on every axis change.
 """
 from __future__ import annotations
 
+import sys
+
 from typing import Any, ClassVar, Final, TypeAlias, cast
 
+from PySide6.QtGui import QIcon
 from PySide6.QtCore import QEvent, QObject, QSignalBlocker, QSize, Qt, Signal
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -648,6 +651,8 @@ class AxisPropertiesWidget(BaseProperties):
         for _button in (self._btn_move_up, self._btn_move_down, self._btn_delete):
             _button.setIconSize(QSize(14, 14))  # a small icon, so a short word keeps room beside it
             _button.setMinimumWidth(78)
+            if sys.platform == "darwin":  # a Mac button is its word
+                _button.setIcon(QIcon())
         self._renderer_value.hide()
         return section
 

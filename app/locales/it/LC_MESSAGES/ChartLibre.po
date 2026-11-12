@@ -2135,7 +2135,7 @@ msgid "Figure {number}. {name}"
 msgstr "Figura {number}. {name}"
 
 msgid "Figure's"
-msgstr "La figura è"
+msgstr "Come la figura"
 
 msgid "Figure:"
 msgstr "Figura:"
@@ -3308,7 +3308,7 @@ msgid "Max lags:"
 msgstr "Ritardi max:"
 
 msgid "Max points"
-msgstr "Punti salienti"
+msgstr "Punti massimi"
 
 msgid "Max runtime:"
 msgstr "Runtime massimo:"

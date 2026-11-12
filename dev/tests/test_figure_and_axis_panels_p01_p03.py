@@ -49,3 +49,19 @@ def test_a_journal_column_sets_the_width_and_keeps_the_proportions(qapp) -> None
     panel._on_journal_width_selected(panel._journal_combo.currentIndex())
     assert panel._fig_width_cm.value() == 8.9 and abs(panel._fig_height_cm.value() - 6.68) < 0.01
     assert panel._journal_combo.currentIndex() == 0
+
+
+def test_hiding_spines_on_a_polar_or_3d_axes_is_skipped_not_an_error(caplog) -> None:
+    import logging
+
+    from app.plugin_api.charts.render_figure import _apply_spines
+
+    figure = Figure()
+    options = {f"hide_spine_{name}": True for name in ("top", "right", "bottom", "left")}
+    with caplog.at_level(logging.ERROR):
+        _apply_spines(figure.add_subplot(1, 2, 1, projection="polar"), options)
+        _apply_spines(figure.add_subplot(1, 2, 2, projection="3d"), options)
+    assert not [record for record in caplog.records if record.levelno >= logging.ERROR]
+    plain = Figure().add_subplot()
+    _apply_spines(plain, {"hide_spine_top": True})
+    assert not plain.spines["top"].get_visible()
