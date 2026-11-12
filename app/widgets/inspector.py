@@ -188,7 +188,8 @@ class InspectorSection(QWidget):
 
     toggled = Signal(bool)
 
-    def __init__(self, title: str, parent: QWidget | None = None, *, key: str, collapsed: bool = False) -> None:
+    def __init__(self, title: str, parent: QWidget | None = None, *, key: str, collapsed: bool = False,
+                 card: bool = True) -> None:
         super().__init__(parent)
         self.setObjectName("inspectorSection")
         self._key = key
@@ -210,8 +211,12 @@ class InspectorSection(QWidget):
         self._header.toggled.connect(self._on_toggled)
         self.body = QWidget(self)
         self.body.setObjectName("inspectorSectionBody")
+        if card:  # the grey rounded surface of the app's other cards, the title above it
+            self.body.setProperty("card", True)
+            self.body.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+            self.body.setContentsMargins(10, 8, 10, 8)
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 4, 0, 6)
+        layout.setContentsMargins(0, 6, 0, 6)
         layout.setSpacing(4)
         layout.addWidget(self._header)
         layout.addWidget(self.body)
@@ -259,7 +264,7 @@ class InspectorForm(QWidget):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._grid = QGridLayout(self)
-        self._grid.setContentsMargins(14, 0, 0, 0)
+        self._grid.setContentsMargins(0, 0, 0, 0)
         self._grid.setHorizontalSpacing(8)
         self._grid.setVerticalSpacing(6)
         self._grid.setColumnStretch(1, 1)

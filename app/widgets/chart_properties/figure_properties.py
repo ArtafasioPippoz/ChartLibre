@@ -61,7 +61,7 @@ from app.utils.hidpi import apply_configured_dpi
 from app.utils.i18n import _
 from app.widgets.chart_panel import RESIZE_MODE_CHOICES
 from app.widgets.chart_properties.base_properties import BaseProperties
-from app.widgets.inspector import InspectorCard
+from app.widgets.inspector import InspectorCard, InspectorForm
 from app.widgets.font_scale_control import FontScaleControl
 from app.widgets.pair_grid import PairGrid
 
@@ -484,12 +484,7 @@ class FigurePropertiesWidget(BaseProperties):
         # rearrangement, not a stored figure property), so an Apply pressed
         # for some unrelated edit would silently flatten a hand-built
         # layout back to a uniform grid.
-        preset_row = QWidget(grid_section)
-        preset_lay = QHBoxLayout(preset_row)
-        preset_lay.setContentsMargins(0, 0, 0, 0)
-        preset_lay.setSpacing(8)
-
-        self._layout_preset_combo = QComboBox(preset_row)
+        self._layout_preset_combo = QComboBox(grid_section)
         # A placeholder first row, carrying no preset, and the row this
         # combo is put back to after every apply (see
         # _reset_layout_preset_combo). Two things need it: picking the
@@ -509,8 +504,6 @@ class FigurePropertiesWidget(BaseProperties):
         self._layout_preset_combo.activated.connect(
             self._on_layout_preset_selected
         )
-        preset_lay.addWidget(QLabel(_("Preset"), preset_row))
-        preset_lay.addWidget(self._layout_preset_combo, 1)
 
         # Axes that share a scale are drawn flush by default, the way
         # Matplotlib's own shared-axis gallery example does it - these two
@@ -528,24 +521,12 @@ class FigurePropertiesWidget(BaseProperties):
         self._shared_hspace.setToolTip(
             _("Gap between shared axes side by side. 0 draws them flush.")
         )
-        # Two to a row, in short words: Rows | Cols, then the shared gap
-        # down | across - "Gap V [] H []" reads as one setting in two halves.
-        gap_v = QLabel(_("Gap V"), grid_section)
-        gap_v.setToolTip(self._shared_vspace.toolTip())
-        gap_h = QLabel(_("H"), grid_section)
-        gap_h.setToolTip(self._shared_hspace.toolTip())
-        grid_section_lay.addWidget(
-            PairGrid(
-                [
-                    (QLabel(_("Rows"), grid_section), self._nrows_combo),
-                    (QLabel(_("Cols"), grid_section), self._ncols_combo),
-                    (gap_v, self._shared_vspace),
-                    (gap_h, self._shared_hspace),
-                ],
-                grid_section,
-            )
-        )
-        grid_section_lay.addWidget(preset_row)
+        form = InspectorForm(grid_section)
+        form.add_row(_("Rows"), self._nrows_combo)
+        form.add_row(_("Cols"), self._ncols_combo)
+        form.add_row(_("Gap V"), self._shared_vspace, self._shared_vspace.toolTip())
+        form.add_row(_("Gap H"), self._shared_hspace, self._shared_hspace.toolTip())
+        form.add_row(_("Preset"), self._layout_preset_combo)
 
         # A mosaic, as plt.subplot_mosaic reads it: letters are the axes in order, a repeated letter
         # is one axis spanning those cells, a dot an empty cell.
@@ -557,13 +538,8 @@ class FigurePropertiesWidget(BaseProperties):
               "starts a new row. Press Enter to apply.")
         )
         self._mosaic_edit.returnPressed.connect(self._on_mosaic_entered)
-        mosaic_row = QWidget(grid_section)
-        mosaic_lay = QHBoxLayout(mosaic_row)
-        mosaic_lay.setContentsMargins(0, 0, 0, 0)
-        mosaic_lay.setSpacing(8)
-        mosaic_lay.addWidget(QLabel(_("Mosaic"), mosaic_row))
-        mosaic_lay.addWidget(self._mosaic_edit, 1)
-        grid_section_lay.addWidget(mosaic_row)
+        form.add_row(_("Mosaic"), self._mosaic_edit)
+        grid_section_lay.addWidget(form)
 
         return grid_section
 
@@ -678,30 +654,20 @@ class FigurePropertiesWidget(BaseProperties):
                 Qt.ItemDataRole.ToolTipRole,
             )
 
-        # Two to a row, each pair one idea: resolution and type size, the two
-        # halves of the size, how the panel shows the figure and how it lays
-        # it out, how much it draws and whether it frames it. One field a row
-        # made this the longest section of the panel; PairGrid still drops to
-        # one a row when the panel is too narrow for two.
-        def pair(text: str, field: QWidget) -> tuple[QWidget, QWidget]:
-            label = QLabel(text, opts_section)
-            label.setToolTip(field.toolTip())
-            return label, field
-
-        opts_section_lay.addWidget(
-            PairGrid(
-                [
-                    pair(_("DPI"), self._fig_dpi),
-                    pair(_("Font size"), self._font_scale),
-                    pair(_("Width"), self._fig_width_cm),
-                    pair(_("Height"), self._fig_height_cm),
-                    pair(_("Journal"), self._journal_combo),
-                    pair(_("Figure layout"), self._fig_layout_mode),
-                    pair(_("Border"), self._fig_frameon),
-                ],
-                opts_section,
-            )
-        )
+        # One setting a row, its label on the left: a pair of fields a row cut the labels and put the
+        # Border box under its word; every row now reads as label and control on one line.
+        form = InspectorForm(opts_section)
+        for text, field in (
+            (_("DPI"), self._fig_dpi),
+            (_("Font size"), self._font_scale),
+            (_("Width"), self._fig_width_cm),
+            (_("Height"), self._fig_height_cm),
+            (_("Journal"), self._journal_combo),
+            (_("Figure layout"), self._fig_layout_mode),
+            (_("Border"), self._fig_frameon),
+        ):
+            form.add_row(text, field, field.toolTip())
+        opts_section_lay.addWidget(form)
         return opts_section
 
 

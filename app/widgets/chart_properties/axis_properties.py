@@ -517,7 +517,7 @@ class AxisPropertiesWidget(BaseProperties):
             spin.setMaximumWidth(120)
 
         def card(title: str, name: str, *, collapsed: bool = False) -> tuple[QWidget, QGridLayout, QWidget]:
-            section = InspectorSection(title, page, key="axis." + name, collapsed=collapsed)
+            section = InspectorSection(title, page, key="axis." + name, collapsed=collapsed, card=False)
             QVBoxLayout(section.body).setContentsMargins(0, 0, 0, 0)
             grid = QGridLayout()
             grid.setContentsMargins(0, 0, 0, 0)
