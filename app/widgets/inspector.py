@@ -136,8 +136,13 @@ class InspectorPages(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         layout.addWidget(bar)
+        self._header_layout = layout
         layout.addWidget(self._stack, 1)
         self._segments.current_changed.connect(self._show)
+
+    def set_header(self, widget: QWidget) -> None:
+        """*widget* (the selection line) between the segments and the pages."""
+        self._header_layout.insertWidget(1, widget)
 
     def segments(self) -> SegmentedControl:
         return self._segments
@@ -278,3 +283,89 @@ class InspectorCard(InspectorSection):
     @property
     def card(self) -> QWidget:
         return self.body
+
+
+class SelectionLine(QFrame):
+    """What is being edited, as one line: the axis > the series, a menu on each.
+
+    It replaces the combo at the top of the Axis page and the one at the top of the Series page, which stay
+    (hidden) as the model and the signal source: a choice here sets the combo and sends its ``activated``, so
+    everything that listened to the combo still hears it. Up / Down / Delete are the menu's last items and
+    press the pages' own buttons.
+    """
+
+    def __init__(self, axis_combo, series_combo, axis_actions, series_actions, parent: QWidget | None = None, *,
+                 note: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setObjectName("selectionLine")
+        self._axis_combo = axis_combo
+        self._series_combo = series_combo
+        self.axis_button = self._make_button("selectionAxis")
+        self.series_button = self._make_button("selectionSeries")
+        self._separator = QLabel(">", self)
+        self._separator.setObjectName("selectionSeparator")
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(10, 2, 10, 2)
+        outer.setSpacing(2)
+        layout = QHBoxLayout()
+        layout.setSpacing(4)
+        layout.addWidget(self.axis_button, 1)
+        layout.addWidget(self._separator, 0)
+        layout.addWidget(self.series_button, 1)
+        outer.addLayout(layout)
+        if note is not None:  # "Also editing ..." (shift-click on the chart), below the line
+            note.setParent(self)
+            outer.addWidget(note)
+        self._wire(self.axis_button, axis_combo, axis_actions)
+        self._wire(self.series_button, series_combo, series_actions)
+        for combo in (axis_combo, series_combo):
+            combo.currentIndexChanged.connect(self.refresh)
+            model = combo.model()
+            for signal in (model.rowsInserted, model.rowsRemoved, model.modelReset, model.dataChanged):
+                signal.connect(self.refresh)
+        self.refresh()
+
+    def _make_button(self, name: str) -> QToolButton:
+        from PySide6.QtWidgets import QMenu
+
+        button = QToolButton(self)
+        button.setObjectName(name)
+        button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
+        button.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
+        button.setMenu(QMenu(button))
+        return button
+
+    def _wire(self, button: QToolButton, combo, actions: dict[str, QPushButton | QToolButton]) -> None:
+        menu = button.menu()
+        menu.aboutToShow.connect(lambda: self._fill(menu, combo, actions))
+
+    def _fill(self, menu, combo, actions) -> None:
+        menu.clear()
+        for index in range(combo.count()):
+            action = menu.addAction(combo.itemText(index))
+            action.setCheckable(True)
+            action.setChecked(index == combo.currentIndex())
+            action.triggered.connect(lambda _checked=False, i=index: self._choose(combo, i))
+        if actions:
+            menu.addSeparator()
+        for text, key in (("Up", "up"), ("Down", "down"), ("Delete", "delete")):
+            source = actions.get(key)
+            if source is not None:
+                action = menu.addAction(source.toolTip() or source.text() or text)
+                action.setEnabled(source.isEnabled())
+                action.triggered.connect(lambda _checked=False, b=source: b.click())
+
+    @staticmethod
+    def _choose(combo, index: int) -> None:
+        if index != combo.currentIndex():
+            combo.setCurrentIndex(index)
+        combo.activated.emit(index)
+
+    def refresh(self, *_args) -> None:
+        for button, combo, empty in ((self.axis_button, self._axis_combo, "No axis"),
+                                     (self.series_button, self._series_combo, "No series")):
+            text = combo.currentText() if combo.count() and combo.currentIndex() >= 0 else empty
+            metrics = button.fontMetrics()
+            button.setToolTip(text)
+            button.setText(metrics.elidedText(text, Qt.TextElideMode.ElideRight, 140) + "  \u25be")

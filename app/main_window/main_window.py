@@ -132,7 +132,7 @@ from app.widgets.chart_properties.overlay_properties import OverlayPropertiesWid
 from app.widgets.chart_properties.series_properties import SeriesPropertiesWidget
 from app.widgets.database_info_panel import DatabaseInfoPanel
 from app.widgets.guided_panel import GuidedAnalysisPanel
-from app.widgets.inspector import InspectorPages
+from app.widgets.inspector import InspectorPages, SelectionLine
 from app.widgets.nav_bar import NavBarItem, NavButton, NavigationBar, NavPanel
 from app.widgets.recent_projects import ProjectsTabs
 from app.widgets.table_list import TableListPanel
@@ -2579,6 +2579,16 @@ class MainWindow(QMainWindow):
             index = control.addTab(self._scrollable(page), title)
             control.setTabToolTip(index, tooltip)
         control.setCurrentIndex(0)
+        # What is edited, as one line over the pages: the axis > the series. The two combos stay, hidden.
+        self._selection_line = SelectionLine(
+            self._axis_widget._axis_combo, self._series_widget._series_combo,
+            {"up": self._axis_widget._btn_move_up, "down": self._axis_widget._btn_move_down,
+             "delete": self._axis_widget._btn_delete},
+            {"up": self._series_widget._btn_move_up, "down": self._series_widget._btn_move_down,
+             "delete": self._series_widget._btn_delete}, control, note=self._series_widget._also_label)
+        control.set_header(self._selection_line)
+        self._axis_widget._axis_selector_card.hide()
+        self._series_widget._selector_section.hide()
         self._connect_property_signals()
         self._clear_property_widgets()
         return control

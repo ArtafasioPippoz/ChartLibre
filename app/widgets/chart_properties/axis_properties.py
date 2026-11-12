@@ -589,6 +589,7 @@ class AxisPropertiesWidget(BaseProperties):
     def _build_axis_selector_section(self) -> QWidget:
         """Create axis selector, axis actions and renderer display."""
         section = CardFrame(self, "axisSelectorCard")
+        self._axis_selector_card = section
         raw_layout = section.layout()
         if not isinstance(raw_layout, QVBoxLayout):
             raise RuntimeError("CardFrame did not create a vertical box layout")
