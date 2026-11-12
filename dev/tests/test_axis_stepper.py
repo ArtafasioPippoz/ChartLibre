@@ -34,7 +34,7 @@ def test_the_arrows_change_the_axis_everywhere(qapp, tmp_path) -> None:
         window._left_panel.select("chart_properties")
         _spin(qapp, 0.8)
         axis = window._axis_widget
-        assert axis.current_axis_id() == first and not axis.axis_stepper._previous.isEnabled()
+        assert axis.current_axis_id() == first and not window._series_widget.axis_stepper._previous.isEnabled()
 
         window._series_widget.axis_stepper._next.click()  # from the Series page
         _spin(qapp, 0.2)
