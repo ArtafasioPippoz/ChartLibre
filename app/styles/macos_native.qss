@@ -1187,6 +1187,31 @@ QFrame#segmentedControl > QToolButton#segment:checked {
   border: 1px solid rgba(@SHADOW_RGB@, 0.12);
   font-weight: 600;
 }
+/* Fields inside the inspector's cards: a quieter edge and a lower box than the app's stand-alone fields. */
+QWidget#inspectorSectionBody QLineEdit,
+QWidget#inspectorSectionBody QSpinBox,
+QWidget#inspectorSectionBody QDoubleSpinBox,
+QWidget#inspectorSectionBody QComboBox,
+QWidget#inspectorSectionBody QPlainTextEdit {
+  border: 1px solid rgba(@SHADOW_RGB@, 0.09);
+  border-radius: 6px;
+  padding: 3px 8px;
+}
+QWidget#inspectorSectionBody QComboBox {
+  padding: 3px 26px 3px 8px;
+}
+QWidget#inspectorSectionBody QSpinBox,
+QWidget#inspectorSectionBody QDoubleSpinBox {
+  min-height: 20px;
+  padding: 2px 8px;
+}
+QWidget#inspectorSectionBody QLineEdit:focus,
+QWidget#inspectorSectionBody QSpinBox:focus,
+QWidget#inspectorSectionBody QDoubleSpinBox:focus,
+QWidget#inspectorSectionBody QComboBox:focus,
+QWidget#inspectorSectionBody QPlainTextEdit:focus {
+  border: 1px solid palette(highlight);
+}
 QToolButton#inspectorSectionTitle {
   border: none;
   background: transparent;
