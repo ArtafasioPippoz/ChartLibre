@@ -194,16 +194,6 @@ class InspectorPages(QWidget):
         bar_layout.setContentsMargins(8, 6, 8, 4)
         bar_layout.setSpacing(4)
         bar_layout.addWidget(self._segments)
-        # The page's name in full under its icon: nothing is cut, in any language.
-        self._heading = QLabel(bar)
-        self._heading.setObjectName("inspectorPageTitle")
-        heading_font = self._heading.font()
-        heading_font.setWeight(QFont.Weight.Medium)
-        heading_font.setPointSizeF(heading_font.pointSizeF() * 1.15)
-        self._heading.setFont(heading_font)
-        self._heading.setContentsMargins(2, 0, 0, 0)
-        bar_layout.addWidget(self._heading)
-        self._segments.current_changed.connect(lambda _index: self._update_heading())
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -222,14 +212,7 @@ class InspectorPages(QWidget):
     def addTab(self, page: QWidget, title: str, icon: str = "") -> int:  # noqa: N802 - QTabWidget's name
         self._stack.addWidget(page)
         index = self._segments.add_segment(title, icon=icon)
-        self._update_heading()
         return index
-
-    def _update_heading(self) -> None:
-        index = self._segments.current_index()
-        self._heading.setText(self._segments.text(index) if index >= 0 else "")
-        self._heading.setVisible(any(self._segments.button(i) is not None and getattr(
-            self._segments.button(i), "_icon_kind", "") for i in range(self._segments.count())))
 
     def setTabToolTip(self, index: int, tooltip: str) -> None:  # noqa: N802
         button = self._segments.button(index)

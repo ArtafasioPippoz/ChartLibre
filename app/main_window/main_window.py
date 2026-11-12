@@ -2581,9 +2581,10 @@ class MainWindow(QMainWindow):
         control.setCurrentIndex(0)
         # Find a property: only the rows whose label or tooltip has the words, on every page.
         self._property_filter = QLineEdit(control)
-        self._property_filter.setObjectName("propertyFilter")
-        self._property_filter.setPlaceholderText(_("Find a property..."))
+        self._property_filter.setObjectName("catalogSearchField")  # the look of the navigation bar's search
+        self._property_filter.setPlaceholderText(_("Search properties..."))
         self._property_filter.setClearButtonEnabled(True)
+        self._property_filter.addAction(load_icon("search_functions"), QLineEdit.ActionPosition.LeadingPosition)
         self._property_filter.textChanged.connect(self._filter_properties)
         holder = QWidget(control)
         holder_layout = QVBoxLayout(holder)
