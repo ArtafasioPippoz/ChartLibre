@@ -28,7 +28,7 @@ from PySide6.QtWidgets import (
     QSizePolicy,
     QSpinBox,
     QStackedWidget,
-    QTabWidget,
+    QScrollArea,
     QVBoxLayout,
     QWidget,
 )
@@ -46,6 +46,7 @@ from app.styles.style import (
     stdSizeAndlayout,
 )
 from app.utils.messages import ask
+from app.widgets.inspector import InspectorForm, InspectorSection, SegmentedControl
 from app.widgets.chart_properties.base_properties import BaseProperties
 from app.widgets.dictionary_editor import DictEditorPanel
 from app.widgets.font_scale_control import FontScaleControl
@@ -148,134 +149,127 @@ class AxisPropertiesWidget(BaseProperties):
     # ------------------------------------------------------------------
 
     def _build_ui(self) -> None:
-        """The axis selector, then tabs: Properties, X, Y, Z (one coordinate page, moved between them), Kwargs."""
-        root = QVBoxLayout(self)
-        root.setContentsMargins(*MARGIN_PANEL)
-        root.setSpacing(12)
-        root.addWidget(self._build_axis_selector_section())
+        """The axis selector, then sections: Title, Scales and limits (X / Y / Z segmented), Position,
+        Appearance and the closed Renderer options."""
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(*MARGIN_PANEL)
+        outer.setSpacing(12)
+        outer.addWidget(self._build_axis_selector_section())
 
         self._build_coordinate_controls()
-        self._tabs = QTabWidget(self)
-        self._tabs.setObjectName("axisPropertiesTabs")
-        self._tabs.setDocumentMode(True)
-        # Each tab as wide as its name: stretched to share the bar, the five
-        # did not fit a narrow panel and Kwargs, the last, went past its edge.
-        self._tabs.tabBar().setExpanding(False)
-        self._tabs.setUsesScrollButtons(True)
-        self._tabs.setElideMode(Qt.TextElideMode.ElideNone)
-        self._tabs.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        self._tabs.addTab(self._tab_page(self._build_shared_properties_frame()), _("Properties"))
-        self._coordinate_page = self._build_coordinate_page()
-        # Shown by the first X, Y or Z tab that hosts it; until then it would
-        # be a stray widget in the panel's corner.
-        self._coordinate_page.hide()
-        self._coordinate_hosts: dict[str, QVBoxLayout] = {}
+        title_section, position_section, appearance_section = self._build_shared_properties_frame()
+
+        # One coordinate page, shown for the X, Y or Z chosen in the segmented control.
+        scales = self._new_section(_("Scales and limits"), "scales")
+        self._coordinate_choice = SegmentedControl(scales.body)
         for axis in axis_options.AXES:
-            page = self._tab_page()
-            self._coordinate_hosts[axis] = cast(QVBoxLayout, page.layout())
-            self._tabs.addTab(page, axis.upper())
-        self._tabs.addTab(self._tab_page(self._build_kwargs_section(), stretch=1), _("Kwargs"))
-        self._tabs.currentChanged.connect(self._on_tab_changed)
-        root.addWidget(self._tabs, 1)
-        self._on_tab_changed(self._tabs.currentIndex())
+            self._coordinate_choice.add_segment(axis.upper())
+        self._coordinate_choice.current_changed.connect(self._on_coordinate_chosen)
+        self._coordinate_page = self._build_coordinate_page()
+        scales_layout = cast(QVBoxLayout, scales.body.layout())
+        scales_layout.addWidget(self._coordinate_choice)
+        scales_layout.addWidget(self._coordinate_page)
+        self._scales_section = scales
+        self._title_section = title_section
 
-    def _tab_page(self, content: QWidget | None = None, *, stretch: int = 0) -> QWidget:
-        """A tab's page on the standard ground, *content* at its top."""
-        page = QWidget(self._tabs if hasattr(self, "_tabs") else self)
-        page.setProperty("toolboxPage", True)
-        page.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        layout = QVBoxLayout(page)
-        layout.setContentsMargins(0, 10, 0, 0)
-        layout.setSpacing(10)
-        if content is not None:
-            layout.addWidget(content, stretch)
-        if not stretch:
-            layout.addStretch(1)
-        return page
+        content = QWidget(self)
+        content.setProperty("toolboxPage", True)
+        content.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        layout = QVBoxLayout(content)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        for section in (title_section, scales, position_section, appearance_section, self._build_kwargs_section()):
+            layout.addWidget(section)
+        layout.addStretch(1)
+        scroll = QScrollArea(self)
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setWidget(content)
+        scroll.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        scroll.setProperty("toolboxPage", True)
+        scroll.viewport().setProperty("toolboxPage", True)
+        scroll.viewport().setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        self._pages = scroll
+        outer.addWidget(scroll, 1)
+        self._on_coordinate_chosen(0)
 
-    def _on_tab_changed(self, index: int) -> None:
-        """An X, Y or Z tab shows the one coordinate page, filled with that coordinate's settings."""
+    def _new_section(self, title: str, key: str, *, collapsed: bool = False) -> InspectorSection:
+        """An inspector section of this page with a vertical body, remembered under "axis.<key>"."""
+        section = InspectorSection(title, self, key="axis." + key, collapsed=collapsed)
+        body = QVBoxLayout(section.body)
+        body.setContentsMargins(0, 0, 0, 0)
+        body.setSpacing(6)
+        return section
+
+    def _new_form_section(self, title: str, key: str, *, collapsed: bool = False) -> tuple[InspectorSection, InspectorForm]:
+        section = self._new_section(title, key, collapsed=collapsed)
+        form = InspectorForm(section.body)
+        section.body.layout().addWidget(form)
+        return section, form
+
+    def _on_coordinate_chosen(self, index: int) -> None:
+        """The X, Y or Z segment shows the one coordinate page, filled with that coordinate's settings."""
         axes = axis_options.AXES
-        if not 1 <= index <= len(axes):
+        if not 0 <= index < len(axes):
             return
-        self._coordinate_axis = axes[index - 1]
-        host = self._coordinate_hosts[self._coordinate_axis]
-        host.insertWidget(0, self._coordinate_page)
-        self._coordinate_page.show()
+        self._coordinate_axis = axes[index]
         self._show_coordinates()
 
-    def _build_shared_properties_frame(self) -> QWidget:
-        """Build compact axis-wide properties mounted in the active XYZ page."""
-        section = TitledCard(self, _("Axis"), "axisPropertiesCard")
-        raw_layout = section.card.layout()
-        if not isinstance(raw_layout, QVBoxLayout):
-            raise RuntimeError("TitledCard did not create a vertical box layout")
+    def _build_shared_properties_frame(self) -> tuple[InspectorSection, InspectorSection, InspectorSection]:
+        """The axis-wide properties as three sections: Title, Position, Appearance."""
+        title_section, title_form = self._new_form_section(_("Title"), "title")
+        position_section, position_form = self._new_form_section(_("Position"), "position")
+        appearance_section, appearance_form = self._new_form_section(_("Appearance"), "appearance")
+        host = self
 
         # Two lines tall: a title over two lines ("Time" / "(s)") is typed as two
         # lines, Enter between them; stored with "\n", as typed titles were.
-        self._axis_label_edit = QPlainTextEdit(section.card)
+        self._axis_label_edit = QPlainTextEdit(title_section.body)
         self._axis_label_edit.setTabChangesFocus(True)
         line = self._axis_label_edit.fontMetrics().lineSpacing()
         self._axis_label_edit.setFixedHeight(2 * line + 14)
-        self._projection_combo = QComboBox(section.card)
+        self._projection_combo = QComboBox(position_section.body)
         for label, value in (
             ("rectilinear", "rectilinear"),
             ("polar", "polar"),
             ("3d", "3d"),
         ):
             self._projection_combo.addItem(label, value)
-        self._hide_axis_check = QCheckBox(_("Hide"), section.card)
-        self._font_scale = FontScaleControl(section.card)
+        self._hide_axis_check = QCheckBox(_("Hide"), appearance_section.body)
+        self._font_scale = FontScaleControl(title_section.body)
         # How the lines of a title or label written over several ("Time\n(s)") line up.
-        self._lines_combo = QComboBox(section.card)
+        self._lines_combo = QComboBox(title_section.body)
         for value, label in (("center", "Centred"), ("left", "Left"), ("right", "Right")):
             self._lines_combo.addItem(_(label), value)
         self._lines_combo.setToolTip(_("Titles and labels over several lines - type \\n where a line ends, "
                                        "as in Time\\n(s): how their lines line up with each other."))
 
-        grid = QGridLayout()
-        grid.setContentsMargins(0, 0, 0, 0)
-        grid.setSpacing(8)
-        grid.setColumnStretch(1, 1)
-        grid.setColumnStretch(3, 1)
+        title_form.add_row(_("Title"), self._axis_label_edit)
+        title_form.add_row(_("Lines"), self._lines_combo)
+        title_form.add_row(_("Font"), self._font_scale)
 
-        def add_field(row: int, column: int, caption: str, widget: QWidget) -> None:
-            grid.addWidget(QLabel(caption, section.card), row, column)
-            grid.addWidget(widget, row, column + 1)
-
-        # The title, how its lines line up and how many cells the axis spans,
-        # each on a line of its own, in that order (todo P-03).
-        title_label = QLabel(_("Title"), section.card)
-        grid.addWidget(title_label, 0, 0, Qt.AlignmentFlag.AlignTop)
-        grid.addWidget(self._axis_label_edit, 0, 1, 1, 3)
-        grid.addWidget(QLabel(_("Lines"), section.card), 1, 0)
-        grid.addWidget(self._lines_combo, 1, 1, 1, 3)
-
-        span = self._build_span_row(section.card)
+        span = self._build_span_row(position_section.body)
         self._row_span_spin.setMaximumWidth(72)
         self._col_span_spin.setMaximumWidth(72)
-        grid.addWidget(QLabel(_("Span"), section.card), 2, 0)
-        grid.addWidget(span, 2, 1, 1, 3)
-        add_field(3, 0, _("Proj."), self._projection_combo)
-        add_field(3, 2, _("Font"), self._font_scale)
-        grid.addWidget(QLabel(_("Visible"), section.card), 4, 0)
-        grid.addWidget(self._hide_axis_check, 4, 1)
+        position_form.add_row(_("Span"), span)
+        position_form.add_row(_("Projection"), self._projection_combo)
         # How many points a series of this axis draws at most (it was the figure's, for all its axes at once).
         from app.widgets.chart_properties.figure_properties import (
             FigurePropertiesWidget,
         )
 
-        self._max_points_combo = QComboBox(section.card)
+        self._max_points_combo = QComboBox(position_section.body)
         self._max_points_combo.addItem(_("Figure's"), None)
         for label, value, tooltip in FigurePropertiesWidget.DOWNSAMPLE_THRESHOLDS:
             self._max_points_combo.addItem(_(label), value)
             self._max_points_combo.setItemData(self._max_points_combo.count() - 1, _(tooltip),
                                                Qt.ItemDataRole.ToolTipRole)
         self._max_points_combo.setToolTip(_("Draw at most this many points per series, sampling the rest away."))
-        add_field(4, 2, _("Max points"), self._max_points_combo)
+        position_form.add_row(_("Max points"), self._max_points_combo)
 
         def check_row(checks: list[QCheckBox]) -> QWidget:
-            holder = QWidget(section.card)
+            holder = QWidget(appearance_section.body)
             layout = QHBoxLayout(holder)
             stdSizeAndlayout(layout)
             for check in checks:
@@ -288,12 +282,11 @@ class AxisPropertiesWidget(BaseProperties):
         for name, check in self._spine_checks().items():
             check.setText(short[name])
             check.setToolTip(names[name])
-        grid.addWidget(QLabel(_("Hide spines"), section.card), 5, 0)
-        grid.addWidget(check_row(list(self._spine_checks().values())), 5, 1, 1, 3)
-        grid.addWidget(QLabel(_("Share"), section.card), 6, 0)
-        grid.addWidget(check_row(list(self._share_checks.values())), 6, 1, 1, 3)
-        raw_layout.addLayout(grid)
-        return section
+        appearance_form.add_row(_("Visible"), self._hide_axis_check)
+        appearance_form.add_row(_("Hide spines"), check_row(list(self._spine_checks().values())))
+        appearance_form.add_row(_("Share"), check_row(list(self._share_checks.values())))
+        del host
+        return title_section, position_section, appearance_section
 
     # ------------------------------------------------------------------
     # Coordinates: one set of controls, applied to the X, Y, Z ticked
@@ -524,17 +517,18 @@ class AxisPropertiesWidget(BaseProperties):
             spin.setMinimumWidth(70)
             spin.setMaximumWidth(120)
 
-        def card(title: str, name: str) -> tuple[QWidget, QGridLayout, QWidget]:
-            section = TitledCard(page, title, name)
+        def card(title: str, name: str, *, collapsed: bool = False) -> tuple[QWidget, QGridLayout, QWidget]:
+            section = InspectorSection(title, page, key="axis." + name, collapsed=collapsed)
+            QVBoxLayout(section.body).setContentsMargins(0, 0, 0, 0)
             grid = QGridLayout()
             grid.setContentsMargins(0, 0, 0, 0)
             grid.setHorizontalSpacing(8)
             grid.setVerticalSpacing(6)
             grid.setColumnStretch(1, 1)
             grid.setColumnStretch(3, 1)
-            section.card.layout().addLayout(grid)
+            section.body.layout().addLayout(grid)
             page_layout.addWidget(section)
-            return section, grid, section.card
+            return section, grid, section.body
 
         def row(parent: QWidget, widgets: list[QWidget], *, fill: bool = False) -> QWidget:
             """*widgets* side by side; with *fill* the first takes the width left."""
@@ -573,7 +567,7 @@ class AxisPropertiesWidget(BaseProperties):
         grid.addWidget(self._break_edit, 7, 1, 1, 3)
 
         # Ticks and grid: major and minor as columns.
-        _section, grid, box = card(_("Ticks and grid"), "axisTicksCard")
+        _section, grid, box = card(_("Ticks and grid"), "axisTicksCard", collapsed=True)
         grid.addWidget(QLabel(_("Major"), box), 0, 1, Qt.AlignmentFlag.AlignHCenter)
         grid.addWidget(QLabel(_("Minor"), box), 0, 2, 1, 2, Qt.AlignmentFlag.AlignHCenter)
         rows = (
@@ -865,15 +859,12 @@ class AxisPropertiesWidget(BaseProperties):
 
     def _build_kwargs_section(self) -> QWidget:
         """Create the host section for DictEditorPanel."""
-        section = TitledCard(self, _("Kwargs"), "axisKwargsCard")
+        section = self._new_section(_("Renderer options"), "kwargs", collapsed=True)
         section.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Preferred,
         )
-        raw_layout = section.card.layout()
-        if not isinstance(raw_layout, QVBoxLayout):
-            raise RuntimeError("TitledCard did not create a vertical box layout")
-        layout = raw_layout
+        layout = cast(QVBoxLayout, section.body.layout())
         # The reset button is not built here: it belongs on the editor's own
         # search row (see rebuild_kwargs_editor), and the editor is rebuilt
         # from scratch for every axis, so the button is too.
@@ -933,9 +924,14 @@ class AxisPropertiesWidget(BaseProperties):
         return True
 
     def show_coordinate(self, coordinate: str | None) -> None:
-        """The tab of *coordinate* ("x", "y", "z"), or Properties for None (a click on the title)."""
+        """The segment of *coordinate* ("x", "y", "z"), or the Title section for None (a click on the title)."""
         axes = axis_options.AXES
-        self._tabs.setCurrentIndex(axes.index(coordinate) + 1 if coordinate in axes else 0)
+        if coordinate in axes:
+            self._scales_section.set_open(True)
+            self._coordinate_choice.set_current_index(axes.index(coordinate))
+        else:
+            self._title_section.set_open(True)
+            self._pages.ensureWidgetVisible(self._title_section)
 
     def set_kwargs_widget(self, widget: QWidget) -> None:
         """Replace kwargs host content."""
@@ -1148,7 +1144,7 @@ class AxisPropertiesWidget(BaseProperties):
             self._hide_axis_check,
             self._max_points_combo,
             self._renderer_value,
-            self._tabs,
+            self._pages,
         )
         for widget in widgets:
             widget.setEnabled(enabled)

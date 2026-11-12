@@ -1,4 +1,4 @@
-"""Axis properties: tabs Properties, X, Y, Z, Kwargs; one coordinate page shown in X, Y and Z."""
+"""Axis properties: sections; one coordinate page shown for the X, Y or Z segment."""
 from __future__ import annotations
 
 from app.plugin_api.charts import axis_options
@@ -6,7 +6,7 @@ from app.widgets.chart_properties.axis_properties import AxisPropertiesWidget
 
 
 def _select(widget: AxisPropertiesWidget, axis: str) -> None:
-    widget._tabs.setCurrentIndex(1 + axis_options.AXES.index(axis))
+    widget.show_coordinate(axis)
 
 
 def test_each_coordinate_tab_edits_its_own_coordinate(qapp) -> None:

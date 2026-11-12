@@ -18,6 +18,7 @@ def test_typed_limits_are_read_as_numbers() -> None:
 @pytest.fixture
 def widget(qapp):
     built = AxisPropertiesWidget()
+    built._pages.setEnabled(True)  # the sections are off without a figure; these tests edit the page alone
     yield built
     built.deleteLater()
 
