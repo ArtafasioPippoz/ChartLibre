@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtWidgets import (
+    QAbstractButton,
     QButtonGroup,
     QFrame,
     QGridLayout,
@@ -221,7 +222,14 @@ class InspectorSection(QWidget):
 
     def _apply(self, is_open: bool) -> None:
         self._header.setArrowType(Qt.ArrowType.DownArrow if is_open else Qt.ArrowType.RightArrow)
-        self.body.setVisible(is_open)
+        self.body.setVisible(is_open or self._forced_open)
+
+    #: While a filter is on, a closed section shows its body anyway (its remembered state is not touched).
+    _forced_open: bool = False
+
+    def force_open(self, forced: bool) -> None:
+        self._forced_open = forced
+        self._apply(self._header.isChecked())
 
     def _on_toggled(self, is_open: bool) -> None:
         self._apply(is_open)
@@ -256,6 +264,12 @@ class InspectorForm(QWidget):
         self._grid.addWidget(control, row, 1)
         self.rows.append((caption, control))
         return caption
+
+    def set_row_visible(self, index: int, visible: bool) -> None:
+        label, control = self.rows[index]
+        if label is not None:
+            label.setVisible(visible)
+        control.setVisible(visible)
 
     def add_wide(self, control: QWidget) -> None:
         row = self._grid.rowCount()
@@ -369,3 +383,70 @@ class SelectionLine(QFrame):
             metrics = button.fontMetrics()
             button.setToolTip(text)
             button.setText(metrics.elidedText(text, Qt.TextElideMode.ElideRight, 140) + "  \u25be")
+
+
+def _texts(widget: QWidget | None) -> str:
+    """The words a widget and everything inside it show: captions, button texts and tooltips, lower case."""
+    if widget is None:
+        return ""
+    found: list[str] = []
+    for item in (widget, *widget.findChildren(QWidget)):
+        found.append(item.toolTip())
+        if isinstance(item, (QLabel, QAbstractButton)):  # not what the user typed in a field
+            found.append(item.text())
+    return " ".join(found).lower()
+
+
+def _owner(widget: QWidget) -> InspectorSection | None:
+    parent = widget.parentWidget()
+    while parent is not None and not isinstance(parent, InspectorSection):
+        parent = parent.parentWidget()
+    return parent
+
+
+def filter_page(page: QWidget, text: str) -> int:
+    """Leave on *page* only the rows whose label or tooltip holds *text*, under the sections they belong to.
+
+    A section whose title holds it stays whole; one with nothing left is hidden; a closed one shows its body
+    while the filter is on (its remembered open / closed is not touched). An empty *text* puts everything
+    back. Returns how many rows or sections matched.
+    """
+    needle = text.strip().lower()
+    sections = page.findChildren(InspectorSection)
+    forms = page.findChildren(InspectorForm)
+    if not needle:
+        for form in forms:
+            for index in range(len(form.rows)):
+                form.set_row_visible(index, True)
+        for section in sections:
+            section.force_open(False)
+            section.setVisible(True)
+        return 0
+    shown: dict[int, bool] = {id(section): False for section in sections}
+    for section in sections:
+        if needle in section.title().lower():
+            shown[id(section)] = True
+    matched = 0
+    for form in forms:
+        owner = _owner(form)
+        whole = owner is not None and needle in owner.title().lower()
+        for index, (label, control) in enumerate(form.rows):
+            hit = whole or needle in _texts(label) or needle in _texts(control)
+            form.set_row_visible(index, hit)
+            if hit and owner is not None:
+                shown[id(owner)] = True
+                matched += 1
+    for section in sections:  # sections with no InspectorForm: found by what they hold
+        if not section.findChildren(InspectorForm) and needle in _texts(section.body):
+            shown[id(section)] = True
+            matched += 1
+    for section in reversed(sections):  # an outer section is shown when an inner one is
+        if shown[id(section)]:
+            outer = _owner(section)
+            if outer is not None:
+                shown[id(outer)] = True
+    for section in sections:
+        visible = shown[id(section)]
+        section.setVisible(visible)
+        section.force_open(visible)
+    return matched

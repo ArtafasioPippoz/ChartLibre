@@ -51,6 +51,7 @@ from PySide6.QtWidgets import (
     QSplitter,
     QTabWidget,
     QToolButton,
+    QLineEdit,
     QVBoxLayout,
     QWidget,
 )
@@ -132,7 +133,7 @@ from app.widgets.chart_properties.overlay_properties import OverlayPropertiesWid
 from app.widgets.chart_properties.series_properties import SeriesPropertiesWidget
 from app.widgets.database_info_panel import DatabaseInfoPanel
 from app.widgets.guided_panel import GuidedAnalysisPanel
-from app.widgets.inspector import InspectorPages, SelectionLine
+from app.widgets.inspector import InspectorPages, SelectionLine, filter_page
 from app.widgets.nav_bar import NavBarItem, NavButton, NavigationBar, NavPanel
 from app.widgets.recent_projects import ProjectsTabs
 from app.widgets.table_list import TableListPanel
@@ -2586,12 +2587,30 @@ class MainWindow(QMainWindow):
              "delete": self._axis_widget._btn_delete},
             {"up": self._series_widget._btn_move_up, "down": self._series_widget._btn_move_down,
              "delete": self._series_widget._btn_delete}, control, note=self._series_widget._also_label)
-        control.set_header(self._selection_line)
+        # Find a property: only the rows whose label or tooltip has the words, on every page.
+        self._property_filter = QLineEdit(control)
+        self._property_filter.setObjectName("propertyFilter")
+        self._property_filter.setPlaceholderText(_("Find a property..."))
+        self._property_filter.setClearButtonEnabled(True)
+        self._property_filter.textChanged.connect(self._filter_properties)
+        holder = QWidget(control)
+        holder_layout = QVBoxLayout(holder)
+        holder_layout.setContentsMargins(8, 0, 8, 4)
+        holder_layout.setSpacing(2)
+        holder_layout.addWidget(self._selection_line)
+        holder_layout.addWidget(self._property_filter)
+        control.set_header(holder)
         self._axis_widget._axis_selector_card.hide()
         self._series_widget._selector_section.hide()
         self._connect_property_signals()
         self._clear_property_widgets()
         return control
+
+    def _filter_properties(self, text: str) -> None:
+        """Apply the find box to the five pages (inspector.filter_page)."""
+        for page in (self._figure_widget, self._axis_widget, self._series_widget, self._animation_widget,
+                     self._overlay_widget):
+            filter_page(page, text)
 
     def _connect_property_signals(self) -> None:
         """Connect property widgets to main-window persistence handlers."""

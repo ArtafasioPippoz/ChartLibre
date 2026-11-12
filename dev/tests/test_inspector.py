@@ -92,3 +92,40 @@ def test_the_selection_line_shows_the_combos_and_a_choice_reaches_them(qapp) -> 
     menu.aboutToShow.emit()
     menu.actions()[-1].trigger()
     assert pressed == ["delete"]
+
+
+def test_the_find_box_leaves_the_rows_that_have_the_words(qapp) -> None:
+    from PySide6.QtWidgets import QCheckBox, QLineEdit, QVBoxLayout, QWidget
+
+    from app.widgets.inspector import InspectorForm, InspectorSection, filter_page
+
+    page = QWidget()
+    layout = QVBoxLayout(page)
+    line = InspectorSection("Line", page, key="test.find.line")
+    marker = InspectorSection("Marker", page, key="test.find.marker", collapsed=True)
+    for section in (line, marker):
+        layout.addWidget(section)
+        QVBoxLayout(section.body)
+    forms = []
+    for section, rows in ((line, (("Width", QLineEdit()), ("Colour", QLineEdit()))),
+                          (marker, (("Size", QLineEdit()), ("Filled", QCheckBox("Fill the marker"))))):
+        form = InspectorForm(section.body)
+        section.body.layout().addWidget(form)
+        for label, control in rows:
+            form.add_row(label, control, "tip for " + label.lower())
+        forms.append(form)
+    page.show()
+
+    assert filter_page(page, "width") == 1
+    assert not forms[0].rows[1][1].isVisibleTo(page) and forms[0].rows[0][1].isVisibleTo(page)
+    assert not marker.isVisibleTo(page)  # nothing left in it
+
+    filter_page(page, "fill")  # a word in a control's own text; the closed section shows its body meanwhile
+    assert marker.isVisibleTo(page) and forms[1].rows[1][1].isVisibleTo(page) and not line.isVisibleTo(page)
+    assert not marker.is_open()  # the remembered state is untouched
+
+    filter_page(page, "marker")  # a section title keeps the section whole
+    assert all(control.isVisibleTo(page) for _label, control in forms[1].rows)
+
+    filter_page(page, "")
+    assert line.isVisibleTo(page) and forms[0].rows[1][1].isVisibleTo(page) and not marker.body.isVisibleTo(page)
