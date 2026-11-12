@@ -172,3 +172,18 @@ def test_the_animation_page_stores_the_settings_and_plays_the_chart(qapp, repo: 
         assert not page._slider.isEnabled()
     finally:
         window.close()
+
+
+def test_the_second_animation_demo_has_seven_playable_figures(tmp_path: Path) -> None:
+    from dev.demo.demo_animation_more import build_more_animation_demo
+
+    repo = SqliteRepo(db_path=build_more_animation_demo(tmp_path))
+    try:
+        figures = repo.load_figures_from_db()
+        assert len(figures) == 7
+        for figure_id, _name in figures:
+            descriptor = repo.load_figure_descriptor(figure_id)
+            settings = anim.AnimationSettings.from_options(descriptor.options)
+            assert settings is not None and len(anim.frames(repo, descriptor, settings)) >= 24
+    finally:
+        repo.close()

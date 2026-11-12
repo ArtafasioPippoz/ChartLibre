@@ -645,6 +645,18 @@ DEMO_PROJECTS: tuple[DemoProject, ...] = (
         category="Graph",
     ),
     DemoProject(
+        "Animated charts 2 - waves, heat and orbits, in 2D and 3D",
+        "More figures that move, all made up on the spot. In two dimensions: a travelling wave fading as it "
+        "goes, heat spreading along a rod, a Lissajous curve drawn as it goes, two tones beating with the "
+        "second one's frequency varied. In three: a helix growing along its axis, thirty particles drifting in "
+        "a box and a ripple spreading over a surface. Open a figure and press Play on Chart properties > "
+        "Animation - Save as GIF is there too.",
+        (),
+        builder="dev.demo.demo_animation_more:build_more_animation_demo",
+        preview="Ripple",
+        category="Graph",
+    ),
+    DemoProject(
         "SymPy functions - stored formulas differentiated, integrated and fitted",
         "Formulas kept with the project (Tables panel, marked F) and drawn as live series: a damped "
         "oscillation and its exact derivative, logistic growth and its exact integral - Calculus works on "
