@@ -328,6 +328,12 @@ class TablePreviewPanel(QWidget):
     def column_info(self) -> None:
         """Column Info for the current column, as the menu's."""
         column = self._current_column_name() if self._model() is not None else self._query_column_name()
+        if not column:  # no cell chosen yet: the first selected column, else the table's first
+            model = self._model()
+            selected = sorted({index.column() for index in self.view.selectionModel().selectedIndexes()}) \
+                if self.view.selectionModel() is not None else []
+            if model is not None:
+                column = model.column_name(selected[0] if selected else 0) if model.columnCount() else None
         if column:
             self._open_column_info(column)
 
