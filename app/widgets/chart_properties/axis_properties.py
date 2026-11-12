@@ -40,7 +40,6 @@ from app.plugin_api.charts.text_lines import display_text
 from app.styles.style import (
     MARGIN_PANEL,
     CardFrame,
-    TitledCard,
     create_action_button,
     mark_icon_only,
     stdSizeAndlayout,

@@ -64,6 +64,9 @@ What does not change
 - What is stored: no descriptor or option changes. Section titles reuse the existing strings where they
   exist; new strings are listed for translation, not translated.
 
+Status (2026-11-12): A-H done, one commit each; I partly (see below). Words, not icons, on the segments
+(decided: icons were not understood); the filter (H) is in.
+
 Steps (one commit each; the app stays usable after each)
 ---------------------------------------------------------
 A. Building blocks, in app/widgets/inspector.py, with QSS in macos_native.qss and fluent_win11.qss:
@@ -105,3 +108,39 @@ To decide before starting
    the centre of the design) and long for a figure with many axes.
 2. Icons only on the segments, or icon + short word when the panel is wide enough?
 3. The filter (H): wanted now, or later?
+
+
+Done differently from the plan, and what is left (2026-11-12)
+--------------------------------------------------------------
+- Figure: seven sections, not five (Name and notes, View, Style, Figure options, Grid, Panel letters closed,
+  Manual spacing closed); the page is about 870 px tall at 300 px wide, not under 800. Merging View + Figure
+  options into "Size" and Grid + Panel letters into "Layout" is still to do.
+- Axis: Title (title, lines, font) | Scales and limits (X / Y / Z segmented; Scale and range, Ticks and grid
+  closed as sub-sections) | Position (span, projection, max points) | Appearance (visible, spines, share) |
+  Renderer options closed. No "legend" row exists on the axis, so no "Title and legend".
+- The pages' own selectors (axis combo, series combo with Up / Down / Delete) are hidden, not removed: the
+  SelectionLine reads and drives them, so every signal and attribute stays.
+- The filter looks at rows of InspectorForm (label, tooltip) and, for wide rows and sections without a form
+  (the coordinate page), at every caption inside; a closed section shows while the filter is on and keeps its
+  remembered state.
+- The toolboxPage rules stay: Database, File and Developer pages use them too. TitledCard is still built,
+  hidden, by the Series page (its selector and an options wrapper): to remove with the next change there.
+
+Missing items found when the plan was checked (still open unless marked)
+------------------------------------------------------------------------
+1. Persistence: the page chosen (Figure / Axis / ...) is not remembered; user.json with unknown or old
+   "inspector_sections" keys is read as is (a non-bool value is ignored). Tests that open or close a section
+   must put it back: user.json is the real one.
+2. Strings: new ones are "Find a property...", "Renderer options", "Scales and limits", "Position",
+   "Appearance", "Title" (section), "No axis", "No series", the menu items Up / Down / Delete. Listed, not
+   translated (the user translates them).
+3. Empty state: no axis or series: the selection line shows "No axis" / "No series" (done); pages disabled as
+   before. A filter with no match shows an empty page, with no message (open).
+4. Keyboard and accessibility: Tab order, shortcuts for the segments, a name for each section header (open).
+5. Themes: both sheets styled the sections; light and dark to be looked at again in the real window, and the
+   panel at a 1280 x 720 screen (open).
+6. Width: the Series page at 300 px still has a horizontal scroll bar (the Line and Marker editors are wider
+   than 300 px); the segments elide "Animation" and "Overlays" at 314 px (open).
+7. Performance: the selection line refreshes on every change of the two combos' models (cheap); not measured on
+   a figure with many axes (open).
+8. The manual's screenshots of the panel are to be taken again (open, with the translations).

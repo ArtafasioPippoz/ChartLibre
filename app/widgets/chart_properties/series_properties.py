@@ -40,7 +40,7 @@ from app.utils.config import get_constant
 from app.utils.i18n import _
 from app.utils.messages import ask
 from app.widgets.chart_properties.base_properties import BaseProperties
-from app.widgets.inspector import InspectorForm, InspectorSection
+from app.widgets.inspector import InspectorCard, InspectorForm, InspectorSection
 from app.widgets.chart_properties.series_style_editors import (
     LineStyleEditor,
     MarkerStyleEditor,
@@ -285,7 +285,7 @@ class SeriesPropertiesWidget(BaseProperties):
 
         return section
 
-    def _build_function_section(self) -> TitledCard:
+    def _build_function_section(self) -> InspectorCard:
         """A function series' function: its formula, this series' values and range (FunctionEditor), Apply.
 
         Shown only for a series that draws a stored function, closed until opened. The formula is the
@@ -295,7 +295,7 @@ class SeriesPropertiesWidget(BaseProperties):
 
         from app.widgets.function_editor import FunctionEditor
 
-        section = TitledCard(self, _("Function"), "seriesFunctionCard", collapsible=True, collapsed=True)
+        section = InspectorCard(self, _("Function"), "seriesFunctionCard", collapsed=True, prefix="series")
         layout = section.card.layout()
         self._function_note = QLabel(section.card)
         self._function_note.setWordWrap(True)
