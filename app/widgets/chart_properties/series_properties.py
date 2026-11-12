@@ -40,6 +40,7 @@ from app.utils.config import get_constant
 from app.utils.i18n import _
 from app.utils.messages import ask
 from app.widgets.chart_properties.base_properties import BaseProperties
+from app.widgets.inspector import InspectorForm, InspectorSection
 from app.widgets.chart_properties.series_style_editors import (
     LineStyleEditor,
     MarkerStyleEditor,
@@ -447,26 +448,26 @@ class SeriesPropertiesWidget(BaseProperties):
                                                 line_colour=lambda: self._line_editor.colour())
         self._sort_x_check.toggled.connect(self._sort_toggled)
 
-        self._group_forms: dict[str, QFormLayout] = {}
+        self._group_forms: dict[str, InspectorForm] = {}
 
-        def group(title: str, name: str, rows: list[tuple[str, QWidget]]) -> TitledCard:
-            # The app's own card: the title outside, the grey rounded box below (as the other panels).
-            card = TitledCard(self, title, name)
+        def group(title: str, name: str, rows: list[tuple[str, QWidget]], *, collapsed: bool = False) -> InspectorSection:
+            # An inspector section: a title row with a chevron over one label/control grid, no box.
+            card = InspectorSection(title, self, key="series." + name, collapsed=collapsed)
             card.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)  # never below its height
-            box_form = QFormLayout()
-            stdSizeAndlayout(box_form)
-            box_form.setVerticalSpacing(10)
+            box_form = InspectorForm(card.body)
+            body_layout = QVBoxLayout(card.body)
+            body_layout.setContentsMargins(0, 0, 0, 0)
+            body_layout.addWidget(box_form)
             for label, widget in rows:
-                box_form.addRow(label, widget) if label else box_form.addRow(widget)
-            card.card.layout().addLayout(box_form)
+                box_form.add_row(label, widget) if label else box_form.add_wide(widget)
             self._group_forms[name] = box_form
             return card
 
         self._groups = [
-            group(_("Query"), "seriesQueryCard", [("", self._sql_query_edit), ("", self._sort_x_check)]),
-            group(_("Legend"), "seriesLegendCard", [(_("Label"), self._legend_label_edit), ("", flags_row)]),
-            group(_("Line"), "seriesLineCard", [("", self._line_editor)]),
-            group(_("Marker"), "seriesMarkerCard", [("", self._marker_editor)]),
+            group(_("Legend"), "legend", [(_("Label"), self._legend_label_edit), ("", flags_row)]),
+            group(_("Line"), "line", [("", self._line_editor)]),
+            group(_("Marker"), "marker", [("", self._marker_editor)]),
+            group(_("Query"), "query", [("", self._sql_query_edit), ("", self._sort_x_check)], collapsed=True),
         ]
 
         raw_layout = section.card.layout()
