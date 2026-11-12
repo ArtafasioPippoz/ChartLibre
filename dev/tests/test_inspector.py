@@ -64,36 +64,6 @@ def test_form_label_column_fits_its_longest_label(qapp):
     form.close()
 
 
-def test_the_selection_line_shows_the_combos_and_a_choice_reaches_them(qapp) -> None:
-    from PySide6.QtWidgets import QComboBox, QPushButton
-
-    from app.widgets.inspector import SelectionLine
-
-    axes, series = QComboBox(), QComboBox()
-    axes.addItems(["Axis 1", "Axis 2"])
-    pressed: list[str] = []
-    delete = QPushButton("Delete")
-    delete.clicked.connect(lambda: pressed.append("delete"))
-    activated: list[int] = []
-    axes.activated.connect(activated.append)
-    line = SelectionLine(axes, series, {"delete": delete}, {})
-    assert line.axis_button.text().startswith("Axis 1") and line.series_button.text().startswith("No series")
-
-    menu = line.axis_button.menu()
-    menu.aboutToShow.emit()
-    texts = [action.text() for action in menu.actions() if not action.isSeparator()]
-    assert texts[:2] == ["Axis 1", "Axis 2"] and "Delete" in texts[-1]
-    menu.actions()[1].trigger()
-    assert axes.currentIndex() == 1 and activated == [1]
-    assert line.axis_button.text().startswith("Axis 2")  # it follows the combo
-
-    series.addItem("Series A")
-    assert line.series_button.text().startswith("Series A")
-    menu.aboutToShow.emit()
-    menu.actions()[-1].trigger()
-    assert pressed == ["delete"]
-
-
 def test_the_find_box_leaves_the_rows_that_have_the_words(qapp) -> None:
     from PySide6.QtWidgets import QCheckBox, QLineEdit, QVBoxLayout, QWidget
 

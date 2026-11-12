@@ -1,6 +1,6 @@
 # ChartLibre — Prioritized Roadmap
 
-**State:** `app/` has 117,908 lines of code in 332 Python files; `dev/tests` has 29,644 lines in 251 files (measured at this commit).
+**State:** `app/` has 117,920 lines of code in 332 Python files; `dev/tests` has 29,614 lines in 251 files (measured at this commit).
 
 **Audience:** engineers, scientists, and students who need an affordable desktop workflow from raw data to analysed, documented figures and reports.
 

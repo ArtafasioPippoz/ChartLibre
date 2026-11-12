@@ -118,8 +118,8 @@ Done differently from the plan, and what is left (2026-11-12)
 - Axis: Title (title, lines, font) | Scales and limits (X / Y / Z segmented; Scale and range, Ticks and grid
   closed as sub-sections) | Position (span, projection, max points) | Appearance (visible, spines, share) |
   Renderer options closed. No "legend" row exists on the axis, so no "Title and legend".
-- The pages' own selectors (axis combo, series combo with Up / Down / Delete) are hidden, not removed: the
-  SelectionLine reads and drives them, so every signal and attribute stays.
+- Step G (a breadcrumb line with menus) was tried and dropped on the user's call (2026-11-12): ugly, and
+  Up / Down / Delete are buttons, not menu items. The pages keep their own combos and buttons as before.
 - The filter looks at rows of InspectorForm (label, tooltip) and, for wide rows and sections without a form
   (the coordinate page), at every caption inside; a closed section shows while the filter is on and keeps its
   remembered state.

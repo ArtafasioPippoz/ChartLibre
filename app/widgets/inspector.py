@@ -299,6 +299,28 @@ class InspectorCard(InspectorSection):
         return self.body
 
 
+class InspectorCard(InspectorSection):
+    """What the page's cards were, as an inspector section: a title row over a body, no frame.
+
+    ``card`` is the body, so the builders keep using ``section.card.layout()`` as they did on a TitledCard;
+    open or closed is remembered under "<prefix>.<object name>".
+    """
+
+    def __init__(self, parent: QWidget | None, title: str, object_name: str = "", *, collapsible: bool = False,
+                 collapsed: bool = False, prefix: str = "") -> None:
+        prefix = prefix or ("figure" if object_name.startswith("figure") else "section")
+        super().__init__(title, parent, key=f"{prefix}.{object_name or title}", collapsed=collapsed)
+        if object_name:
+            self.setObjectName(object_name)
+        layout = QVBoxLayout(self.body)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(6)
+
+    @property
+    def card(self) -> QWidget:
+        return self.body
+
+
 class SelectionLine(QFrame):
     """What is being edited, as one line: the axis > the series, a menu on each.
 
