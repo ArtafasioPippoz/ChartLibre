@@ -19,7 +19,8 @@ of tabs of framed cards:
 
 from __future__ import annotations
 
-from PySide6.QtCore import QSize, Qt, Signal
+from PySide6.QtCore import QEvent, QSize, Qt, Signal
+from PySide6.QtGui import QFont, QPalette
 from PySide6.QtWidgets import (
     QAbstractButton,
     QButtonGroup,
@@ -200,6 +201,11 @@ class InspectorSection(QWidget):
         self._header.setChecked(is_open)
         self._header.setAutoRaise(True)
         self._header.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        self._header.setIconSize(QSize(10, 10))
+        # The system font at its normal size, one weight up: the platforms' own section headings.
+        font = self._header.font()
+        font.setWeight(QFont.Weight.Medium)
+        self._header.setFont(font)
         self._header.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self._header.toggled.connect(self._on_toggled)
         self.body = QWidget(self)
@@ -221,8 +227,16 @@ class InspectorSection(QWidget):
         self._header.setChecked(is_open)
 
     def _apply(self, is_open: bool) -> None:
-        self._header.setArrowType(Qt.ArrowType.DownArrow if is_open else Qt.ArrowType.RightArrow)
+        from app.styles.style.widgets import _chevron_icon
+
+        # A thin chevron before the title: right when closed, down when open (as Claude's own sections).
+        self._header.setIcon(_chevron_icon(down=is_open, color=self._header.palette().color(QPalette.ColorRole.WindowText)))
         self.body.setVisible(is_open or self._forced_open)
+
+    def changeEvent(self, event) -> None:  # noqa: N802 - Qt override
+        if event.type() == QEvent.Type.PaletteChange and hasattr(self, "_header"):
+            self._apply(self._header.isChecked())  # the chevron follows a light / dark switch
+        super().changeEvent(event)
 
     #: While a filter is on, a closed section shows its body anyway (its remembered state is not touched).
     _forced_open: bool = False

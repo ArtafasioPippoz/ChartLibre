@@ -1190,6 +1190,13 @@ QFrame#segmentedControl > QToolButton#segment:checked {
 QToolButton#inspectorSectionTitle {
   border: none;
   background: transparent;
-  font-weight: 600;
-  padding: 2px 0px;
+  text-align: left;
+  padding: 3px 0px;
+  color: palette(window-text);
+}
+QToolButton#inspectorSectionTitle:checked,
+QToolButton#inspectorSectionTitle:hover {
+  background: transparent;
+  border: none;
+  color: palette(window-text);
 }
