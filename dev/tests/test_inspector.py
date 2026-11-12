@@ -99,3 +99,21 @@ def test_the_find_box_leaves_the_rows_that_have_the_words(qapp) -> None:
 
     filter_page(page, "")
     assert line.isVisibleTo(page) and forms[0].rows[1][1].isVisibleTo(page) and not marker.body.isVisibleTo(page)
+
+
+def test_filtering_shrinks_the_form_to_the_rows_left(qapp) -> None:
+    from PySide6.QtWidgets import QLineEdit
+
+    from app.widgets.inspector import InspectorForm
+
+    form = InspectorForm()
+    for name in ("DPI", "Width", "Height", "Border"):
+        form.add_row(name, QLineEdit())
+    form.show()
+    full = form.sizeHint().height()
+    for index in (1, 2, 3):
+        form.set_row_visible(index, False)
+    assert form.sizeHint().height() < full * 0.5
+    for index in (1, 2, 3):
+        form.set_row_visible(index, True)
+    assert form.sizeHint().height() == full

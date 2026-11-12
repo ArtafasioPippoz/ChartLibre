@@ -348,6 +348,7 @@ class InspectorForm(QWidget):
         self._grid.setColumnStretch(1, 1)
         self.rows: list[tuple[QLabel | None, QWidget]] = []
         self._rules: list[QFrame | None] = []
+        self._grid_rows: list[int] = []  # the grid row of each entry of rows
 
     def _rule(self) -> None:
         """A hairline above every row but the first, as the grouped lists of System Settings."""
@@ -364,6 +365,7 @@ class InspectorForm(QWidget):
             if not control.toolTip():
                 control.setToolTip(tooltip)
         self._grid.setRowMinimumHeight(row, 28)
+        self._grid_rows.append(row)
         self._grid.addWidget(caption, row, 0, Qt.AlignmentFlag.AlignVCenter)
         self._grid.addWidget(control, row, 1)
         self.rows.append((caption, control))
@@ -374,6 +376,9 @@ class InspectorForm(QWidget):
         if label is not None:
             label.setVisible(visible)
         control.setVisible(visible)
+        # A hidden row gives its height back: the grid keeps a row's minimum height even when it is empty.
+        self._grid.setRowMinimumHeight(self._grid_rows[index], 28 if visible else 0)
+        self.updateGeometry()
         if self._rules[index] is not None:
             self._rules[index].setVisible(visible)
 
@@ -381,6 +386,7 @@ class InspectorForm(QWidget):
         self._rule()
         row = self._grid.rowCount()
         self._grid.setRowMinimumHeight(row, 28)
+        self._grid_rows.append(row)
         self._grid.addWidget(control, row, 0, 1, 2)
         self.rows.append((None, control))
 
