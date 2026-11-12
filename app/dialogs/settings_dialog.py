@@ -306,7 +306,6 @@ class SettingsDialog(PanelDialog):
         _align_labels(forms)
 
         self.add_action("save", self._save)
-        self.add_action("close", self.reject)
 
     #: Each section's page, as macOS's System Settings draws one: (English title) -> (icon, tile colour, sentence).
     SECTIONS: dict[str, tuple[str, str, str]] = {
