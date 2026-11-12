@@ -48,3 +48,17 @@ def test_the_arrows_change_the_axis_everywhere(qapp, tmp_path) -> None:
     finally:
         window.close()
 
+
+
+def test_the_span_is_off_with_one_axis(qapp) -> None:
+    from app.widgets.chart_properties.axis_properties import AxisPropertiesWidget
+
+    page = AxisPropertiesWidget()
+    page._axis_combo.setEnabled(True)
+    page._pages.setEnabled(True)  # off without a figure
+    page._axis_combo.addItem("A", 1)
+    page._update_axis_action_buttons()
+    assert not page._row_span_spin.isEnabled() and not page._col_span_spin.isEnabled()
+    page._axis_combo.addItem("B", 2)
+    page._update_axis_action_buttons()
+    assert page._row_span_spin.isEnabled() and page._col_span_spin.isEnabled()

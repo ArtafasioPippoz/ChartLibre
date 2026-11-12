@@ -256,9 +256,10 @@ class AxisPropertiesWidget(BaseProperties):
         title_form.add_row(_("Font"), self._font_scale)
 
         span = self._build_span_row(position_section.body)
-        self._row_span_spin.setMaximumWidth(72)
-        self._col_span_spin.setMaximumWidth(72)
-        position_form.add_row(_("Span"), span)
+        # Two rows, each as wide as the others: the two spin boxes side by side were squeezed to a digit.
+        position_form.add_row(_("Row span"), self._row_span_spin)
+        position_form.add_row(_("Column span"), self._col_span_spin)
+        span.deleteLater()  # the row that held them, empty now
         position_form.add_row(_("Projection"), self._projection_combo)
         # How many points a series of this axis draws at most (it was the figure's, for all its axes at once).
         from app.widgets.chart_properties.figure_properties import (
@@ -1250,6 +1251,10 @@ class AxisPropertiesWidget(BaseProperties):
             is_enabled and current_index < self._axis_combo.count() - 1
         )
         self._btn_delete.setEnabled(is_enabled)
+        # A span is a figure's with several axes: with one axis there is nothing to span.
+        several = self._axis_combo.count() > 1
+        for spin in (self._row_span_spin, self._col_span_spin):
+            spin.setEnabled(is_enabled and several)
 
     # ------------------------------------------------------------------
     # Descriptor binding
