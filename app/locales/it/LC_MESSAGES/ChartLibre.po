@@ -14,7 +14,7 @@ msgid " dec."
 msgstr " dec."
 
 msgid " frames/s"
-msgstr " cornici/s"
+msgstr " fotogrammi/s"
 
 msgid " points"
 msgstr " punti"
@@ -191,10 +191,10 @@ msgid "A field in space needs both Z and W; a flat one neither."
 msgstr "Un campo nello spazio vuole sia Z sia W; uno piano nessuno dei due."
 
 msgid "A frame back"
-msgstr "Una cornice posteriore"
+msgstr "Un fotogramma indietro"
 
 msgid "A frame forward"
-msgstr "Una cornice in avanti"
+msgstr "Un fotogramma avanti"
 
 msgid "A function's parameter"
 msgstr "Parametro di una funzione"
@@ -461,7 +461,7 @@ msgid "All"
 msgstr "Tutti"
 
 msgid "All ({count} frames)"
-msgstr "Tutti ({count} cornici)"
+msgstr "Tutti ({count} fotogrammi)"
 
 msgid "All checked series"
 msgstr "Tutte le serie selezionate"
@@ -638,7 +638,7 @@ msgid "Apply template"
 msgstr "Applica modello"
 
 msgid "Apply the settings to play"
-msgstr "Applicare le impostazioni per giocare"
+msgstr "Applica le impostazioni per riprodurre"
 
 msgid "Apply to all figures"
 msgstr "Applica a tutte le figure"
@@ -1751,7 +1751,7 @@ msgid "Drawing every figure and writing the report…"
 msgstr "Disegno di tutte le figure e scrittura del report…"
 
 msgid "Drawing the frames…"
-msgstr "Disegnare le cornici..."
+msgstr "Disegno dei fotogrammi…"
 
 msgid "Draws a square mesh (a box in 3D) over the source's extent and the same mesh after the transform. A rotation turns it, a scale stretches it, a shear leans it over - which is easier to read off the mesh than off the points."
 msgstr "Disegna una griglia quadrata (una scatola in 3D) sull'estensione della sorgente e la stessa griglia dopo la trasformazione. Una rotazione la gira, una scala la allunga, un taglio la inclina - cose più facili da leggere sulla griglia che sui punti."
@@ -1961,7 +1961,7 @@ msgid "Every figure is drawn again, with its notes."
 msgstr "Ogni figura viene ridisegnata, con le sue note."
 
 msgid "Every frame, at the figure's size, into an animated GIF"
-msgstr "Ogni cornice, alle dimensioni della figura, in un GIF animato"
+msgstr "Ogni fotogramma, alle dimensioni della figura, in una GIF animata"
 
 msgid "Every generated table is used by a chart or a saved query: nothing to delete."
 msgstr "Ogni tabella generata viene utilizzata da un grafico o da una query salvata: nulla da eliminare."
@@ -2312,10 +2312,10 @@ msgid "Fraction of each segment shared with the next."
 msgstr "Frazione di ciascun segmento condivisa con il successivo."
 
 msgid "Frames"
-msgstr "Cornici"
+msgstr "Fotogrammi"
 
 msgid "Frames shown"
-msgstr "Cornici mostrati"
+msgstr "Fotogrammi mostrati"
 
 msgid "Friedman test"
 msgstr "Test di Friedman"
@@ -2915,7 +2915,7 @@ msgid "Keep every change made here"
 msgstr "Mantieni tutte le modifiche fatte qui"
 
 msgid "Keep the limits of the whole data, so the axes do not jump from frame to frame"
-msgstr "Tenere i limiti di tutti i dati, in modo che gli assi non saltino da cornice a cornice"
+msgstr "Mantieni i limiti di tutti i dati, così gli assi non saltano da un fotogramma all'altro"
 
 msgid "Keep this SELECT as a saved query of the project"
 msgstr "Tenere questo SELECT come una query salvata del progetto"
@@ -3803,7 +3803,7 @@ msgid "Nothing to offer for these columns alone: add a number to them."
 msgstr "Niente da proporre per queste sole colonne: aggiungi un numero."
 
 msgid "Nothing to play along: the series read no table with row ids, and draw no function."
-msgstr "Niente da giocare: la serie non legge nessun tavolo con ids di riga, e non disegnare nessuna funzione."
+msgstr "Niente da riprodurre: le serie non leggono nessuna tabella con id di riga e non disegnano nessuna funzione."
 
 msgid "Nothing was drawn."
 msgstr "Non è stato disegnato nulla."
@@ -3893,7 +3893,7 @@ msgid "One tree you can read; a Bootstrap Forest (many trees on resampled rows, 
 msgstr "Un albero leggibile; una foresta bootstrap (molti alberi su righe ricampionate, mediati); o un albero con boosting (molti alberi piccoli, ognuno corregge i precedenti)."
 
 msgid "One value at a time, every value up to the frame's, or the last few"
-msgstr "Un valore alla volta, ogni valore fino al telaio, o gli ultimi pochi"
+msgstr "Un valore alla volta, tutti i valori fino a quello del fotogramma, o gli ultimi"
 
 msgid "One value for every series, fitted to all of them together."
 msgstr "Un solo valore per tutte le serie, adattato su tutte insieme."
@@ -4187,19 +4187,19 @@ msgid "Pictures kept in the project, for markers drawn as pictures. SVG stays sh
 msgstr "Immagini conservate nel progetto, per marcatori disegnati come immagini. SVG rimane tagliente a qualsiasi dimensione; un'icona a colori prende il colore della serie."
 
 msgid "Play"
-msgstr "Gioca"
+msgstr "Riproduci"
 
 msgid "Play along"
-msgstr "Giocare lungo"
+msgstr "Riproduci lungo"
 
 msgid "Play the figure along a column or a parameter"
-msgstr "Gioca la figura lungo una colonna o un parametro"
+msgstr "Riproduci la figura lungo una colonna o un parametro"
 
 msgid "Play the figure one frame at a time, with the bar under the chart"
-msgstr "Gioca la figura una cornice alla volta, con la barra sotto il grafico"
+msgstr "Riproduci la figura un fotogramma alla volta, con la barra sotto il grafico"
 
 msgid "Playing"
-msgstr "Giocare"
+msgstr "Riproduzione"
 
 msgid "Plot a function"
 msgstr "Traccia una funzione"
@@ -5183,7 +5183,7 @@ msgid "Show the estimated distribution of one or more samples."
 msgstr "Mostra la distribuzione stimata di uno o più campioni."
 
 msgid "Show the frame's value"
-msgstr "Mostra il valore della cornice"
+msgstr "Mostra il valore del fotogramma"
 
 msgid "Show the navigation labels"
 msgstr "Mostra le etichette di navigazione"
@@ -5714,7 +5714,7 @@ msgid "The formula is empty."
 msgstr "La formula è vuota."
 
 msgid "The frames; at the right end, all the data"
-msgstr "Le cornici; alla fine giusta, tutti i dati"
+msgstr "I fotogrammi; all'estremità destra, tutti i dati"
 
 msgid "The grid's shift from the centre, mm: half a die puts a die corner on the centre."
 msgstr "Lo spostamento della griglia dal centro, mm: mezzo dado mette un angolo dello stampo al centro."
@@ -6455,7 +6455,7 @@ msgid "Write a letter on each panel of a multi-axis figure."
 msgstr "Scrivi una lettera su ogni pannello di una figura con più assi."
 
 msgid "Write the frame's value at the top right of the figure"
-msgstr "Scrivere il valore della cornice in alto a destra della figura"
+msgstr "Scrive il valore del fotogramma in alto a destra nella figura"
 
 msgid "Write what the statement returns as a new table: fixed rows, not read again like a saved query"
 msgstr "Scrive come nuova tabella ciò che l'istruzione restituisce: righe fisse, non rilette come una query salvata"
@@ -6860,7 +6860,7 @@ msgid "z range"
 msgstr "Intervallo di z"
 
 msgid "{charts} cannot be played: it draws the whole table as one structure, with no frames to go through."
-msgstr "{charts} non può essere giocato: disegna l'intero tavolo come una struttura, senza cornici da passare."
+msgstr "{charts} non può essere riprodotto: disegna l'intera tabella come un'unica struttura, senza fotogrammi da scorrere."
 
 msgid "{chart} draws one series per axis: the {count} below will each get an axis of their own."
 msgstr "{chart} disegna una serie per asse: le {count} qui sotto avranno ciascuna un asse dedicato."
