@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import html
+import sys
 
 from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtCore import QRect, QSize, Qt
@@ -277,6 +278,8 @@ def mark_destructive_button(button: QtWidgets.QAbstractButton) -> QtWidgets.QAbs
     theme resolves disabled/hover state through.
     """
     button.setProperty("destructive", True)
+    if sys.platform == "darwin":  # a Mac button is its word: no icon on Delete, Clear...
+        button.setIcon(QIcon())
     repolish_widget(button)
     return button
 
