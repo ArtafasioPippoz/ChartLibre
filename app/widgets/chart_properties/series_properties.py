@@ -203,10 +203,10 @@ class SeriesPropertiesWidget(BaseProperties):
         self._options_section.setVisible(False)
         for card in self._groups:
             root.addWidget(card, 0)
-        root.addStretch(1)
 
         self._function_section = self._build_function_section()
         root.addWidget(self._function_section, 0)
+        root.addStretch(1)  # the spare height goes below the last section, not between Query and Function
 
         scroll = QScrollArea(self)
         scroll.setProperty("toolboxPage", True)
