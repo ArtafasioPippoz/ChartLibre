@@ -70,8 +70,8 @@ class StyleChooser(QWidget):
         choices = [(STANDARD, _("Standard")), (CUSTOM, _("Custom"))] + ([(SYMBOL, _("Symbol"))] if symbols else []) \
             + ([(PICTURE, _("Picture"))] if pictures is not None else [])
         radios = QGridLayout()
-        radios.setHorizontalSpacing(12)
-        radios.setVerticalSpacing(4)
+        radios.setHorizontalSpacing(20)
+        radios.setVerticalSpacing(8)
         for index, (key, label) in enumerate(choices):
             button = QRadioButton(label, self)
             self._group.addButton(button)

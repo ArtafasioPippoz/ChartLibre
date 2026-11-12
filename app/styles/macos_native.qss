@@ -1212,6 +1212,25 @@ QWidget#inspectorSectionBody QComboBox:focus,
 QWidget#inspectorSectionBody QPlainTextEdit:focus {
   border: 1px solid palette(highlight);
 }
+/* Option buttons: an empty ring when off (the native one nearly vanished on a grey card), a blue disc when
+   on. */
+QRadioButton {
+  spacing: 8px;
+  padding: 3px 0px;
+}
+QRadioButton::indicator {
+  width: 14px;
+  height: 14px;
+  border-radius: 8px;
+}
+QRadioButton::indicator:unchecked {
+  background: palette(base);
+  border: 1px solid palette(mid);
+}
+QRadioButton::indicator:checked {
+  background: palette(highlight);
+  border: 1px solid palette(highlight);
+}
 QLabel#inspectorSectionCaption {
   color: palette(placeholder-text);
   background: transparent;
