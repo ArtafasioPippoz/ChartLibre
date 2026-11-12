@@ -1,6 +1,6 @@
 # ChartLibre — Prioritized Roadmap
 
-**State:** `app/` has 0 lines of code in  Python files; `dev/tests` has 0 lines in  files (measured at this commit).
+**State:** `app/` has 117,408 lines of code in 331 Python files; `dev/tests` has 29,362 lines in 248 files (measured at this commit).
 
 **Audience:** engineers, scientists, and students who need an affordable desktop workflow from raw data to analysed, documented figures and reports.
 
@@ -11,6 +11,10 @@
 - **Gap:** the main competing capability that users are likely to notice. `Core` means a foundational ChartLibre capability rather than a direct competitor gap.
 
 The order is a single recommended backlog. Related items have been merged, and completed work has been removed. “Requested most” is an informed proxy based on the stated audience and market gaps; validate the top ten with user interviews, issue tags, and usage data.
+
+ID100 |1|x| Translation not saved when language is changed. Remove Cancel and keep on Close. Allor removing a language,
+ID101 |3|x| Revise tralsations: if "cm" and "cm:" use a single string _("cm")+":"....  Do not translate acronims, symbols, single letters...
+
 
 | ID | Priority | Complexity | Initiative | Simplified scope | Main gap / user need |
 |---|---:|---:|---|---|---|
@@ -56,7 +60,6 @@ The order is a single recommended backlog. Related items have been merged, and c
 
 | ID | Priority | Complexity | Task | Simplified scope |
 |---|---:|---:|---|---|
-| ID42 | 1 | 1 | Move the project out of iCloud Desktop (A-04) | Use a local development folder such as `~/Developer`. |
 | ID43 | 2 | 1 | Improve GitHub presence (A-05) | Add description, topics, and social-preview image. |
 | ID44 | 3 | 2 | Test Linux (A-06) | Validate installation and core workflows on a supported distribution. |
 | ID45 | 4 | 3 | Package and distribution work (I-08) | Sign the macOS app and produce a Windows installer. |

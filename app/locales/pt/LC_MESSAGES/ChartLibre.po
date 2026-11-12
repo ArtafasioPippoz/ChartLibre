@@ -4,11 +4,20 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8\n"
 
+msgid " (near x = {x})"
+msgstr " (perto de x = {x})"
+
 msgid " cm"
 msgstr " cm"
 
 msgid " dec."
 msgstr " dez."
+
+msgid " frames/s"
+msgstr " ▁quadros/s"
+
+msgid " points"
+msgstr " ▁pontos"
 
 msgid "'{key}' back to Matplotlib's default."
 msgstr "'{key}' de volta ao padrão da Matplotlib."
@@ -33,6 +42,9 @@ msgstr "(Estilo incorporado)"
 
 msgid "(empty)"
 msgstr "(vazio)"
+
+msgid "(missing)"
+msgstr "(desaparecido)"
 
 msgid "(none)"
 msgstr "(nenhuma)"
@@ -163,6 +175,9 @@ msgstr "Um gráfico das colunas selecionadas: um histograma de um, senão Novo g
 msgid "A circuit simulation's waveforms: one column per trace; each plot a dataset, .step runs numbered."
 msgstr "Formas de onda de uma simulação de circuito: uma coluna por traço; cada plotagem um conjunto de dados, execuções de etapas numeradas."
 
+msgid "A column"
+msgstr "▁Uma▁coluna"
+
 msgid "A column cannot be both a response and a factor: {columns}."
 msgstr "Uma coluna não pode ser uma resposta e um fator: {columns}."
 
@@ -174,6 +189,15 @@ msgstr "Alguns fatores ocultos por trás de muitas colunas correlacionadas: Prob
 
 msgid "A field in space needs both Z and W; a flat one neither."
 msgstr "Um campo no espaço precisa de Z e W; um plano também não."
+
+msgid "A frame back"
+msgstr "Um▁quadro para▁trás"
+
+msgid "A frame forward"
+msgstr "Um▁quadro para a▁frente"
+
+msgid "A function's parameter"
+msgstr "Parâmetro de▁uma▁função"
 
 msgid "A guide line under the pointer, shared across every axes of this figure."
 msgstr "Uma linha guia sob o ponteiro, compartilhada em todos os eixos desta figura."
@@ -205,17 +229,20 @@ msgstr "Um modelo rodando neste computador através do Ollama (ollama.com): nada
 msgid "A new chart of this table"
 msgstr "Um novo gráfico desta tabela"
 
-msgid "A new figure with this column's histogram, and its statistics in the figure's notes"
-msgstr "Uma nova figura com o histograma desta coluna e suas estatísticas nas notas da figura"
-
 msgid "A notch on 200 mm wafers and up, a flat on smaller ones."
 msgstr "Um entalhe em wafers de 200 mm e para cima, um plano nos menores."
 
+msgid "A pattern: \"-\" a dash, \".\" a dot, a space a longer gap - for example ..--  or  -- . --\nor matplotlib's (offset, (on, off, ...)) in line widths - for example (0, (5, 2, 1, 2))"
+msgstr "Um▁padrão: \"-\" um▁traço, \"..\" um▁ponto, um▁espaço▁uma▁lacuna▁mais▁longa - por▁exemplo ..--- ou -- . --\nou matplotlib's (offset, (on, off, ...)) em▁larguras de▁linha - por▁exemplo (0, (5, 2, 1, 2))"
+
+msgid "A picture named \"{name}\" is already kept."
+msgstr "▁Uma▁imagem▁chamada \"{name}\"▁já▁está▁guardada."
+
+msgid "A picture named \"{name}\" is already kept. Replace it?"
+msgstr "▁Uma▁imagem▁chamada \"{name}\"▁já▁está▁guardada. Substitua- a?"
+
 msgid "A query's or a function's column: named and typed by its SQL or its formula."
 msgstr "Coluna de uma consulta ou de uma função: nomeada e digitada por seu SQL ou sua fórmula."
-
-msgid "A row for each distinct value not listed yet (up to {n})."
-msgstr "Uma linha para cada valor distinto ainda não listado (até {n})."
 
 msgid "A ruler between two points, with its dx/dy/slope written beside it - the same thing a chart's own \"Measure from here\" / \"Measure to here\" right-click actions create. Color has its own column; anything else goes in Kwargs JSON."
 msgstr "Uma régua entre dois pontos, com seu dx/dy/slope escrito ao lado - a mesma coisa que as ações \"Measure from here\" / \"Measure to here\" do próprio gráfico criam. A cor tem sua própria coluna; qualquer outra coisa vai em Kwargs JSON."
@@ -334,6 +361,9 @@ msgstr "Adicione um gráfico dos valores medidos em relação aos valores ajusta
 msgid "Add a new series holding only the selected points."
 msgstr "Adicione uma nova série que contenha apenas os pontos selecionados."
 
+msgid "Add an SVG, PNG or JPEG picture to the project and use it as the marker"
+msgstr "▁Adicionar▁uma▁imagem SVG, PNG ou JPEG▁ao▁projeto e▁usá-la▁como▁marcador"
+
 msgid "Add annotation"
 msgstr "Adicionar anotação"
 
@@ -349,6 +379,9 @@ msgstr "Adicionar coluna"
 msgid "Add computed column"
 msgstr "Adicionar coluna calculada"
 
+msgid "Add from file…"
+msgstr "▁Adicionar do▁ficheiro..."
+
 msgid "Add horizontal line at y = {value}"
 msgstr "Adicionar linha horizontal em y = {value}"
 
@@ -363,6 +396,12 @@ msgstr "Adicionar medição"
 
 msgid "Add new axis"
 msgstr "Adicionar novo eixo"
+
+msgid "Add picture"
+msgstr "▁Adicionar▁uma▁imagem"
+
+msgid "Add pictures"
+msgstr "▁Adicionar▁imagens"
 
 msgid "Add source"
 msgstr "Adicionar fonte"
@@ -406,6 +445,9 @@ msgstr "Adiciona essa quantidade de x para cada unidade de y acima do centro."
 msgid "Adds this much y for each unit of x right of the centre."
 msgstr "Adiciona esta quantidade de y para cada unidade de x à direita do centro."
 
+msgid "Add…"
+msgstr "▁Adicionar..."
+
 msgid "Advanced"
 msgstr "Avançado"
 
@@ -417,6 +459,9 @@ msgstr "Algoritmo:"
 
 msgid "All"
 msgstr "Todos"
+
+msgid "All ({count} frames)"
+msgstr "▁Todos ({count}▁quadros)"
 
 msgid "All checked series"
 msgstr "Todas as séries verificadas"
@@ -438,6 +483,9 @@ msgstr "Permitir avaliação fora do intervalo X de dados de origem."
 
 msgid "Allow extrapolation"
 msgstr "Permitir extrapolação"
+
+msgid "Along"
+msgstr "▁Juntamente"
 
 msgid "Also editing: {names}"
 msgstr "Também editando: {names}"
@@ -487,6 +535,9 @@ msgstr "Analisar frequências"
 msgid "Analysis"
 msgstr "Análise"
 
+msgid "Analysis > Statistics on this column"
+msgstr "▁Análise >▁Estatísticas▁nesta▁coluna"
+
 msgid "Analysis of variance"
 msgstr "Análise de variância"
 
@@ -513,6 +564,15 @@ msgstr "Ângulo (°):"
 
 msgid "Angles (x, y, z)"
 msgstr "Ângulos (x, y, z)"
+
+msgid "Animate this figure"
+msgstr "▁Animar esta▁figura"
+
+msgid "Animated GIF (*.gif)"
+msgstr "GIF▁animado (*.gif)"
+
+msgid "Animation"
+msgstr "▁Animação"
 
 msgid "Annotation text:"
 msgstr "Texto de anotação:"
@@ -556,6 +616,9 @@ msgstr "Aplicado por último. O positivo vira x em direção a y - a rotação 2
 msgid "Applied second. Positive turns z towards x."
 msgstr "Segundo aplicado. O positivo vira z em direção a x."
 
+msgid "Applied. Undo takes the whole of it back."
+msgstr "▁Aplicado. Desfazer▁leva▁tudo de▁volta."
+
 msgid "Apply"
 msgstr "Aplicar"
 
@@ -573,6 +636,9 @@ msgstr "Aplicar multipico"
 
 msgid "Apply template"
 msgstr "Aplicar modelo"
+
+msgid "Apply the settings to play"
+msgstr "▁Aplicar as▁configurações a▁reproduzir"
 
 msgid "Apply to all figures"
 msgstr "Aplicar a todas as figuras"
@@ -1015,6 +1081,9 @@ msgstr "Limpar menu"
 msgid "Clear the log at start"
 msgstr "Limpar o registo no início"
 
+msgid "Clipboard"
+msgstr "Área de transferência"
+
 msgid "Close"
 msgstr "Fechar"
 
@@ -1219,6 +1288,9 @@ msgstr "Copiar figura"
 msgid "Copy parameters"
 msgstr "Copiar parâmetros"
 
+msgid "Copy the rows as tab-separated text, for a spreadsheet"
+msgstr "▁Copiar as▁linhas▁como▁texto▁separado por▁páginas, para▁uma▁folha de▁cálculo"
+
 msgid "Copy the selected cells"
 msgstr "Copiar as células selecionadas"
 
@@ -1260,9 +1332,6 @@ msgstr "Não foi possível escrever o relatório: {reason}"
 
 msgid "Count"
 msgstr "Contagem"
-
-msgid "Count, empty cells, distinct values, and min, max, mean and median"
-msgstr "Contagem, células vazias, valores distintos e mín, máx, média e mediana"
 
 msgid "Counter-clockwise, about the centre below. The query spells this out as cos(radians(...)) rather than as a decimal, so it can be read and edited afterwards."
 msgstr "Sentido anti-horário, em torno do centro abaixo. A consulta soletra isso como cos(radianos(...)) e não como um decimal, para que possa ser lida e editada posteriormente."
@@ -1345,6 +1414,9 @@ msgstr "Curva"
 msgid "Curves"
 msgstr "Curvas"
 
+msgid "Custom"
+msgstr "▁Personalizado"
+
 msgid "Cut criterion:"
 msgstr "Critério de corte:"
 
@@ -1420,6 +1492,9 @@ msgstr "O mais profundo de uma única árvore pode crescer. 0 significa ilimitad
 msgid "Default"
 msgstr "Padrão"
 
+msgid "Default (the axis style)"
+msgstr "Predefinição (estilo do▁eixo)"
+
 msgid "Default chart style"
 msgstr "Estilo de gráfico padrão"
 
@@ -1477,8 +1552,14 @@ msgstr "Eliminar a tabela selecionada"
 msgid "Delete the selected tables"
 msgstr "Eliminar as tabelas selecionadas"
 
+msgid "Delete the tables written by operations that no chart or saved query uses"
+msgstr "▁Apagar as▁tabelas▁escritas por▁operações que▁nenhum▁gráfico ou▁pesquisa▁gravada▁usa"
+
 msgid "Delete this figure"
 msgstr "Eliminar esta figura"
+
+msgid "Delete unused generated tables…"
+msgstr "▁Apagar as▁tabelas▁geradas▁não▁utilizadas..."
 
 msgid "Delete {count} row(s)? This can be undone."
 msgstr "Excluir {count} linha(s)? Isso pode ser desfeito."
@@ -1600,9 +1681,6 @@ msgstr "Categorias distintas"
 msgid "Distinct values"
 msgstr "Valores distintos"
 
-msgid "Distinct values: {n}"
-msgstr "Valores distintos: {n}"
-
 msgid "Distribution"
 msgstr "Distribuição"
 
@@ -1645,9 +1723,6 @@ msgstr "Clique duas vezes em uma coluna para retirá-la desta função."
 msgid "Double-click an effect to remove it."
 msgstr "Clique duas vezes em um efeito para removê-lo."
 
-msgid "Downsample"
-msgstr "Downsample"
-
 msgid "Drag a rectangle over the chart to select points, for hiding or splitting into a new series."
 msgstr "Arraste um retângulo sobre o gráfico para selecionar pontos, para ocultar ou dividir numa nova série."
 
@@ -1656,6 +1731,9 @@ msgstr "Desenhe uma caixa e um gráfico de bigodes."
 
 msgid "Draw a line round the whole figure"
 msgstr "Desenhe uma linha ao redor de toda a figura"
+
+msgid "Draw a marker on every n-th point only; the line still joins them all."
+msgstr "Desenhe um▁marcador▁apenas em▁cada▁ponto n; a▁linha▁ainda se▁junta a▁todos▁eles."
 
 msgid "Draw at most this many points per series, sampling the rest away."
 msgstr "Desenhe no máximo tantos pontos por série, amostrando o resto."
@@ -1671,6 +1749,9 @@ msgstr "Desenhe a própria linha de base estimada."
 
 msgid "Drawing every figure and writing the report…"
 msgstr "Desenhar cada figura e escrever o relatório..."
+
+msgid "Drawing the frames…"
+msgstr "A▁desenhar as▁molduras..."
 
 msgid "Draws a square mesh (a box in 3D) over the source's extent and the same mesh after the transform. A rotation turns it, a scale stretches it, a shear leans it over - which is easier to read off the mesh than off the points."
 msgstr "Desenha uma malha quadrada (uma caixa em 3D) sobre a extensão da fonte e a mesma malha após a transformação. Uma rotação o vira, uma escala o estica, um cisalhamento o inclina - o que é mais fácil de ler na malha do que nos pontos."
@@ -1707,6 +1788,9 @@ msgstr "Cada característica dividida pelo seu desvio padrão, de modo que cada 
 
 msgid "Each feature's mean in each cluster."
 msgstr "A média de cada feição em cada cluster."
+
+msgid "Each frame draws the rows with one value of this column: a year, a time, a step"
+msgstr "▁Cada frame▁desenha as▁linhas com um valor▁desta▁coluna: um▁ano, um tempo, um▁passo"
 
 msgid "Each library is used under its own licence, named above and shipped with the package it belongs to. Versions are the ones installed here, not the ones pinned."
 msgstr "Cada biblioteca é usada sob sua própria licença, nomeada acima e enviada com o pacote ao qual pertence. As versões são as instaladas aqui, não as fixadas."
@@ -1810,9 +1894,6 @@ msgstr "Esvaziar o registo da aplicação"
 msgid "Empty the editor"
 msgstr "Esvaziar o editor"
 
-msgid "Empty: {n}"
-msgstr "Vazio: {n}"
-
 msgid "Encoding"
 msgstr "Codificação"
 
@@ -1864,6 +1945,9 @@ msgstr "Estimador"
 msgid "Eval X:"
 msgstr "Eval X:"
 
+msgid "Every"
+msgstr "▁Cada"
+
 msgid "Every analysis and data operation, by category, as JMP's Analyze menu"
 msgstr "Toda análise e operação de dados, por categoria, conforme menu Analisar do JMP"
 
@@ -1875,6 +1959,15 @@ msgstr "Cada gráfico de '{table}' desenha apenas suas linhas marcadas como Sele
 
 msgid "Every figure is drawn again, with its notes."
 msgstr "Cada figura é desenhada novamente, com as suas notas."
+
+msgid "Every frame, at the figure's size, into an animated GIF"
+msgstr "▁Cada▁quadro, no▁tamanho da▁figura, em um GIF▁animado"
+
+msgid "Every generated table is used by a chart or a saved query: nothing to delete."
+msgstr "▁Cada▁tabela▁gerada é▁usada por um▁gráfico ou▁uma▁consulta▁salva:▁nada para▁excluir."
+
+msgid "Every point"
+msgstr "▁Todos▁os▁pontos"
 
 msgid "Every selected series is linearly resampled onto this many evenly spaced points across their shared x range, before decomposing or embedding them together."
 msgstr "Cada série selecionada é reamostrada linearmente em tantos pontos uniformemente espaçados em toda a sua faixa x compartilhada, antes de decompor ou incorporá-los juntos."
@@ -2041,6 +2134,9 @@ msgstr "Modelo de figura"
 msgid "Figure {number}. {name}"
 msgstr "Figura {number}. {name}"
 
+msgid "Figure's"
+msgstr "▁Figura"
+
 msgid "Figure:"
 msgstr "Figura:"
 
@@ -2061,9 +2157,6 @@ msgstr "Preencher"
 
 msgid "Fill empty cells in '{column}'"
 msgstr "Preencher células vazias em '{column}'"
-
-msgid "Fill from the data"
-msgstr "Preencher a partir dos dados"
 
 msgid "Fill missing values"
 msgstr "Preencher valores em falta"
@@ -2218,8 +2311,17 @@ msgstr "Encontrado na própria grade x/y exata da superfície."
 msgid "Fraction of each segment shared with the next."
 msgstr "Fração de cada segmento compartilhado com o próximo."
 
+msgid "Frames"
+msgstr "Molduras"
+
+msgid "Frames shown"
+msgstr "▁Quadros▁apresentados"
+
 msgid "Friedman test"
 msgstr "Teste de Friedman"
+
+msgid "From"
+msgstr "De"
 
 msgid "Full factorial"
 msgstr "Factorial completo"
@@ -2274,6 +2376,9 @@ msgstr "Dados gerados"
 
 msgid "Generated table schema"
 msgstr "Esquema de tabela gerado"
+
+msgid "Generated tables"
+msgstr "▁Tabelas▁geradas"
 
 msgid "GitHub Copilot"
 msgstr "GitHub Copilot"
@@ -2470,9 +2575,6 @@ msgstr "Highpass"
 msgid "Histogram"
 msgstr "Histograma"
 
-msgid "Histogram of '{column}'"
-msgstr "Histograma de '{column}'"
-
 msgid "History"
 msgstr "História"
 
@@ -2481,6 +2583,9 @@ msgstr "Histórico de {table}"
 
 msgid "History…"
 msgstr "História..."
+
+msgid "Hold the axes"
+msgstr "▁Segurar▁os▁eixos"
 
 msgid "Host"
 msgstr "Anfitrião"
@@ -2517,6 +2622,9 @@ msgstr "Quantas casas decimais de x o solucionador tem que resolver antes de par
 
 msgid "How many factors the factorial macro's interactions combine, at most."
 msgstr "Quantos fatores as interações da macro fatorial combinam, no máximo."
+
+msgid "How many frames stay on screen, the current one included"
+msgstr "▁Quantos▁quadros▁ficam na▁tela, o▁atual▁incluído"
 
 msgid "How many nearby points each one is connected to. Lowered automatically if it does not fit the sample count."
 msgstr "A quantos pontos próximos cada um está conectado. Reduzido automaticamente se não se encaixar na contagem da amostra."
@@ -2770,6 +2878,9 @@ msgstr "Seu histograma, quantis e distribuições ajustadas: Distribuição de {
 msgid "Its trend, season and forecast: Time Series of {measure}"
 msgstr "Sua tendência, estação e previsão: Série Temporal de {measure}"
 
+msgid "Its width at half that height is {width} in x: the span to integrate for its area (Calculus)."
+msgstr "▁Sua▁largura a▁metade▁dessa▁altura é {width} em x: o span para▁integrar para▁sua▁área (Cálculo)."
+
 msgid "JCAMP-DX spectrum"
 msgstr "Espectro JCAMP-DX"
 
@@ -2802,6 +2913,12 @@ msgstr "Estatística KS (curva mais próxima)"
 
 msgid "Keep every change made here"
 msgstr "Mantenha todas as alterações feitas aqui"
+
+msgid "Keep the limits of the whole data, so the axes do not jump from frame to frame"
+msgstr "▁Mantenha▁os▁limites de▁todos▁os▁dados, para que▁os▁eixos▁não saltem de▁quadro para▁quadro"
+
+msgid "Keep this SELECT as a saved query of the project"
+msgstr "▁Mantenha▁este SELECT▁como▁uma▁consulta▁salva do▁projeto"
 
 msgid "Keep this figure's style, axes and series look under a name"
 msgstr "Mantenha o estilo, os eixos e a aparência da série desta figura sob um nome"
@@ -2947,8 +3064,8 @@ msgstr "Esquerda:"
 msgid "Left: every left row"
 msgstr "Esquerda: todas as filas à esquerda"
 
-msgid "Legend label"
-msgstr "Legenda etiqueta"
+msgid "Legend"
+msgstr "▁Legenda"
 
 msgid "Length"
 msgstr "Comprimento"
@@ -2958,6 +3075,9 @@ msgstr "Escala de comprimento:"
 
 msgid "Less"
 msgstr "Menos"
+
+msgid "Letters"
+msgstr "▁Letras"
 
 msgid "Level:"
 msgstr "Nível:"
@@ -2995,8 +3115,14 @@ msgstr "Limites em sigma:"
 msgid "Limits {lower} to {upper} around {center}: a stable process keeps nearly every point (997 in 1000) inside them - its mean ± 3 sigma, not a specification."
 msgstr "Limita {lower} a {upper} em torno de {center}: um processo estável mantém quase todos os pontos (997 em 1000) dentro deles - sua média ± 3 sigma, não uma especificação."
 
+msgid "Line"
+msgstr "▁Linha"
+
 msgid "Line style"
 msgstr "Estilo da linha"
+
+msgid "Line width in points. Default leaves it to the style."
+msgstr "Largura da▁linha em▁pontos. Por▁omissão,▁deixa- a▁ao▁estilo."
 
 msgid "Linear"
 msgstr "Linear"
@@ -3069,6 +3195,9 @@ msgstr "O espaçamento logarítmico requer um intervalo estritamente acima de ze
 
 msgid "Lognormal"
 msgstr "Lognormal"
+
+msgid "Loop"
+msgstr "Loop"
 
 msgid "Loss:"
 msgstr "Prejuízo:"
@@ -3145,9 +3274,6 @@ msgstr "Marcar em:"
 msgid "Marker"
 msgstr "Marcador"
 
-msgid "Marker size"
-msgstr "Tamanho do marcador"
-
 msgid "Marker size in points. Default leaves it to the style."
 msgstr "Tamanho do marcador em pontos. O padrão deixa para o estilo."
 
@@ -3181,6 +3307,9 @@ msgstr "Max evals:"
 msgid "Max lags:"
 msgstr "Atrasos máximos:"
 
+msgid "Max points"
+msgstr "▁Pontos▁máximos"
+
 msgid "Max runtime:"
 msgstr "Tempo máximo de execução:"
 
@@ -3210,9 +3339,6 @@ msgstr "Número máximo de avaliações de função para o otimizador."
 
 msgid "Maximum seconds to wait for clustering. Use 0 for no timeout."
 msgstr "Máximo de segundos para aguardar o agrupamento. Use 0 para nenhum tempo limite."
-
-msgid "Maximum: {v:.6g}"
-msgstr "Máximo: {v:.6g}"
 
 msgid "May"
 msgstr "Maio"
@@ -3244,9 +3370,6 @@ msgstr "Limite superior médio"
 msgid "Mean {column}"
 msgstr "Média {column}"
 
-msgid "Mean: {v:.6g}"
-msgstr "Média: {v:.6g}"
-
 msgid "Measure"
 msgstr "Medida"
 
@@ -3277,8 +3400,8 @@ msgstr "Medidas"
 msgid "Median"
 msgstr "Mediana"
 
-msgid "Median: {v:.6g}"
-msgstr "Mediana: {v:.6g}"
+msgid "Message"
+msgstr "▁Mensagem"
 
 msgid "Metadata"
 msgstr "Metadados"
@@ -3324,9 +3447,6 @@ msgstr "Largura mínima:"
 
 msgid "Minimum:"
 msgstr "Mínimo:"
-
-msgid "Minimum: {v:.6g}"
-msgstr "Mínimo: {v:.6g}"
 
 msgid "Minor"
 msgstr "Menor"
@@ -3430,17 +3550,23 @@ msgstr "Nomear colunas por:"
 msgid "Name of the new column:"
 msgstr "Nome da nova coluna:"
 
+msgid "Name of the picture:"
+msgstr "▁Nome da▁figura:"
+
+msgid "Name of the query:"
+msgstr "▁Nome da▁consulta:"
+
 msgid "Name of this figure. Also the title of its chart tab."
 msgstr "Nome desta figura. Também o título da guia do gráfico."
-
-msgid "Name, type, modelling type, label, unit, missing value codes and value labels of the column"
-msgstr "Nome, tipo, tipo de modelagem, etiqueta, unidade, códigos de valor ausentes e etiquetas de valor da coluna"
 
 msgid "Name:"
 msgstr "Nome:"
 
 msgid "Names"
 msgstr "Nomes"
+
+msgid "Narrow where there are points, wide between and beyond them: there the mean line is a guess, and the band says how loose."
+msgstr "Estreita▁onde▁há▁pontos,▁largo entre e▁além▁deles:▁lá a▁linha▁média é um▁palpite, e a▁banda▁diz o▁quão▁solto."
 
 msgid "Navigation"
 msgstr "Navegação"
@@ -3475,9 +3601,6 @@ msgstr "Nova tabela"
 msgid "New axes and figures use this chart type. Same axis keeps the selected axis."
 msgstr "Novos eixos e figuras usam este tipo de gráfico. O mesmo eixo mantém o eixo selecionado."
 
-msgid "New chart from selected columns"
-msgstr "Novo gráfico a partir das colunas selecionadas"
-
 msgid "New column"
 msgstr "Nova coluna"
 
@@ -3501,6 +3624,9 @@ msgstr "Novo nome para '{column}':"
 
 msgid "New name for '{name}':"
 msgstr "Novo nome para '{name}':"
+
+msgid "New name:"
+msgstr "Novo▁nome:"
 
 msgid "New query, not saved yet."
 msgstr "Nova consulta, ainda não salva."
@@ -3567,6 +3693,9 @@ msgstr "Nenhuma operação foi aplicada neste projeto desde que ele começou a r
 
 msgid "No operation has been applied to or from this table since the project began recording them."
 msgstr "Nenhuma operação foi aplicada para ou a partir desta tabela desde que o projeto começou a registrá-las."
+
+msgid "No peak passed the filters. Lower the prominence or the height to see the smaller ones; a peak is only as real as it is tall above the noise around it."
+msgstr "▁Nenhum▁pico▁passou▁pelos▁filtros.▁Abaixe a proeminência ou a▁altura para ver▁os▁menores; um▁pico é▁tão real▁quanto▁alto▁acima do▁ruído▁ao seu▁redor."
 
 msgid "No peaks passed the filter. Lower the minimum, or switch from height to prominence if the baseline is not at zero."
 msgstr "Nenhum pico passou pelo filtro. Abaixe o mínimo ou mude de altura para proeminência se a linha de base não estiver em zero."
@@ -3673,6 +3802,9 @@ msgstr "Nada encontrado. Tente outra palavra - em inglês ou italiano."
 msgid "Nothing to offer for these columns alone: add a number to them."
 msgstr "Nada a oferecer apenas para essas colunas: adicione um número a elas."
 
+msgid "Nothing to play along: the series read no table with row ids, and draw no function."
+msgstr "▁Nada para▁jogar: a▁série▁não▁lê▁nenhuma▁tabela com ids de▁linha, e▁não▁desenha▁nenhuma▁função."
+
 msgid "Nothing was drawn."
 msgstr "Nada foi desenhado."
 
@@ -3739,6 +3871,9 @@ msgstr "Um eixo não pode conter tantas séries deste tipo de gráfico."
 msgid "One axis per value of this column - one per species, per batch, per site - each with every series, filtered to that value."
 msgstr "Um eixo por valor desta coluna - um por espécie, por lote, por local - cada um com cada série, filtrada para esse valor."
 
+msgid "One character (for example ★ ♣ A), drawn with the font shipped with the app so it looks the same everywhere;\nor matplotlib's mathtext, for example $\\clubsuit$;\nor (sides, style, angle) - style 0 a polygon, 1 a star, 2 an asterisk - for example (5, 1, 0)"
+msgstr "Um▁caractere (por▁exemplo ★ A),▁desenhado com a▁fonte▁enviada com o▁aplicativo para que▁pareça o▁mesmo em▁todos▁os▁lugares;\nou mathtext do matplotlib, por▁exemplo $\\clubsuit$;\nou (lado,▁estilo,▁ângulo) -▁estilo 0 um polígono, 1 a▁estrela, 2 um asterisco - por▁exemplo (5, 1, 0)"
+
 msgid "One more split: the one that best separates the response."
 msgstr "Mais uma divisão: a que melhor separa a resposta."
 
@@ -3751,8 +3886,14 @@ msgstr "Uma linha por combinação distinta. Nenhum marcado: uma linha de totais
 msgid "One series at a time: the histogram, quantiles, moments and normality tests."
 msgstr "Uma série de cada vez: o histograma, quantis, momentos e testes de normalidade."
 
+msgid "One statement per Run · Ctrl+Return"
+msgstr "▁Uma▁instrução por▁Executar · Ctrl+Retorno"
+
 msgid "One tree you can read; a Bootstrap Forest (many trees on resampled rows, averaged); or a Boosted Tree (many small trees, each correcting the ones before)."
 msgstr "Uma árvore que você pode ler; uma Floresta Bootstrap (muitas árvores em linhas reamostradas, em média); ou uma Árvore Impulsionada (muitas árvores pequenas, cada uma corrigindo as anteriores)."
+
+msgid "One value at a time, every value up to the frame's, or the last few"
+msgstr "Um valor de▁cada▁vez,▁cada valor▁até o▁quadro, ou▁os▁últimos▁poucos"
 
 msgid "One value for every series, fitted to all of them together."
 msgstr "Um valor para cada série, ajustado a todas elas juntas."
@@ -3780,9 +3921,6 @@ msgstr "Abrir"
 
 msgid "Open Matplotlib Style"
 msgstr "Abrir estilo Matplotlib"
-
-msgid "Open New plot with the selected columns as x, y and z"
-msgstr "Abrir Novo gráfico com as colunas selecionadas como x, y e z"
 
 msgid "Open NumPy/SciPy documentation for the model."
 msgstr "Abra a documentação do NumPy/SciPy para o modelo."
@@ -3973,11 +4111,20 @@ msgstr "Senha"
 msgid "Password for {username}@{host}:"
 msgstr "Senha para {username}@{host}:"
 
+msgid "Paste"
+msgstr "Colar"
+
+msgid "Paste picture"
+msgstr "Colar a▁imagem"
+
 msgid "Path:"
 msgstr "Caminho:"
 
 msgid "Pattern:"
 msgstr "Padrão:"
+
+msgid "Pause"
+msgstr "Pausa"
 
 msgid "Peak ({x} &rarr; {y})"
 msgstr "Pico ({x} &rarr; {y})"
@@ -4027,8 +4174,32 @@ msgstr "Escolha uma a três colunas de \"{table}\"."
 msgid "Pick the columns: see the charts and the questions they allow. Or start from what you want to find out."
 msgstr "Escolha as colunas: veja os gráficos e as perguntas que eles permitem. Ou comece a partir do que deseja descobrir."
 
+msgid "Picture"
+msgstr "▁Imagem"
+
 msgid "Pictures"
 msgstr "Imagens"
+
+msgid "Pictures (*.svg *.png *.jpg *.jpeg)"
+msgstr "▁Imagens (*.svg *.png *.jpg *.jpeg)"
+
+msgid "Pictures kept in the project, for markers drawn as pictures. SVG stays sharp at any size; a single-colour icon takes the series' colour."
+msgstr "▁Imagens▁mantidas no▁projeto, para▁marcadores▁desenhados▁como▁imagens. SVG▁permanece▁nítida em▁qualquer▁tamanho; um▁ícone de▁uma▁única cor▁leva a cor da▁série."
+
+msgid "Play"
+msgstr "Reproduzir"
+
+msgid "Play along"
+msgstr "▁Jogar▁junto"
+
+msgid "Play the figure along a column or a parameter"
+msgstr "▁Tocar a▁figura▁ao▁longo de▁uma▁coluna ou um▁parâmetro"
+
+msgid "Play the figure one frame at a time, with the bar under the chart"
+msgstr "▁Jogue a▁figura um frame de▁cada▁vez, com a▁barra▁sob o▁gráfico"
+
+msgid "Playing"
+msgstr "Reproduzindo"
 
 msgid "Plot a function"
 msgstr "Traçar uma função"
@@ -4059,6 +4230,9 @@ msgstr "Pontos. De quaisquer dois picos mais próximos do que isso, o mais proem
 
 msgid "Points:"
 msgstr "Pontos:"
+
+msgid "Poisson yield {value}%: the share of dies expected free of defects at this defect density and die area. Defects in clusters spoil fewer dies than this predicts."
+msgstr "▁Poisson▁rendimento {value}%: a▁parte de▁morre▁esperado▁livre de▁defeitos▁nesta▁densidade de▁defeito e▁área de▁morrer. Defeitos em clusters▁estragam▁menos▁morre do que▁isso▁prediz."
 
 msgid "Polynomial degree (for polynomial-family models)."
 msgstr "Grau polinomial (para modelos de família polinomial)."
@@ -4345,6 +4519,9 @@ msgstr "Remover"
 msgid "Remove a constant or linear trend from each segment first. A trend leaks into the lowest frequency bins and hides everything near it."
 msgstr "Remova primeiro uma tendência constante ou linear de cada segmento. Uma tendência vaza para os compartimentos de frequência mais baixa e esconde tudo perto dela."
 
+msgid "Remove the picture \"{name}\"? Series that draw it go back to their style's marker; Undo brings it back."
+msgstr "▁Remover a▁imagem \"{name}\"?▁Série que a▁desenha▁volta▁ao▁marcador do seu▁estilo; Desfazer▁traz- a de▁volta."
+
 msgid "Remove the selected effects."
 msgstr "Remover os efeitos seleccionados."
 
@@ -4362,6 +4539,9 @@ msgstr "Mudar o nome"
 
 msgid "Rename column"
 msgstr "Mudar o nome da coluna"
+
+msgid "Rename picture"
+msgstr "▁Mudar o▁Nome da▁Imagem"
 
 msgid "Rename the selected table, saved query or stored function"
 msgstr "Renomear a tabela selecionada, a consulta guardada ou a função armazenada"
@@ -4570,9 +4750,6 @@ msgstr "Linhas × colunas"
 msgid "Rows, by leaf"
 msgstr "Linhas, por folha"
 
-msgid "Rows: {n}"
-msgstr "Linhas: {n}"
-
 msgid "Rows: {ra} added, {rr} removed, {rm} modified  ·  Columns: {ca} added, {cr} removed, {cm} modified"
 msgstr "Linhas: {ra} adicionadas, {rr} removidas, {rm} modificadas  ·  Colunas: {ca} adicionadas, {cr} removidas, {cm} modificadas"
 
@@ -4621,11 +4798,14 @@ msgstr "SQL bloqueado"
 msgid "SQL guard"
 msgstr "SQL Guard"
 
-msgid "SQL query"
-msgstr "Consulta SQL"
+msgid "SQL on the project's tables; changes are made on a copy and kept only with Apply"
+msgstr "SQL▁nas▁tabelas do▁projeto; as▁alterações são▁feitas em▁uma▁cópia e▁mantidas▁somente com▁Aplicar"
 
 msgid "SQL query (SELECT / WITH ...)"
 msgstr "Consulta SQL (SELECIONAR / COM ...)"
+
+msgid "SQL workpad"
+msgstr "▁Área de▁trabalho SQL"
 
 msgid "SQLite file"
 msgstr "Ficheiro SQLite"
@@ -4644,6 +4824,9 @@ msgstr "SVG - nítido em qualquer zoom"
 
 msgid "Same axis"
 msgstr "Mesmo eixo"
+
+msgid "Same colour as the line"
+msgstr "A▁mesma cor da▁linha"
 
 msgid "Same figure"
 msgstr "Mesma figura"
@@ -4672,11 +4855,23 @@ msgstr "Guardar"
 msgid "Save Matplotlib Style"
 msgstr "Salvar estilo Matplotlib"
 
+msgid "Save animation"
+msgstr "▁Gravar a▁animação"
+
 msgid "Save as CSV"
 msgstr "Guardar como CSV"
 
+msgid "Save as GIF…"
+msgstr "▁Gravar▁como GIF..."
+
 msgid "Save as picture"
 msgstr "Guardar como imagem"
+
+msgid "Save as query"
+msgstr "▁Gravar▁como▁uma▁consulta"
+
+msgid "Save as query…"
+msgstr "▁Gravar▁como▁uma▁consulta..."
 
 msgid "Save as table"
 msgstr "Guardar como tabela"
@@ -4689,9 +4884,6 @@ msgstr "Guardar gráfico como"
 
 msgid "Save database as"
 msgstr "Guardar base de dados como"
-
-msgid "Save figure"
-msgstr "Guardar figura"
 
 msgid "Save function"
 msgstr "Salvar função"
@@ -4713,6 +4905,9 @@ msgstr "Guardar este layout como modelo..."
 
 msgid "Save this look as a template…"
 msgstr "Salve este visual como um modelo..."
+
+msgid "Saved as query \"{name}\"."
+msgstr "▁Salvo▁como▁consulta \"{name}\"."
 
 msgid "Saved queries"
 msgstr "Consultas salvas"
@@ -4987,6 +5182,9 @@ msgstr "Mostrar o Assistente na barra de navegação"
 msgid "Show the estimated distribution of one or more samples."
 msgstr "Mostre a distribuição estimada de uma ou mais amostras."
 
+msgid "Show the frame's value"
+msgstr "▁Mostrar o valor do▁quadro"
+
 msgid "Show the navigation labels"
 msgstr "Mostrar as etiquetas de navegação"
 
@@ -5032,6 +5230,9 @@ msgstr "Silhueta por cluster"
 msgid "Simpson's rule:"
 msgstr "Regra de Simpson:"
 
+msgid "Size"
+msgstr "▁Tamanho"
+
 msgid "Size on disk:"
 msgstr "Tamanho no disco:"
 
@@ -5062,11 +5263,11 @@ msgstr "Solucionador"
 msgid "Solver:"
 msgstr "Solucionador:"
 
-msgid "Sort"
-msgstr "Ordenar"
+msgid "Some lie outside the data's range: there they are a guess, and the further out, the less to trust them."
+msgstr "▁Alguns▁estão▁fora do▁alcance▁dos▁dados:▁lá▁estão▁eles um▁palpite, e▁quanto▁mais▁longe,▁menos▁confiar▁neles."
 
-msgid "Sort by X ascending"
-msgstr "Ordenar por X ascendente"
+msgid "Sort by X ascending (ORDER BY in the query)"
+msgstr "▁Ordenar por X▁ascendente (ORDER BY na▁consulta)"
 
 msgid "Source"
 msgstr "Fonte"
@@ -5085,6 +5286,9 @@ msgstr "Span"
 
 msgid "Spectroscopy and XRD"
 msgstr "Espectroscopia e drx"
+
+msgid "Speed"
+msgstr "▁Velocidade"
 
 msgid "Spline algorithm for SciPy spline family."
 msgstr "Algoritmo de spline para a família de splines SciPy."
@@ -5128,6 +5332,9 @@ msgstr "Folhas de cálculo e texto"
 msgid "Stack:"
 msgstr "Pilha:"
 
+msgid "Standard"
+msgstr "▁Padrão"
+
 msgid "Standard deviation"
 msgstr "Desvio padrão"
 
@@ -5170,6 +5377,9 @@ msgstr "Estatística"
 msgid "Statistics of '{column}'"
 msgstr "Estatísticas de '{column}'"
 
+msgid "Statistics of '{column}'…"
+msgstr "▁Estatísticas de '{column}'..."
+
 msgid "Statistics software"
 msgstr "Software de estatística"
 
@@ -5190,6 +5400,9 @@ msgstr "Tamanho da etapa usado pelo espaçamento de número inteiro/etapa fixa."
 
 msgid "Step:"
 msgstr "Etapa:"
+
+msgid "Stop"
+msgstr "Parar"
 
 msgid "Stopped. Nothing was changed."
 msgstr "Parado. Nada foi alterado."
@@ -5253,6 +5466,9 @@ msgstr "Comandos SymPy nas tabelas do projeto: get, save, plot"
 
 msgid "SymPy workpad"
 msgstr "Bloco de trabalho SymPy"
+
+msgid "Symbol"
+msgstr "▁Símbolo"
 
 msgid "Table"
 msgstr "Tabela"
@@ -5323,6 +5539,9 @@ msgstr "Testa se as autocorrelações residuais através das defasagens selecion
 msgid "Tests whether the number of local peaks and troughs in the residuals is consistent with a random sequence."
 msgstr "Testa se o número de picos e vales locais nos resíduos é consistente com uma sequência aleatória."
 
+msgid "That is {share}% of what was measured: the peaks' areas are read from the rest. A baseline that rises into a peak takes part of it too."
+msgstr "▁Isto é {share}% do que▁foi▁medido: as▁áreas▁dos▁picos são▁lidas do▁resto.▁Uma▁linha de base que▁sobe para um▁pico▁também▁toma▁parte▁dela."
+
 msgid "The A/B/C zones the run rules are phrased in: \"two of three beyond two sigma\" is a statement about a line worth seeing."
 msgstr "As zonas A/B/C nas quais as regras de execução são formuladas: \"dois de três além de dois sigma\" é uma declaração sobre uma linha que vale a pena ver."
 
@@ -5331,6 +5550,9 @@ msgstr "O PDF sempre usa PNG."
 
 msgid "The analysis could not run: {error}"
 msgstr "A análise não pôde ser executada: {error}"
+
+msgid "The area under the curve is {total}{unit}: y summed over x, so its unit is y's times x's. Below zero the curve counts negative; for a peak's area alone, take the baseline away first."
+msgstr "A▁área▁sob a▁curva é {total}{unit}: y▁somado sobre x,▁então▁sua▁unidade é y's▁vezes x's.▁Abaixo de zero a▁curva▁conta▁negativo; para▁uma▁área de▁pico▁sozinho, tire a▁linha de base primeiro."
 
 msgid "The assistant is working..."
 msgstr "O assistente está a trabalhar..."
@@ -5347,8 +5569,14 @@ msgstr "O assistente quer alterar o projeto:"
 msgid "The axis' end, as a number: 0.5, 1e-3; a comma works as the decimal point too."
 msgstr "A extremidade do eixo, como um número: 0,5, 1e-3; uma vírgula também funciona como ponto decimal."
 
+msgid "The band is the process's 95% range for the curve; at its widest it spans {width}"
+msgstr "A▁banda é o▁ângulo 95 % r do▁processo para a▁curva; em▁sua▁maior▁extensão▁ela se▁estende {width}"
+
 msgid "The base of a log scale."
 msgstr "A base de uma escala logarítmica."
+
+msgid "The baseline taken away has an area of {area} under it."
+msgstr "A▁linha de base▁retirada▁tem▁uma▁área de {area}▁debaixo▁dela."
 
 msgid "The change was declined: nothing was changed."
 msgstr "A alteração foi recusada: nada foi alterado."
@@ -5358,6 +5586,9 @@ msgstr "O gráfico é desenhado novamente, com as suas notas."
 
 msgid "The chart style of every figure that has none of its own."
 msgstr "O estilo de gráfico de cada figura que não tem nada próprio."
+
+msgid "The clipboard holds no picture."
+msgstr "A▁área de▁transferência▁não▁tem▁nenhuma▁imagem."
 
 msgid "The code must define def {name}(...)."
 msgstr "O código deve definir def {name}(...)."
@@ -5416,6 +5647,9 @@ msgstr "As colunas contínuas cuja variação é somada."
 msgid "The continuous measures that tell the groups apart."
 msgstr "As medidas contínuas que diferenciam os grupos."
 
+msgid "The copy was thrown away; the project is as it was."
+msgstr "A▁cópia▁foi▁jogada▁fora; o▁projeto é▁como era."
+
 msgid "The current figure draws no series: open the analysis on a chart, or read a table."
 msgstr "A figura atual não desenha nenhuma série: abra a análise em um gráfico ou leia uma tabela."
 
@@ -5452,6 +5686,9 @@ msgstr "O componente y do campo."
 msgid "The field, coloured by its divergence"
 msgstr "O campo, colorido pela sua divergência"
 
+msgid "The figure's style - Browse… chooses another"
+msgstr "O▁estilo da▁figura -▁Navegar...▁escolhe▁outro"
+
 msgid "The filter family. Butterworth is maximally flat; Chebyshev/Elliptic trade ripple for a sharper roll-off."
 msgstr "A família de filtros. Butterworth é maximamente plana; Chebyshev/Elliptic troca ondulação por um roll-off mais nítido."
 
@@ -5475,6 +5712,9 @@ msgstr "A fórmula para cada gráfico da função; os valores e o intervalo para
 
 msgid "The formula is empty."
 msgstr "A fórmula está vazia."
+
+msgid "The frames; at the right end, all the data"
+msgstr "▁Os▁quadros; na▁extremidade▁direita,▁todos▁os▁dados"
 
 msgid "The grid's shift from the centre, mm: half a die puts a die corner on the centre."
 msgstr "O deslocamento da grade do centro, mm: metade de um dado coloca um canto do dado no centro."
@@ -5569,6 +5809,12 @@ msgstr "As operações aplicadas de ou para esta tabela"
 msgid "The other half of the fixed point."
 msgstr "A outra metade do ponto fixo."
 
+msgid "The parameter of the figure's function that changes from frame to frame"
+msgstr "O▁parâmetro da▁função da▁figura que▁muda de▁quadro para▁quadro"
+
+msgid "The pictures kept in this project"
+msgstr "As▁imagens▁guardadas▁neste▁projeto"
+
 msgid "The previous column - the changes to this one are saved first"
 msgstr "A coluna anterior - as alterações a esta são guardadas primeiro"
 
@@ -5625,6 +5871,9 @@ msgstr "A série que um gráfico desenha."
 
 msgid "The series never crosses this level. Check the level against the data's range - a crossing no two samples straddle cannot be found from these samples."
 msgstr "A série nunca ultrapassa este nível. Verifique o nível em relação ao intervalo dos dados - não é possível encontrar um cruzamento de duas amostras a partir dessas amostras."
+
+msgid "The series never reaches {level} in its range: no crossing. A root outside the data would need extrapolation."
+msgstr "A▁série▁nunca▁atinge {level} na▁sua▁gama:▁sem▁cruzamento.▁Uma▁raiz▁fora▁dos▁dados▁precisaria de▁extrapolação."
 
 msgid "The sources of the data and methods: a citation, and if it has them a DOI (10.xxxx/...) and a web link. Reports list them with their links."
 msgstr "As fontes dos dados e métodos: uma citação e, se houver, um DOI (10.xxxx/...) e um link da web. Os relatórios listam-nos com os seus links."
@@ -5745,6 +5994,12 @@ msgstr "Título"
 
 msgid "Titles and labels over several lines - type \\n where a line ends, as in Time\\n(s): how their lines line up with each other."
 msgstr "Títulos e rótulos em várias linhas - digite \\n onde uma linha termina, como em Tempo\\n(s): como suas linhas se alinham umas com as outras."
+
+msgid "To"
+msgstr "Para"
+
+msgid "To find the parameters that match measured points, use Fit Curve with this function."
+msgstr "Para▁encontrar▁os▁parâmetros que▁correspondem▁aos▁pontos▁medidos, use Fit Curve com esta▁função."
 
 msgid "Tolerance (USL - LSL):"
 msgstr "Tolerância (USL - Lsl):"
@@ -5887,6 +6142,9 @@ msgstr "Fator s de suavização UnivariateSpline."
 msgid "Unsupported DOE model: {model}"
 msgstr "Modelo DOE não suportado: {model}"
 
+msgid "Untitled"
+msgstr "Sem▁Título"
+
 msgid "Untitled project"
 msgstr "Projeto sem título"
 
@@ -5956,9 +6214,6 @@ msgstr "Partilha de validação:"
 msgid "Value"
 msgstr "Valor"
 
-msgid "Value labels: the analyses show the label in place of the value (1 -> male)."
-msgstr "Rótulos de valor: as análises mostram o rótulo no lugar do valor (1 -> masculino)."
-
 msgid "Value:"
 msgstr "Valor:"
 
@@ -6006,9 +6261,6 @@ msgstr "Ver"
 
 msgid "Violin Plot"
 msgstr "Trama para Violino"
-
-msgid "Visibility"
-msgstr "Visibilidade"
 
 msgid "Visible"
 msgstr "Visível"
@@ -6184,17 +6436,26 @@ msgstr "Sem o pacote de chaveiro, a chave é lida do ambiente (ANTHROPIC_API_KEY
 msgid "Work"
 msgstr "Trabalho"
 
+msgid "Working on a copy - Apply to keep, Cancel to throw away"
+msgstr "▁Trabalhando em▁uma▁cópia -▁Aplicar para▁manter,▁Cancelar para▁jogar▁fora"
+
 msgid "Working... press Stop to end it early."
 msgstr "A trabalhar... prima Parar para terminar mais cedo."
 
 msgid "Workspace"
 msgstr "Espaço de trabalho"
 
+msgid "Workspace: hide the panel, or show it again"
+msgstr "▁Espaço de▁trabalho:▁ocultar o▁painel ou▁mostrá- lo▁novamente"
+
 msgid "Write SQL"
 msgstr "Escrever SQL"
 
 msgid "Write a letter on each panel of a multi-axis figure."
 msgstr "Escreva uma letra em cada painel de uma figura multi-eixo."
+
+msgid "Write the frame's value at the top right of the figure"
+msgstr "▁Escreva o valor do▁quadro na▁parte superior▁direita da▁figura"
 
 msgid "Write what the statement returns as a new table: fixed rows, not read again like a saved query"
 msgstr "Escreva o que a instrução retorna como uma nova tabela: linhas fixas, não lidas novamente como uma consulta salva"
@@ -6286,6 +6547,9 @@ msgstr "Yeo-Johnson aceita quaisquer dados; Box-Cox é muitas vezes um ajuste me
 msgid "Yes"
 msgstr "Sim"
 
+msgid "Yield {value}%: the share of the {dies} measured dies inside the limits. Look at the map for where the failures sit - an edge ring, a scratch, a corner - which says more about the cause than the number."
+msgstr "Rende {value}%: a▁parte do {dies}▁medido▁morre▁dentro▁dos▁limites.▁Olhe para o▁mapa para▁onde as▁falhas se▁sentam - um▁anel de▁borda, um▁arranhão, um▁canto - que▁diz▁mais sobre a▁causa do que o▁número."
+
 msgid "You"
 msgstr "Tu"
 
@@ -6343,8 +6607,23 @@ msgstr "curva"
 msgid "density: power per unit frequency. spectrum: power per segment."
 msgstr "densidade: potência por unidade de frequência. espectro: potência por segmento."
 
+msgid "down"
+msgstr "para▁baixo"
+
+msgid "e.g. ..--  or  -- . --  or  (0, (5, 2, 1, 2))"
+msgstr "p. ex. ..-- ou -- . -- ou (0, (5, 2, 1, 2))"
+
+msgid "e.g. MIT, CC BY 4.0, own work"
+msgstr "Por▁exemplo, MIT, CC BY 4.0,▁trabalho▁próprio"
+
+msgid "e.g. SELECT species, AVG(body_mass_g) FROM Penguins GROUP BY species"
+msgstr "Por▁exemplo,▁espécies SELECT, AVG(body_mass_g) DO GRUPO DE Pinguins▁POR▁espécies"
+
 msgid "e.g. m = get('Penguins', 'body_mass_g'); mean(m)"
 msgstr "por exemplo, m = get('Penguins', 'body_mass_g'); mean(m)"
+
+msgid "e.g. ★  or  $\\clubsuit$  or  (5, 1, 0)"
+msgstr "Por▁exemplo, ★ ou $\\clubsuit$ ou (5, 1, 0)"
 
 msgid "empty: replace the column"
 msgstr "vazio: substitua a coluna"
@@ -6559,6 +6838,9 @@ msgstr "divisórias imparciais pela sobreposição em cada defasagem; divisória
 msgid "unknown"
 msgstr "desconhecido"
 
+msgid "up"
+msgstr "para▁cima"
+
 msgid "value"
 msgstr "value"
 
@@ -6576,6 +6858,9 @@ msgstr "intervalo y"
 
 msgid "z range"
 msgstr "intervalo z"
+
+msgid "{charts} cannot be played: it draws the whole table as one structure, with no frames to go through."
+msgstr "{charts}▁não▁pode ser▁jogado:▁desenha▁toda a▁tabela▁como▁uma▁estrutura,▁sem▁quadros para▁percorrer."
 
 msgid "{chart} draws one series per axis: the {count} below will each get an axis of their own."
 msgstr "{chart} desenha uma série por eixo: o {count} abaixo receberá um eixo próprio."
@@ -6595,6 +6880,9 @@ msgstr "{count} célula(s) alterada (s)."
 msgid "{count} could not be drawn"
 msgstr "{count} não pôde ser desenhado"
 
+msgid "{count} crossings of {level}; the first at x = {x}, going {way}. Each is where the curve, as interpolated between the points, passes the level - finer data move it less."
+msgstr "{count}▁cruzamentos de {level}; o primeiro em x = {x},▁indo {way}.▁Cada um é▁onde a▁curva,▁como interpolou entre▁os▁pontos,▁passa o▁nível -▁dados▁mais▁finos movê-lo▁menos."
+
 msgid "{count} factor(s) were enough to explain the correlations"
 msgstr "{count} fator(es) foram suficientes para explicar as correlações"
 
@@ -6604,6 +6892,9 @@ msgstr "{count} figura(s), {date}"
 msgid "{count} further candidates fitted worse and are not shown."
 msgstr "{count} outros candidatos se encaixaram pior e não são mostrados."
 
+msgid "{count} generated tables are used by no chart and no saved query:\n\n{names}\n\nDelete them? Undo takes them back."
+msgstr "{count}▁tabelas▁geradas são▁usadas por▁nenhum▁gráfico e▁nenhuma▁consulta▁salva:\n\n{names}\n\nApagá-los?"
+
 msgid "{count} of {total} points signal. The process is not in statistical control."
 msgstr "{count} de {total} pontos de sinal. O processo não está sob controle estatístico."
 
@@ -6612,6 +6903,9 @@ msgstr "{count} de {total} valores sinalizados por {method}: extraordinariamente
 
 msgid "{count} operation(s), oldest first"
 msgstr "{count} operação(ões), mais antiga (s) primeiro"
+
+msgid "{count} peaks kept; the most prominent is at x = {x}, standing {prominence} above the lowest ground that separates it from a higher one."
+msgstr "{count}▁picos▁mantidos; o▁mais▁proeminente é em x = {x}, em▁pé {prominence}▁acima do▁chão▁mais▁baixo que o▁separa de um superior."
 
 msgid "{count} point(s) embedded from {series} series into 2 dimensions."
 msgstr "{count} ponto(s) incorporado (s) da série {series} em 2 dimensões."
@@ -6642,9 +6936,6 @@ msgstr "{count} sinal(is) - um ponto do lado de fora ou uma corrida de um lado -
 
 msgid "{count} value(s) could not be read as {kind} and were left empty."
 msgstr "{count} valor(es) não pode (m) ser lido (s) como {kind} e foi (ram) deixado (s) vazio (s"
-
-msgid "{count} values, {empty} empty, {distinct} distinct"
-msgstr "{count} valores, {empty} vazios, {distinct} distintos"
 
 msgid "{distribution} quantile plot"
 msgstr "{distribution} gráfico de quantil"
@@ -6730,8 +7021,17 @@ msgstr "{measure} vagou sem nenhum nível para voltar"
 msgid "{measure}: control chart"
 msgstr "{measure}: gráfico de controlo"
 
+msgid "{method} over {points} points: the curve keeps the slow trend and loses the quick wiggles. A feature narrower than the window is flattened along with the noise - compare it with the original before reading peaks or edges from it."
+msgstr "{method} sobre {points}▁pontos: a▁curva▁mantém a▁tendência▁lenta e▁perde▁os▁movimentos▁rápidos.▁Uma▁característica▁mais▁estreita do que a▁janela é▁achatada▁juntamente com o▁ruído - compare- a com o original▁antes de▁ler▁picos ou▁bordas▁dele."
+
+msgid "{model} applied to {points} points: positions change, distances and angles keep what the motion keeps (a rotation or a shift keeps both, a scaling neither). The original rows are left as they were; the moved ones are in a new query."
+msgstr "{model}▁aplicado a {points}▁pontos: as▁posições▁mudam,▁distâncias e▁ângulos▁mantêm o que o▁movimento▁mantém (uma▁rotação ou▁uma▁mudança▁mantém▁ambas,▁uma▁escala▁nenhuma). As▁linhas▁originais são▁deixadas▁como▁estavam; as▁movidas▁estão em▁uma▁nova▁consulta."
+
 msgid "{model} · {tokens_in} tokens in, {tokens_out} out"
 msgstr "{model} · {tokens_in} tokens in, {tokens_out} out"
+
+msgid "{model}: the values are changed, not the rows. Statistics on the new column describe the transformed scale - a mean of logarithms is a geometric mean, not the arithmetic one."
+msgstr "{model}:▁os▁valores são▁alterados,▁não as▁linhas.▁Estatísticas na▁nova▁coluna▁descrevem a▁escala▁transformada -▁uma▁média de logaritmos é▁uma▁média▁geométrica,▁não a▁aritmética."
 
 msgid "{names}: needs a value."
 msgstr "{names}: precisa de um valor."
@@ -6756,6 +7056,9 @@ msgstr "{name} = {value}: o limite de especificação mais próximo é {sigmas} 
 
 msgid "{name} = {value}: {meaning}. By the usual marks ({small} small, {medium} medium, {large} large) it is a {size}: how much the difference matters, where p only says whether there is one."
 msgstr "{name} = {value}: {meaning}. Pelas marcas usuais ({small} pequeno, {medium} médio, {large} grande) é um {size}: quanto a diferença importa, onde p apenas diz se existe um."
+
+msgid "{name} drawn with the parameters as set{values}: a curve computed, not fitted to the data."
+msgstr "{name}▁desenhado com▁os▁parâmetros▁definidos {values}:▁uma▁curva▁calculada,▁não▁ajustada▁aos▁dados."
 
 msgid "{name} is given twice."
 msgstr "{name} é dado duas vezes."
@@ -6793,6 +7096,9 @@ msgstr "{personality} precisa de um Y contínuo; {columns} é nominal - escolha 
 msgid "{personality} needs a nominal Y; {columns} is continuous - set its type to Nominal, or choose a least-squares personality."
 msgstr "{personality} precisa de um Y nominal; {columns} é contínuo - defina seu tipo como Nominal ou escolha uma personalidade de mínimos quadrados."
 
+msgid "{points} values computed between the measured points. They follow the model through the data; they are as good as the points are close together."
+msgstr "{points}▁valores▁calculados entre▁os▁pontos▁medidos.▁Eles▁seguem o▁modelo▁através▁dos▁dados;▁eles são▁tão▁bons▁quanto▁os▁pontos▁estão▁próximos."
+
 msgid "{provider} answered."
 msgstr "{provider} respondeu."
 
@@ -6801,6 +7107,9 @@ msgstr "{provider} · {level}"
 
 msgid "{p}: if {null}, a result at least this strong would come up by chance {how_often}."
 msgstr "{p}: se {null}, um resultado pelo menos tão forte surgiria por acaso {how_often}."
+
+msgid "{response} at {cutoff} (cycles per unit of x): changes on the other side of it are taken out, those on this side pass. Near the cut-off both are only partly kept - a peak there loses some of its height."
+msgstr "{response} em {cutoff} (ciclos por▁unidade de x): as▁alterações do▁outro▁lado são▁retiradas, as▁deste▁lado▁passam.▁Perto do▁ponto de▁corte▁ambas são▁mantidas▁apenas▁parcialmente - um▁pico▁aí▁perde▁alguma da▁sua▁altura."
 
 msgid "{response} by leaf"
 msgstr "{response} por folha"
@@ -6876,6 +7185,81 @@ msgstr "{y} não dependia de {x}"
 
 msgid "▲ number · ● category · ◐ ordered category · ◷ date"
 msgstr "▲ número · ● categoria · categoria ◐ ordenada · ◷ data"
+
+msgid "A new figure with this column's histogram, and its statistics in the figure's notes"
+msgstr "Uma nova figura com o histograma desta coluna e suas estatísticas nas notas da figura"
+
+msgid "A row for each distinct value not listed yet (up to {n})."
+msgstr "Uma linha para cada valor distinto ainda não listado (até {n})."
+
+msgid "Count, empty cells, distinct values, and min, max, mean and median"
+msgstr "Contagem, células vazias, valores distintos e mín, máx, média e mediana"
+
+msgid "Distinct values: {n}"
+msgstr "Valores distintos: {n}"
+
+msgid "Downsample"
+msgstr "Downsample"
+
+msgid "Empty: {n}"
+msgstr "Vazio: {n}"
+
+msgid "Fill from the data"
+msgstr "Preencher a partir dos dados"
+
+msgid "Histogram of '{column}'"
+msgstr "Histograma de '{column}'"
+
+msgid "Legend label"
+msgstr "Legenda etiqueta"
+
+msgid "Marker size"
+msgstr "Tamanho do marcador"
+
+msgid "Maximum: {v:.6g}"
+msgstr "Máximo: {v:.6g}"
+
+msgid "Mean: {v:.6g}"
+msgstr "Média: {v:.6g}"
+
+msgid "Median: {v:.6g}"
+msgstr "Mediana: {v:.6g}"
+
+msgid "Minimum: {v:.6g}"
+msgstr "Mínimo: {v:.6g}"
+
+msgid "Name, type, modelling type, label, unit, missing value codes and value labels of the column"
+msgstr "Nome, tipo, tipo de modelagem, etiqueta, unidade, códigos de valor ausentes e etiquetas de valor da coluna"
+
+msgid "New chart from selected columns"
+msgstr "Novo gráfico a partir das colunas selecionadas"
+
+msgid "Open New plot with the selected columns as x, y and z"
+msgstr "Abrir Novo gráfico com as colunas selecionadas como x, y e z"
+
+msgid "Rows: {n}"
+msgstr "Linhas: {n}"
+
+msgid "SQL query"
+msgstr "Consulta SQL"
+
+msgid "Save figure"
+msgstr "Guardar figura"
+
+msgid "Sort"
+msgstr "Ordenar"
+
+msgid "Sort by X ascending"
+msgstr "Ordenar por X ascendente"
+
+msgid "Value labels: the analyses show the label in place of the value (1 -> male)."
+msgstr "Rótulos de valor: as análises mostram o rótulo no lugar do valor (1 -> masculino)."
+
+msgid "Visibility"
+msgstr "Visibilidade"
+
+msgid "{count} values, {empty} empty, {distinct} distinct"
+msgstr "{count} valores, {empty} vazios, {distinct} distintos"
 
 msgid "\"{code}\" already has a catalogue."
 msgstr "\"{code}\" já tem um catálogo."
@@ -7035,9 +7419,6 @@ msgstr "Mostrar"
 
 msgid "Show the tools for extending the app"
 msgstr "Mostrar as ferramentas para estender a aplicação"
-
-msgid "Stop"
-msgstr "Parar"
 
 msgid "Strings"
 msgstr "Cadeias de caracteres"
@@ -7344,9 +7725,6 @@ msgstr "Cálculo"
 
 msgid "Charts to draw"
 msgstr "Gráficos para desenhar"
-
-msgid "Clipboard"
-msgstr "Área de transferência"
 
 msgid "Clipboard transposed"
 msgstr "Área de transferência transposta"
