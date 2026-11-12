@@ -4190,10 +4190,10 @@ msgid "Play"
 msgstr "Riproduci"
 
 msgid "Play along"
-msgstr "Riproduci lungo"
+msgstr "Anima per"
 
 msgid "Play the figure along a column or a parameter"
-msgstr "Riproduci la figura lungo una colonna o un parametro"
+msgstr "Riproduci la figura scorrendo una colonna o un parametro"
 
 msgid "Play the figure one frame at a time, with the bar under the chart"
 msgstr "Riproduci la figura un fotogramma alla volta, con la barra sotto il grafico"
