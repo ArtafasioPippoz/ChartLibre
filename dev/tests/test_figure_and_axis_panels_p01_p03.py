@@ -7,18 +7,20 @@ from types import SimpleNamespace
 from matplotlib.figure import Figure
 
 from app.plugin_api.charts.render_figure import _apply_figure_options
-from app.styles.style.widgets import TitledCard
+from app.widgets.inspector import InspectorSection
 from app.widgets.chart_properties.axis_properties import AxisPropertiesWidget
 from app.widgets.chart_properties.figure_properties import FigurePropertiesWidget
 
 
 def test_view_comes_before_style_and_the_grid_folds(qapp) -> None:
     panel = FigurePropertiesWidget(None)
-    titles = [card.title_label.text().lower() for card in panel.findChildren(TitledCard)]
+    titles = [section.title().lower() for section in panel.findChildren(InspectorSection)]
     assert titles.index("view") < titles.index("style")
     assert not hasattr(panel, "_btn_default")
-    grid = next(card for card in panel.findChildren(TitledCard) if card.title_label.text().lower() == "grid")
-    assert grid.disclosure is not None
+    grid = next(section for section in panel.findChildren(InspectorSection) if section.title().lower() == "grid")
+    grid.set_open(False)
+    assert not grid.is_open()  # the Grid section folds
+    grid.set_open(True)  # user.json is the real one: leave it as it was
 
 
 def test_border_draws_a_line_round_the_figure() -> None:
