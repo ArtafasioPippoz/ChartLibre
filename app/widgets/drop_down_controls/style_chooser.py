@@ -10,9 +10,7 @@ from typing import Any
 
 from PySide6.QtCore import QSize
 from PySide6.QtWidgets import (
-    QButtonGroup,
     QComboBox,
-    QGridLayout,
     QHBoxLayout,
     QLineEdit,
     QPushButton,
@@ -63,21 +61,20 @@ class StyleChooser(QWidget):
         column = QVBoxLayout(self)
         column.setContentsMargins(0, 0, 0, 0)
         column.setSpacing(4)
-        row = QGridLayout()  # one choice a line, what it needs beside it
-        row.setColumnStretch(1, 1)
-        row.setHorizontalSpacing(10)
-        row.setVerticalSpacing(8)
-        self._group = QButtonGroup(self)
-        self._buttons: dict[str, QRadioButton] = {}
+        # The choices as one segmented control, and under it only the chosen one's editor: a line a choice with
+        # its editor beside it left the editors too narrow ("Default" cut to "Def").
+        from app.widgets.inspector import SegmentedControl
+
+        self._segments = SegmentedControl(self)
+        self._buttons: dict[str, QRadioButton] = {}  # the segments' buttons: checkable, toggled, as radio buttons
         choices = [(STANDARD, _("Standard")), (CUSTOM, _("Custom"))] + ([(SYMBOL, _("Symbol"))] if symbols else []) \
             + ([(PICTURE, _("Picture"))] if pictures is not None else [])
         for key, label in choices:
-            button = QRadioButton(label, self)
-            self._group.addButton(button)
+            index = self._segments.add_segment(label)
+            button = self._segments.button(index)
             self._buttons[key] = button
             button.toggled.connect(lambda on, k=key: on and self._show(k))
-            row.addWidget(button, len(self._buttons) - 1, 0)
-        column.addLayout(row)
+        column.addWidget(self._segments)
 
         self._text = QLineEdit(self)
         self._text.setPlaceholderText(hint)
@@ -97,7 +94,9 @@ class StyleChooser(QWidget):
             from app.plugin_api.charts.markers import _dejavu_has
 
             font = self._symbols.font()
-            font.setFamily("DejaVu Sans")
+            from app.widgets.drop_down_controls.marker_combo import dejavu_family
+
+            font.setFamily(dejavu_family())
             font.setPointSizeF(font.pointSizeF() * 1.3)
             self._symbols.setFont(font)
             for symbol in symbols:
@@ -121,8 +120,8 @@ class StyleChooser(QWidget):
         add.clicked.connect(self._add_picture)
         picture_row.addWidget(add)
         self._editors = {STANDARD: self._shown, CUSTOM: self._text, SYMBOL: self._symbols, PICTURE: self._picture_row}
-        for index, (key, _label) in enumerate(choices):
-            row.addWidget(self._editors[key], index, 1)
+        for key, _label in choices:
+            column.addWidget(self._editors[key])
         for key, editor in self._editors.items():
             if key not in self._buttons:
                 editor.setVisible(False)
@@ -132,6 +131,7 @@ class StyleChooser(QWidget):
     def _show(self, key: str) -> None:
         for other, editor in self._editors.items():  # all shown, beside their choice; only the chosen one on
             editor.setEnabled(other == key)
+            editor.setVisible(other == key and other in self._buttons)
         if key == STANDARD and self._is_custom(self._value()) and not self._syncing:
             # Standard chosen: a value of its own no longer stands - the list's first concrete entry does.
             value = str(self._shown.currentData() or "")

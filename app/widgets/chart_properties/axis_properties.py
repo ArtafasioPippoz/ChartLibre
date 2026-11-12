@@ -38,6 +38,7 @@ from app.plugin_api.charts import axis_options, secondary_axis
 from app.plugin_api.charts.render_figure import AXIS_SCALE_LABELS, SUPPORTED_AXIS_SCALES
 from app.plugin_api.charts.text_lines import display_text
 from app.styles.style import (
+    mark_destructive_button,
     MARGIN_PANEL,
     CardFrame,
     create_action_button,
@@ -163,10 +164,11 @@ class AxisPropertiesWidget(BaseProperties):
         self._coordinate_choice = SegmentedControl(scales.body)
         for axis in axis_options.AXES:
             self._coordinate_choice.add_segment(axis.upper())
+        self._coordinate_choice.set_compact(56)
         self._coordinate_choice.current_changed.connect(self._on_coordinate_chosen)
         self._coordinate_page = self._build_coordinate_page()
         scales_layout = cast(QVBoxLayout, scales.body.layout())
-        scales_layout.addWidget(self._coordinate_choice)
+        scales_layout.addWidget(self._coordinate_choice, 0, Qt.AlignmentFlag.AlignHCenter)
         scales_layout.addWidget(self._coordinate_page)
         self._scales_section = scales
         self._title_section = title_section
@@ -508,7 +510,7 @@ class AxisPropertiesWidget(BaseProperties):
 
         for widget in (self._scale_combo, *self._grid_combos.values(), *self._tick_combos.values()):
             widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-            widget.setMinimumContentsLength(5)
+            widget.setMinimumContentsLength(7)
         for edge in self._RANGE_FIELDS:
             self._limit_edits[edge].setMinimumWidth(60)
         # Their ranges are huge; their values are short.
@@ -594,6 +596,10 @@ class AxisPropertiesWidget(BaseProperties):
             raise RuntimeError("CardFrame did not create a vertical box layout")
         layout = raw_layout
 
+        # The axis' name above its menu, as the Series page does.
+        self._axis_title = QLabel(_("Axis"), section)  # the name is in the menu below: not said twice
+        self._axis_title.setProperty("sectionTitle", True)
+        layout.addWidget(self._axis_title)
         self._axis_combo = QComboBox(section)
         self._configure_combo_width(self._axis_combo, minimum_contents_length=24)
         # The tooltip that keeps the elided name readable is wired by
@@ -641,6 +647,7 @@ class AxisPropertiesWidget(BaseProperties):
         self._renderer_value.setTextInteractionFlags(
             Qt.TextInteractionFlag.TextSelectableByMouse
         )
+        mark_destructive_button(self._btn_delete)  # red, as every delete of the app
         self._renderer_value.hide()
         return section
 

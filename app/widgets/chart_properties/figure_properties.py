@@ -61,6 +61,7 @@ from app.utils.hidpi import apply_configured_dpi
 from app.utils.i18n import _
 from app.widgets.chart_panel import RESIZE_MODE_CHOICES
 from app.widgets.chart_properties.base_properties import BaseProperties
+from PySide6.QtGui import QIcon
 from app.widgets.inspector import InspectorCard, InspectorForm
 from app.widgets.font_scale_control import FontScaleControl
 from app.widgets.pair_grid import PairGrid
@@ -408,32 +409,29 @@ class FigurePropertiesWidget(BaseProperties):
         style_section = InspectorCard(self, _("Style"), "figureStyleCard")
         style_section_lay = style_section.card.layout()
 
-        # The style's name, shown, not typed: Browse… picks it. Drawn as plain text, not as a field.
+        # The style's name, shown, not typed: a grey field, and a small "…" at its left picks another.
         self._style_edit = QLineEdit(style_section)
         self._style_edit.setReadOnly(True)
-        self._style_edit.setFrame(False)
         self._style_edit.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self._style_edit.setStyleSheet("QLineEdit { background: transparent; }")
+        self._style_edit.setEnabled(False)  # read-only and greyed: nothing to type here
         self._style_edit.setToolTip(_("The figure's style - Browse… chooses another"))
 
-        # Name and Browse… on one line; Apply to all and Edit on the next.
         style_buttons_row = QWidget(style_section)
         style_buttons_lay = QGridLayout(style_buttons_row)
         style_buttons_lay.setContentsMargins(0, 0, 0, 0)
         style_buttons_lay.setSpacing(8)
-        style_buttons_lay.setColumnStretch(0, 1)
         style_buttons_lay.setColumnStretch(1, 1)
-        style_buttons_lay.addWidget(self._style_edit, 0, 0)
 
         self._btn_browse = create_action_button(
             parent=style_buttons_row,
             action_id="open",
             action=self._browse_for_style_file,
             layout=None,
-            presentation=(load_icon("open"), _("Browse…"),
-                          _("Pick a .mplstyle file from the mplstyles folder")),
+            presentation=(QIcon(), "…", _("Browse… Pick a .mplstyle file from the mplstyles folder")),
         )
-        style_buttons_lay.addWidget(self._btn_browse, 0, 1)
+        self._btn_browse.setFixedWidth(34)
+        style_buttons_lay.addWidget(self._btn_browse, 0, 0)
+        style_buttons_lay.addWidget(self._style_edit, 0, 1)
         self._btn_style_to_all = create_action_button(
             parent=style_buttons_row,
             action_id="copy",
@@ -442,14 +440,14 @@ class FigurePropertiesWidget(BaseProperties):
             presentation=(load_icon("copy"), _("Apply to all figures"),
                           _("Give every figure of the project this style")),
         )
-        style_buttons_lay.addWidget(self._btn_style_to_all, 1, 0)
         self._btn_edit = create_action_button(
                              parent=style_buttons_row,
                              action_id="edit",
                              action=self._edit_current_style,
                              layout=None,
                          )
-        style_buttons_lay.addWidget(self._btn_edit, 1, 1)
+        style_buttons_lay.addWidget(self._btn_edit, 1, 0, 1, 2)
+        style_buttons_lay.addWidget(self._btn_style_to_all, 2, 0, 1, 2)
         # No Apply button: every control on this panel applies itself a
         # short moment after it changes (see _connect_auto_apply).
 

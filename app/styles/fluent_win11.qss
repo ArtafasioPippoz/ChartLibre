@@ -1637,12 +1637,16 @@ QToolButton#inspectorSectionTitle {
   border: none;
   background: transparent;
   text-align: left;
-  padding: 3px 0px;
-  color: palette(window-text);
+  padding: 3px 4px;
+  color: palette(placeholder-text);
 }
 QToolButton#inspectorSectionTitle:checked,
 QToolButton#inspectorSectionTitle:hover {
   background: transparent;
   border: none;
-  color: palette(window-text);
+  color: palette(placeholder-text);
+}
+QFrame#inspectorHairline {
+  background: rgba(@SHADOW_RGB@, 0.10);
+  border: none;
 }

@@ -2563,12 +2563,12 @@ class MainWindow(QMainWindow):
         control = InspectorPages(self)
         # Last: annotations and reference lines are the finishing pass on a
         # chart, done once the data, the axes and the series are right.
-        for page, title, tooltip in (
-            (self._figure_widget, _("Figure"), _("Figure properties")),
-            (self._axis_widget, _("Axis"), _("Axis properties")),
-            (self._series_widget, _("Series"), _("Series properties")),
-            (self._animation_widget, _("Animation"), _("Play the figure along a column or a parameter")),
-            (self._overlay_widget, _("Overlays"), _("Overlay properties")),
+        for page, title, tooltip, icon in (
+            (self._figure_widget, _("Figure"), _("Figure properties"), "figure"),
+            (self._axis_widget, _("Axis"), _("Axis properties"), "axis"),
+            (self._series_widget, _("Series"), _("Series properties"), "series"),
+            (self._animation_widget, _("Animation"), _("Play the figure along a column or a parameter"), "animation"),
+            (self._overlay_widget, _("Overlays"), _("Overlay properties"), "overlays"),
         ):
             # The ground and the room a toolbox page had: the window grey on
             # macOS, white on Windows (the toolboxPage rule in each sheet).
@@ -2577,7 +2577,7 @@ class MainWindow(QMainWindow):
             layout = page.layout()
             if layout is not None and layout.contentsMargins().isNull():
                 layout.setContentsMargins(*MARGIN_TOOLBOX_PAGE)
-            index = control.addTab(self._scrollable(page), title)
+            index = control.addTab(self._scrollable(page), title, icon)
             control.setTabToolTip(index, tooltip)
         control.setCurrentIndex(0)
         # Find a property: only the rows whose label or tooltip has the words, on every page.

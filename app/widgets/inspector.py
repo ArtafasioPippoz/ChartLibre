@@ -19,8 +19,8 @@ of tabs of framed cards:
 
 from __future__ import annotations
 
-from PySide6.QtCore import QEvent, QSize, Qt, Signal
-from PySide6.QtGui import QFont, QPalette
+from PySide6.QtCore import QEvent, QPointF, QRectF, QSize, Qt, Signal
+from PySide6.QtGui import QColor, QFont, QPainter, QPalette, QPen
 from PySide6.QtWidgets import (
     QAbstractButton,
     QButtonGroup,
@@ -43,11 +43,54 @@ from app.utils import config
 SECTIONS_KEY = "inspector_sections"
 
 
+
+def _draw_page_icon(painter: QPainter, kind: str, rect: QRectF, colour: QColor) -> None:
+    """A page's icon, drawn as lines in *colour* inside *rect* (a square): figure, axis, series, animation, overlays."""
+    painter.save()
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    pen = QPen(colour)
+    pen.setWidthF(1.6)
+    pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+    pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+    painter.setPen(pen)
+    painter.setBrush(Qt.BrushStyle.NoBrush)
+    x, y, w, h = rect.x(), rect.y(), rect.width(), rect.height()
+
+    def pt(fx: float, fy: float) -> QPointF:
+        return QPointF(x + fx * w, y + fy * h)
+
+    if kind == "figure":  # a sheet with a small plot on it
+        painter.drawRoundedRect(QRectF(x + 0.1 * w, y + 0.1 * h, 0.8 * w, 0.8 * h), 2, 2)
+        painter.drawPolyline([pt(0.25, 0.7), pt(0.42, 0.5), pt(0.58, 0.62), pt(0.75, 0.3)])
+    elif kind == "axis":  # two axes and tick marks
+        painter.drawPolyline([pt(0.15, 0.1), pt(0.15, 0.85), pt(0.92, 0.85)])
+        for f in (0.4, 0.65, 0.9):
+            painter.drawLine(pt(f, 0.85), pt(f, 0.95))
+        for f in (0.2, 0.45, 0.7):
+            painter.drawLine(pt(0.05, f), pt(0.15, f))
+    elif kind == "series":  # a curve with its points
+        painter.drawPolyline([pt(0.1, 0.75), pt(0.35, 0.45), pt(0.6, 0.6), pt(0.9, 0.2)])
+        painter.setBrush(colour)
+        for f in ((0.1, 0.75), (0.35, 0.45), (0.6, 0.6), (0.9, 0.2)):
+            painter.drawEllipse(pt(*f), 1.6, 1.6)
+    elif kind == "animation":  # a play triangle in a circle
+        painter.drawEllipse(QRectF(x + 0.08 * w, y + 0.08 * h, 0.84 * w, 0.84 * h))
+        painter.setBrush(colour)
+        painter.drawPolygon([pt(0.42, 0.33), pt(0.42, 0.67), pt(0.7, 0.5)])
+    elif kind == "overlays":  # two layers
+        painter.drawPolygon([pt(0.5, 0.12), pt(0.92, 0.38), pt(0.5, 0.64), pt(0.08, 0.38)])
+        painter.drawPolyline([pt(0.08, 0.58), pt(0.5, 0.84), pt(0.92, 0.58)])
+    painter.restore()
+
+
 class _Segment(QToolButton):
     """One word of a SegmentedControl: shrinks below its text by eliding it."""
 
-    def __init__(self, text: str, parent: QWidget) -> None:
+    def __init__(self, text: str, parent: QWidget, icon: str = "") -> None:
         super().__init__(parent)
+        self._icon_kind = icon
+        if icon:  # an icon, the word in the tooltip and in the heading under the bar
+            self.setMinimumHeight(34)
         self._full_text = text
         self.setText(text)
         self.setCheckable(True)
@@ -66,9 +109,17 @@ class _Segment(QToolButton):
         option = QStyleOptionToolButton()
         self.initStyleOption(option)
         room = self.width() - 8
-        option.text = self.fontMetrics().elidedText(self._full_text, Qt.TextElideMode.ElideRight, max(room, 0))
+        option.text = "" if self._icon_kind else self.fontMetrics().elidedText(
+            self._full_text, Qt.TextElideMode.ElideRight, max(room, 0))
         painter = QStylePainter(self)
         painter.drawComplexControl(QStyle.ComplexControl.CC_ToolButton, option)
+        if self._icon_kind:
+            side = 20.0
+            box = QRectF((self.width() - side) / 2, (self.height() - side) / 2, side, side)
+            colour = self.palette().color(QPalette.ColorRole.ButtonText)
+            if not self.isChecked():
+                colour.setAlphaF(0.75)
+            _draw_page_icon(painter, self._icon_kind, box, colour)
 
 
 class SegmentedControl(QFrame):
@@ -87,9 +138,17 @@ class SegmentedControl(QFrame):
         layout.setSpacing(2)
         self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
 
-    def add_segment(self, text: str, tooltip: str = "") -> int:
+    def set_compact(self, width: int = 52) -> None:
+        """Segments of one fixed *width* in a control as wide as they are, centred (X Y Z), not stretched."""
+        self._compact = width
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        self.setFixedWidth(width * max(1, len(self._group.buttons())) + 4 + 2 * max(0, len(self._group.buttons()) - 1))
+        for button in self._group.buttons():
+            button.setFixedWidth(width)
+
+    def add_segment(self, text: str, tooltip: str = "", icon: str = "") -> int:
         index = len(self._group.buttons())
-        button = _Segment(text, self)
+        button = _Segment(text, self, icon)
         button.setObjectName("segment")
         button.setToolTip(tooltip or text)
         self._group.addButton(button, index)
@@ -131,9 +190,20 @@ class InspectorPages(QWidget):
         bar = QWidget(self)
         bar.setObjectName("inspectorSegmentsBar")
         bar.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
-        bar_layout = QHBoxLayout(bar)
-        bar_layout.setContentsMargins(8, 6, 8, 6)
+        bar_layout = QVBoxLayout(bar)
+        bar_layout.setContentsMargins(8, 6, 8, 4)
+        bar_layout.setSpacing(4)
         bar_layout.addWidget(self._segments)
+        # The page's name in full under its icon: nothing is cut, in any language.
+        self._heading = QLabel(bar)
+        self._heading.setObjectName("inspectorPageTitle")
+        heading_font = self._heading.font()
+        heading_font.setWeight(QFont.Weight.Medium)
+        heading_font.setPointSizeF(heading_font.pointSizeF() * 1.15)
+        self._heading.setFont(heading_font)
+        self._heading.setContentsMargins(2, 0, 0, 0)
+        bar_layout.addWidget(self._heading)
+        self._segments.current_changed.connect(lambda _index: self._update_heading())
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -149,9 +219,17 @@ class InspectorPages(QWidget):
     def segments(self) -> SegmentedControl:
         return self._segments
 
-    def addTab(self, page: QWidget, title: str) -> int:  # noqa: N802 - QTabWidget's name
+    def addTab(self, page: QWidget, title: str, icon: str = "") -> int:  # noqa: N802 - QTabWidget's name
         self._stack.addWidget(page)
-        return self._segments.add_segment(title)
+        index = self._segments.add_segment(title, icon=icon)
+        self._update_heading()
+        return index
+
+    def _update_heading(self) -> None:
+        index = self._segments.current_index()
+        self._heading.setText(self._segments.text(index) if index >= 0 else "")
+        self._heading.setVisible(any(self._segments.button(i) is not None and getattr(
+            self._segments.button(i), "_icon_kind", "") for i in range(self._segments.count())))
 
     def setTabToolTip(self, index: int, tooltip: str) -> None:  # noqa: N802
         button = self._segments.button(index)
@@ -197,7 +275,8 @@ class InspectorSection(QWidget):
         is_open = remembered if isinstance(remembered, bool) else not collapsed
         self._header = QToolButton(self)
         self._header.setObjectName("inspectorSectionTitle")
-        self._header.setText(title)
+        self._title = title
+        self._header.setText(title.upper())  # a small grey caption above its list
         self._header.setCheckable(True)
         self._header.setChecked(is_open)
         self._header.setAutoRaise(True)
@@ -205,25 +284,29 @@ class InspectorSection(QWidget):
         self._header.setIconSize(QSize(10, 10))
         # The system font at its normal size, one weight up: the platforms' own section headings.
         font = self._header.font()
-        font.setWeight(QFont.Weight.Medium)
+        font.setWeight(QFont.Weight.DemiBold)
+        font.setPointSizeF(max(8.0, font.pointSizeF() * 0.86))
+        font.setLetterSpacing(QFont.SpacingType.PercentageSpacing, 104)
         self._header.setFont(font)
         self._header.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self._header.toggled.connect(self._on_toggled)
         self.body = QWidget(self)
         self.body.setObjectName("inspectorSectionBody")
-        if card:  # the grey rounded surface of the app's other cards, the title above it
+        if card:  # the app's grey rounded card, the caption above it
             self.body.setProperty("card", True)
             self.body.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-            self.body.setContentsMargins(10, 8, 10, 8)
+            self.body.setContentsMargins(12, 10, 12, 10)
+        else:
+            self.body.setObjectName("inspectorSectionPlain")
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 6, 0, 6)
-        layout.setSpacing(4)
+        layout.setContentsMargins(0, 10, 0, 10)
+        layout.setSpacing(5)
         layout.addWidget(self._header)
         layout.addWidget(self.body)
         self._apply(is_open)
 
     def title(self) -> str:
-        return self._header.text()
+        return self._title
 
     def is_open(self) -> bool:
         return self._header.isChecked()
@@ -235,7 +318,7 @@ class InspectorSection(QWidget):
         from app.styles.style.widgets import _chevron_icon
 
         # A thin chevron before the title: right when closed, down when open (as Claude's own sections).
-        self._header.setIcon(_chevron_icon(down=is_open, color=self._header.palette().color(QPalette.ColorRole.WindowText)))
+        self._header.setIcon(_chevron_icon(down=is_open, color=self._header.palette().color(QPalette.ColorRole.PlaceholderText)))
         self.body.setVisible(is_open or self._forced_open)
 
     def changeEvent(self, event) -> None:  # noqa: N802 - Qt override
@@ -265,12 +348,18 @@ class InspectorForm(QWidget):
         super().__init__(parent)
         self._grid = QGridLayout(self)
         self._grid.setContentsMargins(0, 0, 0, 0)
-        self._grid.setHorizontalSpacing(8)
-        self._grid.setVerticalSpacing(6)
+        self._grid.setHorizontalSpacing(10)
+        self._grid.setVerticalSpacing(8)
         self._grid.setColumnStretch(1, 1)
         self.rows: list[tuple[QLabel | None, QWidget]] = []
+        self._rules: list[QFrame | None] = []
+
+    def _rule(self) -> None:
+        """A hairline above every row but the first, as the grouped lists of System Settings."""
+        self._rules.append(None)  # no hairlines: the other cards have none, and the rows breathe instead
 
     def add_row(self, label: str, control: QWidget, tooltip: str = "") -> QLabel:
+        self._rule()
         row = self._grid.rowCount()
         caption = QLabel(label, self)
         caption.setObjectName("inspectorLabel")
@@ -279,6 +368,7 @@ class InspectorForm(QWidget):
             caption.setToolTip(tooltip)
             if not control.toolTip():
                 control.setToolTip(tooltip)
+        self._grid.setRowMinimumHeight(row, 28)
         self._grid.addWidget(caption, row, 0, Qt.AlignmentFlag.AlignVCenter)
         self._grid.addWidget(control, row, 1)
         self.rows.append((caption, control))
@@ -289,9 +379,13 @@ class InspectorForm(QWidget):
         if label is not None:
             label.setVisible(visible)
         control.setVisible(visible)
+        if self._rules[index] is not None:
+            self._rules[index].setVisible(visible)
 
     def add_wide(self, control: QWidget) -> None:
+        self._rule()
         row = self._grid.rowCount()
+        self._grid.setRowMinimumHeight(row, 28)
         self._grid.addWidget(control, row, 0, 1, 2)
         self.rows.append((None, control))
 

@@ -30,6 +30,7 @@ from PySide6.QtWidgets import (
 from app.logs.logger import applogger
 from app.plugin_api.charts.kwarg_spec import DEFAULT
 from app.styles.style import (
+    mark_destructive_button,
     MARGIN_PANEL,
     TitledCard,
     create_action_button,
@@ -276,6 +277,7 @@ class SeriesPropertiesWidget(BaseProperties):
             action=self._on_delete_clicked,
             layout=row_layout,
         )
+        mark_destructive_button(self._btn_delete)  # red, as every delete of the app
         # No Apply button: every style control applies itself a short moment
         # after it changes (see _connect_auto_apply). Up / Down / Delete stay
         # - they reorder and remove series, not commit the form.

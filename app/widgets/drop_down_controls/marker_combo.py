@@ -32,6 +32,23 @@ from app.plugin_api.charts.kwarg_spec import DEFAULT
 from app.styles.style import create_hidpi_pixmap
 from app.widgets.drop_down_controls.icon_combo import ComboEntry, IconComboBox
 
+
+@cache
+def dejavu_family() -> str:
+    """The family of the DejaVu Sans that ships inside matplotlib, registered with Qt once.
+
+    Asking Qt for "DejaVu Sans" by name when the system has none (macOS, Windows) made it search its
+    font aliases every time ("Populating font family aliases took 129 ms" in the log); registering the
+    bundled file gives the name a real family, the same on every platform.
+    """
+    from matplotlib import get_data_path
+    from PySide6.QtGui import QFontDatabase
+
+    path = f"{get_data_path()}/fonts/ttf/DejaVuSans.ttf"
+    font_id = QFontDatabase.addApplicationFont(path)
+    families = QFontDatabase.applicationFontFamilies(font_id) if font_id >= 0 else []
+    return families[0] if families else "DejaVu Sans"
+
 _ICON_SIZE = 16
 _MARKER_COLOR = "#3a3a3a"
 _PEN_WIDTH = 1.4
@@ -372,7 +389,7 @@ def _draw_text_marker(p: QPainter, cx: float, cy: float, _r: float, text: str) -
         text = "▣"  # a picture of the project: its name is the entry's text
     if len(text) > 2 and text[0] == "$" == text[-1]:
         text = text[1:-1]
-    font = QFont("DejaVu Sans")
+    font = QFont(dejavu_family())
     font.setPointSize(8 if len(text) > 1 else 11)
     font.setBold(True)
     p.setFont(font)
