@@ -49,6 +49,7 @@ from app.styles.style import (
     stdSizeAndlayout,
 )
 from app.utils.messages import ask
+from app.styles.style import field_label
 from app.widgets.inspector import InspectorForm, InspectorSection, SegmentedControl
 from app.widgets.chart_properties.base_properties import BaseProperties
 from app.widgets.dictionary_editor import DictEditorPanel
@@ -167,11 +168,10 @@ class AxisPropertiesWidget(BaseProperties):
         self._coordinate_choice = SegmentedControl(scales.body)
         for axis in axis_options.AXES:
             self._coordinate_choice.add_segment(axis.upper())
-        self._coordinate_choice.set_compact(56)
         self._coordinate_choice.current_changed.connect(self._on_coordinate_chosen)
         self._coordinate_page = self._build_coordinate_page()
         scales_layout = cast(QVBoxLayout, scales.body.layout())
-        scales_layout.addWidget(self._coordinate_choice, 0, Qt.AlignmentFlag.AlignHCenter)
+        scales_layout.addWidget(self._coordinate_choice)
         scales_layout.addWidget(self._coordinate_page)
         self._scales_section = scales
         self._title_section = title_section
@@ -550,12 +550,12 @@ class AxisPropertiesWidget(BaseProperties):
 
         # Label, scale and range.
         _section, grid, box = card(_("Scale and range"), "axisScaleCard")
-        grid.addWidget(QLabel(_("Label"), box), 0, 0)
+        grid.addWidget(QLabel(field_label(_("Label")), box), 0, 0)
         grid.addWidget(self._coordinate_label, 0, 1, 1, 3)
-        grid.addWidget(QLabel(_("Scale"), box), 1, 0)
+        grid.addWidget(QLabel(field_label(_("Scale")), box), 1, 0)
         grid.addWidget(self._scale_combo, 1, 1)
         # One box beside the scale: its base for log, its linear zone for symlog.
-        self._scale_parameter_caption = QLabel(_("Base"), box)
+        self._scale_parameter_caption = QLabel(field_label(_("Base")), box)
         self._scale_parameter = QStackedWidget(box)
         self._scale_parameter.addWidget(self._scale_base_spin)
         self._scale_parameter.addWidget(self._linthresh_spin)
@@ -563,13 +563,13 @@ class AxisPropertiesWidget(BaseProperties):
         grid.addWidget(self._scale_parameter, 1, 3)
         # Min, Max and the tick Interval: a row each, the field and its Auto.
         for offset, (edge, text) in enumerate((("min", _("Min")), ("max", _("Max")), ("interval", _("Interval")))):
-            grid.addWidget(QLabel(text, box), 2 + offset, 0)
+            grid.addWidget(QLabel(field_label(text), box), 2 + offset, 0)
             grid.addWidget(row(box, [self._limit_edits[edge], self._limit_auto_checks[edge]], fill=True),
                            2 + offset, 1, 1, 3)
         grid.addWidget(self._invert_check, 5, 1, 1, 3)
-        grid.addWidget(QLabel(_("Also in"), box), 6, 0)
+        grid.addWidget(QLabel(field_label(_("Also in")), box), 6, 0)
         grid.addWidget(self._secondary_combo, 6, 1, 1, 3)
-        grid.addWidget(QLabel(_("Break"), box), 7, 0)
+        grid.addWidget(QLabel(field_label(_("Break")), box), 7, 0)
         grid.addWidget(self._break_edit, 7, 1, 1, 3)
 
         # Ticks and grid: major and minor as columns.
@@ -583,7 +583,7 @@ class AxisPropertiesWidget(BaseProperties):
             (_("Rotation"), self._tick_rotation_spin, self._minor_tick_rotation_spin),
         )
         for index, (text, major, minor) in enumerate(rows, start=1):
-            grid.addWidget(QLabel(text, box), index, 0)
+            grid.addWidget(QLabel(field_label(text), box), index, 0)
             grid.addWidget(major, index, 1)
             grid.addWidget(minor, index, 2, 1, 2)
         copy = QPushButton(_("Copy to X, Y and Z"), box)
@@ -705,7 +705,7 @@ class AxisPropertiesWidget(BaseProperties):
         symlog = shown == "symlog"
         if hasattr(self, "_scale_parameter"):
             self._scale_parameter.setCurrentWidget(self._linthresh_spin if symlog else self._scale_base_spin)
-            self._scale_parameter_caption.setText(_("Linear zone") if symlog else _("Base"))
+            self._scale_parameter_caption.setText(field_label(_("Linear zone") if symlog else _("Base")))
             self._scale_parameter_caption.setToolTip(
                 _("The linear region around zero of a symlog scale.") if symlog else _("The base of a log scale."))
         self._scale_base_spin.setEnabled(shown == "log")

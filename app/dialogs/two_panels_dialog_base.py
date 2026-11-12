@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app.styles.style import normalize_form_labels
 from app.styles.style import (
     CardFrame,
     TitledCard,
@@ -53,6 +54,10 @@ class PanelDialog(QDialog):
         self.action_row.addStretch(1)
         self.root_layout.addLayout(self.action_row)
         self._has_primary_action = False
+
+    def showEvent(self, event) -> None:  # noqa: N802 - Qt override
+        normalize_form_labels(self)  # the labels as the platform writes them (a colon on Mac and Windows)
+        super().showEvent(event)
 
     def add_card(self, title: str, object_name: str | None = None, *, stretch: int = 0,
                  collapsible: bool = False, collapsed: bool = False) -> CardFrame:

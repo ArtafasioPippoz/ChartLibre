@@ -1983,6 +1983,14 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
     # Qt events
     # ------------------------------------------------------------------
+    def showEvent(self, event) -> None:  # noqa: N802 - Qt override
+        super().showEvent(event)
+        if not getattr(self, "_labels_normalized", False):
+            self._labels_normalized = True
+            from app.styles.style import normalize_form_labels
+
+            normalize_form_labels(self)  # the panels' form labels as the platform writes them
+
     def closeEvent(self, event: QCloseEvent) -> None:
         """Persist the window layout, then collect resources and close."""
         applogger.info("Closing main window")

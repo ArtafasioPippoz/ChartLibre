@@ -45,8 +45,8 @@ def test_min_max_and_interval_are_three_rows_each_with_its_auto(widget) -> None:
     for grid in widget.findChildren(QGridLayout):  # the Scale card's grid: the one that holds these labels
         for index in range(grid.count()):
             item = grid.itemAt(index).widget()
-            if isinstance(item, QLabel) and item.text() in ("Min", "Max", "Interval"):
-                rows[item.text()] = grid.getItemPosition(index)[0]
+            if isinstance(item, QLabel) and item.text().rstrip(":") in ("Min", "Max", "Interval"):  # a colon on Mac
+                rows[item.text().rstrip(":")] = grid.getItemPosition(index)[0]
     assert rows["Max"] == rows["Min"] + 1 and rows["Interval"] == rows["Max"] + 1
     for edge in ("min", "max", "interval"):
         assert widget._limit_auto_checks[edge].isChecked()  # all automatic at first

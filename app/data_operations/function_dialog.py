@@ -224,6 +224,7 @@ class SeriesFunctionDialog(DataOperationDialogBase):
         self._expression_label = QLabel("", self)
 
         self._model_tabs = QTabWidget(self)
+        self._model_tabs.tabBar().setExpanding(True)  # equal segments, as every segmented control
         self._current_function_name = ""
         #: A stored function - Expression or Code - its formula, parameters' values and range (the Function tab).
         self._editor = FunctionEditor(self)

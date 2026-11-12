@@ -362,7 +362,9 @@ class InspectorForm(QWidget):
     def add_row(self, label: str, control: QWidget, tooltip: str = "") -> QLabel:
         self._rule()
         row = self._grid.rowCount()
-        caption = QLabel(label, self)
+        from app.styles.style import field_label
+
+        caption = QLabel(field_label(label), self)
         caption.setObjectName("inspectorLabel")
         caption.setBuddy(control)
         if tooltip:

@@ -265,6 +265,31 @@ def mark_icon_only(button: QtWidgets.QAbstractButton) -> QtWidgets.QAbstractButt
     return button
 
 
+def field_label(text: str) -> str:
+    """A form label as the platform writes it: with a colon on macOS and Windows, without on Linux (GNOME's way).
+
+    The translated word is kept whole - "cm" and "cm:" are one string - and the colon is put on or taken off
+    here. Text that is a question, a sentence's end, an ellipsis or rich text is left alone.
+    """
+    plain = text.rstrip()
+    if not plain or plain.startswith("<") or plain.endswith(("…", "...", "?", "!", ".")):
+        return text
+    bare = plain.rstrip(":：").rstrip()
+    if sys.platform.startswith("linux"):
+        return bare
+    return plain if plain.endswith("：") else bare + ":"
+
+
+def normalize_form_labels(root: QWidget) -> None:
+    """Every QFormLayout label under *root* written as :func:`field_label` writes it (a dialog or a panel, once built)."""
+    for form in root.findChildren(QtWidgets.QFormLayout):
+        for row in range(form.rowCount()):
+            item = form.itemAt(row, QtWidgets.QFormLayout.ItemRole.LabelRole)
+            label = item.widget() if item is not None else None
+            if isinstance(label, QtWidgets.QLabel) and label.text() and not label.property("noColon"):
+                label.setText(field_label(label.text()))
+
+
 def mark_destructive_button(button: QtWidgets.QAbstractButton) -> QtWidgets.QAbstractButton:
     """Style a button as a destructive action - solid red, on both platforms.
 

@@ -543,6 +543,9 @@ class DataOperationDialogBase(QDialog):
         """
         if self._results_label.parent() is self:
             self._results_label.hide()
+        from app.styles.style import normalize_form_labels
+
+        normalize_form_labels(self)  # the labels as the platform writes them (a colon on Mac and Windows)
         super().showEvent(event)
 
     def __init__(
@@ -1622,7 +1625,7 @@ class DataOperationDialogBase(QDialog):
         left_tabs.setDocumentMode(True)
         left_tabs.setUsesScrollButtons(True)
         left_tabs.setElideMode(Qt.TextElideMode.ElideNone)
-        left_tabs.tabBar().setExpanding(False)
+        left_tabs.tabBar().setExpanding(True)  # equal segments across the width, as the panels' segmented controls
         left_tabs.setSizePolicy(
             QSizePolicy.Policy.Preferred,
             QSizePolicy.Policy.Expanding,
