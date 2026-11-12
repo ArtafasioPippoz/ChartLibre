@@ -36,6 +36,7 @@ from app.dialogs.edit_mpl_styles_dialog import (
 from app.logs.logger import applogger
 from app.plugin_api.charts import layout_presets, panel_labels
 from app.plugin_api.charts.render_figure import (
+    DEFAULT_MPL_STYLE_KEY,
     OPT_DOWNSAMPLE_THRESHOLD,
     OPT_SHARED_HORIZONTAL_SPACE,
     OPT_SHARED_VERTICAL_SPACE,
@@ -47,7 +48,7 @@ from app.styles.style import (
     load_icon,
     stdSizeAndlayout,
 )
-from app.utils.config import MPLSTYLES_DIR
+from app.utils.config import MPLSTYLES_DIR, get_value
 from app.utils.figure_metrics import (
     CM_PER_INCH,
     DEFAULT_FIGURE_DPI,
@@ -420,6 +421,7 @@ class FigurePropertiesWidget(BaseProperties):
         style_buttons_lay = QGridLayout(style_buttons_row)
         style_buttons_lay.setContentsMargins(0, 0, 0, 0)
         style_buttons_lay.setSpacing(8)
+        style_buttons_lay.setColumnStretch(0, 1)
         style_buttons_lay.setColumnStretch(1, 1)
 
         self._btn_browse = create_action_button(
@@ -427,17 +429,19 @@ class FigurePropertiesWidget(BaseProperties):
             action_id="open",
             action=self._browse_for_style_file,
             layout=None,
-            presentation=(QIcon(), "…", _("Browse… Pick a .mplstyle file from the mplstyles folder")),
+            presentation=(load_icon("open"), "", _("Browse… Pick a .mplstyle file from the mplstyles folder")),
         )
         self._btn_browse.setFixedWidth(34)
-        style_buttons_lay.addWidget(self._btn_browse, 0, 0)
-        style_buttons_lay.addWidget(self._style_edit, 0, 1)
+        if self._btn_browse.icon().isNull():  # no icon theme (a bare checkout): the dots
+            self._btn_browse.setText("…")
+        style_buttons_lay.addWidget(self._style_edit, 0, 0, 1, 2)
+        style_buttons_lay.addWidget(self._btn_browse, 0, 2)
         self._btn_style_to_all = create_action_button(
             parent=style_buttons_row,
             action_id="copy",
             action=lambda: self.style_applied_to_all.emit(self._current_style_text()),
             layout=None,
-            presentation=(load_icon("copy"), _("Apply to all figures"),
+            presentation=(load_icon("copy"), _("Apply to all"),
                           _("Give every figure of the project this style")),
         )
         self._btn_edit = create_action_button(
@@ -446,8 +450,8 @@ class FigurePropertiesWidget(BaseProperties):
                              action=self._edit_current_style,
                              layout=None,
                          )
-        style_buttons_lay.addWidget(self._btn_edit, 1, 0, 1, 2)
-        style_buttons_lay.addWidget(self._btn_style_to_all, 2, 0, 1, 2)
+        style_buttons_lay.addWidget(self._btn_edit, 1, 0)
+        style_buttons_lay.addWidget(self._btn_style_to_all, 1, 1, 1, 2)
         # No Apply button: every control on this panel applies itself a
         # short moment after it changes (see _connect_auto_apply).
 
@@ -566,7 +570,7 @@ class FigurePropertiesWidget(BaseProperties):
 
     def _build_options_section(self) -> QWidget:
         """The Figure options card."""
-        opts_section = InspectorCard(self, _("Figure options"), "figureOptionsCard")
+        opts_section = InspectorCard(self, _("Options"), "figureOptionsCard")
         opts_section_lay = opts_section.card.layout()
 
         self._fig_dpi = QSpinBox(opts_section)
@@ -660,7 +664,7 @@ class FigurePropertiesWidget(BaseProperties):
             (_("Font size"), self._font_scale),
             (_("Width"), self._fig_width_cm),
             (_("Height"), self._fig_height_cm),
-            (_("Journal"), self._journal_combo),
+            (_("Template"), self._journal_combo),
             (_("Figure layout"), self._fig_layout_mode),
             (_("Border"), self._fig_frameon),
         ):
@@ -976,9 +980,11 @@ class FigurePropertiesWidget(BaseProperties):
         elif text.strip():
             label = _("(Embedded style)")
         else:
-            label = _("(Default)")
+            # No style of its own: it is drawn with the default chart style of Settings > Charts, by name.
+            label = str(get_value(DEFAULT_MPL_STYLE_KEY) or "").strip().replace("/", ".") or _("Matplotlib")
         self._style_edit.setText(label)
-        self._style_edit.setToolTip(str(path) if path is not None else "")
+        self._style_edit.setToolTip(str(path) if path is not None else _(
+            "This figure has no style of its own: it uses the default chart style (Settings > Charts)."))
         self._update_style_buttons()
 
     def _load_style_from_text(self, current_style: str) -> None:
