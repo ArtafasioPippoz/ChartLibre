@@ -1097,6 +1097,11 @@
       "title": "Load demo",
       "text": "Could not load the demo project:\n{error}"
     },
+    "dev.confirm_remove_language": {
+      "level": "question",
+      "title": "Remove language",
+      "text": "Remove {language}? Its translations go to the Trash."
+    },
     "dev.validation_error": {
       "level": "warning",
       "title": "Renderer Helper",

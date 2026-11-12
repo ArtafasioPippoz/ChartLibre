@@ -1,0 +1,258 @@
+"""Building blocks of the chart-properties inspector (dev/plans/chart_properties_ui_plan.txt).
+
+One column read top to bottom, as Keynote, Numbers and Figma have, instead
+of tabs of framed cards:
+
+- SegmentedControl: the pages as one row of words, the chosen one filled.
+  Words, not icons: five pictograms for Figure, Axis, Series, Animation and
+  Overlays were not understood. A word too long for its segment is elided,
+  its full text in the tooltip.
+- InspectorPages: the segments over a stack of pages. It keeps the part of
+  QTabWidget's interface the window and the tests use (count, widget,
+  currentIndex, setCurrentIndex, tabText, currentChanged), so the pages
+  inside did not have to change.
+- InspectorSection: a bold title with a chevron over its rows, no box; open
+  or closed is remembered per section in user.json ("inspector_sections").
+- InspectorForm: the label/control grid of a section, labels in one column
+  as wide as its longest label.
+"""
+
+from __future__ import annotations
+
+from PySide6.QtCore import QSize, Qt, Signal
+from PySide6.QtWidgets import (
+    QButtonGroup,
+    QFrame,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QSizePolicy,
+    QStackedWidget,
+    QStyle,
+    QStyleOptionToolButton,
+    QStylePainter,
+    QToolButton,
+    QVBoxLayout,
+    QWidget,
+)
+
+from app.utils import config
+
+SECTIONS_KEY = "inspector_sections"
+
+
+class _Segment(QToolButton):
+    """One word of a SegmentedControl: shrinks below its text by eliding it."""
+
+    def __init__(self, text: str, parent: QWidget) -> None:
+        super().__init__(parent)
+        self._full_text = text
+        self.setText(text)
+        self.setCheckable(True)
+        self.setAutoRaise(True)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
+
+    def full_text(self) -> str:
+        return self._full_text
+
+    def minimumSizeHint(self) -> QSize:  # noqa: N802 - Qt override
+        return QSize(0, super().minimumSizeHint().height())
+
+    def paintEvent(self, _event) -> None:  # noqa: N802 - Qt override
+        option = QStyleOptionToolButton()
+        self.initStyleOption(option)
+        room = self.width() - 8
+        option.text = self.fontMetrics().elidedText(self._full_text, Qt.TextElideMode.ElideRight, max(room, 0))
+        painter = QStylePainter(self)
+        painter.drawComplexControl(QStyle.ComplexControl.CC_ToolButton, option)
+
+
+class SegmentedControl(QFrame):
+    """Exclusive words drawn as one control; emits the index chosen."""
+
+    current_changed = Signal(int)
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setObjectName("segmentedControl")
+        self._group = QButtonGroup(self)
+        self._group.setExclusive(True)
+        self._group.idClicked.connect(self.current_changed.emit)
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(2, 2, 2, 2)
+        layout.setSpacing(2)
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
+
+    def add_segment(self, text: str, tooltip: str = "") -> int:
+        index = len(self._group.buttons())
+        button = _Segment(text, self)
+        button.setObjectName("segment")
+        button.setToolTip(tooltip or text)
+        self._group.addButton(button, index)
+        self.layout().addWidget(button, 1)
+        if index == 0:
+            button.setChecked(True)
+        return index
+
+    def button(self, index: int) -> QToolButton | None:
+        return self._group.button(index)
+
+    def count(self) -> int:
+        return len(self._group.buttons())
+
+    def text(self, index: int) -> str:
+        button = self._group.button(index)
+        return button.full_text() if isinstance(button, _Segment) else ""
+
+    def current_index(self) -> int:
+        return self._group.checkedId()
+
+    def set_current_index(self, index: int) -> None:
+        button = self._group.button(index)
+        if button is not None and not button.isChecked():
+            button.setChecked(True)
+            self.current_changed.emit(index)
+
+
+class InspectorPages(QWidget):
+    """A SegmentedControl over a QStackedWidget, with QTabWidget's names."""
+
+    currentChanged = Signal(int)
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setObjectName("inspectorPages")
+        self._segments = SegmentedControl(self)
+        self._stack = QStackedWidget(self)
+        bar = QWidget(self)
+        bar.setObjectName("inspectorSegmentsBar")
+        bar.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
+        bar_layout = QHBoxLayout(bar)
+        bar_layout.setContentsMargins(8, 6, 8, 6)
+        bar_layout.addWidget(self._segments)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.addWidget(bar)
+        layout.addWidget(self._stack, 1)
+        self._segments.current_changed.connect(self._show)
+
+    def segments(self) -> SegmentedControl:
+        return self._segments
+
+    def addTab(self, page: QWidget, title: str) -> int:  # noqa: N802 - QTabWidget's name
+        self._stack.addWidget(page)
+        return self._segments.add_segment(title)
+
+    def setTabToolTip(self, index: int, tooltip: str) -> None:  # noqa: N802
+        button = self._segments.button(index)
+        if button is not None:
+            button.setToolTip(tooltip)
+
+    def count(self) -> int:
+        return self._stack.count()
+
+    def widget(self, index: int) -> QWidget | None:
+        return self._stack.widget(index)
+
+    def currentWidget(self) -> QWidget | None:  # noqa: N802
+        return self._stack.currentWidget()
+
+    def currentIndex(self) -> int:  # noqa: N802
+        return self._stack.currentIndex()
+
+    def setCurrentIndex(self, index: int) -> None:  # noqa: N802
+        self._segments.set_current_index(index)
+        self._show(index)
+
+    def tabText(self, index: int) -> str:  # noqa: N802
+        return self._segments.text(index)
+
+    def _show(self, index: int) -> None:
+        if 0 <= index < self._stack.count() and index != self._stack.currentIndex():
+            self._stack.setCurrentIndex(index)
+            self.currentChanged.emit(index)
+
+
+class InspectorSection(QWidget):
+    """A title row with a chevron over a body; no border, no ground of its own."""
+
+    toggled = Signal(bool)
+
+    def __init__(self, title: str, parent: QWidget | None = None, *, key: str, collapsed: bool = False) -> None:
+        super().__init__(parent)
+        self.setObjectName("inspectorSection")
+        self._key = key
+        remembered = config.get_section(SECTIONS_KEY).get(key)
+        is_open = remembered if isinstance(remembered, bool) else not collapsed
+        self._header = QToolButton(self)
+        self._header.setObjectName("inspectorSectionTitle")
+        self._header.setText(title)
+        self._header.setCheckable(True)
+        self._header.setChecked(is_open)
+        self._header.setAutoRaise(True)
+        self._header.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        self._header.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self._header.toggled.connect(self._on_toggled)
+        self.body = QWidget(self)
+        self.body.setObjectName("inspectorSectionBody")
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 4, 0, 6)
+        layout.setSpacing(4)
+        layout.addWidget(self._header)
+        layout.addWidget(self.body)
+        self._apply(is_open)
+
+    def title(self) -> str:
+        return self._header.text()
+
+    def is_open(self) -> bool:
+        return self._header.isChecked()
+
+    def set_open(self, is_open: bool) -> None:
+        self._header.setChecked(is_open)
+
+    def _apply(self, is_open: bool) -> None:
+        self._header.setArrowType(Qt.ArrowType.DownArrow if is_open else Qt.ArrowType.RightArrow)
+        self.body.setVisible(is_open)
+
+    def _on_toggled(self, is_open: bool) -> None:
+        self._apply(is_open)
+        sections = dict(config.get_section(SECTIONS_KEY))
+        sections[self._key] = is_open
+        config.set_section(SECTIONS_KEY, sections)
+        self.toggled.emit(is_open)
+
+
+class InspectorForm(QWidget):
+    """Label and control rows; the label column as wide as its longest label."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self._grid = QGridLayout(self)
+        self._grid.setContentsMargins(14, 0, 0, 0)
+        self._grid.setHorizontalSpacing(8)
+        self._grid.setVerticalSpacing(6)
+        self._grid.setColumnStretch(1, 1)
+        self.rows: list[tuple[QLabel | None, QWidget]] = []
+
+    def add_row(self, label: str, control: QWidget, tooltip: str = "") -> QLabel:
+        row = self._grid.rowCount()
+        caption = QLabel(label, self)
+        caption.setObjectName("inspectorLabel")
+        caption.setBuddy(control)
+        if tooltip:
+            caption.setToolTip(tooltip)
+            if not control.toolTip():
+                control.setToolTip(tooltip)
+        self._grid.addWidget(caption, row, 0, Qt.AlignmentFlag.AlignVCenter)
+        self._grid.addWidget(control, row, 1)
+        self.rows.append((caption, control))
+        return caption
+
+    def add_wide(self, control: QWidget) -> None:
+        row = self._grid.rowCount()
+        self._grid.addWidget(control, row, 0, 1, 2)
+        self.rows.append((None, control))

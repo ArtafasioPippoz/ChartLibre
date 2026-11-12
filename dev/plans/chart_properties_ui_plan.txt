@@ -1,0 +1,107 @@
+Chart properties: one inspector instead of tabs full of frames (2026-11-12)
+==========================================================================
+
+What is there today (measured in the window, panel at its default width)
+-------------------------------------------------------------------------
+- A QTabWidget of five pages: Figure, Axis, Series, Animation, Overlays. The five titles do not fit the panel:
+  the tab bar scrolls with two arrows, and Overlays is out of sight until it is scrolled to.
+- Tabs inside tabs: Axis has Properties / X / Y / Z / Kwargs, Overlays has Annotations / Lines / ...
+- Frames: Figure 7 titled cards (Name and notes, View, Style, Figure options, Grid, Panel letters, Manual
+  spacing) in a page 1 357 px tall; Series 5 (the axis, Query, Legend, Line, Marker); Animation 2; Axis 1.
+  Every card has its own border, title, margins: about a third of the height is frame, not controls.
+- Labels are cut at the default width: the Axis page shows "Ti", "Li", "S|", "Pi", "Vi", "H" for Title,
+  Legend, Subplot, Projection, Visible, Hide.
+- What is edited is chosen in three places: the tab (which kind), a combo at the top of Axis (which axis), a
+  combo at the top of Series (which series). A click on the chart already selects all three; the panel does
+  not show that as one thing.
+
+What it becomes
+---------------
+An inspector, as Keynote, Numbers, Figma and Xcode have: one column, read top to bottom.
+
+  +------------------------------------------+
+  |  [Figure] [Axis] [Series] [Anim] [Over]  |   1. five icon segments, always all visible, no scrolling
+  |  CO2, one year at a time  >  CO2      v  |   2. what is selected: axis > series, one line, two menus
+  |  [ Find a property...                  ] |   3. filter
+  |------------------------------------------|
+  |  v Line                                  |   4. sections: a title row with a chevron, a hairline,
+  |     Style        [ ----  v]              |      no box around them; closed ones are one row high
+  |     Width        [ 1.6   ]               |   5. rows: label left (one width for the whole page),
+  |     Color        [# Default v]           |      control right, 28 px, units inside the control
+  |  v Marker                                |
+  |     Shape        [ o  v]   Size [ 4 ]    |
+  |  > Query                                 |   advanced sections start closed
+  |  > Renderer options                      |
+  +------------------------------------------+
+
+1. Segments, not tabs: icons with tooltips (the page's name), the chosen one filled. Five always fit in 300 px.
+2. Selection line: the axis and the series being edited, as a breadcrumb with a menu on each. It replaces the
+   combo at the top of the Axis page and the one at the top of the Series page; Up / Down / Delete move into
+   the menu of each (and stay on the chart's right-click). A click on the chart updates it, as today.
+3. Find a property: typing "width" leaves only the rows whose label or tooltip has it, on every page, with the
+   section titles they belong to. Empty again: everything back.
+4. Sections instead of cards: no border, no background of their own; a bold title with a chevron; open or
+   closed is remembered per section in user.json. The common ones open, the rest closed:
+     Figure:    Name and notes | Size (view mode, width, height, DPI, font size) | Style (style sheet, template,
+                apply to all) | Layout (grid, panel letters) | > Manual spacing
+     Axis:      Title and legend | Scales and limits ([X][Y][Z] as a segmented control, not tabs) |
+                Position (subplot, rows, cols, projection) | Appearance (spines, visible) | > Renderer options
+     Series:    Legend | Line | Marker | > Query | > Renderer options
+     Animation: Play along | Playing (with the player)
+     Overlays:  [Annotations][Lines][...] segmented, the table under it, Add / Delete in its title row
+5. Rows: one grid for the page, labels in one column wide enough for the longest label of the page (no more
+   "Ti", "Li"); a label too long for the panel is elided with its full text in the tooltip, never cut to
+   two letters. Check boxes that belong together share a row (Spines: T R B L). The panel's minimum width
+   becomes 300 px.
+
+What does not change
+--------------------
+- The widgets themselves and their attribute names (_figure_widget._dpi_spin, _series_widget._series_combo ...):
+  main_window.py reads them in 64 places and four test files use them (found in the code polish, B2). Only
+  their containers and layout change. Nothing is built lazily.
+- The signals (figure_options_requested, axis_options_requested, series_options_requested ...) and the
+  auto-apply of BaseProperties.
+- What is stored: no descriptor or option changes. Section titles reuse the existing strings where they
+  exist; new strings are listed for translation, not translated.
+
+Steps (one commit each; the app stays usable after each)
+---------------------------------------------------------
+A. Building blocks, in app/widgets/inspector.py, with QSS in macos_native.qss and fluent_win11.qss:
+     InspectorSection(title, *, key, collapsed=False)  - title row + chevron + body, remembers its state
+                                                          (user.json "inspector_sections": {key: open})
+     InspectorForm                                      - the label/control grid; add_row(label, control,
+                                                          tooltip=""), add_wide(control); label column sized
+                                                          to its longest label, elided past the panel
+     SegmentedControl(items)                            - exclusive tool buttons drawn as one control
+   Tests: a section opens, closes and remembers; the form's label column fits its labels; a segment emits.
+B. The shell, in main_window._create_properties_control: the QTabWidget replaced by SegmentedControl +
+   QStackedWidget; the same five pages inside, unchanged. Tests that find the pages by tab text
+   (test_click_selects_properties, test_animation) use a small helper: properties_page_name().
+C. Series page moved to sections and one form (the smallest page with every kind of control). Screenshot at
+   300 px and at 420 px, offscreen, compared by eye; the page's tests pass unchanged.
+D. Axis page: sections; X / Y / Z as a segmented control inside "Scales and limits"; Kwargs becomes the closed
+   section "Renderer options".
+E. Figure page: 7 cards -> 5 sections; its height at the default size should drop from 1 357 px to under 800.
+F. Animation and Overlays pages.
+G. The selection line (axis > series) above the pages; the two combos leave their pages; Up / Down / Delete in
+   the menus. The click-on-chart path updates the line.
+H. Find a property: the filter over every InspectorForm row (label + tooltip), section titles kept for the
+   rows shown.
+I. Clean-up: TitledCard is no longer used by the properties (it stays for the dialogs); the toolboxPage rules
+   of the two sheets that only the properties used are removed; the manual's screenshots of the panel are
+   listed to be taken again.
+
+Checks at every step
+--------------------
+- dev/tests of the page touched, test_properties_roundtrip, test_click_selects_properties, test_animation.
+- The panel at 300 px: no label cut to initials, no horizontal scroll bar.
+- The real window opened once (not only offscreen): a crash at start was missed twice by offscreen tests.
+- Dark theme: the section titles and hairlines read on the dark palette.
+
+To decide before starting
+-------------------------
+1. Five pages behind segments (this plan), or ONE scrolling page with everything, the sections of the object
+   clicked on the chart opening by themselves? The second is closer to Figma; it is a bigger change (G becomes
+   the centre of the design) and long for a figure with many axes.
+2. Icons only on the segments, or icon + short word when the panel is wide enough?
+3. The filter (H): wanted now, or later?

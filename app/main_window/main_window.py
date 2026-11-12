@@ -132,6 +132,7 @@ from app.widgets.chart_properties.overlay_properties import OverlayPropertiesWid
 from app.widgets.chart_properties.series_properties import SeriesPropertiesWidget
 from app.widgets.database_info_panel import DatabaseInfoPanel
 from app.widgets.guided_panel import GuidedAnalysisPanel
+from app.widgets.inspector import InspectorPages
 from app.widgets.nav_bar import NavBarItem, NavButton, NavigationBar, NavPanel
 from app.widgets.recent_projects import ProjectsTabs
 from app.widgets.table_list import TableListPanel
@@ -245,7 +246,7 @@ class MainWindow(QMainWindow):
     """
 
     _tabs: QTabWidget
-    _properties_control: QTabWidget
+    _properties_control: InspectorPages
     _figure_widget: FigurePropertiesWidget
     _axis_widget: AxisPropertiesWidget
     _series_widget: SeriesPropertiesWidget
@@ -2544,13 +2545,13 @@ class MainWindow(QMainWindow):
             what = _("Properties")
         return _("{what} of {element}").format(what=what, element=element)
 
-    def _create_properties_control(self) -> QTabWidget:
-        """Figure, Axis, Series and Overlays as tabs, each page scrolling on its own.
+    def _create_properties_control(self) -> InspectorPages:
+        """Figure, Axis, Series, Animation and Overlays behind one row of words, each page scrolling on its own.
 
-        Tabs rather than the accordion they were: four headers stacked
-        took about 200 px of the panel's height and showed one page at a
-        time all the same. Short names, so the four fit a narrow panel;
-        when they do not, the tab bar scrolls rather than eliding them.
+        Segments rather than tabs (dev/plans/chart_properties_ui_plan.txt):
+        the five tab titles did not fit the panel and the bar scrolled,
+        Overlays out of sight. Words, not icons, which were not understood;
+        a word too long for a narrow panel is elided, whole in its tooltip.
         """
         self._figure_widget = FigurePropertiesWidget(self)
         self._axis_widget = AxisPropertiesWidget(self)
@@ -2558,12 +2559,7 @@ class MainWindow(QMainWindow):
         self._overlay_widget = OverlayPropertiesWidget(self)
         self._animation_widget = AnimationPropertiesWidget(self)
 
-        control = QTabWidget(self)
-        control.setObjectName("propertiesTabs")
-        control.setDocumentMode(True)
-        control.setUsesScrollButtons(True)
-        control.setElideMode(Qt.TextElideMode.ElideNone)
-        control.tabBar().setExpanding(False)
+        control = InspectorPages(self)
         # Last: annotations and reference lines are the finishing pass on a
         # chart, done once the data, the axes and the series are right.
         for page, title, tooltip in (

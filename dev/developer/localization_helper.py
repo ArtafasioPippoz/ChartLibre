@@ -116,7 +116,7 @@ class EditLocalizationDialog(SettingsTableDialog):
         self.content_frame, self.content_layout = card, card.layout()
 
         self._language_combo = self._build_language_combo(panel)
-        self._language_combo.currentIndexChanged.connect(self._reload_table)
+        self._language_combo.currentIndexChanged.connect(self._on_language_changed)
         side.addWidget(self._language_combo)
         new_row = QHBoxLayout()
         stdSizeAndlayout(new_row)
@@ -126,6 +126,14 @@ class EditLocalizationDialog(SettingsTableDialog):
             action=self._on_new_language,
             layout=new_row,
             presentation=(load_icon("new"), _("New language…"), _("Create a new, empty catalogue")),
+        )
+        create_action_button(
+            parent=self,
+            action_id="delete",
+            action=self._on_remove_language,
+            layout=new_row,
+            presentation=(load_icon("delete"), _("Remove…"),
+                          _("Remove this language: its catalogue goes to the Trash")),
         )
         new_row.addStretch(1)
         side.addLayout(new_row)
@@ -203,12 +211,16 @@ class EditLocalizationDialog(SettingsTableDialog):
         self._status_label.setWordWrap(True)
         self.content_layout.addWidget(self._status_label)
 
-        # Not the default button: Return ends a cell's edit - as the default it also saved and closed the
-        # dialog in the middle of the work.
-        self.add_action("apply", self._on_save)
-        self.add_action("close", self.reject)
+        # One button, Close, and no Cancel (ID100): what is typed is kept - when the language is changed
+        # and when the dialog closes, however it closes. Not the default button: Return ends a cell's edit.
+        self.add_action("dismiss", self.accept)
 
         self._entries: dict[str, str] = {}
+        #: The language the table shows, and whether it holds something its file does not.
+        self._loaded_language: str | None = None
+        self._dirty = False
+        self._filling = False
+        self._table.itemChanged.connect(self._on_item_changed)
         self._translation_task: BackgroundTask | None = None
         #: [done, total], written by the worker thread, read by the timer.
         self._translation_progress: list[int] = [0, 0]
@@ -271,8 +283,54 @@ class EditLocalizationDialog(SettingsTableDialog):
     # ------------------------------------------------------------------
     # Table
     # ------------------------------------------------------------------
+    def _on_item_changed(self, _item: QTableWidgetItem) -> None:
+        if not self._filling:
+            self._dirty = True
+
+    def _on_language_changed(self, *_args: object) -> None:
+        """Another language chosen: what was typed for the one shown is saved first, then the table changes."""
+        self._save_if_changed()
+        self._reload_table()
+
+    def _save_if_changed(self) -> bool:
+        """Save the language shown if the table holds a change; False only when the save failed."""
+        if not self._dirty or self._loaded_language is None:
+            return True
+        return self._save(self._loaded_language)
+
+    def _on_remove_language(self) -> None:
+        """Remove the language shown, after a question: its folder goes to the Trash, where it can be found."""
+        from PySide6.QtCore import QFile
+
+        from app.utils.messages import ask
+
+        language = self._current_language()
+        folder = _po_path(language).parent.parent
+        if not folder.is_dir():
+            return
+        if language == i18n.language():
+            show_message(self, "dev.validation_error",
+                         detail=_("This is the language the application is shown in: choose another in Settings first."))
+            return
+        if not ask(self, "dev.confirm_remove_language", language=LANGUAGE_NAMES.get(language, language)):
+            return
+        if not QFile.moveToTrash(str(folder)):
+            show_message(self, "dev.validation_error", detail=_("The language could not be moved to the Trash."))
+            return
+        applogger.info("Edit Localization: removed %s (moved to the Trash).", folder)
+        i18n._translation.cache_clear()
+        # Nothing of the removed language is saved back: the table is another one's from here.
+        self._dirty, self._loaded_language = False, None
+        self._language_combo.blockSignals(True)
+        self._language_combo.removeItem(self._language_combo.currentIndex())
+        if self._language_combo.count() == 0:
+            self._language_combo.addItem(LANGUAGE_NAMES.get("it", "it"), "it")
+        self._language_combo.blockSignals(False)
+        self._reload_table()
+
     def _reload_table(self) -> None:
         language = self._current_language()
+        self._loaded_language = language
         path = _po_path(language)
         catalog = i18n._parse_po(path) if path.is_file() else {}
         catalog.pop("", None)
@@ -289,14 +347,19 @@ class EditLocalizationDialog(SettingsTableDialog):
         )
 
     def _populate_table(self) -> None:
-        self._table.setRowCount(0)
-        self._table.setRowCount(len(self._entries))
-        for row, (msgid, msgstr) in enumerate(self._entries.items()):
-            source_item = QTableWidgetItem(msgid)
-            source_item.setFlags(source_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            source_item.setData(Qt.ItemDataRole.UserRole, msgid)
-            self._table.setItem(row, 0, source_item)
-            self._table.setItem(row, 1, QTableWidgetItem(msgstr))
+        self._filling = True
+        try:
+            self._table.setRowCount(0)
+            self._table.setRowCount(len(self._entries))
+            for row, (msgid, msgstr) in enumerate(self._entries.items()):
+                source_item = QTableWidgetItem(msgid)
+                source_item.setFlags(source_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                source_item.setData(Qt.ItemDataRole.UserRole, msgid)
+                self._table.setItem(row, 0, source_item)
+                self._table.setItem(row, 1, QTableWidgetItem(msgstr))
+        finally:
+            self._filling = False
+        self._dirty = False
         self._apply_filter()
 
     def _apply_filter(self) -> None:
@@ -327,8 +390,12 @@ class EditLocalizationDialog(SettingsTableDialog):
             self._table.closeEditor(editor, QAbstractItemDelegate.EndEditHint.NoHint)
 
     def _on_save(self) -> None:
+        """Save the language shown and close (kept for the callers that asked for OK)."""
+        self.accept()
+
+    def _save(self, language: str) -> bool:
+        """Write the table to *language*'s catalogue; False, with a message, when it could not be written."""
         self._commit_open_edit()
-        language = self._current_language()
         path = _po_path(language)
         header_comment = _leading_comment(path)
         if not header_comment:
@@ -355,14 +422,12 @@ class EditLocalizationDialog(SettingsTableDialog):
         except OSError as exc:
             applogger.exception("Could not save the localization catalogue.")
             show_message(self, "dev.validation_error", detail=str(exc))
-            return
+            return False
 
         applogger.info("Edit Localization: saved %s (%d entries).", path, len(entries) - 1)
-        # OK saves and closes, like every other OK in the application. A
-        # message box saying so was one more click standing between the
-        # user and the window they came from - and it read as the dialog
-        # refusing to close.
-        self.accept()
+        self._entries = {key: value for key, value in entries.items() if key}
+        self._dirty = False
+        return True
 
     # ------------------------------------------------------------------
     # Auto-translate
@@ -529,9 +594,16 @@ class EditLocalizationDialog(SettingsTableDialog):
         )
 
     def done(self, result: int) -> None:
-        """Stop a running translation when the dialog closes, however it closes."""
+        """Stop a running translation and keep what was typed when the dialog closes, however it closes.
+
+        A save that fails says why and leaves the dialog open once; closing again gives the change up.
+        """
         if self._translation_task is not None:
             self._translation_task.cancel()
+            self._fill_arrived()
+        if not self._save_if_changed():
+            self._dirty = False  # said; the next Close closes
+            return
         super().done(result)
 
     # ------------------------------------------------------------------

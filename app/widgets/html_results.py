@@ -223,6 +223,8 @@ class HtmlResultsView(QWidget):
     # already cleared (a closed window not deleted yet).
     _watched_window: QWidget | None = None
     _parked = False
+    #: True while _unpark_viewer makes the viewer: the window may be hidden and shown under it.
+    _making_viewer = False
 
     def __init__(self, parent: QWidget | None = None, *, lazy: bool = False) -> None:
         """Build the pane: the viewer and a small custom context menu.
@@ -275,12 +277,12 @@ class HtmlResultsView(QWidget):
                 self._watched_window.removeEventFilter(self)
             window.installEventFilter(self)
             self._watched_window = window
-        if self._parked:
+        if self._parked and not self._making_viewer:
             self._unpark_viewer()
 
     def eventFilter(self, watched: QObject, event: QEvent) -> bool:
         if (watched is self._watched_window and event.type() == QEvent.Type.Hide
-                and not self._watched_window.isMinimized()):
+                and not self._watched_window.isMinimized() and not self._making_viewer):
             self._park_viewer()
         return super().eventFilter(watched, event)
 
@@ -304,16 +306,25 @@ class HtmlResultsView(QWidget):
     def _unpark_viewer(self) -> None:
         # The viewer's own menu too: QWebEngineView and QTextBrowser both have a standard one, and
         # CustomContextMenu on the viewer itself is what leaves only Copy and the two exports.
+        #
+        # _making_viewer: the first web view put in a window already on screen makes Qt build the window
+        # again - hidden and shown in the middle of this very call. Without the flag that Hide parked the
+        # view just made and that Show made another, without end: the process died of it when a project
+        # opened on a chart with its notes shown (a lazy pane's first view is made here, in showEvent).
         self._parked = False
-        view = self._view = self._create_viewer()
-        mark_editor_panel(view)
-        layout = self.layout()
-        if layout is not None:
-            layout.addWidget(view, 1)
-        view.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        view.customContextMenuRequested.connect(self._show_context_menu)
-        if self._html:
-            self.setHtml(self._html, plain_source=self._plain_text)
+        self._making_viewer = True
+        try:
+            view = self._view = self._create_viewer()
+            mark_editor_panel(view)
+            layout = self.layout()
+            if layout is not None:
+                layout.addWidget(view, 1)
+            view.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+            view.customContextMenuRequested.connect(self._show_context_menu)
+            if self._html:
+                self.setHtml(self._html, plain_source=self._plain_text)
+        finally:
+            self._making_viewer = False
 
     def _show_context_menu(self, pos: QPoint) -> None:
         """Show the HTML results context menu."""
