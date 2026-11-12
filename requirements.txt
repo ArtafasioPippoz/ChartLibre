@@ -62,7 +62,7 @@ pyreadr==0.5.7; python_version < "3.15"
 # just without the fallback, since importing a server database has no local
 # equivalent to fall back to.
 pg8000==1.31.6
-PyMySQL==1.2.3
+PyMySQL==1.2.4
 
 # Import - Web's own CA bundle (app.utils.data_sources.read_web_url). A
 # python.org macOS build has no trust store wired up until "Install
@@ -79,5 +79,5 @@ certifi==2026.10.23
 # application is the same; without keyring the API key is read from the
 # environment (ANTHROPIC_API_KEY) instead of the macOS Keychain or the Windows
 # Credential Manager. Both are pure Python, on every platform.
-anthropic==2.6.0
+anthropic==2.8.0
 keyring==25.7.0
