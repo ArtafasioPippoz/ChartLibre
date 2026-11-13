@@ -120,7 +120,6 @@ from app.utils.screen_fit import fit_on_show
 from app.utils.startup import PROJECT_FILE_FILTER
 from app.widgets.analysis_panel import AnalysisPanel, plot_operation, plugin_icon
 from app.widgets.assistant_panel import AssistantPanel
-from app.widgets.sql_workpad_panel import SqlWorkpadPanel
 from app.widgets.workpad_panel import WorkpadPanel
 from app.utils import recent_analyses
 from app.widgets.catalog_search import CatalogSearch
@@ -1045,9 +1044,7 @@ class MainWindow(QMainWindow):
         # The SymPy workpad: commands on the project's tables (app.workpad).
         workpad_panel = self._workpad_panel = WorkpadPanel(self, repo=lambda: self._repo)
         workpad_panel.project_changed.connect(self._on_assistant_changed)
-        # The SQL workpad: statements on the project, writing on a copy until Apply (app.data.sql_workpad).
-        sql_panel = self._sql_workpad_panel = SqlWorkpadPanel(self, repo=lambda: self._repo)
-        sql_panel.project_changed.connect(self._on_assistant_changed)
+        # The SQL workpad moved to ChartLibre Developer (dev/developer/sql_workpad_dialog.py).
 
         # Workspace is the house beside the sidebar button where the window has its own title strip
         # (macOS, Windows); elsewhere it stays a row of the bar (ID47).
@@ -1099,10 +1096,6 @@ class MainWindow(QMainWindow):
                 "workpad": NavBarItem(
                     _("SymPy workpad"), self._rail_icon("nav_analysis"), workpad_panel,
                     _("SymPy commands on the project's tables: get, save, plot"),
-                ),
-                "sql_workpad": NavBarItem(
-                    _("SQL workpad"), self._rail_icon("nav_sql_workpad"), sql_panel,
-                    _("SQL on the project's tables; changes are made on a copy and kept only with Apply"),
                 ),
             },
         }
@@ -2002,7 +1995,6 @@ class MainWindow(QMainWindow):
             self._repo.close()
             self._delete_project_file(self._db_path, to_trash=settled == "discard")
         try:
-            self._sql_workpad_panel.discard()  # its copy, never kept unasked
             self._remember_layout()
             gc.collect()
         finally:

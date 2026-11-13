@@ -34,6 +34,7 @@ area, the size line of todo.txt. "You" = what only the owner can decide or check
     other expert tools (the section icons are done).
 2.2 SQL workpad (dev/plans/sql_workpad_plan.txt, "Missing"): a Stop button, views and indexes kept by Apply
     (the CSV export is dropped, 2026-11-13). The result is above the statement now; the one-line hint is gone.
+    The workpad moved out of the app's rail into ChartLibre Developer (2026-11-13, by your choice).
 2.3 ID46 Marker editor and rotation (dev/plans/line_editor_plan.txt B and C): a point/SVG-path marker editor and a
     __markers__ table; rotation by a constant or a column (arrows).
 2.4 ID32 Animated charts: MP4 export; frames drawn in place for big charts (the plan's end).

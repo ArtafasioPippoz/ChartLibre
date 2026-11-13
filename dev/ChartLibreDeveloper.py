@@ -136,6 +136,9 @@ class DeveloperWindow(QMainWindow):
             NavButton("database_info", self._tables_inventory, text="Project tables",
                       tooltip="Every table of a project file, the app's own included, with a preview of its rows.",
                       described=True),
+            NavButton("nav_sql_workpad", self._sql_workpad, text="SQL workpad",
+                      tooltip="SQL on a project file; changes are made on a copy and kept only with Apply.",
+                      described=True),
             NavButton("settings", self._qss_editor, text="Qt style editor",
                       tooltip="Edit one of app/styles/*.qss and try it live on the app's widgets, light or dark.",
                       described=True),
@@ -159,6 +162,11 @@ class DeveloperWindow(QMainWindow):
         from dev.developer.tables_inventory import TablesInventoryDialog
 
         TablesInventoryDialog(self).exec()
+
+    def _sql_workpad(self) -> None:
+        from dev.developer.sql_workpad_dialog import SqlWorkpadDialog
+
+        SqlWorkpadDialog(self).exec()
 
     def _qss_editor(self) -> None:
         from dev.developer.qss_editor import QssEditorDialog
