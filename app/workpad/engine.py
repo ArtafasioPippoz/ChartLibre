@@ -163,6 +163,7 @@ class Workpad:
         Raises UnsafeCommand when the filter refuses it, or the command's own error.
         """
         self._builtins_namespace()
+        self._load_saved_functions()
         tree = check(source) if self.safe else ast.parse(source, mode="exec")
         last = tree.body.pop() if tree.body and isinstance(tree.body[-1], ast.Expr) else None
         printed = io.StringIO()
@@ -180,6 +181,22 @@ class Workpad:
     # ------------------------------------------------------------------
     # The project's tables
     # ------------------------------------------------------------------
+
+    def _load_saved_functions(self) -> None:
+        """The project's saved analysis functions defined in the session (each one read by the filter first)."""
+        try:
+            saved = self._repo().analysis_functions()
+        except Exception:  # no project open, or a project without the table
+            return
+        names = []
+        for row in saved:
+            try:
+                tree = check(row["code"]) if self.safe else ast.parse(row["code"], mode="exec")
+                exec(compile(tree, f"<function {row['name']}>", "exec"), self.namespace)  # noqa: S102
+                names.append(row["name"])
+            except Exception:
+                continue  # a function that no longer reads: left out, never the reason a command fails
+        self.namespace["functions"] = lambda: {row["name"]: row["description"] for row in saved if row["name"] in names}
 
     def _tools(self) -> AssistantTools:
         return AssistantTools(self._repo(), confirm=lambda question: True, changed=self._changed,

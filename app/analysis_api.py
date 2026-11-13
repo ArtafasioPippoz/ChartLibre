@@ -85,7 +85,11 @@ def call_text(function: str, name: str, table: str, roles: Mapping[str, Any], pa
               model: str = "", draw_on: str = "new_figure") -> str:
     """A call as Python source: Analysis("Fit Y by X", "t", {"x": ["a"]}, degree=2)."""
     arguments = [repr(name), repr(table), repr({key: list(value) for key, value in dict(roles).items()})]
-    arguments += [f"{key}={value!r}" for key, value in dict(parameters).items()]
+    plain = {key: value for key, value in dict(parameters).items() if str(key).isidentifier()}
+    odd = {key: value for key, value in dict(parameters).items() if not str(key).isidentifier()}  # "Box Plot"
+    arguments += [f"{key}={value!r}" for key, value in plain.items()]
+    if odd:
+        arguments.append(f"**{odd!r}")
     if model:
         arguments.append(f"model={model!r}")
     if draw_on != "new_figure":
@@ -432,3 +436,63 @@ def Analysis(name: str, table: str, columns: Any = None, **options: Any) -> Anal
 def Chart(chart_type: str, table: str, y: Any, x: str = "", title: str = "", **roles: str) -> ChartResult:  # noqa: N802
     """Draw a chart in the project use_project() set; see make_callables."""
     return make_callables(current_project)[1](chart_type, table, y, x, title, **roles)
+
+
+# ----------------------------------------------------------------------
+# From the project's history to code, and to a saved function
+# ----------------------------------------------------------------------
+def record_call(record: Any) -> str | None:
+    """The Analysis(...) call that makes a recorded operation again, or None when it was not run on a table
+    (an analysis of a chart's series has no table to name)."""
+    sources = list(getattr(record, "sources", []) or [])
+    if len(sources) != 1 or not sources[0].get("table") or not sources[0].get("roles"):
+        return None
+    parameters = {key: value for key, value in dict(record.parameters).items() if key != "model"}
+    model = str(dict(record.parameters).get("model") or dict(record.entries).get("model_combo") or "")
+    return call_text("Analysis", str(record.operation), str(sources[0]["table"]), sources[0]["roles"], parameters,
+                     model=model)
+
+
+def history_code(records: Iterable[Any]) -> str:
+    """The calls of *records*, one a line, in order; a comment where one cannot be written."""
+    lines = []
+    for record in records:
+        call = record_call(record)
+        lines.append(call if call else f"# {record.operation}: run on a chart's series, not on a table")
+    return "\n".join(lines)
+
+
+def valid_function_name(name: str) -> str | None:
+    """Why *name* cannot be a function's name, or None when it can."""
+    import keyword
+
+    if not name.isidentifier() or keyword.iskeyword(name):
+        return "A function's name is letters, digits and _, not starting with a digit."
+    if name.startswith("_"):
+        return "A name starting with _ is not allowed."
+    if name in ("Analysis", "Chart", "analysis_names", "describe_analysis", "functions"):
+        return f"'{name}' is already a name of the workpad."
+    return None
+
+
+def function_code(name: str, record: Any, description: str = "") -> str:
+    """A function *name* that runs a recorded analysis again: its table, columns and parameters are the defaults,
+    each one given in the call replaces it.
+
+        def compare(table="t", roles=None, **parameters):
+            return Analysis('Are there differences?', table, roles or {...}, **{...}, **parameters)
+    """
+    sources = list(record.sources)
+    if len(sources) != 1 or not sources[0].get("table") or not sources[0].get("roles"):
+        raise AnalysisError(f"{record.operation} was run on a chart's series: it has no table to name.")
+    problem = valid_function_name(name)
+    if problem:
+        raise AnalysisError(problem)
+    model = str(dict(record.parameters).get("model") or dict(record.entries).get("model_combo") or "")
+    defaults = {key: value for key, value in dict(record.parameters).items() if key != "model"}
+    roles = {key: list(value) for key, value in dict(sources[0]["roles"]).items()}
+    doc = description or f"{record.operation} on {sources[0]['table']}, as it was run."
+    return (f"def {name}(table={str(sources[0]['table'])!r}, roles=None, model={model!r}, **parameters):\n"
+            f"    {doc!r}\n"
+            f"    return Analysis({str(record.operation)!r}, table, roles or {roles!r}, model=model,\n"
+            f"                    **{{**{defaults!r}, **parameters}})\n")

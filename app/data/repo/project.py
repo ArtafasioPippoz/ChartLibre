@@ -97,6 +97,8 @@ def _convert(value: Any, kind: str) -> Any:
 
 
 OPERATIONS_TABLE = "__operations__"
+#: The project's saved analysis functions (Python that calls Analysis(): name, code, description).
+ANALYSIS_FUNCTIONS_TABLE = "__analysis_functions__"
 
 
 @dataclass(frozen=True, slots=True)
@@ -1584,6 +1586,51 @@ class ProjectMixin(_Host):
         cursor = self._con.execute(f"DELETE FROM {OPERATIONS_TABLE} WHERE id IN ({marks})", wanted)
         self._commit()
         return int(cursor.rowcount or 0)
+
+    # ==================================================================
+    # Analysis functions: the ``__analysis_functions__`` record.
+    # ==================================================================
+    @ensure_connection_wrapper
+    def create_analysis_functions_table(self) -> None:
+        assert self._con is not None
+        self._con.execute(
+            f"""
+            CREATE TABLE IF NOT EXISTS {ANALYSIS_FUNCTIONS_TABLE} (
+                name        TEXT PRIMARY KEY,
+                code        TEXT NOT NULL,
+                description TEXT NOT NULL DEFAULT '',
+                created     TEXT NOT NULL
+            )
+            """
+        )
+
+    @ensure_connection_wrapper
+    def save_analysis_function(self, name: str, code: str, description: str = "") -> None:
+        """Keep (or replace) the function *name*: Python source that defines it and calls Analysis()."""
+        assert self._con is not None
+        self.create_analysis_functions_table()
+        self._con.execute(
+            f"INSERT OR REPLACE INTO {ANALYSIS_FUNCTIONS_TABLE} (name, code, description, created) VALUES (?, ?, ?, ?)",
+            (str(name), str(code), str(description), datetime.now(UTC).isoformat(timespec="seconds")),
+        )
+        self._commit()
+
+    @ensure_connection_wrapper
+    def analysis_functions(self) -> list[dict[str, str]]:
+        """The saved analysis functions, by name: [{"name", "code", "description", "created"}]."""
+        assert self._con is not None
+        self.create_analysis_functions_table()
+        rows = self._con.execute(
+            f"SELECT name, code, description, created FROM {ANALYSIS_FUNCTIONS_TABLE} ORDER BY name"
+        ).fetchall()
+        return [{"name": str(r[0]), "code": str(r[1]), "description": str(r[2]), "created": str(r[3])} for r in rows]
+
+    @ensure_connection_wrapper
+    def delete_analysis_function(self, name: str) -> None:
+        assert self._con is not None
+        self.create_analysis_functions_table()
+        self._con.execute(f"DELETE FROM {ANALYSIS_FUNCTIONS_TABLE} WHERE name = ?", (str(name),))
+        self._commit()
 
     # ==================================================================
     # ProjectInfo: The ``__project_info__`` entries.

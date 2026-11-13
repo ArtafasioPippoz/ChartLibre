@@ -1,6 +1,7 @@
 Analyses and charts as Python (ID02, ID01's base; proposed by the owner 2026-11-13)
-Status 2026-11-13: A, B, C done (app/analysis_api.py; the workpad's Analysis, Chart, analysis_names,
-describe_analysis); D (Copy as Python, Save as function), E (export, re-run all), F (manual) to do.
+Status 2026-11-13: A, B, C and D done (app/analysis_api.py; the workpad's Analysis, Chart, analysis_names,
+describe_analysis); E (export, re-run all), F (manual) to do. D: Project history has a picker, Copy as Python and Save as
+function... (the project's __analysis_functions__; the workpad defines them, functions() lists them).
 Decided: English names only; a saved function is a Python function that calls Analysis(), usable everywhere.
 ==================================================================================
 

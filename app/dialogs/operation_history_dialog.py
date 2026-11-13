@@ -9,12 +9,23 @@ any other report.
 from __future__ import annotations
 
 import html
+import re
 from collections.abc import Sequence
 from datetime import datetime
 from typing import Any
 
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QHBoxLayout,
+    QInputDialog,
+    QMessageBox,
+    QPushButton,
+    QSizePolicy,
+    QWidget,
+)
 
+from app import analysis_api
 from app.data.repo.project import OperationRecord
 from app.data.sqlite_repo import SqliteRepo
 from app.dialogs.two_panels_dialog_base import PanelDialog
@@ -34,6 +45,22 @@ class OperationHistoryDialog(PanelDialog):
         self._repo = repo
         self._table = table
         card = self.add_card(_("History"), "operationHistoryCard", stretch=1)
+        # One operation picked, as Python: its call copied, or kept as a function of the project.
+        bar = QHBoxLayout()
+        self._record_combo = QComboBox(card)
+        self._record_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self._copy_code_button = QPushButton(_("Copy as Python"), card)
+        self._copy_code_button.setToolTip(_("The call that makes this analysis again; for all of them, a script"))
+        self._copy_code_button.clicked.connect(self.copy_code)
+        self._save_function_button = QPushButton(_("Save as function..."), card)
+        self._save_function_button.setToolTip(
+            _("Keep this analysis as a Python function of the project, to call from the workpad"))
+        self._save_function_button.clicked.connect(self.save_as_function)
+        self._record_combo.currentIndexChanged.connect(self._update_code_buttons)
+        bar.addWidget(self._record_combo, 1)
+        bar.addWidget(self._copy_code_button)
+        bar.addWidget(self._save_function_button)
+        card.layout().addLayout(bar)
         self._view = HtmlResultsView(card)
         card.layout().addWidget(self._view, 1)
         self._reload()
@@ -50,6 +77,51 @@ class OperationHistoryDialog(PanelDialog):
         self._view.setContent(history_html(self._table, self._records))
         if hasattr(self, "_delete_button"):
             self._delete_button.setEnabled(bool(self._records))
+        self._record_combo.blockSignals(True)
+        self._record_combo.clear()
+        self._record_combo.addItem(_("All operations"), None)
+        for record in self._records:
+            self._record_combo.addItem(f"{record.id}. {record.operation}", record.id)
+        self._record_combo.setCurrentIndex(self._record_combo.count() - 1 if self._records else 0)
+        self._record_combo.blockSignals(False)
+        self._update_code_buttons()
+
+    def _picked(self) -> list[OperationRecord]:
+        """The record picked, or all of them."""
+        record_id = self._record_combo.currentData()
+        return list(self._records) if record_id is None else [r for r in self._records if r.id == record_id]
+
+    def _update_code_buttons(self) -> None:
+        picked = self._picked()
+        self._copy_code_button.setEnabled(bool(picked))
+        single = self._record_combo.currentData() is not None
+        self._save_function_button.setEnabled(single and bool(picked) and analysis_api.record_call(picked[0]) is not None)
+
+    def copy_code(self) -> None:
+        """The picked operation's call (all of them: one a line) on the clipboard."""
+        QApplication.clipboard().setText(analysis_api.history_code(self._picked()))
+
+    def save_as_function(self) -> None:
+        """Ask a name, then keep the picked operation as a Python function of the project."""
+        picked = self._picked()
+        if len(picked) != 1:
+            return
+        record = picked[0]
+        name, accepted = QInputDialog.getText(self, _("Save as function"), _("Function name:"),
+                                              text=re.sub(r"\W+", "_", record.operation.lower()).strip("_"))
+        name = name.strip()
+        if not accepted or not name:
+            return
+        try:
+            code = analysis_api.function_code(name, record)
+        except analysis_api.AnalysisError as error:
+            QMessageBox.warning(self, _("Save as function"), str(error))
+            return
+        if any(row["name"] == name for row in self._repo.analysis_functions()) and QMessageBox.question(
+                self, _("Save as function"), _("A function called {name} exists. Replace it?").format(name=name),
+        ) != QMessageBox.StandardButton.Yes:
+            return
+        self._repo.save_analysis_function(name, code, f"{record.operation} on {record.sources[0].get('table', '')}")
 
     def _delete_history(self) -> None:
         """Forget the listed operations, after asking; the tables they made stay."""
@@ -92,12 +164,14 @@ def _record_section(record: OperationRecord) -> str:
         align=["left", "left"],
         empty_message=_("No settings recorded."),
     )
+    call = analysis_api.record_call(record)
+    code = report_html.raw_note(f"<pre>{html.escape(call)}</pre>") if call else ""
     report = ""
     if record.report.strip():
         report = report_html.raw_note(
             record.report if looks_like_html(record.report) else plain_to_html(record.report)
         )
-    return report_html.section(f"{record.id}. {record.operation}", summary, parameters, report)
+    return report_html.section(f"{record.id}. {record.operation}", summary, parameters, code, report)
 
 
 def history_html(table: str | None, records: Sequence[OperationRecord]) -> str:
