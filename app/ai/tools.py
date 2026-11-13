@@ -22,6 +22,7 @@ from collections.abc import Callable, Iterable, Mapping
 from typing import Any
 
 from app.ai import settings
+from app.analysis_api import AnalysisError, closest as _closest, plain_text as _plain, run_analysis
 from app.data.repo._common import is_read_only_select
 from app.plugin_api.ai.provider import ToolSpec
 from app.plugin_api.data_operations.column_roles import declared_kind, guess_kind
@@ -45,23 +46,6 @@ def _assignments(text: str) -> dict[str, str]:
     return {key.strip(): value.strip() for key, value in pairs}
 
 
-def _closest(name: str, known: Iterable[str]) -> str:
-    """The one of *known* a small model meant - "box_plot" for Box Plot, "body mass" for body_mass_g; else *name*."""
-    def words(text: str) -> list[str]:
-        return [word for word in re.split(r"[^a-z0-9]+", str(text).lower()) if word]
-
-    wanted = words(name)
-    choices = list(known)
-    for test in (lambda have: have == wanted,
-                 lambda have: [w for w in have if w not in ("plot", "chart")] == [w for w in wanted
-                                                                                  if w not in ("plot", "chart")],
-                 lambda have: bool(wanted) and all(word in have for word in wanted)):
-        found = [choice for choice in choices if test(words(choice))]
-        if len(found) == 1:
-            return found[0]
-    return name
-
-
 def _column_list(value: Any) -> list[str]:
     """Columns as a list, also when a model wrote the list as text: "['a', 'b']" or "a, b"."""
     if isinstance(value, str):
@@ -71,15 +55,6 @@ def _column_list(value: Any) -> list[str]:
 
 def _quote(name: str) -> str:
     return '"' + str(name).replace('"', '""') + '"'
-
-
-def _plain(html: str) -> str:
-    """A report's HTML as text, for the model."""
-    from PySide6.QtGui import QTextDocument
-
-    document = QTextDocument()
-    document.setHtml(html)
-    return document.toPlainText().strip()
 
 
 class AssistantTools:
@@ -252,9 +227,9 @@ class AssistantTools:
     def catalogue(self) -> dict[str, Any]:
         """The table analyses by name: their discovery entries."""
         if self._catalogue is None:
-            from app.scanners.data_operation_scanner import data_operations, reads_roles
+            from app.analysis_api import catalogue
 
-            self._catalogue = {str(entry["value"]): entry for entry in data_operations if reads_roles(entry)}
+            self._catalogue = catalogue()
         return self._catalogue
 
     def _tool_list_analyses(self) -> str:
@@ -328,60 +303,14 @@ class AssistantTools:
     def _tool_run_analysis(self, analysis: str, table: str, roles: Mapping[str, list[str]] | None = None,
                            parameters: Mapping[str, Any] | None = None, model: str = "",
                            draw_on: str = "new_figure", roles_text: str = "", parameters_text: str = "") -> str:
-        from PySide6.QtWidgets import QApplication
-
-        from app.scanners.data_operation_scanner import import_class_from_file
-
-        analysis = _closest(analysis, self.catalogue())
-        entry = self.catalogue().get(analysis)
-        if entry is None:
-            raise ValueError(f"No analysis named '{analysis}'. They are: {', '.join(sorted(self.catalogue()))}.")
         casting = {**{key: value.split(",") for key, value in _assignments(roles_text).items()}, **dict(roles or {})}
         values = {**_assignments(parameters_text), **dict(parameters or {})}
-        table = self._table(table)
-        casting = {key: self._columns(table, _column_list(columns)) for key, columns in casting.items()}
-        before = set(self._repo.list_user_tables()["Table"].astype(str))
-        cls = import_class_from_file(entry)
-        if cls is None:  # its file went, or did not load: the log says why
-            raise ValueError(f"The analysis '{analysis}' could not be loaded; the log says why.")
-        dialog = cls(repo=self._repo, table=table)
-        try:
-            if dialog.reads_chart():  # the dialog remembers it was last used on a chart: the assistant names a table
-                dialog.source_table_radio.setChecked(True)
-                dialog._load_tables(table)
-            if dialog.table != table:
-                raise ValueError(f"No table named '{table}'.")
-            dialog.current_figure_id = self._current_figure()
-            dialog.roles_widget.set_casting({key: [str(column).strip() for column in columns] for key, columns in casting.items()})
-            for form in dialog.parameter_forms():
-                form.set_values(values)
-            if model and getattr(dialog, "model_combo", None) is not None:
-                index = dialog.model_combo.findData(model)
-                if index < 0:
-                    raise ValueError(f"'{model}' is not one of {analysis}'s models.")
-                dialog.model_combo.setCurrentIndex(index)
-            combo = getattr(dialog, "destination_combo", None)
-            if combo is not None and combo.findData(draw_on) >= 0:
-                combo.setCurrentIndex(combo.findData(draw_on))
-            problems = dialog.problems()
-            if problems:
-                raise ValueError("; ".join(problems))
-            dialog.ok()
-            deadline = time.monotonic() + ANALYSIS_TIMEOUT_S
-            while dialog.job_running and time.monotonic() < deadline and self._keep_waiting():
-                QApplication.processEvents()
-                time.sleep(0.01)
-            if dialog.job_running:
-                dialog.stop()
-                raise RuntimeError("The analysis was stopped before it finished.")
-            report = _plain(getattr(dialog.results_widget(), "_html", "") or "")
-            figures = list(dialog.created_figure_ids)
-        finally:
-            dialog.close()
-        written = sorted(set(self._repo.list_user_tables()["Table"].astype(str)) - before)
-        self._changed(figures)
-        return (f"{analysis} on {table} done. Tables written: {', '.join(written) or 'none'}. "
-                f"Figures: {', '.join(map(str, figures)) or 'none'}.\nReport:\n{report}")
+        result = run_analysis(self._repo, analysis, table, casting, values, model=model, draw_on=draw_on,
+                              current_figure=self._current_figure, keep_waiting=self._keep_waiting,
+                              timeout=ANALYSIS_TIMEOUT_S)
+        self._changed(result.figures)
+        return (f"{result.name} on {result.table} done. Tables written: {', '.join(result.tables) or 'none'}. "
+                f"Figures: {', '.join(map(str, result.figures)) or 'none'}.\nReport:\n{result.report_text}")
 
     def _chart_class(self, chart_type: str) -> Any:
         from app.scanners.axis_renderer_scanner import get_renderer, renderers
