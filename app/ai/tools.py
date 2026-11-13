@@ -22,7 +22,7 @@ from collections.abc import Callable, Iterable, Mapping
 from typing import Any
 
 from app.ai import settings
-from app.analysis_api import AnalysisError, closest as _closest, plain_text as _plain, run_analysis
+from app.analysis_api import AnalysisError, closest as _closest, describe_analysis, make_chart, plain_text as _plain, run_analysis
 from app.data.repo._common import is_read_only_select
 from app.plugin_api.ai.provider import ToolSpec
 from app.plugin_api.data_operations.column_roles import declared_kind, guess_kind
@@ -237,38 +237,7 @@ class AssistantTools:
                          for name, entry in sorted(self.catalogue().items()))
 
     def _tool_describe_analysis(self, analysis: str) -> str:
-        from app.plugin_api.data_operations.parameter_spec import (
-            BoolParam,
-            ChoiceParam,
-            FloatParam,
-            IntParam,
-        )
-        from app.scanners.data_operation_scanner import import_class_from_file
-
-        if analysis not in self.catalogue():
-            raise ValueError(f"No analysis named '{analysis}'. They are: {', '.join(sorted(self.catalogue()))}.")
-        lines = []
-        entry = self.catalogue()[analysis]
-        cls = import_class_from_file(entry)
-        lines.append(f"## {analysis} - {entry.get('description', '')}")
-        for role in getattr(cls, "ROLES", ()):
-            most = f"at most {role.maximum}" if role.maximum else "any number"
-            lines.append(f"  role {role.key} ({role.label}): {', '.join(role.kinds)}; at least {role.minimum}, "
-                         f"{most} - {role.tooltip or role.label}")
-        for param in getattr(cls, "PARAMS", ()):
-            if isinstance(param, ChoiceParam):
-                kind = "one of " + ", ".join(str(value) for _label, value in param.labelled_choices())
-            elif isinstance(param, (IntParam, FloatParam)):
-                kind = f"number {param.minimum}..{param.maximum}"
-            elif isinstance(param, BoolParam):
-                kind = "true/false"
-            else:
-                kind = "text"
-            lines.append(f"  parameter {param.name}: {kind}, default {param.default!r}")
-        models = list(getattr(cls, "MODELS", {}) or {})
-        if models:
-            lines.append(f"  models: {', '.join(models)}")
-        return "\n".join(lines)
+        return describe_analysis(analysis)
 
     def _table(self, table: str) -> str:
         """The table a model named, or the error that names the real ones."""
@@ -309,7 +278,7 @@ class AssistantTools:
                               current_figure=self._current_figure, keep_waiting=self._keep_waiting,
                               timeout=ANALYSIS_TIMEOUT_S)
         self._changed(result.figures)
-        return (f"{result.name} on {result.table} done. Tables written: {', '.join(result.tables) or 'none'}. "
+        return (f"{result.name} on {result.source} done. Tables written: {', '.join(result.tables) or 'none'}. "
                 f"Figures: {', '.join(map(str, result.figures)) or 'none'}.\nReport:\n{result.report_text}")
 
     def _chart_class(self, chart_type: str) -> Any:
@@ -339,45 +308,11 @@ class AssistantTools:
 
     def _tool_create_chart(self, table: str, chart_type: str, y: list[str], x: str = "", title: str = "",
                            roles_text: str = "") -> str:
-        cls = self._chart_class(chart_type)
-        chart_type = str(cls.Name)
-        table = self._table(table)
-        y = self._columns(table, _column_list(y))
-        required = list(getattr(cls, "RequiredRoles", ()) or ())
-        known = {*required, *(getattr(cls, "OptionalRoles", ()) or ())}
-        shared = _assignments(roles_text)
-        if x:
-            shared.setdefault("x", x)
-        unknown = sorted(set(shared) - known)
-        if unknown:
-            raise ValueError(f"{chart_type} has no role {', '.join(unknown)}. Its roles: {', '.join(sorted(known))}.")
-        shared = dict(zip(shared, self._columns(table, shared.values()), strict=True))
-        # What y's columns fill: y when the chart has it, else its first required role still free (a histogram's x).
-        free = [role for role in required if role not in shared]
-        drawn = "y" if "y" in known else (free[0] if free else "")
-        if not drawn:
-            raise ValueError(f"{chart_type}'s roles are all given: {', '.join(sorted(known))}.")
-        absent = [role for role in free if role not in (drawn, "x")]
-        if absent:
-            raise ValueError(f"{chart_type} also needs: {', '.join(absent)} (in roles_text).")
-        use_row = "x" in required and "x" not in shared and drawn != "x"
-        repo = self._repo
-        repo.snapshot_for_undo(list(repo.DESCRIPTOR_TABLES), label=f"Assistant: chart of '{table}'")
-        figure_id = int(repo.create_figure_descriptor(name=title or f"{table}: {', '.join(y)}"))
-        axis_id = int(repo.create_axis_descriptor(figure_id=figure_id, axis_index=0, chart_type=chart_type,
-                                                  title=title, x_label=shared.get("x", ""),
-                                                  y_label=y[0] if len(y) == 1 else "", options={"grid": True}))
-        for index, column in enumerate(y):
-            chosen = {**shared, drawn: column}
-            select = [f"{_quote(name)} AS {_quote(role)}" for role, name in chosen.items()]
-            if use_row:
-                select.insert(0, 'rowid AS "x"')
-            roles = {role: role for role in chosen} | ({"x": "x"} if use_row else {})
-            repo.create_series_descriptor(axis_id=axis_id, series_index=index, name=column,
-                                          sql_query=f"SELECT {', '.join(select)} FROM {_quote(table)}",
-                                          roles=roles, style={})
-        self._changed([figure_id])
-        return f"Figure {figure_id} drawn: {chart_type} of {', '.join(y)}" + (f" against {x}" if x else "") + "."
+        result = make_chart(self._repo, table, chart_type, _column_list(y), x, title, _assignments(roles_text),
+                            undo_label=f"Assistant: chart of '{self._table(table)}'")
+        self._changed([result.figure_id])
+        return (f"Figure {result.figure_id} drawn: {result.chart_type} of {', '.join(result.y)}"
+                + (f" against {x}" if x else "") + ".")
 
     # -- changes ---------------------------------------------------------
 

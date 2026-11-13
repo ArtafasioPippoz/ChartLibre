@@ -29,7 +29,8 @@ class AnalysisResult:
     """What one run gave back."""
 
     name: str
-    table: str
+    #: The table it analysed.
+    source: str
     roles: dict[str, list[str]]
     parameters: dict[str, Any]
     model: str
@@ -41,6 +42,50 @@ class AnalysisResult:
     #: Its row of the project's history (__operations__), None when the run recorded none.
     operation_id: int | None = None
     seconds: float = 0.0
+    #: The project it ran on (so the object can read its tables and run again).
+    repo: Any = field(default=None, repr=False, compare=False)
+    draw_on: str = "new_figure"
+
+    @property
+    def report(self) -> str:
+        """The report, as HTML."""
+        return self.report_html
+
+    def table(self, name: str | None = None) -> Any:
+        """One of the tables it wrote as a DataFrame: *name*, or the first."""
+        if not self.tables:
+            raise AnalysisError(f"{self.name} wrote no table.")
+        chosen = name or self.tables[0]
+        if chosen not in self.tables:
+            raise AnalysisError(f"{self.name} wrote: {', '.join(self.tables)}; not '{chosen}'.")
+        return self.repo.query_df(f"SELECT * FROM {_quote(chosen)}")
+
+    def code(self) -> str:
+        """The call that makes this analysis again."""
+        return call_text("Analysis", self.name, self.source, self.roles, self.parameters,
+                         model=self.model, draw_on=self.draw_on)
+
+    def rerun(self, table: str | None = None, **parameters: Any) -> AnalysisResult:
+        """The same analysis again - on *table* when given (its columns must have the same names), with
+        *parameters* changed where given."""
+        return run_analysis(self.repo, self.name, table or self.source, self.roles, {**self.parameters, **parameters},
+                            model=self.model, draw_on=self.draw_on)
+
+
+def _quote(name: str) -> str:
+    return '"' + str(name).replace('"', '""') + '"'
+
+
+def call_text(function: str, name: str, table: str, roles: Mapping[str, Any], parameters: Mapping[str, Any], *,
+              model: str = "", draw_on: str = "new_figure") -> str:
+    """A call as Python source: Analysis("Fit Y by X", "t", {"x": ["a"]}, degree=2)."""
+    arguments = [repr(name), repr(table), repr({key: list(value) for key, value in dict(roles).items()})]
+    arguments += [f"{key}={value!r}" for key, value in dict(parameters).items()]
+    if model:
+        arguments.append(f"model={model!r}")
+    if draw_on != "new_figure":
+        arguments.append(f"draw_on={draw_on!r}")
+    return f"{function}({', '.join(arguments)})"
 
 
 def closest(name: str, known: Iterable[str]) -> str:
@@ -179,6 +224,206 @@ def run_analysis(repo: Any, analysis: str, table: str, roles: Mapping[str, Any] 
     written = sorted(set(repo.list_user_tables()["Table"].astype(str)) - tables_before)
     new_operations = [record.id for record in repo.operations() if record.id not in operations_before]
     return AnalysisResult(
-        name=name, table=table, roles=casting, parameters=values, model=model, report_html=report_html,
+        name=name, source=table, roles=casting, parameters=values, model=model, report_html=report_html,
         report_text=plain_text(report_html), tables=written, figures=[int(figure) for figure in figures],
-        operation_id=new_operations[-1] if new_operations else None, seconds=time.monotonic() - started)
+        operation_id=new_operations[-1] if new_operations else None, seconds=time.monotonic() - started,
+        repo=repo, draw_on=draw_on)
+
+
+def describe_analysis(analysis: str) -> str:
+    """An analysis' roles, parameters and models in words (what Analysis() accepts)."""
+    from app.plugin_api.data_operations.parameter_spec import BoolParam, ChoiceParam, FloatParam, IntParam
+    from app.scanners.data_operation_scanner import import_class_from_file
+
+    name, entry = find_analysis(analysis)
+    cls = import_class_from_file(entry)
+    lines = [f"## {name} - {entry.get('description', '')}"]
+    for role in getattr(cls, "ROLES", ()):
+        most = f"at most {role.maximum}" if role.maximum else "any number"
+        lines.append(f"  role {role.key} ({role.label}): {', '.join(role.kinds)}; at least {role.minimum}, "
+                     f"{most} - {role.tooltip or role.label}")
+    for param in getattr(cls, "PARAMS", ()):
+        if isinstance(param, ChoiceParam):
+            kind = "one of " + ", ".join(str(value) for _label, value in param.labelled_choices())
+        elif isinstance(param, (IntParam, FloatParam)):
+            kind = f"number {param.minimum}..{param.maximum}"
+        elif isinstance(param, BoolParam):
+            kind = "true/false"
+        else:
+            kind = "text"
+        lines.append(f"  parameter {param.name}: {kind}, default {param.default!r}")
+    models = list(getattr(cls, "MODELS", {}) or {})
+    if models:
+        lines.append(f"  models: {', '.join(models)}")
+    return "\n".join(lines)
+
+
+def _roles_of(analysis: str, columns: Any, roles: Mapping[str, Any] | None) -> dict[str, Any]:
+    """The roles for a call: *roles* as given, or the list *columns* put in the analysis' only main role."""
+    from app.scanners.data_operation_scanner import import_class_from_file
+
+    if roles:
+        return dict(roles)
+    if columns is None:
+        return {}
+    if isinstance(columns, Mapping):
+        return dict(columns)
+    cls = import_class_from_file(find_analysis(analysis)[1])
+    required = [role.key for role in getattr(cls, "ROLES", ()) if role.minimum >= 1]
+    every = [role.key for role in getattr(cls, "ROLES", ())]
+    if len(required) > 1 or (not required and len(every) != 1):
+        raise AnalysisError(f"{analysis} has several roles ({', '.join(every)}): give the columns of each, "
+                            f'as {{"{every[0]}": [...], ...}}.')
+    return {(required or every)[0]: list(columns) if not isinstance(columns, str) else [columns]}
+
+
+# ----------------------------------------------------------------------
+# Charts
+# ----------------------------------------------------------------------
+@dataclass
+class ChartResult:
+    """A chart made in the project."""
+
+    figure_id: int
+    chart_type: str
+    table: str
+    y: list[str]
+    x: str = ""
+    title: str = ""
+    roles: dict[str, str] = field(default_factory=dict)
+    repo: Any = field(default=None, repr=False, compare=False)
+
+    def code(self) -> str:
+        """The call that makes this chart again."""
+        arguments = [repr(self.chart_type), repr(self.table), repr(self.y)]
+        if self.x:
+            arguments.append(f"x={self.x!r}")
+        if self.title:
+            arguments.append(f"title={self.title!r}")
+        arguments += [f"{key}={value!r}" for key, value in self.roles.items() if key != "x"]
+        return f"Chart({', '.join(arguments)})"
+
+    def png(self, path: Any = None, *, dpi: int = 100) -> bytes:
+        """The chart drawn as PNG bytes; also written to *path* when given."""
+        import io
+
+        from matplotlib.figure import Figure
+
+        from app.plugin_api.charts.render_figure import render_figure_from_descriptor
+
+        descriptor = self.repo.load_figure_descriptor(self.figure_id)
+        figure = Figure()
+        render_figure_from_descriptor(figure=figure, descriptor=descriptor, repo=self.repo)
+        buffer = io.BytesIO()
+        figure.savefig(buffer, format="png", dpi=dpi)
+        data = buffer.getvalue()
+        if path is not None:
+            from pathlib import Path
+
+            Path(path).write_bytes(data)
+        return data
+
+
+def chart_class(chart_type: str) -> Any:
+    """The renderer class of a chart type named loosely, or an AnalysisError that points to the list."""
+    from app.scanners.axis_renderer_scanner import get_renderer, renderers
+    from app.scanners.data_operation_scanner import import_class_from_file
+
+    entry = get_renderer(closest(chart_type, [str(item["value"]) for item in renderers]))
+    if entry is None:
+        raise AnalysisError(f"No chart type '{chart_type}'.")
+    return import_class_from_file(entry)
+
+
+def make_chart(repo: Any, table: str, chart_type: str, y: Any, x: str = "", title: str = "",
+               roles: Mapping[str, str] | None = None, *, undo_label: str | None = None) -> ChartResult:
+    """Draw *chart_type* of the columns *y* (against *x*) in a new figure of the project."""
+    cls = chart_class(chart_type)
+    chart_type = str(cls.Name)
+    table = find_table(repo, table)
+    y = find_columns(repo, table, _list_of_columns(y))
+    required = list(getattr(cls, "RequiredRoles", ()) or ())
+    known = {*required, *(getattr(cls, "OptionalRoles", ()) or ())}
+    shared = {str(key): str(value) for key, value in dict(roles or {}).items()}
+    if x:
+        shared.setdefault("x", x)
+    unknown = sorted(set(shared) - known)
+    if unknown:
+        raise AnalysisError(f"{chart_type} has no role {', '.join(unknown)}. Its roles: {', '.join(sorted(known))}.")
+    shared = dict(zip(shared, find_columns(repo, table, shared.values()), strict=True))
+    # What y's columns fill: y when the chart has it, else its first required role still free (a histogram's x).
+    free = [role for role in required if role not in shared]
+    drawn = "y" if "y" in known else (free[0] if free else "")
+    if not drawn:
+        raise AnalysisError(f"{chart_type}'s roles are all given: {', '.join(sorted(known))}.")
+    absent = [role for role in free if role not in (drawn, "x")]
+    if absent:
+        raise AnalysisError(f"{chart_type} also needs: {', '.join(absent)}.")
+    use_row = "x" in required and "x" not in shared and drawn != "x"
+    repo.snapshot_for_undo(list(repo.DESCRIPTOR_TABLES), label=undo_label or f"Chart of '{table}'")
+    figure_id = int(repo.create_figure_descriptor(name=title or f"{table}: {', '.join(y)}"))
+    axis_id = int(repo.create_axis_descriptor(figure_id=figure_id, axis_index=0, chart_type=chart_type,
+                                              title=title, x_label=shared.get("x", ""),
+                                              y_label=y[0] if len(y) == 1 else "", options={"grid": True}))
+    for index, column in enumerate(y):
+        chosen = {**shared, drawn: column}
+        select = [f"{_quote(name)} AS {_quote(role)}" for role, name in chosen.items()]
+        if use_row:
+            select.insert(0, 'rowid AS "x"')
+        series_roles = {role: role for role in chosen} | ({"x": "x"} if use_row else {})
+        repo.create_series_descriptor(axis_id=axis_id, series_index=index, name=column,
+                                      sql_query=f"SELECT {', '.join(select)} FROM {_quote(table)}",
+                                      roles=series_roles, style={})
+    return ChartResult(figure_id=figure_id, chart_type=chart_type, table=table, y=y, x=x, title=title,
+                       roles={key: value for key, value in shared.items() if key != "x"}, repo=repo)
+
+
+# ----------------------------------------------------------------------
+# The two callables a script or the workpad uses
+# ----------------------------------------------------------------------
+_project: Any = None
+
+
+def use_project(repo: Any) -> None:
+    """The project Analysis() and Chart() work on when no repo is given (a script sets it once)."""
+    global _project
+    _project = repo
+
+
+def current_project() -> Any:
+    if _project is None:
+        raise AnalysisError("No project: open one, or call use_project(repo) first.")
+    return _project
+
+
+def make_callables(repo_getter: Callable[[], Any], *, current_figure: Callable[[], int | None] = lambda: None,
+                   keep_waiting: Callable[[], bool] = lambda: True,
+                   on_change: Callable[[list[int]], None] = lambda figures: None) -> tuple[Callable, Callable]:
+    """(Analysis, Chart) bound to a project - the workpad's names, or a script's. *on_change* hears the figures made."""
+
+    def Analysis(name: str, table: str, columns: Any = None, *, roles: Mapping[str, Any] | None = None,  # noqa: N802
+                 model: str = "", draw_on: str = "new_figure", **parameters: Any) -> AnalysisResult:
+        """Run an analysis: Analysis("Fit Y by X", "table", ["column"], degree=2); see analysis_names()."""
+        result = run_analysis(repo_getter(), name, table, _roles_of(name, columns, roles), parameters, model=model,
+                              draw_on=draw_on, current_figure=current_figure, keep_waiting=keep_waiting)
+        on_change(result.figures)
+        return result
+
+    def Chart(chart_type: str, table: str, y: Any, x: str = "", title: str = "",  # noqa: N802
+              **roles: str) -> ChartResult:
+        """Draw a chart: Chart("Scatter Plot", "table", ["y"], x="x", title="..."); extra keywords are roles."""
+        result = make_chart(repo_getter(), table, chart_type, y, x, title, roles)
+        on_change([result.figure_id])
+        return result
+
+    return Analysis, Chart
+
+
+def Analysis(name: str, table: str, columns: Any = None, **options: Any) -> AnalysisResult:  # noqa: N802
+    """Run an analysis on the project use_project() set; see make_callables."""
+    return make_callables(current_project)[0](name, table, columns, **options)
+
+
+def Chart(chart_type: str, table: str, y: Any, x: str = "", title: str = "", **roles: str) -> ChartResult:  # noqa: N802
+    """Draw a chart in the project use_project() set; see make_callables."""
+    return make_callables(current_project)[1](chart_type, table, y, x, title, **roles)
