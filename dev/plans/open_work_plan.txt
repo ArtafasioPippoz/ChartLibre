@@ -5,7 +5,7 @@ area, the size line of todo.txt. "You" = what only the owner can decide or check
 
 0. Close what is built (half a day, before anything new)
 ---------------------------------------------------------
-0.1 You: restart the app and look at the finished work with your eyes - Chart properties (Figure, Axis, Series,
+0.1 (done, OK'd 2026-11-13) You: restart the app and look at the finished work with your eyes - Chart properties (Figure, Axis, Series,
     Animation, Overlays) in light and dark, at 300 and 420 px; Project panel (information, database info);
     Preferences > Log; Project history > Delete; the animation grey rectangle (commit 48148f3, unverified on
     macOS); Column Info button; the Up/Down/Delete buttons. A list of what is wrong goes back as one message.
@@ -32,8 +32,8 @@ area, the size line of todo.txt. "You" = what only the owner can decide or check
 ----------------------------------------------------
 2.1 ID48 Preferences: an "Advanced mode" setting - off, the window hides the assistant, the workpads and the
     other expert tools (the section icons are done).
-2.2 SQL workpad (dev/plans/sql_workpad_plan.txt, "Missing"): CSV export of a result, a Stop button, views and
-    indexes kept by Apply.
+2.2 SQL workpad (dev/plans/sql_workpad_plan.txt, "Missing"): a Stop button, views and indexes kept by Apply
+    (the CSV export is dropped, 2026-11-13). The result is above the statement now; the one-line hint is gone.
 2.3 ID46 Marker editor and rotation (dev/plans/line_editor_plan.txt B and C): a point/SVG-path marker editor and a
     __markers__ table; rotation by a constant or a column (arrows).
 2.4 ID32 Animated charts: MP4 export; frames drawn in place for big charts (the plan's end).

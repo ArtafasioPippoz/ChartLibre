@@ -58,10 +58,12 @@ class SqlWorkpadPanel(NavPanel):
         self._completer.activated.connect(self._complete)
         self._command.textChanged.connect(self._offer_names)
         QShortcut(QKeySequence("Ctrl+Space"), self._command).activated.connect(lambda: self._offer_names(True))
-        row = QHBoxLayout()
+        # The copy warning on a line of its own, over the buttons (beside them it was cut to a few letters).
         self._status = QLabel(box)
         self._status.setWordWrap(True)
-        row.addWidget(self._status, 1)
+        column.addWidget(self._status)
+        row = QHBoxLayout()
+        row.addStretch(1)
         self._cancel = QPushButton(_("Cancel"), box)
         self._cancel.clicked.connect(self.cancel)
         row.addWidget(self._cancel)
@@ -73,7 +75,6 @@ class SqlWorkpadPanel(NavPanel):
         run.clicked.connect(self.run)
         row.addWidget(run)
         column.addLayout(row)
-        self.add_frame(_("SQL"), box, object_name="sqlWorkpadCommandCard")
 
         self._result = QTableWidget(self)
         self._result.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Ignored)
@@ -94,7 +95,9 @@ class SqlWorkpadPanel(NavPanel):
         self._save_query_button.clicked.connect(self.save_as_query)
         buttons.addWidget(self._save_query_button)
         result_column.addLayout(buttons)
+        # The result first, the statement under it: it is read from the top and typed at the bottom.
         self.add_frame(_("Result"), result_box, object_name="sqlWorkpadResultCard", stretch=1)
+        self.add_frame(_("SQL"), box, object_name="sqlWorkpadCommandCard")
         self._message = QLabel(self)
         self._message.setWordWrap(True)
         self.add_frame(_("Message"), self._message, object_name="sqlWorkpadMessageCard")
@@ -109,7 +112,8 @@ class SqlWorkpadPanel(NavPanel):
         self._cancel.setEnabled(on_copy)
         self._status.setText(
             f"<span style='color:#b45309;'>{_('Working on a copy - Apply to keep, Cancel to throw away')}</span>"
-            if on_copy else f"<span style='color:#6b7280;'>{_('One statement per Run · Ctrl+Return')}</span>")
+            if on_copy else "")
+        self._status.setVisible(on_copy)
 
     def _recall(self, step: int) -> None:
         if not self._history:
