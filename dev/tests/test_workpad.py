@@ -83,3 +83,30 @@ def test_plot_draws_values_or_a_table_s_columns(repo):
     assert "drawn" in pad.run("plot('Box Plot', table='Birds', y='mass', group='species')")[1]
     assert sum(1 for figures in made if figures) == 2
     assert len(repo.list_figures()) == 2 if hasattr(repo, "list_figures") else True
+
+
+def test_analyses_and_charts_are_calls_in_the_workpad(qapp, tmp_path: Path) -> None:
+    import numpy as np
+
+    rng = np.random.default_rng(1)
+    project = SqliteRepo(db_path=tmp_path / "w.dhub")
+    project.import_dataframe(pd.DataFrame({"g": list("aaabbbccc") * 4, "v": rng.normal(5, 1, 36)}), table_name="T",
+                             normalize_columns=False)
+    made: list[list[int]] = []
+    pad = Workpad(lambda: project, changed=made.append)
+    try:
+        out, value = pad.run('r = Analysis("Are there differences?", "T", roles={"response": ["v"], "group": ["g"]})\n'
+                             'r')
+        assert "Are there differences?" in repr(value) and r_has_report(pad)
+        assert pad.run("r.code()")[1].startswith("Analysis('Are there differences?', 'T', {")
+        assert "Are there differences?" in pad.run("analysis_names()")[1]
+        figure = pad.run('c = Chart("Scatter Plot", "T", ["v"], x="v")\nc.figure_id')[1]
+        assert figure and made[-1] == [figure]
+        with pytest.raises(UnsafeCommand):
+            pad.run("r._repo")  # the project is not reachable from a command
+    finally:
+        project.close()
+
+
+def r_has_report(pad: Workpad) -> bool:
+    return bool(pad.run("r.report_text")[1]) and "<" in pad.run("r.report")[1]

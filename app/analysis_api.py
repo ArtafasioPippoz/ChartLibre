@@ -43,8 +43,13 @@ class AnalysisResult:
     operation_id: int | None = None
     seconds: float = 0.0
     #: The project it ran on (so the object can read its tables and run again).
-    repo: Any = field(default=None, repr=False, compare=False)
+    #: Private, so a workpad's filter keeps it out of reach of the user's own commands.
+    _repo: Any = field(default=None, repr=False, compare=False)
     draw_on: str = "new_figure"
+
+    def __repr__(self) -> str:
+        return (f"{self.name} on {self.source}. Tables written: {', '.join(self.tables) or 'none'}. "
+                f"Figures: {', '.join(map(str, self.figures)) or 'none'}.\n\n{self.report_text}")
 
     @property
     def report(self) -> str:
@@ -58,7 +63,7 @@ class AnalysisResult:
         chosen = name or self.tables[0]
         if chosen not in self.tables:
             raise AnalysisError(f"{self.name} wrote: {', '.join(self.tables)}; not '{chosen}'.")
-        return self.repo.query_df(f"SELECT * FROM {_quote(chosen)}")
+        return self._repo.query_df(f"SELECT * FROM {_quote(chosen)}")
 
     def code(self) -> str:
         """The call that makes this analysis again."""
@@ -68,7 +73,7 @@ class AnalysisResult:
     def rerun(self, table: str | None = None, **parameters: Any) -> AnalysisResult:
         """The same analysis again - on *table* when given (its columns must have the same names), with
         *parameters* changed where given."""
-        return run_analysis(self.repo, self.name, table or self.source, self.roles, {**self.parameters, **parameters},
+        return run_analysis(self._repo, self.name, table or self.source, self.roles, {**self.parameters, **parameters},
                             model=self.model, draw_on=self.draw_on)
 
 
@@ -227,7 +232,7 @@ def run_analysis(repo: Any, analysis: str, table: str, roles: Mapping[str, Any] 
         name=name, source=table, roles=casting, parameters=values, model=model, report_html=report_html,
         report_text=plain_text(report_html), tables=written, figures=[int(figure) for figure in figures],
         operation_id=new_operations[-1] if new_operations else None, seconds=time.monotonic() - started,
-        repo=repo, draw_on=draw_on)
+        _repo=repo, draw_on=draw_on)
 
 
 def describe_analysis(analysis: str) -> str:
@@ -291,7 +296,7 @@ class ChartResult:
     x: str = ""
     title: str = ""
     roles: dict[str, str] = field(default_factory=dict)
-    repo: Any = field(default=None, repr=False, compare=False)
+    _repo: Any = field(default=None, repr=False, compare=False)
 
     def code(self) -> str:
         """The call that makes this chart again."""
@@ -311,9 +316,9 @@ class ChartResult:
 
         from app.plugin_api.charts.render_figure import render_figure_from_descriptor
 
-        descriptor = self.repo.load_figure_descriptor(self.figure_id)
+        descriptor = self._repo.load_figure_descriptor(self.figure_id)
         figure = Figure()
-        render_figure_from_descriptor(figure=figure, descriptor=descriptor, repo=self.repo)
+        render_figure_from_descriptor(figure=figure, descriptor=descriptor, repo=self._repo)
         buffer = io.BytesIO()
         figure.savefig(buffer, format="png", dpi=dpi)
         data = buffer.getvalue()
@@ -375,7 +380,7 @@ def make_chart(repo: Any, table: str, chart_type: str, y: Any, x: str = "", titl
                                       sql_query=f"SELECT {', '.join(select)} FROM {_quote(table)}",
                                       roles=series_roles, style={})
     return ChartResult(figure_id=figure_id, chart_type=chart_type, table=table, y=y, x=x, title=title,
-                       roles={key: value for key, value in shared.items() if key != "x"}, repo=repo)
+                       roles={key: value for key, value in shared.items() if key != "x"}, _repo=repo)
 
 
 # ----------------------------------------------------------------------
