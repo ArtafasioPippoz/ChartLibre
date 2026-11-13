@@ -1,0 +1,64 @@
+Analyses and charts as Python (ID02, ID01's base; proposed by the owner 2026-11-13)
+==================================================================================
+
+The idea
+--------
+An analysis is a call:  result = Analysis("Fit Y by X", "table", {"x": ["a"], "y": ["b"]}, degree=2)
+and so is a chart:      figure = Chart("Scatter Plot", "table", x="a", y=["b"], title="...")
+The call returns an object, so an analysis can be saved, re-run on another table, used in the SymPy workpad and
+written into a script. Names and parameters are the ones of the dialogs (Tables menu, analyses), nothing new to learn.
+
+    result.report          the report as an HTML string        result.report_text   the same, plain
+    result.tables          the tables it wrote (names)         result.table(name)   one of them, a DataFrame
+    result.figures         the figures it drew (ids)           result.parameters    what it ran with, resolved
+    result.operation_id    its row in __operations__           result.code()        the call that makes it again
+    result.rerun(table=None)   the same analysis, on another table when given
+
+What is there already (so the work is mostly extraction, not new maths)
+-----------------------------------------------------------------------
+- app/ai/tools.py AssistantTools._tool_run_analysis: opens an analysis dialog without a window, fills its roles and
+  parameters, runs it (a job), waits, reads the report, the tables written and the figures drawn. It is the engine.
+- app/data/repo/project.py: __operations__ records every Apply (operation, parameters, entries, sources, results,
+  report, app version) - the source of "the call that makes it again".
+- app/workpad/engine.py: the SymPy workpad namespace (get, put, plot, tables, columns) with a safety filter.
+- app/data_operations/sympy_store.py: stored functions of the project (the F in the Tables list).
+
+Steps (one commit each, tests on a real project with a small analysis; no GUI window)
+------------------------------------------------------------------------------------
+A. The engine out of the assistant: app/analysis_api.py with run_analysis(repo, name, table, roles, parameters,
+   model, draw_on) -> AnalysisResult (a dataclass: name, table, roles, parameters, report_html, report_text,
+   tables, figures, operation_id, seconds). AssistantTools calls it; its tests stay green. Errors are exceptions
+   with the dialog's own words (the problems list), never a message box.
+B. Analysis(...) and Chart(...) as the user-facing callables, bound to the open project: validation of names
+   against the catalogue (the closest name is offered, as the assistant does), roles as a list for the one-role
+   analyses, parameters as keywords. .tables as DataFrames on request, .figures, .code().
+C. The workpad: Analysis, Chart, tables(), columns() in its namespace (the filter lets these names through, and no
+   other door to Python); the result prints as its plain report and a one-line summary; a figure appears in the
+   window. The panel offers "Insert call" from the last analysis run.
+D. "Copy as Python" and "Save as function": from a recorded operation (Project history and the report's menu)
+   the call is written with the roles and parameters of that run; Save as function stores it in the project as a
+   function of the table name and the columns (def name(table, columns, *parameters): return Analysis(...)), listed
+   in the Tables panel with the other stored functions, callable from the workpad. A figure's descriptor gives
+   Chart(...) the same way.
+E. The whole history: "Export script" writes every recorded operation in order as one .py (imports, the calls,
+   a run_all() and the table names as arguments) and "Re-run all" runs them on a project (todo ID02, H-01/I-07).
+F. Manual chapter and the strings (listed for translation, not translated); the Developer manual says how an
+   analysis plugin becomes callable (nothing to do: the catalogue is the API).
+
+Rules and risks
+---------------
+- The analysis dialogs are the single implementation: no second code path to keep in step. The API drives them
+  headlessly, as the assistant does; if an analysis needs a window feature it fails with a clear message.
+- Re-running is only as exact as the analysis is deterministic: random ones (clustering, bootstrap) record their seed
+  in parameters; those without one say so in result.parameters.
+- A saved function runs inside the workpad's filter (no imports, no open()); Analysis is the only door to analyses.
+- Long analyses run in the job thread; the call blocks with a timeout and a Stop, as in the assistant.
+- Not here: a general Python console, scripting charts' styling beyond Chart's options, editing past operations.
+
+Decisions for the owner
+-----------------------
+1. Names in code: English (Analysis, Chart, report, tables) with the docs in the manual's languages, or localised
+   aliases (Analisi, Grafico, report, tabelle_generate)? The English names are the ones in exported scripts.
+2. Where saved functions live: with the SymPy stored functions (one list), or a kind of their own "Analysis".
+3. Is "Re-run all" (E) wanted before the workpad (C)? The plan puts the workpad first because it is the way to
+   try the API by hand.

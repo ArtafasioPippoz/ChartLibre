@@ -42,11 +42,9 @@ area, the size line of todo.txt. "You" = what only the owner can decide or check
 2.6 ID38 Windows UI parity: a test that opens every dialog at 1366x768 and at 125% scaling (the audit script of
     2026-11-13 - open every dialog, list labels - becomes that test).
 
-3. Decision due on 2026-11-14 (the reminder)
----------------------------------------------
-Small models, guided plan (dev/plans/small_models_guided_plan.txt): A-D are done (13/20 with C). Choose: the form
-in two steps (the action first, then only its fields, all required), or step E (qwen2.5:3b, about 2 GB), or F
-(Apple Foundation Models). Nothing is done on it before your go.
+3. Small models (dev/plans/small_models_guided_plan.txt): decided 2026-11-13 - qwen2.5:3b (step E) and the free
+Apple models (step F). Waiting for your yes on the 1.9 GB download of qwen2.5:3b (ollama pull); the 20-request
+measure runs by hand, one provider at a time, never beside the tests.
 
 4. Imports and plugins (dev/plans/import_formats_plan.txt, importer_plugins_plan.txt) - ID11, ID26
 ---------------------------------------------------------------------------------------------------
@@ -56,8 +54,10 @@ plugin tools (Importer Builder, "Reload", the documentation and examples: the pl
 
 5. The roadmap, in the todo's own order (each one a plan of its own before code)
 ---------------------------------------------------------------------------------
-5.1 Foundation for repeatable work: ID01 saved models, ID02 reproducible analysis (re-run, export a script),
-    ID14 imputation and preprocessing, ID04 local data filtering.
+5.1 FIRST (your choice, 2026-11-13): analyses and charts as Python - dev/plans/analysis_api_plan.txt (steps A-F:
+    the engine out of the assistant, Analysis()/Chart(), the SymPy workpad, Copy as Python / Save as function,
+    export and re-run a whole history = ID02). Then ID01 saved models, ID14 imputation and preprocessing,
+    ID04 local data filtering.
 5.2 Visible differentiation: ID03 Graph Builder, ID05 templates and batch, ID06 publication export, ID07 units.
 5.3 Statistical depth: ID08, ID13, ID15, ID12; then reliability, DOE, signal, ML (ID16-ID24), the specialist ones
     (ID28-ID36, ID41) last. ID22 (cancelling long operations) and ID09 (errors and onboarding) can come earlier:
