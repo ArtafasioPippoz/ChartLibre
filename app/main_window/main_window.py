@@ -1987,9 +1987,9 @@ class MainWindow(QMainWindow):
         super().showEvent(event)
         if not getattr(self, "_labels_normalized", False):
             self._labels_normalized = True
-            from app.styles.style import normalize_form_labels
+            from app.styles.style import polish_dialog
 
-            normalize_form_labels(self)  # the panels' form labels as the platform writes them
+            polish_dialog(self)  # the panels' form labels as the platform writes them; Delete in red
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """Persist the window layout, then collect resources and close."""

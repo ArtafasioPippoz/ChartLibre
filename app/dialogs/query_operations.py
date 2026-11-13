@@ -43,8 +43,9 @@ RECODE_LIMIT = get_constant("query_recode_values", 200)
 _NONE = "(none)"
 
 
-def _check_list(parent: QWidget, height: int = 96) -> QListWidget:
+def _check_list(parent: QWidget, height: int = 132) -> QListWidget:
     view = QListWidget(parent)
+    view.setSpacing(3)  # the rows breathe: a check list of names was a tight stack
     # Fusion draws the check boxes; the native macOS style hid the unchecked ones.
     apply_fusion_for_item_view_styling(view)
     view.setMaximumHeight(height)

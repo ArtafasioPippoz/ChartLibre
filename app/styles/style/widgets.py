@@ -290,6 +290,23 @@ def normalize_form_labels(root: QWidget) -> None:
                 label.setText(field_label(label.text()))
 
 
+def mark_delete_buttons(root: QWidget) -> None:
+    """Every button under *root* that says Delete (the catalogue's word, translated) drawn as a destructive one."""
+    try:
+        word = action_presentation("delete")[1]
+    except Exception:  # a bare checkout without the catalogue
+        return
+    for button in root.findChildren(QtWidgets.QPushButton):
+        if button.text().strip() == word and not button.property("destructive"):
+            mark_destructive_button(button)
+
+
+def polish_dialog(root: QWidget) -> None:
+    """What every dialog and panel gets once built: platform labels, red Delete buttons."""
+    normalize_form_labels(root)
+    mark_delete_buttons(root)
+
+
 def mark_destructive_button(button: QtWidgets.QAbstractButton) -> QtWidgets.QAbstractButton:
     """Style a button as a destructive action - solid red, on both platforms.
 
@@ -348,6 +365,8 @@ def create_action_button(
         button.setEnabled(False)
 
     _mark_primary_button(button, text)
+    if action_id == "delete":  # red in every dialog and panel, whatever calls it
+        mark_destructive_button(button)
 
     if layout is not None:
         layout.addWidget(button)

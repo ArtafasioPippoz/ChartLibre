@@ -543,9 +543,9 @@ class DataOperationDialogBase(QDialog):
         """
         if self._results_label.parent() is self:
             self._results_label.hide()
-        from app.styles.style import normalize_form_labels
+        from app.styles.style import polish_dialog
 
-        normalize_form_labels(self)  # the labels as the platform writes them (a colon on Mac and Windows)
+        polish_dialog(self)  # the labels as the platform writes them; Delete in red
         super().showEvent(event)
 
     def __init__(

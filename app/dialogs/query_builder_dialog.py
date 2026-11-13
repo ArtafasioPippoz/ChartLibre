@@ -138,15 +138,17 @@ class QueryBuilderDialog(SettingsTableDialog):
         self._query_combo = QComboBox(card)
         self._query_combo.setToolTip(_("Pick a saved query."))
         self._query_combo.currentTextChanged.connect(self._on_saved_query_changed)
-        # The combo and its two buttons on one row: the Build frame below needs the height.
-        add_row = QWidget(card)
-        add_layout = QHBoxLayout(add_row)
-        stdSizeAndlayout(add_layout)
+        # The list of queries on a line of its own, its New and Delete under it.
         self._query_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self._query_combo.setMinimumContentsLength(8)
         self._query_combo.setPlaceholderText(_("No saved query"))
-        add_layout.addWidget(self._query_combo, 1)
-        create_action_button(parent=add_row, action_id="add", action=self._new_query, layout=add_layout)
+        layout.addWidget(self._query_combo)
+        add_row = QWidget(card)
+        add_layout = QHBoxLayout(add_row)
+        stdSizeAndlayout(add_layout)
+        add_layout.addStretch(1)
+        new_button = create_action_button(parent=add_row, action_id="add", action=self._new_query, layout=add_layout)
+        new_button.setText(_("New"))
         create_action_button(
             parent=add_row, action_id="delete",
             action=self._delete_current_query, layout=add_layout
@@ -176,9 +178,11 @@ class QueryBuilderDialog(SettingsTableDialog):
         layout.addWidget(self._operation_combo)
         layout.addWidget(self._operation_description)
         layout.addWidget(self._operation_stack)
+        layout.addSpacing(12)  # room between the form's last row and Write SQL
         write = create_action_button(parent=card, action_id="sql_write", action=self.write_operation_sql,
                                      layout=None)
         write.setText(_("Write SQL"))
+        write.setProperty("primary", True)  # the step the form leads to: the highlighted button
         write.setToolTip(_("Put this operation's statement in the editor and run it"))
         row = QHBoxLayout()
         row.addStretch(1)
@@ -201,7 +205,7 @@ class QueryBuilderDialog(SettingsTableDialog):
                                QSizePolicy.Policy.Minimum if position == index else QSizePolicy.Policy.Ignored)
         # Never less than the shown form needs: its last row (Join's "Add a
         # Match column") was cut at the bottom when the column was short.
-        self._operation_stack.setMinimumHeight(self._operation_forms[index].sizeHint().height())
+        self._operation_stack.setMinimumHeight(self._operation_forms[index].sizeHint().height() + 12)
         self._operation_stack.adjustSize()
 
     def write_operation_sql(self) -> bool:
