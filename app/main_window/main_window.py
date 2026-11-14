@@ -976,7 +976,7 @@ class MainWindow(QMainWindow):
                          object_name="projectHistoryCard")
         page.add_buttons(_("Pictures"), [NavButton("project_images", self._on_project_images, described=True)],
                          object_name="projectImagesCard")
-        self._database_info_panel = DatabaseInfoPanel(self._repo, page, optimize_action=self._on_optimize_db)
+        self._database_info_panel = DatabaseInfoPanel(self._repo, page)
         page.add_widget(self._database_info_panel)
         return page
 
@@ -2082,7 +2082,6 @@ class MainWindow(QMainWindow):
                 _("Database"),
                 [
                     action_menu_item("query_builder", self._on_query_builder),
-                    action_menu_item("optimize_db", self._on_optimize_db),
                     None,
                     action_menu_item("database_info", self._on_database_info),
                 ],

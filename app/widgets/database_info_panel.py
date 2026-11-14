@@ -43,13 +43,7 @@ def _human_size(num_bytes: int) -> str:
 class DatabaseInfoPanel(QWidget):
     """Size and contents of the connected database, with Optimize DB."""
 
-    def __init__(
-        self,
-        repo: SqliteRepo,
-        parent: QWidget | None = None,
-        *,
-        optimize_action: Callable[[], None] | None = None,
-    ) -> None:
+    def __init__(self, repo: SqliteRepo, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._repo = repo
 
@@ -65,22 +59,6 @@ class DatabaseInfoPanel(QWidget):
         stdSizeAndlayout(self._form_layout)
         self._card_layout.addWidget(self._form_host)
         self._build_form()
-
-        if optimize_action is not None:
-            # Below the list of tables, right-aligned: the last thing in the
-            # card, after what it acts on - the file's figures above and the
-            # tables it holds. A maintenance action against the database file
-            # as a whole, so here and not beside Query Builder.
-            optimize_row = QHBoxLayout()
-            stdSizeAndlayout(optimize_row)
-            optimize_row.addStretch(1)
-            create_action_button(
-                parent=self._card,
-                action_id="optimize_db",
-                action=optimize_action,
-                layout=optimize_row,
-            )
-            self._card_layout.addLayout(optimize_row)
 
         root.addWidget(self._titled_card, 0)
 

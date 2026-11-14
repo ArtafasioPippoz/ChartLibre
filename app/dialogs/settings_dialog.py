@@ -285,6 +285,16 @@ class SettingsDialog(PanelDialog):
         )
         self._sql_guard_check.setChecked(sql_guard_enabled())
         form.addRow(tr("SQL guard"), self._sql_guard_check)
+        # Check and compact the open project's database (it was a button of the Project page and of the Database menu).
+        from PySide6.QtWidgets import QPushButton
+
+        self._optimize_button = QPushButton(tr("Optimize the project's database..."), card)
+        self._optimize_button.setToolTip(tr("Check the open project's database, offer to fix what is wrong, then "
+                                            "compact the file."))
+        self._optimize_button.setEnabled(callable(getattr(parent, "_on_optimize_db", None))
+                                         and getattr(parent, "_repo", None) is not None)
+        self._optimize_button.clicked.connect(lambda: parent._on_optimize_db())  # type: ignore[union-attr]
+        form.addRow(tr("Database"), self._optimize_button)
         # The SymPy workpad's filter (it was a box on the workpad itself).
         self._workpad_filter_check = QCheckBox(tr("Filter unsafe commands"), card)
         self._workpad_filter_check.setProperty("destructive", True)  # off: imports, eval and open may run
@@ -321,7 +331,7 @@ class SettingsDialog(PanelDialog):
         "Charts": ("chart_from_columns", "#22a06b", "How new charts look and how they are exported."),
         "Reports": ("project_report", "#e8860c", "What every analysis report adds to its results."),
         "Assistant": ("nav_assistant", "#8b5cf6", "The AI assistant: its provider, its key and what it may do."),
-        "Advanced": ("settings", "#8a8f98", "The SQL guard and the SymPy workpad's filter."),
+        "Advanced": ("settings", "#8a8f98", "The SQL guard, the SymPy workpad's filter and the database."),
         "Log": ("log_viewer", "#6b7280", "The application log: read it, copy it or empty it."),
     }
 
