@@ -9,7 +9,6 @@ from typing import Any
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import (
-    QCheckBox,
     QHBoxLayout,
     QPlainTextEdit,
     QPushButton,
@@ -57,12 +56,6 @@ class WorkpadPanel(NavPanel):
         column.addWidget(self._command)
         QShortcut(QKeySequence("Ctrl+Return"), self._command).activated.connect(self.run)
         row = QHBoxLayout()
-        self._safe = QCheckBox(_("Filter unsafe commands"), box)
-        self._safe.setChecked(True)
-        self._safe.setToolTip(_("Refuse imports, eval, exec, open and names starting with _ - against mistakes and "
-                                "lines pasted from the web, not a sandbox."))
-        self._safe.toggled.connect(self._safe_toggled)
-        row.addWidget(self._safe)
         row.addStretch(1)
         clear = QPushButton(_("New session"), box)
         clear.clicked.connect(self.new_session)
@@ -78,9 +71,6 @@ class WorkpadPanel(NavPanel):
         self._names.setMaximumHeight(110)
         self.add_frame(_("Names"), self._names, object_name="workpadNamesCard")
         self._render()
-
-    def _safe_toggled(self, on: bool) -> None:
-        self._pad.safe = on
 
     def new_session(self) -> None:
         """Forget every name and the session's text."""

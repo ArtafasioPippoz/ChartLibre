@@ -48,6 +48,7 @@ from PySide6.QtWidgets import (
 )
 
 from app.data.repo._common import SQL_GUARD_KEY, sql_guard_enabled
+from app.workpad.engine import WORKPAD_FILTER_KEY, workpad_filter_enabled
 from app.dialogs.two_panels_dialog_base import PanelDialog
 from app.logs.logger import applogger
 from app.plugin_api.charts.render_figure import DEFAULT_MPL_STYLE_KEY
@@ -284,6 +285,13 @@ class SettingsDialog(PanelDialog):
         )
         self._sql_guard_check.setChecked(sql_guard_enabled())
         form.addRow(tr("SQL guard"), self._sql_guard_check)
+        # The SymPy workpad's filter (it was a box on the workpad itself).
+        self._workpad_filter_check = QCheckBox(tr("Filter unsafe commands"), card)
+        self._workpad_filter_check.setProperty("destructive", True)  # off: imports, eval and open may run
+        self._workpad_filter_check.setToolTip(tr("Refuse imports, eval, exec, open and names starting with _ - "
+                                                 "against mistakes and lines pasted from the web, not a sandbox."))
+        self._workpad_filter_check.setChecked(workpad_filter_enabled())
+        form.addRow(tr("SymPy workpad"), self._workpad_filter_check)
 
         # The application log: read here (it was a page of the Project panel), emptied at start if wanted.
         form = self._section(tr("Log"), forms)
@@ -313,7 +321,7 @@ class SettingsDialog(PanelDialog):
         "Charts": ("chart_from_columns", "#22a06b", "How new charts look and how they are exported."),
         "Reports": ("project_report", "#e8860c", "What every analysis report adds to its results."),
         "Assistant": ("nav_assistant", "#8b5cf6", "The AI assistant: its provider, its key and what it may do."),
-        "Advanced": ("settings", "#8a8f98", "The SQL guard."),
+        "Advanced": ("settings", "#8a8f98", "The SQL guard and the SymPy workpad's filter."),
         "Log": ("log_viewer", "#6b7280", "The application log: read it, copy it or empty it."),
     }
 
@@ -625,6 +633,7 @@ class SettingsDialog(PanelDialog):
         set_value(CONFIG_SAVE_FORMAT, self._value(self._format_combo))
         set_value(DEFAULT_MPL_STYLE_KEY, self._value(self._mpl_style_combo))
         set_value(SQL_GUARD_KEY, bool(self._sql_guard_check.isChecked()))
+        set_value(WORKPAD_FILTER_KEY, bool(self._workpad_filter_check.isChecked()))
         from app.plugin_api import reading_guide
         from app.plugin_api.data_operations import next_steps
 

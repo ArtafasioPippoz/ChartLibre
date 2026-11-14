@@ -110,3 +110,14 @@ def test_analyses_and_charts_are_calls_in_the_workpad(qapp, tmp_path: Path) -> N
 
 def r_has_report(pad: Workpad) -> bool:
     return bool(pad.run("r.report_text")[1]) and "<" in pad.run("r.report")[1]
+
+
+def test_the_filter_follows_preferences_unless_the_session_says_otherwise(repo, monkeypatch) -> None:
+    from app.workpad import engine
+
+    pad = Workpad(lambda: repo)
+    monkeypatch.setattr(engine, "workpad_filter_enabled", lambda: False)
+    assert pad.safe is False
+    monkeypatch.setattr(engine, "workpad_filter_enabled", lambda: True)
+    assert pad.safe is True
+    assert Workpad(lambda: repo, safe=False).safe is False

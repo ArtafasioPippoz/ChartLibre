@@ -48,6 +48,17 @@ UNSAFE_NAMES = frozenset({
 })
 
 
+#: user.json key: false lets the workpad run imports, eval, open... (Preferences > Advanced).
+WORKPAD_FILTER_KEY = "workpad_filter"
+
+
+def workpad_filter_enabled() -> bool:
+    """Whether commands are read before they run (the default); Preferences > Advanced turns it off."""
+    from app.utils.config import get_value
+
+    return bool(get_value(WORKPAD_FILTER_KEY, True))
+
+
 class UnsafeCommand(ValueError):
     """A command the filter refuses: what, and where."""
 
@@ -93,12 +104,22 @@ class Workpad:
     """One session on *repo()*; *changed(figure_ids)* tells the window the project changed."""
 
     def __init__(self, repo: Callable[[], Any], *, changed: Callable[[list[int]], None] = lambda figures: None,
-                 safe: bool = True) -> None:
+                 safe: bool | None = None) -> None:
         self._repo = repo
         self._changed = changed
-        self.safe = safe
+        #: None: follow Preferences > Advanced; True or False: fixed (the tests).
+        self._safe_fixed = safe
         self._namespace: dict[str, Any] | None = None
         self._default_names: dict[str, Any] = {}
+
+    @property
+    def safe(self) -> bool:
+        """Whether commands are filtered: Preferences' setting unless the session was made with its own."""
+        return workpad_filter_enabled() if self._safe_fixed is None else self._safe_fixed
+
+    @safe.setter
+    def safe(self, value: bool | None) -> None:
+        self._safe_fixed = value
 
     def reset(self) -> None:
         """Forget every name: a new session."""
