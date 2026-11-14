@@ -33,6 +33,7 @@ class PLSDialog(RolesOperationDialogBase):
     """Partial least squares: predict Y from many X that move together."""
 
     Name = "Partial Least Squares"
+    FITS_MODEL = True
     Description = (
         "Y from many X that move together - a spectrum's wavelengths: a few latent components, "
         "their number chosen by cross-validation; variable importance (VIP), loadings, scores, predictions."

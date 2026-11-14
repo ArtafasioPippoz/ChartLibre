@@ -1,6 +1,8 @@
 Save and apply prediction models (ID01; started 2026-11-14)
-Status 2026-11-14: A-D (Partition) and E (Fit Model, least squares: pickled LinearFormModel with a 95 % prediction
-interval; the portable JSON form is still to do) done; Save as model... is on every analysis that sets FITS_MODEL (models.py; PartitionModel - tree, forest, boosted - reproduces the report's predictions;
+Status 2026-11-14: A-D (Partition) E (Fit Model, least squares: pickled LinearFormModel with a 95 % prediction
+interval; the portable JSON form is still to do) and F-PLS done (one response: Prediction; several: Predicted <response>); Save as model... is on every analysis that
+sets FITS_MODEL. Still to do: Discriminant, Fit Y by X, series Regression, the Tables list's menu entry, the portable
+JSON form, the manual (models.py; PartitionModel - tree, forest, boosted - reproduces the report's predictions;
 result.fitted, result.save_model(name), Model(name).predict(table, into=...), models() in the workpad). The API gives
 result.fitted, not result.model: AnalysisResult.model already names the analysis' model variant. D: Analysis page > Predict with a saved model (a dialog: model, table, the predictions in a new table, what could not
 be read counted) and Save as model... in the Partition window; the Tables list's own menu entry is still to do.

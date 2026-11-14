@@ -27,6 +27,8 @@ from dataclasses import dataclass, field
 import numpy as np
 import pandas as pd
 
+from app.analysis.models import CONTINUOUS, PICKLED, Feature, SavedModel
+
 #: The most components tried.
 MAX_COMPONENTS = 15
 #: VIP above this marks a variable that matters (Wold's rule of thumb).
@@ -53,6 +55,8 @@ class PLSResult:
     scores: pd.DataFrame
     predicted: pd.DataFrame
     notes: list[str] = field(default_factory=list)
+    #: The fitted model as a SavedModel: keep it, or score new rows with it.
+    model: object = None
 
 
 def _vip(model) -> np.ndarray:
@@ -146,9 +150,37 @@ def pls(frame: pd.DataFrame, responses: list[str], predictors: list[str], *, max
         notes.append(f"{left_out} row(s) with a missing value are left out of the fit.")
     return PLSResult(responses=list(responses), predictors=predictors, components=components, summary=summary,
                      cross_validation=cross_validation, vip=vip, loadings=loadings, coefficients=coefficients,
-                     scores=scores, predicted=predicted, notes=notes)
+                     scores=scores, predicted=predicted, notes=notes,
+                     model=PLSModel(responses, predictors, model, summary=summary))
 
 
 def ranked_vip(vip: pd.DataFrame) -> pd.DataFrame:
     """The variable importance table, highest VIP first."""
     return vip.sort_values("VIP", ascending=False)
+
+
+@SavedModel.register
+class PLSModel(SavedModel):
+    """A PLS regression that can score new rows: the estimator, its X columns and its responses. Gives a
+    Prediction (one response) or one "Predicted <response>" column each. A pickled kind."""
+
+    KIND = "pls"
+    FORM = PICKLED
+
+    def __init__(self, responses: list[str], predictors: list[str], estimator: object, *,
+                 summary: dict[str, float]) -> None:
+        super().__init__(responses[0], [Feature(name, CONTINUOUS) for name in predictors],
+                         response_kind=CONTINUOUS, summary=summary)
+        self.responses = list(responses)
+        self.estimator = estimator
+
+    def predict_matrix(self, frame: pd.DataFrame) -> pd.DataFrame:
+        names = ["Prediction"] if len(self.responses) == 1 else [f"Predicted {name}" for name in self.responses]
+        if frame.empty:
+            return pd.DataFrame(columns=names)
+        x = frame[[feature.name for feature in self.features]].to_numpy(float)
+        values = np.asarray(self.estimator.predict(x)).reshape(len(frame), -1)  # type: ignore[attr-defined]
+        return pd.DataFrame(values, index=frame.index, columns=names)
+
+    def describe(self) -> dict:
+        return {**super().describe(), "responses": list(self.responses)}

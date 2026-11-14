@@ -196,3 +196,20 @@ def test_a_least_squares_model_reproduces_the_fit_and_gives_an_interval(tmp_path
                                    again.table["Prediction"].to_numpy())
     finally:
         repo.close()
+
+
+def test_a_pls_model_reproduces_its_predictions() -> None:
+    from app.analysis.pls import pls
+
+    rng = np.random.default_rng(5)
+    x = rng.normal(size=(80, 6))
+    y = x @ np.array([1.0, 0.5, 0.0, 0.0, -1.0, 2.0]) + rng.normal(0, 0.1, 80)
+    frame = pd.DataFrame(x, columns=[f"w{i}" for i in range(6)])
+    frame["y"] = y
+    result = pls(frame, ["y"], [f"w{i}" for i in range(6)], components=3)
+    again = result.model.predict(frame)
+    assert again.notes == []
+    np.testing.assert_allclose(again.table["Prediction"].to_numpy(), result.predicted["Predicted y"].to_numpy())
+    new = frame.drop(columns="y").copy()
+    new.loc[0, "w1"] = np.nan
+    assert result.model.predict(new).table["Prediction"].isna().tolist()[:2] == [True, False]
