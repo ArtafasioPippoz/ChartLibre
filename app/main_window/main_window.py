@@ -130,7 +130,6 @@ from app.widgets.chart_properties.axis_properties import AxisPropertiesWidget
 from app.widgets.chart_properties.figure_properties import FigurePropertiesWidget
 from app.widgets.chart_properties.overlay_properties import OverlayPropertiesWidget
 from app.widgets.chart_properties.series_properties import SeriesPropertiesWidget
-from app.widgets.database_info_panel import DatabaseInfoPanel
 from app.widgets.project_info_panel import ProjectInfoPanel
 from app.widgets.guided_panel import GuidedAnalysisPanel
 from app.widgets.inspector import InspectorPages, filter_page
@@ -970,14 +969,11 @@ class MainWindow(QMainWindow):
         """
         page = NavPanel(self)
         self._project_info_panel = ProjectInfoPanel(self._repo, page)
-        self._project_info_panel.saved.connect(lambda: self._database_info_panel.set_repo(self._repo))
         page.add_widget(self._project_info_panel)
         page.add_buttons(_("History"), [NavButton("project_history", self._on_project_history)],
                          object_name="projectHistoryCard")
         page.add_buttons(_("Pictures"), [NavButton("project_images", self._on_project_images, described=True)],
                          object_name="projectImagesCard")
-        self._database_info_panel = DatabaseInfoPanel(self._repo, page)
-        page.add_widget(self._database_info_panel)
         return page
 
     def _navigation_icon(action_id: str) -> QIcon:
@@ -3350,7 +3346,6 @@ class MainWindow(QMainWindow):
     #: The project metadata panel is supplied by the composed MainWindow.
     #: Declaring it here keeps the mixin type-checkable without changing the
     #: runtime construction order of the window's widgets.
-    _database_info_panel: Any
 
     #: How many database-check problems the message box lists inline before
     #: it stops and points at Show Details, which holds all of them. Enough
@@ -3664,7 +3659,6 @@ class MainWindow(QMainWindow):
                 except Exception:
                     self._repo = SqliteRepo(db_path=self._db_path)
                     self._table_panel.set_repo(self._repo)
-                    self._database_info_panel.set_repo(self._repo)
                     self._project_info_panel.set_repo(self._repo)
                     self._table_panel.reload()
                     self._reload_tabs()
@@ -3678,7 +3672,6 @@ class MainWindow(QMainWindow):
                 # A new project carries the author this computer remembers.
                 self._repo.set_project_info({"author": default_author()})
             self._table_panel.set_repo(self._repo)
-            self._database_info_panel.set_repo(self._repo)
             self._project_info_panel.set_repo(self._repo)
             self._update_window_title()
             set_last_database(db_path)
@@ -3735,7 +3728,6 @@ class MainWindow(QMainWindow):
             self._repo = SqliteRepo(db_path=db_path)
             self._db_path = db_path
             self._table_panel.set_repo(self._repo)
-            self._database_info_panel.set_repo(self._repo)
             self._project_info_panel.set_repo(self._repo)
             self._update_window_title()
             set_last_database(db_path)

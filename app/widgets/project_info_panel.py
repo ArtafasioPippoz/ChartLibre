@@ -60,13 +60,23 @@ def default_author() -> str:
     return str(get_value(AUTHOR_SETTING, "") or "")
 
 
+def _human_size(num_bytes: int) -> str:
+    """*num_bytes* as "12.3 MB" - the units a person actually reads."""
+    size = float(num_bytes)
+    for unit in ("B", "KB", "MB", "GB"):
+        if size < 1024.0:
+            return f"{size:.0f} {unit}" if unit == "B" else f"{size:.1f} {unit}"
+        size /= 1024.0
+    return f"{size:.1f} TB"
+
+
 class ProjectInfoPanel(QWidget):
     """Author, creation date, notes, references and preview of the open project, edited in place."""
 
     saved = Signal()
 
     #: The preview, at the size the Load demo dialog shows it, halved.
-    PREVIEW_SIZE = QSize(200, 125)
+    PREVIEW_SIZE = QSize(160, 100)
 
     def __init__(self, repo: SqliteRepo, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -102,8 +112,16 @@ class ProjectInfoPanel(QWidget):
 
         self.notes_edit = QPlainTextEdit(card)
         self.notes_edit.setPlaceholderText(_("What the project is about, where the data came from, what is left to do..."))
-        self.notes_edit.setMinimumHeight(90)
+        self.notes_edit.setMinimumHeight(54)
+        self.notes_edit.setMaximumHeight(64)
         form.addRow(_("Notes"), self.notes_edit)
+        # What the file holds: its size, the tables and rows in it, what Optimize could give back.
+        self.size_label = QLabel("", card)
+        self.size_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        form.addRow(_("Size on disk"), self.size_label)
+        self.contents_label = QLabel("", card)
+        self.contents_label.setWordWrap(True)
+        form.addRow(_("Tables"), self.contents_label)
         card_layout.addLayout(form)
 
         # The first figure, as the project's preview shows it.
@@ -127,7 +145,8 @@ class ProjectInfoPanel(QWidget):
         header.resizeSection(2, 110)
         self.references_table.verticalHeader().setVisible(False)
         self.references_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        self.references_table.setMinimumHeight(110)
+        self.references_table.setMinimumHeight(64)
+        self.references_table.setMaximumHeight(88)
         mark_editor_panel(self.references_table)
         self.references_table.setAlternatingRowColors(True)
         refs_layout.addWidget(self.references_table, 1)
@@ -159,12 +178,36 @@ class ProjectInfoPanel(QWidget):
             self.author_edit.setText(info.get("author", ""))
             self.created_label.setText(readable_date(info.get("created", "")) or _("unknown"))
             self.notes_edit.setPlainText(info.get("notes", ""))
+            self._show_database_facts()
             self.references_table.setRowCount(0)
             for entry in parse_references(info.get("references")):
                 self._append_reference(entry)
             self._show_preview(info.get("preview_path"))
         finally:
             self._loading = False
+
+    def _show_database_facts(self) -> None:
+        """The file's size and its tables and rows (Database info, folded into this card)."""
+        try:
+            size = _human_size(Path(str(self._repo.db_path)).stat().st_size)
+        except OSError:
+            size = _("unknown")
+        self.size_label.setText(size)
+        try:
+            info = self._repo.database_pragma_info()
+            text = _("{tables} table(s), {rows} row(s) total").format(tables=f"{info.table_count:,}",
+                                                                     rows=f"{info.total_rows:,}")
+            if info.reclaimable_bytes:
+                text += " - " + _("{amount} could be reclaimed (Preferences > Advanced)").format(
+                    amount=_human_size(info.reclaimable_bytes))
+        except Exception:
+            applogger.exception("Could not read database PRAGMA info.")
+            text = ""
+        self.contents_label.setText(text)
+
+    def showEvent(self, event) -> None:  # noqa: N802 - Qt override
+        super().showEvent(event)
+        self._show_database_facts()  # tables came and went since it was last seen
 
     def _changed(self, *_args) -> None:
         if not self._loading:
@@ -185,10 +228,9 @@ class ProjectInfoPanel(QWidget):
         if png:
             picture.loadFromData(png)
         if picture.isNull():
-            self.preview_label.setText(_("No preview yet: it is drawn when the project is saved."))
-            self.preview_label.setWordWrap(True)
-            self.preview_label.setProperty("muted", True)
+            self.preview_label.hide()  # nothing to show until the project is saved: no empty box
             return
+        self.preview_label.show()
         ratio = self.devicePixelRatioF()
         scaled = picture.scaled(self.PREVIEW_SIZE * ratio, Qt.AspectRatioMode.KeepAspectRatio,
                                 Qt.TransformationMode.SmoothTransformation)
