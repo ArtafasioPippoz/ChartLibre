@@ -4829,7 +4829,7 @@ msgid "Same colour as the line"
 msgstr "Stesso colore della linea"
 
 msgid "Same figure"
-msgstr "Stessa cifra"
+msgstr "Stessa figura"
 
 msgid "Sample rows"
 msgstr "Righe di esempio"
