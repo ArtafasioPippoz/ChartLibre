@@ -48,7 +48,7 @@ def test_missing_roles_are_the_dialogs_own_problems(repo) -> None:
 
 def test_the_callables_take_a_list_of_columns_and_give_an_object(repo) -> None:
     changed: list[list[int]] = []
-    analysis, _chart = analysis_api.make_callables(lambda: repo, on_change=changed.append)
+    analysis, _chart, _model = analysis_api.make_callables(lambda: repo, on_change=changed.append)
     result = analysis("Are there differences?", "t", roles={"response": ["value"], "group": ["group"]})
     assert result.report and changed == [result.figures]
     assert result.code().startswith("Analysis('Are there differences?', 't', {")
@@ -60,7 +60,7 @@ def test_the_callables_take_a_list_of_columns_and_give_an_object(repo) -> None:
 
 
 def test_a_chart_is_made_described_and_drawn(repo, tmp_path) -> None:
-    _analysis, chart = analysis_api.make_callables(lambda: repo)
+    _analysis, chart, _model = analysis_api.make_callables(lambda: repo)
     made = chart("Scatter Plot", "t", ["value"], x="value", title="Values")
     assert made.figure_id and made.chart_type == "Scatter Plot"
     assert made.code() == "Chart('Scatter Plot', 't', ['value'], x='value', title='Values')"

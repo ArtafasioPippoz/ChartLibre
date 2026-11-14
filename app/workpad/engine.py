@@ -5,6 +5,8 @@ Everything SymPy offers is there (``from sympy import *``), with a few words for
     Analysis(name, table, columns or roles={...}, **parameters)   run an analysis; its result has report,
                          report_text, tables, table(name), figures, code(), rerun()
     Chart(type, table, y, x=, title=)   a chart; analysis_names(), describe_analysis(name)
+    Model(name)          a saved prediction model: predict(table or DataFrame), describe(); models() lists them;
+                         an analysis that fits one gives result.fitted, result.save_model(name)
     get(table, column)   a column - numbers as a numpy array, else a list; get(table) the whole table as a dict
     tables(), columns(table)
     put(table, {column: values})   a new table (Undo takes it back); also save, store, write
@@ -139,11 +141,12 @@ class Workpad:
         namespace: dict[str, Any] = {name: getattr(sympy, name) for name in sympy.__all__}
         from app import analysis_api
 
-        analysis, chart = analysis_api.make_callables(self._repo, on_change=self._changed)
+        analysis, chart, model = analysis_api.make_callables(self._repo, on_change=self._changed)
         namespace.update(
             sympy=sympy, np=np,
             # Analyses and charts as calls (app/analysis_api.py): Analysis("Fit Y by X", "table", ["column"], ...)
-            Analysis=analysis, Chart=chart, analysis_names=analysis_api.analysis_names,
+            Analysis=analysis, Chart=chart, Model=model, analysis_names=analysis_api.analysis_names,
+            models=lambda: analysis_api.model_names(self._repo()),
             describe_analysis=analysis_api.describe_analysis,
             get=self.get, tables=self.tables, columns=self.columns, plot=self.plot,
             put=self.put, save=self.put, store=self.put, write=self.put,

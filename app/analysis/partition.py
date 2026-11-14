@@ -23,6 +23,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from app.analysis.models import PICKLED, Feature, SavedModel
 from app.utils.coercion import column_of, to_numbers
 from app.utils.config import get_constant
 
@@ -99,6 +100,8 @@ class PartitionResult:
     #: A nominal response's ROC curves (Level, FPR, TPR) and areas, on the same rows (AN-19).
     roc: pd.DataFrame = field(default_factory=pd.DataFrame)
     auc: dict[str, float] = field(default_factory=dict)
+    #: The fitted model, as a SavedModel (app/analysis/models.py): keep it, or score new rows with it.
+    model: Any = None
 
 
 # ----------------------------------------------------------------------
@@ -391,6 +394,7 @@ def partition(frame: pd.DataFrame, spec: PartitionSpec) -> PartitionResult:
         levels=levels,
         note=note,
     )
+    result.model = _kept_model(spec, model, encoded.orders, nominal, levels, summary)
     _explain(result, model, x, y, train, valid, nominal, levels, encoded.orders)
     return result
 
@@ -552,6 +556,7 @@ def _ensemble(spec: PartitionSpec, complete: pd.DataFrame, x: np.ndarray, y: np.
         role=role, probabilities=probabilities, confusion=confusion, levels=levels, note=note,
         method=spec.method,
     )
+    result.model = _kept_model(spec, model, orders or {}, nominal, levels, summary)
     _explain(result, model, x, y, train, valid, nominal, levels, orders or {})
     return result
 
@@ -590,3 +595,55 @@ def leaf_layout(result: PartitionResult) -> LeafLayout:
     # The leaves' means weighted by their training rows: the mean of all of them.
     mean = float(result.leaves["Mean"].mul(result.leaves["Count"]).sum() / max(result.leaves["Count"].sum(), 1))
     return LeafLayout(pd.Series(positions, index=leaf.index), pd.DataFrame(segments), pd.DataFrame(leaves), mean)
+
+
+# ----------------------------------------------------------------------
+# The model kept for later (ID01)
+# ----------------------------------------------------------------------
+@SavedModel.register
+class PartitionModel(SavedModel):
+    """A tree, a Bootstrap Forest or a Boosted Tree that can score new rows: the estimator and how the factors were
+    encoded (a nominal one as the rank of each level by the response, as fitted). A pickled kind: kept in the project
+    and run on a computer that trusts it."""
+
+    KIND = "partition"
+    FORM = PICKLED
+
+    def __init__(self, response: str, features: list[Feature], estimator: Any, orders: dict[str, list[str]], *,
+                 response_kind: str, levels: list[str], summary: dict[str, Any], source_table: str = "",
+                 method: str = TREE) -> None:
+        super().__init__(response, features, response_kind=response_kind, levels=levels, summary=summary,
+                         source_table=source_table)
+        self.estimator = estimator
+        self.orders = {name: list(order) for name, order in orders.items()}
+        self.method = method
+
+    def _matrix(self, frame: pd.DataFrame) -> np.ndarray:
+        columns = []
+        for feature in self.features:
+            if feature.kind == NOMINAL:
+                codes = {level: index for index, level in enumerate(self.orders[feature.name])}
+                columns.append(frame[feature.name].astype(str).map(codes).to_numpy(dtype=float))
+            else:
+                columns.append(pd.to_numeric(frame[feature.name], errors="coerce").to_numpy(dtype=float))
+        return np.column_stack(columns) if columns else np.empty((len(frame), 0))
+
+    def predict_matrix(self, frame: pd.DataFrame) -> pd.DataFrame:
+        if frame.empty:
+            return pd.DataFrame(columns=["Prediction"])
+        x = self._matrix(frame)
+        if self.response_kind == NOMINAL:
+            table = pd.DataFrame({"Prediction": self.estimator.predict(x).astype(str)}, index=frame.index)
+            proba = self.estimator.predict_proba(x)
+            for index, level in enumerate(self.estimator.classes_):
+                table[f"Prob({level})"] = proba[:, index]
+            return table
+        return pd.DataFrame({"Prediction": self.estimator.predict(x)}, index=frame.index)
+
+
+def _kept_model(spec: PartitionSpec, estimator: Any, orders: dict[str, list[str]], nominal: bool,
+                levels: list[str], summary: dict[str, float]) -> PartitionModel:
+    features = [Feature(name, NOMINAL if spec.kinds.get(name) == NOMINAL else CONTINUOUS,
+                        list(orders.get(name, []))) for name in spec.factors]
+    return PartitionModel(spec.response, features, estimator, orders, response_kind=NOMINAL if nominal else CONTINUOUS,
+                          levels=levels, summary=dict(summary), method=spec.method)

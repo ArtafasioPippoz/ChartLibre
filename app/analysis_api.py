@@ -43,6 +43,8 @@ class AnalysisResult:
     operation_id: int | None = None
     seconds: float = 0.0
     #: The project it ran on (so the object can read its tables and run again).
+    #: The model it fitted (a SavedModel), for the analyses that fit one - Partition so far - else None.
+    fitted: Any = field(default=None, compare=False)
     #: Private, so a workpad's filter keeps it out of reach of the user's own commands.
     _repo: Any = field(default=None, repr=False, compare=False)
     draw_on: str = "new_figure"
@@ -69,6 +71,14 @@ class AnalysisResult:
         """The call that makes this analysis again."""
         return call_text("Analysis", self.name, self.source, self.roles, self.parameters,
                          model=self.model, draw_on=self.draw_on)
+
+    def save_model(self, name: str, *, replace: bool = False) -> str:
+        """Keep the model this analysis fitted in the project under *name* (see Model)."""
+        from app.analysis import models
+
+        if self.fitted is None:
+            raise AnalysisError(f"{self.name} fits no model to keep.")
+        return models.save_model(self._repo, name, self.fitted, replace=replace)
 
     def save(self, path: Any) -> dict[str, Any]:
         """Write this analysis' settings to a JSON file, to open or run again."""
@@ -244,6 +254,7 @@ def run_analysis(repo: Any, analysis: str, table: str, roles: Mapping[str, Any] 
             raise RuntimeError("The analysis was stopped before it finished.")
         report_html = str(getattr(dialog.results_widget(), "_html", "") or "")
         figures = list(dialog.created_figure_ids)
+        fitted = getattr(dialog, "fitted_model", None)
     finally:
         dialog.close()
     written = sorted(set(repo.list_user_tables()["Table"].astype(str)) - tables_before)
@@ -253,7 +264,7 @@ def run_analysis(repo: Any, analysis: str, table: str, roles: Mapping[str, Any] 
         report_html=report_html, report_text=plain_text(report_html), tables=written,
         figures=[int(figure) for figure in figures],
         operation_id=new_operations[-1] if new_operations else None, seconds=time.monotonic() - started,
-        _repo=repo, draw_on=draw_on)
+        fitted=fitted, _repo=repo, draw_on=draw_on)
 
 
 # ----------------------------------------------------------------------
@@ -527,7 +538,7 @@ def current_project() -> Any:
 
 def make_callables(repo_getter: Callable[[], Any], *, current_figure: Callable[[], int | None] = lambda: None,
                    keep_waiting: Callable[[], bool] = lambda: True,
-                   on_change: Callable[[list[int]], None] = lambda figures: None) -> tuple[Callable, Callable]:
+                   on_change: Callable[[list[int]], None] = lambda figures: None) -> tuple[Callable, Callable, Callable]:
     """(Analysis, Chart) bound to a project - the workpad's names, or a script's. *on_change* hears the figures made."""
 
     def Analysis(name: str, table: str, columns: Any = None, *, roles: Mapping[str, Any] | None = None,  # noqa: N802
@@ -545,6 +556,10 @@ def make_callables(repo_getter: Callable[[], Any], *, current_figure: Callable[[
         on_change([result.figure_id])
         return result
 
+    def model(name: str) -> ModelHandle:
+        """A model kept in the project: Model("birds").predict("Table")."""
+        return ModelHandle(repo_getter(), name)
+
     def from_file(path: str, table: str | None = None, **parameters: Any) -> AnalysisResult:
         """Run the analysis kept in a settings file (see AnalysisResult.save): Analysis.from_file("a.json")."""
         result = run_settings(repo_getter(), load_settings(path), table, **parameters)
@@ -552,7 +567,7 @@ def make_callables(repo_getter: Callable[[], Any], *, current_figure: Callable[[
         return result
 
     Analysis.from_file = from_file  # type: ignore[attr-defined]
-    return Analysis, Chart
+    return Analysis, Chart, model
 
 
 def Analysis(name: str, table: str, columns: Any = None, **options: Any) -> AnalysisResult:  # noqa: N802
@@ -563,6 +578,11 @@ def Analysis(name: str, table: str, columns: Any = None, **options: Any) -> Anal
 def Chart(chart_type: str, table: str, y: Any, x: str = "", title: str = "", **roles: str) -> ChartResult:  # noqa: N802
     """Draw a chart in the project use_project() set; see make_callables."""
     return make_callables(current_project)[1](chart_type, table, y, x, title, **roles)
+
+
+def Model(name: str) -> ModelHandle:  # noqa: N802
+    """A model kept in the project use_project() set."""
+    return make_callables(current_project)[2](name)
 
 
 # ----------------------------------------------------------------------
@@ -623,3 +643,57 @@ def function_code(name: str, record: Any, description: str = "") -> str:
             f"    {doc!r}\n"
             f"    return Analysis({str(record.operation)!r}, table, roles or {roles!r}, model=model,\n"
             f"                    **{{**{defaults!r}, **parameters}})\n")
+
+
+# ----------------------------------------------------------------------
+# Saved models
+# ----------------------------------------------------------------------
+class ModelHandle:
+    """A model kept in the project: Model("birds_mass").predict("NewBirds"), .describe(), .delete()."""
+
+    def __init__(self, repo: Any, name: str) -> None:
+        self._repo = repo
+        self.name = name
+        from app.analysis import models
+
+        try:
+            self._model = models.load_model(repo, name)
+        except models.ModelError as error:
+            raise AnalysisError(str(error)) from error
+
+    def describe(self) -> dict[str, Any]:
+        """Its kind, response, features, the fit's numbers and the table it was made from."""
+        return self._model.describe()
+
+    def predict(self, source: Any, *, into: str | None = None) -> Any:
+        """The predictions for a table of the project (by name) or a DataFrame: a DataFrame with the rows' index,
+        its notes (unseen levels, missing values) in ``.attrs["notes"]``. With *into*, the rows and their predictions
+        are also written to that new table of the project."""
+        import pandas as pd
+
+        from app.analysis import models
+
+        try:
+            frame = source if isinstance(source, pd.DataFrame) else self._repo.query_df(
+                f"SELECT * FROM {_quote(find_table(self._repo, str(source)))}")
+            prediction = self._model.predict(frame)
+        except models.ModelError as error:
+            raise AnalysisError(str(error)) from error
+        table = prediction.table.copy()
+        table.attrs["notes"] = list(prediction.notes)
+        if into:
+            written = pd.concat([frame.reset_index(drop=True), table.reset_index(drop=True)], axis=1)
+            self._repo.import_dataframe(written, table_name=into, normalize_columns=False)
+        return table
+
+    def delete(self) -> None:
+        self._repo.delete_model(self.name)
+
+    def __repr__(self) -> str:
+        info = self._model.describe()
+        return (f"Model {self.name}: {info['kind']} of {info['response']} from "
+                f"{', '.join(feature['name'] for feature in info['features'])}")
+
+
+def model_names(repo: Any) -> list[str]:
+    return [row["name"] for row in repo.models()]

@@ -295,6 +295,9 @@ class PartitionDialog(RolesOperationDialogBase):
         return lines
 
     def apply_results(self, result: pt.PartitionResult) -> list[dict[str, Any]]:
+        if result.model is not None:  # kept for "Save as model" and for result.fitted in the Python API
+            result.model.source_table = self.table
+            self.fitted_model = result.model
         repo = self._repo
         charts = self.charts()
         # A forest or a boosted model has no single tree: no leaves to write or draw.

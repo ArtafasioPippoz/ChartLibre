@@ -510,6 +510,8 @@ class DataOperationDialogBase(QDialog):
     _switching_figure: bool = False
     #: The inputs' tabs (_build_common_ui).
     left_tabs: QTabWidget | None = None
+    #: The model an analysis fitted, kept to score new rows (a SavedModel, app/analysis/models.py), or None.
+    fitted_model: Any = None
     #: The Charts tab's "Draw on" list, and the form of its ``tab="charts"`` parameters.
     destination_combo: QComboBox | None = None
     chart_form: ParameterForm | None = None
