@@ -602,6 +602,15 @@ class TableListPanel(QWidget):
                     icon="operation_history",
                 )
             )
+        if len(selected_sources) == 1 and not has_query and self._repo is not None and self._repo.models():
+            items.append(
+                MenuItem(
+                    text=_("Predict with a saved model…"),
+                    tooltip=_("Apply a model kept in the project to this table: its predictions in a new table"),
+                    callback=self._predict_with_model,
+                    icon="chart_from_columns",
+                )
+            )
         if has_link:
             items.append(
                 MenuItem(
@@ -824,6 +833,19 @@ class TableListPanel(QWidget):
         if self._repo is None or current is None:
             return
         OperationHistoryDialog(self._repo, current[0], parent=self.window()).exec()
+
+    def _predict_with_model(self) -> None:
+        """Predict with a saved model: the selected table scored, the predictions in a new table."""
+        current = self._current_source()
+        if self._repo is None or current is None:
+            return
+        from app.dialogs.predict_dialog import PredictDialog
+
+        dialog = PredictDialog(self._repo, self.window(), table=current[0])
+        dialog.applied.connect(self.reload)
+        dialog.exec()
+        if dialog.created_table_name:
+            self.changed.emit()
 
     def delete_unused_generated(self) -> None:
         """The generated tables nothing uses, listed and deleted once confirmed (Undo takes each back)."""

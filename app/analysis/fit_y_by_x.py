@@ -20,6 +20,8 @@ here.
 """
 from __future__ import annotations
 
+from typing import Any
+
 import itertools
 from collections.abc import Mapping
 from dataclasses import dataclass, field
@@ -29,6 +31,7 @@ import pandas as pd
 from scipy import stats
 
 from app.analysis import statistics as st
+from app.analysis.models import CONTINUOUS, NOMINAL, PORTABLE, Feature, SavedModel
 from app.utils.coercion import column_of, to_numbers
 
 BIVARIATE, ONEWAY, CONTINGENCY, LOGISTIC = "Bivariate", "Oneway", "Contingency", "Logistic"
@@ -44,6 +47,8 @@ class FitYByXResult:
     #: What the chart draws (the fitted line, the probability curves); empty when the raw data suffice.
     curve: pd.DataFrame = field(default_factory=pd.DataFrame)
     notes: list[str] = field(default_factory=list)
+    #: The fitted model as a SavedModel (portable, JSON): keep it, or score new rows with it.
+    model: Any = None
 
 
 def analysis_for(y_continuous: bool, x_continuous: bool) -> str:
@@ -98,8 +103,12 @@ def _bivariate(yv: pd.Series, xv: pd.Series, y: str, x: str) -> FitYByXResult:
     band = fit.get_prediction(sm.add_constant(grid, has_constant="add")).summary_frame(alpha=0.05)
     curve = pd.DataFrame({x: grid, "Fit": band["mean"].to_numpy(), "Lower 95% mean": band["mean_ci_lower"].to_numpy(),
                           "Upper 95% mean": band["mean_ci_upper"].to_numpy()})
+    kept = FitYByXModel(y, x, BIVARIATE, {
+        "intercept": float(fit.params[0]), "slope": float(fit.params[1]), "mse": float(fit.mse_resid),
+        "df": float(fit.df_resid), "n": float(xs.size), "xbar": float(xs.mean()),
+        "sxx": float(np.sum((xs - xs.mean()) ** 2)), "r2": float(fit.rsquared)})
     return FitYByXResult(y, x, BIVARIATE, {"Summary of fit": summary, "Linear fit": estimates,
-                                           "Correlation": correlation}, curve)
+                                           "Correlation": correlation}, curve, model=kept)
 
 
 # ----------------------------------------------------------------------
@@ -195,7 +204,13 @@ def _oneway(yv: pd.Series, xv: pd.Series, y: str, x: str) -> FitYByXResult:
         tables["Dunn, Holm-adjusted (ranks)"] = dunn(groups)
     if len(groups) > 30:
         notes.append(f"'{x}' has {len(groups)} levels: is it really a grouping column?")
-    return FitYByXResult(y, x, ONEWAY, tables, notes=notes)
+    sizes = {level: float(values.size) for level, values in groups.items()}
+    within = sum(float(np.sum((values - values.mean()) ** 2)) for values in groups.values())
+    dof = float(sum(values.size for values in groups.values()) - len(groups))
+    kept = FitYByXModel(y, x, ONEWAY, {
+        "levels": list(groups), "means": {level: float(values.mean()) for level, values in groups.items()},
+        "sizes": sizes, "mse": within / dof if dof > 0 else float("nan"), "df": dof}, levels=list(groups))
+    return FitYByXResult(y, x, ONEWAY, tables, notes=notes, model=kept)
 
 
 # ----------------------------------------------------------------------
@@ -208,7 +223,13 @@ def _contingency(yv: pd.Series, xv: pd.Series, y: str, x: str) -> FitYByXResult:
     counts_out = counts.reset_index().rename(columns={counts.index.name or "index": x})
     shares_out = shares.reset_index().rename(columns={shares.index.name or "index": x})
     tests = pd.DataFrame(st.contingency_tests(counts))
-    return FitYByXResult(y, x, CONTINGENCY, {"Counts": counts_out, "Row shares (%)": shares_out, "Tests": tests})
+    kept = FitYByXModel(y, x, CONTINGENCY, {
+        "levels": [str(level) for level in counts.index],
+        "classes": [str(level) for level in counts.columns],
+        "shares": (counts.div(counts.sum(axis=1), axis=0)).to_numpy(float).tolist()},
+        levels=[str(level) for level in counts.columns])
+    return FitYByXResult(y, x, CONTINGENCY, {"Counts": counts_out, "Row shares (%)": shares_out, "Tests": tests},
+                         model=kept)
 
 
 # ----------------------------------------------------------------------
@@ -264,4 +285,73 @@ def _logistic(yv: pd.Series, xv: pd.Series, y: str, x: str) -> FitYByXResult:
     grid = np.linspace(xs.min(), xs.max(), 100)
     curve = pd.DataFrame(probabilities(grid), columns=[f"P({level})" for level in levels])
     curve.insert(0, x, grid)
-    return FitYByXResult(y, x, LOGISTIC, {"Whole model test": whole, "Parameter estimates": estimates}, curve, notes)
+    coefficients = ([np.asarray(model.params, dtype=float).tolist()] if len(levels) == 2
+                    else np.asarray(model.params, dtype=float).T.tolist())
+    kept = FitYByXModel(y, x, LOGISTIC, {"coefficients": coefficients, "classes": levels}, levels=list(levels))
+    return FitYByXResult(y, x, LOGISTIC, {"Whole model test": whole, "Parameter estimates": estimates}, curve, notes,
+                         model=kept)
+
+
+@SavedModel.register
+class FitYByXModel(SavedModel):
+    """The one-predictor model of Fit Y by X, as plain numbers (JSON): a line (continuous by continuous), the group
+    means (continuous by groups), the group shares (groups by groups) or a logistic curve (groups by continuous)."""
+
+    KIND = "fit_y_by_x"
+    FORM = PORTABLE
+
+    def __init__(self, response: str, predictor: str, case: str, params: dict[str, Any], *,
+                 levels: list[str] | None = None, summary: dict[str, float] | None = None,
+                 source_table: str = "") -> None:
+        numeric_x = case in (BIVARIATE, LOGISTIC)
+        super().__init__(response, [Feature(predictor, CONTINUOUS if numeric_x else NOMINAL,
+                                            [] if numeric_x else list(params.get("levels", [])))],
+                         response_kind=CONTINUOUS if case in (BIVARIATE, ONEWAY) else NOMINAL,
+                         levels=levels, summary=summary, source_table=source_table)
+        self.case = case
+        self.params = params
+
+    def _interval(self, centre: np.ndarray, variance: np.ndarray) -> pd.DataFrame:
+        half = stats.t.ppf(0.975, self.params["df"]) * np.sqrt(variance) if self.params["df"] > 0 else np.nan
+        return pd.DataFrame({"Prediction": centre, "Lower (95%)": centre - half, "Upper (95%)": centre + half})
+
+    def predict_matrix(self, frame: pd.DataFrame) -> pd.DataFrame:
+        name = self.features[0].name
+        values = frame[name]
+        case, p = self.case, self.params
+        if case == BIVARIATE:
+            x = values.to_numpy(float)
+            variance = p["mse"] * (1 + 1 / p["n"] + (x - p["xbar"]) ** 2 / p["sxx"])
+            table = self._interval(p["intercept"] + p["slope"] * x, variance)
+        elif case == ONEWAY:
+            keys = values.astype(str)
+            variance = np.array([p["mse"] * (1 + 1 / p["sizes"][k]) for k in keys])
+            table = self._interval(np.array([p["means"][k] for k in keys]), variance)
+        elif case == CONTINGENCY:
+            rows = np.array([p["shares"][p["levels"].index(str(k))] for k in values])
+            table = pd.DataFrame(rows, columns=[f"Prob({c})" for c in p["classes"]])
+            table.insert(0, "Prediction", np.asarray(p["classes"], dtype=object)[np.argmax(rows, axis=1)])
+        else:
+            x = values.to_numpy(float)
+            design = np.column_stack([np.ones_like(x), x])
+            coefficients = np.asarray(p["coefficients"], dtype=float)
+            if coefficients.shape[0] == 1:  # two groups: the probability of the first, as the report models it
+                first = 1.0 / (1.0 + np.exp(-(design @ coefficients[0])))
+                probabilities = np.column_stack([first, 1.0 - first])
+            else:  # several: the first group is the reference
+                logits = np.column_stack([np.zeros(len(x)), *[design @ row for row in coefficients]])
+                logits -= logits.max(axis=1, keepdims=True)
+                probabilities = np.exp(logits) / np.exp(logits).sum(axis=1, keepdims=True)
+            table = pd.DataFrame(probabilities, columns=[f"Prob({c})" for c in p["classes"]])
+            table.insert(0, "Prediction", np.asarray(p["classes"], dtype=object)[np.argmax(probabilities, axis=1)])
+        table.index = frame.index
+        return table
+
+    def state(self) -> dict[str, Any]:
+        return {"case": self.case, "params": self.params}
+
+    @classmethod
+    def from_state(cls, header: dict[str, Any], state: dict[str, Any]) -> FitYByXModel:
+        return cls(str(header["response"]), header["features"][0]["name"], str(state["case"]), dict(state["params"]),
+                   levels=header.get("levels"), summary=header.get("summary"),
+                   source_table=str(header.get("source_table", "")))

@@ -236,3 +236,54 @@ def test_a_discriminant_model_is_portable_and_classifies_like_the_report(method,
         assert reloaded.predict(frame).table["Prediction"].tolist() == result.predicted.tolist()
     finally:
         repo.close()
+
+
+def test_fit_y_by_x_models_cover_the_four_cases_and_round_trip(tmp_path) -> None:
+    import statsmodels.api as sm
+
+    from app.analysis.fit_y_by_x import fit_y_by_x
+
+    rng = np.random.default_rng(9)
+    n = 120
+    x = rng.uniform(0, 10, n)
+    frame = pd.DataFrame({
+        "x": x, "y": 3.0 + 2.0 * x + rng.normal(0, 1.0, n),
+        "g": rng.choice(["a", "b", "c"], n), "cls": np.where(x + rng.normal(0, 1.5, n) > 5, "hi", "lo")})
+    frame["m"] = frame["y"] + frame["g"].map({"a": 0.0, "b": 5.0, "c": 10.0})
+    noisy = frame["x"] + rng.normal(0, 2.0, n)  # not separable: the logistic fit needs overlap
+    frame["c3"] = np.where(noisy > 6, "top", np.where(noisy > 3, "mid", "low"))
+
+    line = fit_y_by_x(frame, "y", "x", y_continuous=True, x_continuous=True).model
+    table = line.predict(frame).table
+    expected = sm.OLS(frame["y"], sm.add_constant(frame["x"])).fit().predict(sm.add_constant(frame["x"]))
+    np.testing.assert_allclose(table["Prediction"].to_numpy(), expected.to_numpy())
+    assert (table["Lower (95%)"] < table["Prediction"]).all()
+
+    means = fit_y_by_x(frame, "m", "g", y_continuous=True, x_continuous=False).model
+    by_group = frame.groupby("g")["m"].mean()
+    np.testing.assert_allclose(means.predict(frame).table["Prediction"].to_numpy(),
+                               frame["g"].map(by_group).to_numpy())
+
+    shares = fit_y_by_x(frame, "cls", "c3", y_continuous=False, x_continuous=False).model
+    result = shares.predict(frame).table
+    assert set(result["Prediction"]) <= {"hi", "lo"} and np.allclose(result[["Prob(hi)", "Prob(lo)"]].sum(axis=1), 1.0)
+
+    logistic = fit_y_by_x(frame, "cls", "x", y_continuous=False, x_continuous=True).model
+    probabilities = logistic.predict(frame).table
+    assert np.allclose(probabilities[["Prob(hi)", "Prob(lo)"]].sum(axis=1), 1.0)
+    assert (probabilities.loc[frame["x"] > 8, "Prediction"] == "hi").mean() > 0.8
+
+    multi = fit_y_by_x(frame, "c3", "x", y_continuous=False, x_continuous=True).model
+    assert np.allclose(multi.predict(frame).table.filter(like="Prob(").sum(axis=1), 1.0)
+
+    repo = SqliteRepo(db_path=tmp_path / "y.dhub")
+    try:
+        for name, model in (("line", line), ("means", means), ("shares", shares), ("logit", logistic),
+                            ("multi", multi)):
+            models.save_model(repo, name, model)
+        assert {row["form"] for row in repo.models()} == {models.PORTABLE}
+        reloaded = models.load_model(repo, "logit")
+        np.testing.assert_allclose(reloaded.predict(frame).table["Prob(hi)"].to_numpy(),
+                                   probabilities["Prob(hi)"].to_numpy())
+    finally:
+        repo.close()

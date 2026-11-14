@@ -40,6 +40,7 @@ class FitYByXReport:
 class FitYByXDialog(RolesOperationDialogBase):
     """One response against one or more factors, each pair analysed as its types call for."""
 
+    FITS_MODEL = True
     Name = "Fit Y by X"
     Description = ("Y against each X, the analysis chosen by their types: bivariate fit, oneway ANOVA "
                    "with pairwise comparisons, contingency table, or logistic fit.")
