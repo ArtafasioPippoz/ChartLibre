@@ -309,6 +309,14 @@ class InspectorSection(QWidget):
     def title(self) -> str:
         return self._title
 
+    def set_title(self, title: str) -> None:
+        """Rename the section (a title that names what it follows: Ticks and grid - X)."""
+        self._title = title
+        self._header.setText(title.upper())
+        caption = self.findChild(QLabel, "inspectorSectionCaption")
+        if caption is not None:
+            caption.setText(title.upper())
+
     def is_open(self) -> bool:
         return self._header.isChecked()
 

@@ -182,7 +182,8 @@ class AxisPropertiesWidget(BaseProperties):
         layout = QVBoxLayout(content)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
-        for section in (title_section, scales, position_section, appearance_section, self._build_kwargs_section()):
+        for section in (title_section, scales, self._ticks_section, position_section, appearance_section,
+                        self._build_kwargs_section()):
             layout.addWidget(section)
         layout.addStretch(1)
         scroll = QScrollArea(self)
@@ -219,6 +220,7 @@ class AxisPropertiesWidget(BaseProperties):
         if not 0 <= index < len(axes):
             return
         self._coordinate_axis = axes[index]
+        self._ticks_section.set_title(f"{_('Ticks and grid')} - {axes[index].upper()}")
         self._show_coordinates()
 
     def _build_shared_properties_frame(self) -> tuple[InspectorSection, InspectorSection, InspectorSection]:
@@ -258,6 +260,7 @@ class AxisPropertiesWidget(BaseProperties):
         # Two rows, each as wide as the others: the two spin boxes side by side were squeezed to a digit.
         position_form.add_row(_("Row span"), self._row_span_spin)
         position_form.add_row(_("Column span"), self._col_span_spin)
+        span.hide()
         span.deleteLater()  # the row that held them, empty now
         position_form.add_row(_("Projection"), self._projection_combo)
         # How many points a series of this axis draws at most (it was the figure's, for all its axes at once).
@@ -523,8 +526,11 @@ class AxisPropertiesWidget(BaseProperties):
             spin.setMinimumWidth(70)
             spin.setMaximumWidth(120)
 
-        def card(title: str, name: str, *, collapsed: bool = False) -> tuple[QWidget, QGridLayout, QWidget]:
-            section = InspectorSection(title, page, key="axis." + name, collapsed=collapsed, card=False)
+        def card(title: str, name: str, *, collapsed: bool = False, own_card: bool = False,
+                 in_page: bool = True) -> tuple[QWidget, QGridLayout, QWidget]:
+            # own_card: a frame of its own with a caption that never folds; in_page False: placed by the caller.
+            section = InspectorSection(title, page, key="axis." + name, collapsed=collapsed, card=own_card,
+                                       foldable=not own_card)
             QVBoxLayout(section.body).setContentsMargins(0, 0, 0, 0)
             grid = QGridLayout()
             grid.setContentsMargins(0, 0, 0, 0)
@@ -532,8 +538,11 @@ class AxisPropertiesWidget(BaseProperties):
             grid.setVerticalSpacing(6)
             grid.setColumnStretch(1, 1)
             grid.setColumnStretch(3, 1)
+            if own_card:
+                section.body.layout().setContentsMargins(0, 0, 0, 0)
             section.body.layout().addLayout(grid)
-            page_layout.addWidget(section)
+            if in_page:
+                page_layout.addWidget(section)
             return section, grid, section.body
 
         def row(parent: QWidget, widgets: list[QWidget], *, fill: bool = False) -> QWidget:
@@ -573,7 +582,8 @@ class AxisPropertiesWidget(BaseProperties):
         grid.addWidget(self._break_edit, 7, 1, 1, 3)
 
         # Ticks and grid: major and minor as columns.
-        _section, grid, box = card(_("Ticks and grid"), "axisTicksCard", collapsed=True)
+        # Its own frame, under the scale's: placed by _build_ui, with the X / Y / Z it follows named in its title.
+        self._ticks_section, grid, box = card(_("Ticks and grid"), "axisTicksCard", own_card=True, in_page=False)
         grid.addWidget(QLabel(_("Major"), box), 0, 1, Qt.AlignmentFlag.AlignHCenter)
         grid.addWidget(QLabel(_("Minor"), box), 0, 2, 1, 2, Qt.AlignmentFlag.AlignHCenter)
         rows = (
