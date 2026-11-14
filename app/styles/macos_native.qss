@@ -1212,6 +1212,29 @@ QWidget#inspectorSectionBody QComboBox:focus,
 QWidget#inspectorSectionBody QPlainTextEdit:focus {
   border: 1px solid palette(highlight);
 }
+/* Check boxes: an empty box with an edge when off (the native one vanished on a grey card), a blue box with a
+   white tick when on. */
+QCheckBox {
+  spacing: 8px;
+}
+QCheckBox::indicator {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+}
+QCheckBox::indicator:unchecked {
+  background: palette(base);
+  border: 1px solid palette(mid);
+}
+QCheckBox::indicator:checked {
+  background: palette(highlight);
+  border: 1px solid palette(highlight);
+  image: url(@ICON:checkbox_tick@);
+}
+QCheckBox::indicator:indeterminate {
+  background: palette(highlight);
+  border: 1px solid palette(highlight);
+}
 /* Option buttons: an empty ring when off (the native one nearly vanished on a grey card), a blue disc when
    on. */
 QRadioButton {
