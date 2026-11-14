@@ -117,3 +117,15 @@ def test_filtering_shrinks_the_form_to_the_rows_left(qapp) -> None:
     for index in (1, 2, 3):
         form.set_row_visible(index, True)
     assert form.sizeHint().height() == full
+
+
+def test_a_drawn_icon_has_pixels_and_the_style_browse_button_uses_one(qapp) -> None:
+    from PySide6.QtGui import QColor
+
+    from app.widgets.chart_properties.figure_properties import FigurePropertiesWidget
+    from app.widgets.inspector import drawn_icon
+
+    image = drawn_icon("folder", QColor("#222222")).pixmap(16, 16).toImage()
+    assert any(image.pixelColor(x, y).alpha() > 40 for x in range(image.width()) for y in range(image.height()))
+    page = FigurePropertiesWidget()
+    assert not page._btn_browse.icon().isNull() and page._btn_browse.text() == ""

@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from matplotlib import rcParams
-from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtCore import QSize, Qt, QTimer, Signal
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -62,8 +62,8 @@ from app.utils.hidpi import apply_configured_dpi
 from app.utils.i18n import _
 from app.widgets.chart_panel import RESIZE_MODE_CHOICES
 from app.widgets.chart_properties.base_properties import BaseProperties
-from PySide6.QtGui import QIcon
-from app.widgets.inspector import InspectorCard, InspectorForm
+from PySide6.QtGui import QIcon, QPalette
+from app.widgets.inspector import InspectorCard, InspectorForm, drawn_icon
 from app.widgets.font_scale_control import FontScaleControl
 from app.widgets.pair_grid import PairGrid
 
@@ -432,8 +432,9 @@ class FigurePropertiesWidget(BaseProperties):
             presentation=(load_icon("open"), "", _("Browse… Pick a .mplstyle file from the mplstyles folder")),
         )
         self._btn_browse.setFixedWidth(34)
-        if self._btn_browse.icon().isNull():  # no icon theme (a bare checkout): the dots
-            self._btn_browse.setText("…")
+        # A folder drawn here, in the button's own text colour: the catalogue's icon showed as a blank grey button.
+        self._btn_browse.setIcon(drawn_icon("folder", self._btn_browse.palette().color(QPalette.ColorRole.ButtonText)))
+        self._btn_browse.setIconSize(QSize(16, 16))
         style_buttons_lay.addWidget(self._style_edit, 0, 0, 1, 2)
         style_buttons_lay.addWidget(self._btn_browse, 0, 2)
         self._btn_style_to_all = create_action_button(

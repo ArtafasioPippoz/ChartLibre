@@ -20,7 +20,7 @@ of tabs of framed cards:
 from __future__ import annotations
 
 from PySide6.QtCore import QEvent, QPointF, QRectF, QSize, Qt, Signal
-from PySide6.QtGui import QColor, QFont, QPainter, QPalette, QPen
+from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPalette, QPen, QPixmap
 from PySide6.QtWidgets import (
     QAbstractButton,
     QButtonGroup,
@@ -77,6 +77,9 @@ def _draw_page_icon(painter: QPainter, kind: str, rect: QRectF, colour: QColor) 
         painter.drawEllipse(QRectF(x + 0.08 * w, y + 0.08 * h, 0.84 * w, 0.84 * h))
         painter.setBrush(colour)
         painter.drawPolygon([pt(0.42, 0.33), pt(0.42, 0.67), pt(0.7, 0.5)])
+    elif kind == "folder":  # a folder
+        painter.drawPolyline([pt(0.08, 0.3), pt(0.08, 0.8), pt(0.92, 0.8), pt(0.92, 0.3), pt(0.5, 0.3),
+                              pt(0.42, 0.18), pt(0.08, 0.18), pt(0.08, 0.3)])
     elif kind == "overlays":  # two layers
         painter.drawPolygon([pt(0.5, 0.12), pt(0.92, 0.38), pt(0.5, 0.64), pt(0.08, 0.38)])
         painter.drawPolyline([pt(0.08, 0.58), pt(0.5, 0.84), pt(0.92, 0.58)])
@@ -593,3 +596,18 @@ def filter_page(page: QWidget, text: str) -> int:
         section.setVisible(visible)
         section.force_open(visible)
     return matched
+
+
+def drawn_icon(kind: str, colour: QColor, size: int = 16) -> QIcon:
+    """A line icon of the inspector's own set (figure, axis, series, animation, overlays, folder), as a QIcon.
+
+    For a button whose catalogue icon does not draw (a blank grey button): this one is painted here, in *colour*.
+    """
+    ratio = 2
+    pixmap = QPixmap(size * ratio, size * ratio)
+    pixmap.setDevicePixelRatio(ratio)
+    pixmap.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pixmap)
+    _draw_page_icon(painter, kind, QRectF(0, 0, size, size), colour)
+    painter.end()
+    return QIcon(pixmap)
