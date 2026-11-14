@@ -11,6 +11,7 @@ lives here once rather than three times with three chances to drift.
 """
 from __future__ import annotations
 
+from app.styles.style import field_label
 import importlib.util
 import re
 import sys
@@ -194,11 +195,11 @@ class DeveloperDialogBase(QDialog):
         self._name_edit = QLineEdit(card)
         self._name_edit.setPlaceholderText(_(self.NAME_PLACEHOLDER))
         self._name_edit.textEdited.connect(self._on_name_edited)
-        form.addRow(_("Name:"), self._name_edit)
+        form.addRow(field_label(_("Name")), self._name_edit)
         self._file_edit = QLineEdit(card)
         self._file_edit.setPlaceholderText(_(self.FILE_PLACEHOLDER))
         self._file_edit.textEdited.connect(self._on_file_edited_by_user)
-        form.addRow(_("File name:"), self._file_edit)
+        form.addRow(field_label(_("File name")), self._file_edit)
         self._description_edit = QLineEdit(card)
         self._description_edit.setPlaceholderText(_(self.DESCRIPTION_PLACEHOLDER))
         self.add_fields(form, card)
@@ -222,7 +223,7 @@ class DeveloperDialogBase(QDialog):
 
     def add_fields(self, form: QFormLayout, card: QWidget) -> None:
         """Add the Description row (``self._description_edit``) and any others, in order."""
-        form.addRow(_("Description:"), self._description_edit)
+        form.addRow(field_label(_("Description")), self._description_edit)
 
     def validate_fields(self) -> str:
         """A message for what is wrong with this tool's own fields, or ''."""

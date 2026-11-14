@@ -19,6 +19,7 @@ SeriesJob) and the generated-table names (generated_table_name).
 """
 from __future__ import annotations
 
+from app.styles.style import field_label
 import html
 import inspect
 import json
@@ -766,7 +767,7 @@ class DataOperationDialogBase(QDialog):
         Sets source_table_radio and source_chart_radio; *on_change(from_chart)* follows the choice.
         """
         row = QHBoxLayout()
-        row.addWidget(QLabel(_("Data from:"), parent))
+        row.addWidget(QLabel(field_label(_("Data from")), parent))
         table_radio = self.source_table_radio = QRadioButton(_("Table with roles"), parent)
         table_radio.setToolTip(_("A table's columns, each in the role the operation reads it as (X, Y)."))
         chart_radio = self.source_chart_radio = QRadioButton(_("Chart"), parent)
@@ -831,11 +832,11 @@ class DataOperationDialogBase(QDialog):
         if combo is not None:
             # In the charts' own form when there are some: their boxes under the combo, in its column.
             if self.chart_form is not None:
-                self.chart_form.layout.insertRow(0, _("Draw on:"), combo)
+                self.chart_form.layout.insertRow(0, field_label(_("Draw on")), combo)
             else:
                 row = QFormLayout()
                 stdSizeAndlayout(row)
-                row.addRow(_("Draw on:"), combo)
+                row.addRow(field_label(_("Draw on")), combo)
                 layout.insertLayout(0, row)
         layout.addStretch(1)
         return panel
@@ -1316,7 +1317,7 @@ class DataOperationDialogBase(QDialog):
                 self.model_combo.insertSeparator(index)
         self.model_combo.setToolTip(_(self.MODEL_TOOLTIP))
         form.addRow(_(self.MODEL_LABEL), self.model_combo)
-        form.addRow(_("Docs:"), self._doc_link)
+        form.addRow(field_label(_("Docs")), self._doc_link)
         return panel
 
     def model_spec(self) -> OperationModel | None:
@@ -1339,7 +1340,7 @@ class DataOperationDialogBase(QDialog):
         """"Result name:" first on the Charts tab - what the operation writes is named there, "_" first."""
         form = QFormLayout()
         stdSizeAndlayout(form)
-        form.addRow(_("Result name:"), self._output_table_edit)
+        form.addRow(field_label(_("Result name")), self._output_table_edit)
         form.addRow("", self._output_warning)
         cast(QBoxLayout, charts_tab.layout()).insertLayout(0, form)
 
@@ -1491,7 +1492,7 @@ class DataOperationDialogBase(QDialog):
             form.addRow(label, widget)
         if self._doc_link is None:
             self._doc_link = create_doc_link(self)
-        form.addRow(_("Docs:"), self._doc_link)
+        form.addRow(field_label(_("Docs")), self._doc_link)
         panel.layout().addWidget(form_widget)
         return panel
 
@@ -1743,7 +1744,7 @@ class DataOperationDialogBase(QDialog):
             return
         form = self._table_chart_form = QFormLayout()
         stdSizeAndlayout(form)
-        form.addRow(_("Chart:"), self.table_source.chart_combo)
+        form.addRow(field_label(_("Chart")), self.table_source.chart_combo)
         cast(QBoxLayout, charts_tab.layout()).insertLayout(0, form)
         form.setRowVisible(self.table_source.chart_combo, self.reads_table())
 

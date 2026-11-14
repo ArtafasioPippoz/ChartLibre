@@ -454,8 +454,8 @@ msgstr "アドバンスト"
 msgid "After"
 msgstr "後"
 
-msgid "Algorithm:"
-msgstr "アルゴリズム："
+msgid "Algorithm"
+msgstr "アルゴリズム"
 
 msgid "All"
 msgstr "すべて"
@@ -496,17 +496,14 @@ msgstr "また、"
 msgid "Also list the tables the data operations wrote (their names start with _)."
 msgstr "また、データ操作が書いたテーブルをリストします(名前は_から始まります)。"
 
-msgid "Also missing:"
-msgstr "また欠落:"
+msgid "Also missing"
+msgstr "また欠落"
 
 msgid "Alternative"
 msgstr "オルタナティブ"
 
 msgid "Alternative hypothesis for supported tests."
 msgstr "サポートされているテストの代替仮説。"
-
-msgid "Alternative:"
-msgstr "代替案："
 
 msgid "Amplitude envelope"
 msgstr "振幅エンベロープ"
@@ -544,9 +541,6 @@ msgstr "分散の解析"
 msgid "Anderson method"
 msgstr "アンダーソン法"
 
-msgid "Anderson method:"
-msgstr "アンダーソン法："
-
 msgid "Anderson p-value: Monte Carlo"
 msgstr "アンダーソンp値：モンテカルロ"
 
@@ -574,8 +568,8 @@ msgstr "アニメーションGIF(*.gif)"
 msgid "Animation"
 msgstr "アニメーション"
 
-msgid "Annotation text:"
-msgstr "アノテーションテキスト："
+msgid "Annotation text"
+msgstr "アノテーションテキスト"
 
 msgid "Annotations"
 msgstr "注釈"
@@ -679,9 +673,6 @@ msgstr "減衰（ dB ） ："
 msgid "Author"
 msgstr "作成者"
 
-msgid "Author:"
-msgstr "作成者:"
-
 msgid "Auto"
 msgstr "自動"
 
@@ -712,9 +703,6 @@ msgstr "軸"
 msgid "Axis name"
 msgstr "軸名"
 
-msgid "Axis name:"
-msgstr "軸名："
-
 msgid "Axis properties"
 msgstr "軸のプロパティ"
 
@@ -723,9 +711,6 @@ msgstr "軸線のタイトル: クリックして軸線を編集"
 
 msgid "Axis {id}"
 msgstr "枢軸軍 {id}"
-
-msgid "Axis:"
-msgstr "軸："
 
 msgid "Axis: No axis selected"
 msgstr "軸：軸が選択されていません"
@@ -793,8 +778,8 @@ msgstr "バイアス(豆差)"
 msgid "Bias {bias}: {y} reads on average {bias} more than {x}. 95% of the differences fall between {lower} and {upper} - whether that is close enough depends on what the results are used for."
 msgstr "バイアス {bias}: {y} は {x} よりも平均 {bias} を読み込みます。 差の95% は {lower} と {upper} の間で下がります。 結果が使用されるかは十分に近いかどうかです。"
 
-msgid "Bins:"
-msgstr "ビン:"
+msgid "Bins"
+msgstr "ビン"
 
 msgid "Biplot"
 msgstr "ピプロット"
@@ -880,8 +865,8 @@ msgstr "{response} による標準スコア"
 msgid "Categories"
 msgstr "カテゴリー"
 
-msgid "Center points:"
-msgstr "中心点："
+msgid "Center points"
+msgstr "中心点"
 
 msgid "Center the window on each point instead of trailing it."
 msgstr "それを追跡するのではなく、各ポイントのウィンドウを中央にします。"
@@ -906,9 +891,6 @@ msgstr "中央"
 
 msgid "Centre line"
 msgstr "中心線"
-
-msgid "Centre line:"
-msgstr "センターライン:"
 
 msgid "Centre on the data"
 msgstr "データセンターのデータ"
@@ -948,9 +930,6 @@ msgstr "グラフのプロパティ"
 
 msgid "Chart type:"
 msgstr "チャートのタイプ:"
-
-msgid "Chart:"
-msgstr "グラフ："
 
 msgid "ChartLibre"
 msgstr "ChartLibre"
@@ -1099,8 +1078,8 @@ msgstr "クローズドフォーマット(JMP、Minitab、オリジン)"
 msgid "Cluster"
 msgstr "クラスター"
 
-msgid "Cluster by:"
-msgstr "クラスタ:"
+msgid "Cluster by"
+msgstr "クラスタ"
 
 msgid "Cluster means"
 msgstr "クラスターの手段"
@@ -1114,17 +1093,11 @@ msgstr "クラスタ"
 msgid "Clusters on two principal components"
 msgstr "2つの主要コンポーネントのクラスタ"
 
-msgid "Clusters:"
-msgstr "クラスター:"
-
 msgid "Cochran-Mantel-Haenszel test (odds ratio = 1)"
 msgstr "Cochran-Mantel-Haenszelテスト(odds Ratio = 1)"
 
 msgid "Code"
 msgstr "コードコード"
-
-msgid "Code:"
-msgstr "コード:"
 
 msgid "Coefficients"
 msgstr "係数"
@@ -1137,9 +1110,6 @@ msgstr "色"
 
 msgid "Colour them"
 msgstr "それらを着色する"
-
-msgid "Colour:"
-msgstr "色:"
 
 msgid "Cols"
 msgstr "Cols"
@@ -1171,9 +1141,6 @@ msgstr "カラム名（カンマ区切り） ："
 msgid "Column {number} of {count}"
 msgstr "{count} の列 {number}"
 
-msgid "Column:"
-msgstr "コラム:"
-
 msgid "Columnar and scientific"
 msgstr "コラムおよび科学"
 
@@ -1186,11 +1153,8 @@ msgstr "列最初に:それらを示すチャートとそれらに関する質�
 msgid "Columns standardized"
 msgstr "標準化されたコラム"
 
-msgid "Columns:"
-msgstr "コラム:"
-
-msgid "Combine:"
-msgstr "コンバイン:"
+msgid "Combine"
+msgstr "コンバイン"
 
 msgid "Command"
 msgstr "コマンド"
@@ -1215,9 +1179,6 @@ msgstr "コンポーネント2"
 
 msgid "Components"
 msgstr "コンポーネント"
-
-msgid "Components:"
-msgstr "コンポーネント:"
 
 msgid "Compute metrics"
 msgstr "計算メトリック"
@@ -1378,9 +1339,6 @@ msgstr "作成済み"
 msgid "Created {date}"
 msgstr "{date} を作成しました"
 
-msgid "Created:"
-msgstr "作成日："
-
 msgid "Credits"
 msgstr "クレジット"
 
@@ -1450,17 +1408,17 @@ msgstr "ラプラス変数s =シグマ+ i *オメガの減衰シグマ。 ゼロ
 msgid "Data"
 msgstr "データ"
 
-msgid "Data column:"
-msgstr "データ列:"
+msgid "Data column"
+msgstr "データ列"
 
-msgid "Data from:"
-msgstr "データ元："
+msgid "Data from"
+msgstr "データ元"
 
-msgid "Data source:"
-msgstr "データソース："
+msgid "Data source"
+msgstr "データソース"
 
-msgid "Data type:"
-msgstr "データタイプ:"
+msgid "Data type"
+msgstr "データタイプ"
 
 msgid "Database"
 msgstr "データベース"
@@ -1474,8 +1432,8 @@ msgstr "データベースが保存されました。"
 msgid "Dataset"
 msgstr "データセット"
 
-msgid "Dates:"
-msgstr "日付:"
+msgid "Dates"
+msgstr "日付"
 
 msgid "Decision tree of a continuous or nominal response on many factors: split and prune a step at a time, or automatically on validation rows; leaves, column contributions and each row's leaf and prediction."
 msgstr "連続的または非公正な応答の決定ツリー:ステップを一度に分割してプルーンするか、検証行で自動的にプルーンします。葉、列の貢献と各行の葉と予測。"
@@ -1506,9 +1464,6 @@ msgstr "保存された関数の名前で def {name}(...) を定義します。"
 
 msgid "Degree"
 msgstr "度"
-
-msgid "Degree:"
-msgstr "学位："
 
 msgid "Delete"
 msgstr "削除"
@@ -1600,9 +1555,6 @@ msgstr "絶え間ない"
 msgid "Description"
 msgstr "説明"
 
-msgid "Description:"
-msgstr "説明："
-
 msgid "Descriptive statistics"
 msgstr "記述統計"
 
@@ -1660,9 +1612,6 @@ msgstr "差別化または統合"
 msgid "Direction"
 msgstr "方向"
 
-msgid "Direction:"
-msgstr "方向："
-
 msgid "Discard the changes?"
 msgstr "変更を破棄しますか？"
 
@@ -1687,9 +1636,6 @@ msgstr "コンテンツ"
 msgid "Distribution fit"
 msgstr "ディストリビューションフィット"
 
-msgid "Distribution:"
-msgstr "ディストリビューション："
-
 msgid "Divergence"
 msgstr "ダイバージェンス"
 
@@ -1705,8 +1651,8 @@ msgstr "クラスターは{column}と異なるのですか?"
 msgid "Do two methods agree on the same samples? Bland-Altman bias and limits of agreement, Deming and Passing-Bablok regression with their intervals."
 msgstr "2つの方法は、同じサンプルに同意しますか? Bland-Altman biasと合意の制限、DemingとPassing-Bablokの回帰とその間隔。"
 
-msgid "Docs:"
-msgstr "文書:"
+msgid "Docs"
+msgstr "文書"
 
 msgid "Documentation"
 msgstr "ドキュメンテーション"
@@ -1738,8 +1684,8 @@ msgstr "すべてのn点だけにマーカーを描画します。 行はまだ�
 msgid "Draw at most this many points per series, sampling the rest away."
 msgstr "シリーズごとに最大この数のポイントを描画し、残りをサンプリングします。"
 
-msgid "Draw on:"
-msgstr "引く:"
+msgid "Draw on"
+msgstr "引く"
 
 msgid "Draw the curve past the data, on each side, by this share of the data's x range: 10 % extrapolates a tenth either way."
 msgstr "データのx範囲のこの共有により、各側面にデータを貼り付けた曲線を描画します。10 % extrapolは、どちらかの方法で10をトラップします。"
@@ -1822,8 +1768,8 @@ msgstr "各行の起源: 両方、左だけまたは右だけ。"
 msgid "Edge exclusion:"
 msgstr "端の除外:"
 
-msgid "Edges:"
-msgstr "エッジ:"
+msgid "Edges"
+msgstr "エッジ"
 
 msgid "Edit"
 msgstr "編集"
@@ -1879,9 +1825,6 @@ msgstr "楕円形"
 msgid "Emphasis"
 msgstr "強調"
 
-msgid "Emphasis:"
-msgstr "強調："
-
 msgid "Empty or blank text is missing"
 msgstr "空のテキストや空白のテキストが欠落している"
 
@@ -1896,9 +1839,6 @@ msgstr "エディタを空にする"
 
 msgid "Encoding"
 msgstr "エンコーディング"
-
-msgid "Encoding:"
-msgstr "エンコーディング："
 
 msgid "End of the range to evaluate over."
 msgstr "オーバーを評価する範囲の終了。"
@@ -1936,8 +1876,8 @@ msgstr "見積もり"
 msgid "Estimates"
 msgstr "見積もり"
 
-msgid "Estimation method:"
-msgstr "見積もり方法："
+msgid "Estimation method"
+msgstr "見積もり方法"
 
 msgid "Estimator"
 msgstr "見積もり担当者"
@@ -2047,9 +1987,6 @@ msgstr "結果を値の10 * log 10として表します。"
 msgid "Expression"
 msgstr "式"
 
-msgid "Expression:"
-msgstr "式:"
-
 msgid "Extend automatic data range by this percent on both sides."
 msgstr "自動データ範囲を両側のこのパーセントで拡張します。"
 
@@ -2089,23 +2026,20 @@ msgstr "学位への因数分解"
 msgid "Factors"
 msgstr "要因"
 
-msgid "Factors:"
-msgstr "要因："
-
 msgid "Failed to load renderer kwargs schema."
 msgstr "レンダラーkwargsスキーマの読み込みに失敗しました。"
 
 msgid "False positive rate"
 msgstr "偽陽性率"
 
-msgid "Family:"
-msgstr "家族："
+msgid "Family"
+msgstr "家族"
 
 msgid "Feather / Arrow"
 msgstr "フェザー/矢印"
 
-msgid "Features:"
-msgstr "特徴："
+msgid "Features"
+msgstr "特徴"
 
 msgid "Fewer than 30 points: the capability indices are rough estimates."
 msgstr "30点以下のフェーアー: 機能指数は、大まかな推定値です。"
@@ -2137,9 +2071,6 @@ msgstr "図{number}.{name}"
 msgid "Figure's"
 msgstr "プロフィール"
 
-msgid "Figure:"
-msgstr "図："
-
 msgid "Figures"
 msgstr "図"
 
@@ -2164,8 +2095,8 @@ msgstr "不足している値を満たす"
 msgid "Fill the Initial column from the data: the function's own estimator when it has one, a Monte Carlo search of the parameter space when it does not."
 msgstr "データからInitial列を塗りつぶします。関数がある場合は関数自身の見積もりを、そうでない場合はパラメータ空間のモンテカルロ検索を行います。"
 
-msgid "Fill with:"
-msgstr "塗りつぶし："
+msgid "Fill with"
+msgstr "塗りつぶし"
 
 msgid "Filled Contour"
 msgstr "満たされた輪郭"
@@ -2203,8 +2134,8 @@ msgstr "検索したいものの関数を見つける"
 msgid "Find where a series crosses a level"
 msgstr "シリーズがレベルを交差させる場所を見つける"
 
-msgid "Find:"
-msgstr "検索:"
+msgid "Find"
+msgstr "検索"
 
 msgid "Finish the measurement at this point."
 msgstr "この時点で測定を終了します。"
@@ -2287,9 +2218,6 @@ msgstr "新着情報"
 msgid "Forecast periods:"
 msgstr "予測期間:"
 
-msgid "Forecast:"
-msgstr "予測:"
-
 msgid "Forget a saved template"
 msgstr "保存したテンプレートを忘れる"
 
@@ -2301,9 +2229,6 @@ msgstr "測定を完了せずに保留中のポイントを忘れます。"
 
 msgid "Format"
 msgstr "フォーマット"
-
-msgid "Format:"
-msgstr "フォーマット:"
 
 msgid "Found on the surface's own exact x/y grid."
 msgstr "サーフェス独自の正確なx/yグリッド上にあります。"
@@ -2341,8 +2266,8 @@ msgstr "関数式"
 msgid "Function expression with evaluated parameters"
 msgstr "評価されたパラメーターを持つ関数式"
 
-msgid "Function name:"
-msgstr "関数名:"
+msgid "Function name"
+msgstr "関数名"
 
 msgid "Function of '{name}'"
 msgstr "'{name}' の機能"
@@ -2433,9 +2358,6 @@ msgstr "グループと集約'{table}'"
 
 msgid "Group by"
 msgstr "グループ化基準"
-
-msgid "Group by:"
-msgstr "グループ化基準："
 
 msgid "Group comparison"
 msgstr "グループ比較"
@@ -2662,8 +2584,8 @@ msgstr "行が分割される回数:葉よりも1回。 植木の場合、各ツ
 msgid "How many trees a Bootstrap Forest or a Boosted Tree grows."
 msgstr "ブーツストラップフォレストやボオステッドツリーが育つ樹木はいくつあります。"
 
-msgid "How many:"
-msgstr "数:"
+msgid "How many"
+msgstr "数"
 
 msgid "How much each boosting stage corrects the previous one."
 msgstr "ステージを上回るごとに、前のステージを補正する量はどのくらいかかります。"
@@ -2770,8 +2692,8 @@ msgstr "インポート..."
 msgid "Importance"
 msgstr "重要度"
 
-msgid "In:"
-msgstr "In:"
+msgid "In"
+msgstr "In"
 
 msgid "Include hidden rows"
 msgstr "非表示の行を含める"
@@ -2863,9 +2785,6 @@ msgstr "{measure} は正常ですか?"
 msgid "Iterations"
 msgstr "イテレーション"
 
-msgid "Iterations:"
-msgstr "イテレーション："
-
 msgid "Its arguments are the parameters only: x and y are given, not passed."
 msgstr "その引数は、x と y のみが渡されないパラメータです。"
 
@@ -2884,8 +2803,8 @@ msgstr "高さが x の {width} の半分にその幅: その領域 (カルカ�
 msgid "JCAMP-DX spectrum"
 msgstr "JCAMP-DXスペクトル"
 
-msgid "JMP documentation:"
-msgstr "JMPドキュメンテーション："
+msgid "JMP documentation"
+msgstr "JMPドキュメンテーション"
 
 msgid "JSON starting parameters for nonlinear series_fit models."
 msgstr "非線形series_fitモデルのJSON開始パラメータ。"
@@ -2923,8 +2842,8 @@ msgstr "このSELECTをプロジェクトの保存クエリとして保存して
 msgid "Keep this figure's style, axes and series look under a name"
 msgstr "このフィギュアのスタイル、軸、シリーズの外観を名前の下に保ちます"
 
-msgid "Keep:"
-msgstr "保って下さい:"
+msgid "Keep"
+msgstr "保って下さい"
 
 msgid "Keeps the first crossings in x order when a noisy series crosses the level hundreds of times."
 msgstr "騒々しいシリーズが数百回レベルを交差させるとき、x の順序で最初の交差を保ちます。"
@@ -2938,17 +2857,11 @@ msgstr "このコンピュータ上のシステムキーホルダーによって
 msgid "Kept with the figure in the project, and printed under it in reports."
 msgstr "プロジェクト内の数字を保管し、レポートの下に印刷しました。"
 
-msgid "Kernel:"
-msgstr "カーネル："
-
 msgid "Kind"
 msgstr "種類"
 
-msgid "Kind:"
-msgstr "種類:"
-
-msgid "Knots:"
-msgstr "ノット："
+msgid "Knots"
+msgstr "ノット"
 
 msgid "Kolmogorov-Smirnov D"
 msgstr "コルモゴロフ・シミノフ D"
@@ -2971,11 +2884,11 @@ msgstr "クワーグス"
 msgid "L2 regularization strength."
 msgstr "L2正規化強度。"
 
-msgid "LHS algorithm:"
-msgstr "LHSアルゴリズム："
+msgid "LHS algorithm"
+msgstr "LHSアルゴリズム"
 
-msgid "LHS samples:"
-msgstr "LHSサンプル："
+msgid "LHS samples"
+msgstr "LHSサンプル"
 
 msgid "Lab instruments"
 msgstr "ラボ機器"
@@ -2986,14 +2899,11 @@ msgstr "LabVIEW測定(.lvm)"
 msgid "Label"
 msgstr "ラベル"
 
-msgid "Label column:"
-msgstr "ラベルのコラム:"
+msgid "Label column"
+msgstr "ラベルのコラム"
 
-msgid "Label:"
-msgstr "ラベル:"
-
-msgid "Labels:"
-msgstr "ラベル:"
+msgid "Labels"
+msgstr "ラベル"
 
 msgid "Lack of fit"
 msgstr "フィット感の欠如"
@@ -3058,9 +2968,6 @@ msgstr "葉っぱ"
 msgid "Left"
 msgstr "左"
 
-msgid "Left:"
-msgstr "左:"
-
 msgid "Left: every left row"
 msgstr "左:各左行"
 
@@ -3082,8 +2989,8 @@ msgstr "ニュースレター"
 msgid "Level:"
 msgstr "レベル:"
 
-msgid "Levels:"
-msgstr "レベル："
+msgid "Levels"
+msgstr "レベル"
 
 msgid "Levels: {levels}. The predictions are the probability of {first}."
 msgstr "レベル：{levels}。予測は {first} の確率です。"
@@ -3199,8 +3106,8 @@ msgstr "ログノーマル"
 msgid "Loop"
 msgstr "ループ"
 
-msgid "Loss:"
-msgstr "Loss ："
+msgid "Loss"
+msgstr "Loss"
 
 msgid "Low"
 msgstr "低"
@@ -3277,8 +3184,8 @@ msgstr "マーカー"
 msgid "Marker size in points. Default leaves it to the style."
 msgstr "ポイントのマーカーサイズ。デフォルトはスタイルに反映されます。"
 
-msgid "Match:"
-msgstr "マッチ:"
+msgid "Match"
+msgstr "マッチ"
 
 msgid "Matplotlib Style (*.mplstyle);;All Files (*)"
 msgstr "Matplotlibスタイル(*.mplstyle);;すべてのファイル(*)"
@@ -3292,17 +3199,14 @@ msgstr "Matplotlibデフォルト"
 msgid "Matrix"
 msgstr "マトリックス"
 
-msgid "Matrix:"
-msgstr "マトリックス:"
-
 msgid "Max"
 msgstr "最大"
 
 msgid "Max depth:"
 msgstr "最高の深さ:"
 
-msgid "Max evals:"
-msgstr "最大エヴァル数："
+msgid "Max evals"
+msgstr "最大エヴァル数"
 
 msgid "Max lags:"
 msgstr "最大ラグ："
@@ -3412,9 +3316,6 @@ msgstr "方法"
 msgid "Method Comparison"
 msgstr "方法比較"
 
-msgid "Method:"
-msgstr "方法："
-
 msgid "Midpoints"
 msgstr "ミッドポイント"
 
@@ -3445,9 +3346,6 @@ msgstr "最小ストップバンド減衰（ dB ） （ Chebyshev II/Elliptic �
 msgid "Minimum width:"
 msgstr "最小幅:"
 
-msgid "Minimum:"
-msgstr "最小値:"
-
 msgid "Minor"
 msgstr "軽微"
 
@@ -3460,17 +3358,14 @@ msgstr "ミラーライン"
 msgid "Misclassification {percent}%: the model puts {count} of {rows} rows in another group than their own. These are the rows it was fitted to: on new rows it usually does a little worse."
 msgstr "Misclassification {percent}%: モデルは {count} の {rows} を別のグループに置きます。 これらは、新しい行で、通常は少し悪化します。"
 
-msgid "Missing values:"
-msgstr "値の欠損:"
+msgid "Missing values"
+msgstr "値の欠損"
 
 msgid "Model"
 msgstr "モデル"
 
-msgid "Model:"
-msgstr "モデル："
-
-msgid "Modelling type:"
-msgstr "モデリングタイプ:"
+msgid "Modelling type"
+msgstr "モデリングタイプ"
 
 msgid "Models tried, best AIC first"
 msgstr "最初に試したモデル、最高の AIC"
@@ -3544,23 +3439,20 @@ msgstr "名前"
 msgid "Name and notes"
 msgstr "名前とメモ"
 
-msgid "Name columns by:"
-msgstr "名前 列 による:"
+msgid "Name columns by"
+msgstr "名前 列 による"
 
 msgid "Name of the new column:"
 msgstr "新しい列の名前："
 
-msgid "Name of the picture:"
-msgstr "映像の名前:"
+msgid "Name of the picture"
+msgstr "映像の名前"
 
-msgid "Name of the query:"
-msgstr "クエリの名前:"
+msgid "Name of the query"
+msgstr "クエリの名前"
 
 msgid "Name of this figure. Also the title of its chart tab."
 msgstr "この図の名前。 グラフタブのタイトルも表示されます。"
-
-msgid "Name:"
-msgstr "氏名："
 
 msgid "Names"
 msgstr "お名前 (必須)"
@@ -3604,9 +3496,6 @@ msgstr "新しい軸と図は、このチャートタイプを使用します。
 msgid "New column"
 msgstr "新しい列"
 
-msgid "New column:"
-msgstr "新しいコラム:"
-
 msgid "New conversation: the settings or the project changed."
 msgstr "新しい会話:設定やプロジェクトが変更されました。"
 
@@ -3625,8 +3514,8 @@ msgstr "'{column}'の新しい名前:"
 msgid "New name for '{name}':"
 msgstr "'{name}' の新しい名前:"
 
-msgid "New name:"
-msgstr "新しい名前:"
+msgid "New name"
+msgstr "新しい名前"
 
 msgid "New query, not saved yet."
 msgstr "新しいクエリはまだ保存されていません。"
@@ -3793,9 +3682,6 @@ msgstr "ノッチ"
 msgid "Notes"
 msgstr "メモ"
 
-msgid "Notes:"
-msgstr "ノート:"
-
 msgid "Nothing found. Try another word - in English or Italian."
 msgstr "何も見つかりませんでした。英語またはイタリア語で別の単語をお試しください。"
 
@@ -3853,8 +3739,8 @@ msgstr "OK"
 msgid "Odds ratio"
 msgstr "オッズ比率"
 
-msgid "Of:"
-msgstr "の:"
+msgid "Of"
+msgstr "の"
 
 msgid "Offset"
 msgstr "オフセット"
@@ -3952,9 +3838,6 @@ msgstr "操作"
 msgid "Operation history"
 msgstr "操作履歴"
 
-msgid "Operation:"
-msgstr "操作："
-
 msgid "Operator"
 msgstr "運営会社"
 
@@ -3991,8 +3874,8 @@ msgstr "オプション: ノードの z は、スペース内のフィールド�
 msgid "Optional: who measured. Without it, repeatability alone."
 msgstr "任意:測定される人。それなしで、反復性単独で。"
 
-msgid "Order by:"
-msgstr "注文:"
+msgid "Order by"
+msgstr "注文"
 
 msgid "Order of the polynomial fitted over each window."
 msgstr "各ウィンドウに取り付けられた多項式の順序。"
@@ -4011,12 +3894,6 @@ msgstr "その他:"
 
 msgid "Outliers"
 msgstr "外れ値"
-
-msgid "Outliers:"
-msgstr "アウター:"
-
-msgid "Output:"
-msgstr "出力："
 
 msgid "Overlay properties"
 msgstr "オーバーレイプロパティ"
@@ -4075,9 +3952,6 @@ msgstr "パラメータ推定値（符号化単位）"
 msgid "Parameters"
 msgstr "パラメータ"
 
-msgid "Parameters:"
-msgstr "パラメータ："
-
 msgid "Parquet"
 msgstr "パーケット"
 
@@ -4120,17 +3994,14 @@ msgstr "映像を貼り付けて下さい"
 msgid "Path:"
 msgstr "パス："
 
-msgid "Pattern:"
-msgstr "パターン:"
+msgid "Pattern"
+msgstr "パターン"
 
 msgid "Pause"
 msgstr "パデュース"
 
 msgid "Peak ({x} &rarr; {y})"
 msgstr "ピーク ({x} &rarr; {y})"
-
-msgid "Peaks:"
-msgstr "ピークスピークス"
 
 msgid "Pearson chi-squared"
 msgstr "ピアソンのカイ二乗"
@@ -4152,9 +4023,6 @@ msgstr "パープレックス性:"
 
 msgid "Personality"
 msgstr "パーソナリティ"
-
-msgid "Personality:"
-msgstr "パーソナリティ："
 
 msgid "Pick Role Variables"
 msgstr "ロール変数を選択"
@@ -4227,9 +4095,6 @@ msgstr "点プロット"
 
 msgid "Points. Of any two peaks closer than this, the more prominent is kept - which is how a single noisy peak stops being reported as several."
 msgstr "ポイント。 これよりも近い2つのピークのうち、より顕著に保たれている - 単一の騒々しいピークがいくつか報告されているのはどのようにして止まっているか。"
-
-msgid "Points:"
-msgstr "点："
 
 msgid "Poisson yield {value}%: the share of dies expected free of defects at this defect density and die area. Defects in clusters spoil fewer dies than this predicts."
 msgstr "Poisson yield {value}%:この欠陥密度とダイ領域で欠陥の自由を期待するダイのシェア。 クラスターの欠陥はこの予測よりも少数の死を台無しにします。"
@@ -4378,9 +4243,6 @@ msgstr "品質・プロセス"
 msgid "Quantiles"
 msgstr "クアンティル"
 
-msgid "Quantiles:"
-msgstr "Quantiles:"
-
 msgid "Quantity"
 msgstr "注文数量"
 
@@ -4390,11 +4252,8 @@ msgstr "クエリ"
 msgid "Query Builder"
 msgstr "クエリビルダー"
 
-msgid "Query name:"
-msgstr "クエリ名:"
-
-msgid "Query:"
-msgstr "クエリ:"
+msgid "Query name"
+msgstr "クエリ名"
 
 msgid "Quick answers"
 msgstr "簡単な回答"
@@ -4480,9 +4339,6 @@ msgstr "基準値"
 msgid "Reference value for one-sample location tests."
 msgstr "1検体ロケーションテストの基準値。"
 
-msgid "Reference value:"
-msgstr "基準値："
-
 msgid "References"
 msgstr "参考文献"
 
@@ -4549,8 +4405,8 @@ msgstr "選択したテーブルの名前、保存されたクエリ、保存さ
 msgid "Rename…"
 msgstr "名前を変更…"
 
-msgid "Render as:"
-msgstr "レンダリング形式:"
+msgid "Render as"
+msgstr "レンダリング形式"
 
 msgid "Renderer not found."
 msgstr "レンダラーが見つかりません。"
@@ -4567,11 +4423,11 @@ msgstr "繰り返し測定試験"
 msgid "Replace the effects with a standard model of the selected columns."
 msgstr "効果を選択した列の標準モデルに置き換えます。"
 
-msgid "Replace with:"
-msgstr "置き換え:"
+msgid "Replace with"
+msgstr "置き換え"
 
-msgid "Replicates:"
-msgstr "反復数："
+msgid "Replicates"
+msgstr "反復数"
 
 msgid "Report"
 msgstr "レポート"
@@ -4639,14 +4495,8 @@ msgstr "応答 {name}"
 msgid "Response {number} has no name."
 msgstr "応答 {number} には名前がありません。"
 
-msgid "Response:"
-msgstr "回答："
-
 msgid "Responses"
 msgstr "回答"
-
-msgid "Responses:"
-msgstr "回答："
 
 msgid "Restore the table?"
 msgstr "テーブルを復元しますか？"
@@ -4654,8 +4504,8 @@ msgstr "テーブルを復元しますか？"
 msgid "Result"
 msgstr "結果発表"
 
-msgid "Result name:"
-msgstr "結果名:"
+msgid "Result name"
+msgstr "結果名"
 
 msgid "Result preview"
 msgstr "結果プレビュー"
@@ -4668,9 +4518,6 @@ msgstr "結果 ({count})"
 
 msgid "Right"
 msgstr "右"
-
-msgid "Right:"
-msgstr "右:"
 
 msgid "Right: every right row"
 msgstr "右:すべての右行"
@@ -4719,9 +4566,6 @@ msgstr "回転y (°):"
 
 msgid "Rotation z (°):"
 msgstr "回転z (°):"
-
-msgid "Rotation:"
-msgstr "回転:"
 
 msgid "Roughly, how many neighbours each point is assumed to have. Lowered automatically if it does not fit the sample count."
 msgstr "当然のことながら、各ポイントが持つと想定されるのはいくつものネグブラーです。サンプルカウントに合わないと自動的に下げられます。"
@@ -4834,8 +4678,8 @@ msgstr "同じ数字"
 msgid "Sample rows"
 msgstr "サンプル行"
 
-msgid "Sample size column:"
-msgstr "サンプルサイズカラム："
+msgid "Sample size column"
+msgstr "サンプルサイズカラム"
 
 msgid "Samples"
 msgstr "サンプル"
@@ -4939,9 +4783,6 @@ msgstr "スケール y バイ:"
 msgid "Scale z by:"
 msgstr "スケールzによる:"
 
-msgid "Scale:"
-msgstr "スケール:"
-
 msgid "Scales:"
 msgstr "スケール："
 
@@ -4999,8 +4840,8 @@ msgstr "2つ目のカットオフ："
 msgid "See it"
 msgstr "詳しくはこちら"
 
-msgid "Seed:"
-msgstr "シード："
+msgid "Seed"
+msgstr "シード"
 
 msgid "Segment length:"
 msgstr "セグメントの長さ："
@@ -5071,8 +4912,8 @@ msgstr "質問やデータをプロバイダに送信する"
 msgid "Sends the provider the smallest request it answers, with this key: whether the key, the account's credit and the connection work."
 msgstr "プロバイダーに応答する最小限のリクエストを送信します。このキー:キー、アカウントのクレジット、および接続作業。"
 
-msgid "Separate axes by:"
-msgstr "別々の軸:"
+msgid "Separate axes by"
+msgstr "別々の軸"
 
 msgid "Series"
 msgstr "シリーズ"
@@ -5080,14 +4921,8 @@ msgstr "シリーズ"
 msgid "Series name"
 msgstr "シリーズ名"
 
-msgid "Series name:"
-msgstr "シリーズ名："
-
 msgid "Series properties"
 msgstr "系列プロパティ"
-
-msgid "Series:"
-msgstr "シリーズ："
 
 msgid "Session"
 msgstr "セッション"
@@ -5122,8 +4957,8 @@ msgstr "共有"
 msgid "Share the {axis} range with the other axes that share it."
 msgstr "{axis} の範囲を共有する他の軸と共有します。"
 
-msgid "Shared:"
-msgstr "共有:"
+msgid "Shared"
+msgstr "共有"
 
 msgid "Shear"
 msgstr "せん断"
@@ -5260,9 +5095,6 @@ msgstr "滑らかさ。大きければ大きいほどベースラインが硬く
 msgid "Solver"
 msgstr "ソルバー"
 
-msgid "Solver:"
-msgstr "Solver:"
-
 msgid "Some lie outside the data's range: there they are a guess, and the further out, the less to trust them."
 msgstr "データの範囲の外にある人もいます: 推測があり、さらには、それらを信頼するのは少ないです。"
 
@@ -5277,9 +5109,6 @@ msgstr "ソーステーブル"
 
 msgid "Spacing"
 msgstr "間隔"
-
-msgid "Spacing:"
-msgstr "間隔："
 
 msgid "Span"
 msgstr "スパン"
@@ -5311,8 +5140,8 @@ msgstr "スプライン："
 msgid "Split"
 msgstr "スプリット"
 
-msgid "Split by:"
-msgstr "スプリット:"
+msgid "Split by"
+msgstr "スプリット"
 
 msgid "Split history"
 msgstr "スプリット履歴"
@@ -5329,8 +5158,8 @@ msgstr "スプリット:"
 msgid "Spreadsheets and text"
 msgstr "スプレッドシートとテキスト"
 
-msgid "Stack:"
-msgstr "スタック:"
+msgid "Stack"
+msgstr "スタック"
 
 msgid "Standard"
 msgstr "スタンダード"
@@ -5338,8 +5167,8 @@ msgstr "スタンダード"
 msgid "Standard deviation"
 msgstr "標準偏差"
 
-msgid "Standard errors:"
-msgstr "標準的な間違い:"
+msgid "Standard errors"
+msgstr "標準的な間違い"
 
 msgid "Standardized canonical coefficients"
 msgstr "標準化された正準係数"
@@ -5368,8 +5197,8 @@ msgstr "スタッタ"
 msgid "Stationarity tests"
 msgstr "静止テスト"
 
-msgid "Statistic:"
-msgstr "統計学:"
+msgid "Statistic"
+msgstr "統計学"
 
 msgid "Statistics"
 msgstr "統計"
@@ -5410,8 +5239,8 @@ msgstr "停止しました。何も変更されませんでした。"
 msgid "Stored function: its values on its range"
 msgstr "保存機能:その範囲のその値"
 
-msgid "Stored:"
-msgstr "貯えられる:"
+msgid "Stored"
+msgstr "貯えられる"
 
 msgid "Straight line"
 msgstr "ストレートライン"
@@ -5430,9 +5259,6 @@ msgstr "スタイル"
 
 msgid "Subgroup size"
 msgstr "サブグループサイズ"
-
-msgid "Subgroup size:"
-msgstr "サブグループのサイズ:"
 
 msgid "Subtract a spectrum's background (AsLS or rubber band)"
 msgstr "スペクトルの背景(AsLSまたはゴムバンド)を抽出する"
@@ -5476,20 +5302,14 @@ msgstr "テーブル"
 msgid "Table '{name}' created."
 msgstr "テーブル'{name}'が作成されました。"
 
-msgid "Table name:"
-msgstr "テーブル名:"
+msgid "Table name"
+msgstr "テーブル名"
 
 msgid "Table with roles"
 msgstr "役割を持つテーブル"
 
-msgid "Table:"
-msgstr "表："
-
 msgid "Tables"
 msgstr "テーブル"
-
-msgid "Tables:"
-msgstr "表："
 
 msgid "Take the sampling frequency from the spacing of the x role."
 msgstr "Xロールの間隔からサンプリング周波数を取ります。"
@@ -5509,23 +5329,17 @@ msgstr "ターゲット"
 msgid "Target shape:"
 msgstr "ターゲット形:"
 
-msgid "Target:"
-msgstr "ターゲット:"
-
 msgid "Template"
 msgstr "テンプレート"
 
 msgid "Template name (an existing name is replaced):"
 msgstr "テンプレート名（既存の名前が置き換えられます） ："
 
-msgid "Template name:"
-msgstr "テンプレート名:"
+msgid "Template name"
+msgstr "テンプレート名"
 
 msgid "Template saved: {path}"
 msgstr "保存されたテンプレート: {path}"
-
-msgid "Template:"
-msgstr "テンプレート:"
 
 msgid "Test"
 msgstr "テスト"
@@ -6025,8 +5839,8 @@ msgstr "サーフェス独自の正確なx/yグリッドでトレースされま
 msgid "Training"
 msgstr "トレーニング"
 
-msgid "Transpose:"
-msgstr "トランスポーズ:"
+msgid "Transpose"
+msgstr "トランスポーズ"
 
 msgid "Tree"
 msgstr "木"
@@ -6036,9 +5850,6 @@ msgstr "木:"
 
 msgid "Trend"
 msgstr "傾向"
-
-msgid "Trend:"
-msgstr "傾向："
 
 msgid "Tries the assistant without a key or a connection: a fixed script that uses the real tools. Nothing leaves the computer."
 msgstr "キーやコネクションなしでアシスタントを試す: 実際のツールを使用する固定スクリプト。 何もコンピュータを離れません。"
@@ -6106,9 +5917,6 @@ msgstr "最初にキーをタイプして下さい。"
 msgid "Type what you want to do: \"anova\", \"outliers\", \"peaks\", \"tree\"…"
 msgstr "「anova」、「outliers」、「peaks」、「tree」などを入力します。"
 
-msgid "Type:"
-msgstr "タイプ："
-
 msgid "U"
 msgstr "ユダヤ"
 
@@ -6133,8 +5941,8 @@ msgstr "元に戻す：{what}"
 msgid "Uniform"
 msgstr "ユニフォーム"
 
-msgid "Unit:"
-msgstr "ユニット:"
+msgid "Unit"
+msgstr "ユニット"
 
 msgid "UnivariateSpline smoothing factor s."
 msgstr "UnivariateSpline平滑化係数。"
@@ -6214,9 +6022,6 @@ msgstr "検証共有:"
 msgid "Value"
 msgstr "値"
 
-msgid "Value:"
-msgstr "値:"
-
 msgid "Values"
 msgstr "値"
 
@@ -6225,9 +6030,6 @@ msgstr "「値なし」を意味する値、コンマで区切る値:それら�
 
 msgid "Values that stand for \"no value\", separated by commas: filled like the empty cells. Text is matched whatever its case (na is NA); a number by its value (-999 is -999.0). Empty cells - NULL and blank text - are always filled."
 msgstr "\"no value\" で、コンマで区切る値: 空のセルのように埋められます。 テキストは、その値(-999 は -999.0 です)の数字で一致します。 空のセル - NULL と空白のテキスト - 常に満たされています。"
-
-msgid "Values:"
-msgstr "値:"
 
 msgid "Variable (in column order)"
 msgstr "変数(列順)"
@@ -6289,8 +6091,8 @@ msgstr "ウェブソース"
 msgid "Weibull"
 msgstr "Weibull(ワイブル)"
 
-msgid "Weights:"
-msgstr "重量："
+msgid "Weights"
+msgstr "重量"
 
 msgid "Welch ANOVA (unequal variances)"
 msgstr "ウェルチANOVA （不等分散）"
@@ -6361,8 +6163,8 @@ msgstr "ノッチまたはフラットが描画される場所:データはウ�
 msgid "Where the result is drawn: on the axis of its data (the first chart only), in the current figure as new axes, or in a figure of its own."
 msgstr "結果が描画される場所:そのデータの軸線(最初のチャートのみ)、現在の図は新しい軸として、または独自の図で。"
 
-msgid "Where:"
-msgstr "所在地:"
+msgid "Where"
+msgstr "所在地"
 
 msgid "Whether the fitted curve must rise, fall, or whichever the data itself suggests."
 msgstr "取り付けられた曲線が上昇し、落ちる、またはデータ自体が示唆するかどうか。"
@@ -6417,9 +6219,6 @@ msgstr "ウィンドウ"
 
 msgid "Window size:"
 msgstr "窓のサイズ:"
-
-msgid "Window:"
-msgstr "ウィンドウ:"
 
 msgid "With a specification limit the report gives the process capability: Cp, Cpk, Pp, Ppk and the share out of specification. Empty when there is none."
 msgstr "仕様の制限により、レポートは、Cp、Cpk、Ppk、および仕様の共有のプロセス機能を提供します。 誰にもない場合、空にしてください。"
@@ -6499,9 +6298,6 @@ msgstr "X、モデルの入力(トランスフェ機能)"
 msgid "X, reference"
 msgstr "X、参照"
 
-msgid "X:"
-msgstr "X:"
-
 msgid "Y"
 msgstr "ツイート"
 
@@ -6534,9 +6330,6 @@ msgstr "Y、テストされる方法"
 
 msgid "Y, time series"
 msgstr "Y, タイムシリーズ"
-
-msgid "Y:"
-msgstr "Y:"
 
 msgid "Yeo-Johnson"
 msgstr "イオ・ジョンソン"
@@ -7246,8 +7039,8 @@ msgstr "{alpha} の下、通常の行なので {shown} は本物と呼ばれま�
 msgid "Cast the columns into their roles, then press Preview."
 msgstr "列を役割にキャストし、[プレビュー]を押します。"
 
-msgid "Category:"
-msgstr "カテゴリ:"
+msgid "Category"
+msgstr "カテゴリ"
 
 msgid "Cluster Analysis"
 msgstr "クラスタ分析"
@@ -7318,8 +7111,8 @@ msgstr "ファイル名は、my_function.pyなどの有効なPythonファイル�
 msgid "File name must be a valid Python file name, e.g. my_operation_dialog.py."
 msgstr "ファイル名は、my_operation_dialog.pyなどの有効なPythonファイル名でなければなりません。"
 
-msgid "File name:"
-msgstr "ファイル名："
+msgid "File name"
+msgstr "ファイル名"
 
 msgid "Fill every empty translation with a machine translation to review"
 msgstr "すべての空の翻訳に機械翻訳を記入してレビューします"
@@ -7365,9 +7158,6 @@ msgstr "最も大きいkは試みました:"
 
 msgid "Legend label"
 msgstr "凡例ラベル"
-
-msgid "Link:"
-msgstr "リンク："
 
 msgid "Link: a chain for a table linked to its source, Q for a saved query"
 msgstr "リンク：ソースにリンクされたテーブルのチェーン、保存されたクエリのQ"
@@ -7456,8 +7246,8 @@ msgstr "フィットダイアログのモデルリストに表示される1行�
 msgid "Open New plot with the selected columns as x, y and z"
 msgstr "選択した列をx、y、zとして新しいプロットを開く"
 
-msgid "Optional roles:"
-msgstr "オプションの役割："
+msgid "Optional roles"
+msgstr "オプションの役割"
 
 msgid "Output"
 msgstr "出力"
@@ -7474,8 +7264,8 @@ msgstr "テーブルの名前を変更"
 msgid "Renderer Helper"
 msgstr "レンダラーヘルパー"
 
-msgid "Required roles:"
-msgstr "必要な役割："
+msgid "Required roles"
+msgstr "必要な役割"
 
 msgid "Rows: {n}"
 msgstr "行数：{n}"

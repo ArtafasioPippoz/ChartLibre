@@ -9,6 +9,7 @@ here, through the repository, as plain SQL.
 """
 from __future__ import annotations
 
+from app.styles.style import field_label
 from collections.abc import Sequence
 
 import numpy as np
@@ -151,11 +152,11 @@ class SelectForm(OperationForm):
         test = self.row(self.operator, (self.value, 1))
         self.order_column = self.combo()
         self.descending = QCheckBox(_("Descending"), self)
-        self.form.addRow(_("Table:"), self.table)
-        self.form.addRow(_("Columns:"), self.columns_list)
-        self.form.addRow(_("Where:"), self.where_column)
+        self.form.addRow(field_label(_("Table")), self.table)
+        self.form.addRow(field_label(_("Columns")), self.columns_list)
+        self.form.addRow(field_label(_("Where")), self.where_column)
         self.form.addRow("", test)
-        self.form.addRow(_("Order by:"), self.order_column)
+        self.form.addRow(field_label(_("Order by")), self.order_column)
         self.form.addRow("", self.descending)
         self._reload()
 
@@ -195,9 +196,9 @@ class JoinForm(OperationForm):
         for kind, label in zip(sb.JOIN_KINDS, (_("Inner: matched rows only"), _("Left: every left row"),
                                                _("Right: every right row"), _("Full outer: every row"))):
             self.kind.addItem(label, kind)
-        self.form.addRow(_("Left:"), self.left)
-        self.form.addRow(_("Right:"), self.right)
-        self.form.addRow(_("Keep:"), self.kind)
+        self.form.addRow(field_label(_("Left")), self.left)
+        self.form.addRow(field_label(_("Right")), self.right)
+        self.form.addRow(field_label(_("Keep")), self.kind)
         self.pairs: list[tuple[QComboBox, QComboBox]] = []
         for index in range(2):
             pair = (self.combo(), self.combo())
@@ -212,7 +213,7 @@ class JoinForm(OperationForm):
             layout.addWidget(pair[0], 1)
             layout.addWidget(QLabel("=", row))
             layout.addWidget(pair[1], 1)
-            self.form.addRow(_("Match:") if index == 0 else "", row)
+            self.form.addRow(field_label(_("Match")) if index == 0 else "", row)
         self.match = QCheckBox(_("Add a Match column"), self)
         self.match.setToolTip(_("Each row's origin: Both, Left only or Right only."))
         self.form.addRow("", self.match)
@@ -253,7 +254,7 @@ class UnionForm(OperationForm):
         self.source = QCheckBox(_("Add a Source column with each row's table"), self)
         self.source.setChecked(True)
         self.distinct = QCheckBox(_("Drop repeated rows (UNION instead of UNION ALL)"), self)
-        self.form.addRow(_("Tables:"), self.tables_list)
+        self.form.addRow(field_label(_("Tables")), self.tables_list)
         self.form.addRow("", self.source)
         self.form.addRow("", self.distinct)
 
@@ -275,10 +276,10 @@ class StackForm(OperationForm):
         self.label = QLineEdit("Label", self)
         self.value = QLineEdit("Data", self)
         self.drop = QCheckBox(_("Leave out empty values"), self)
-        self.form.addRow(_("Table:"), self.table)
-        self.form.addRow(_("Stack:"), self.stacked)
-        self.form.addRow(_("Label column:"), self.label)
-        self.form.addRow(_("Data column:"), self.value)
+        self.form.addRow(field_label(_("Table")), self.table)
+        self.form.addRow(field_label(_("Stack")), self.stacked)
+        self.form.addRow(field_label(_("Label column")), self.label)
+        self.form.addRow(field_label(_("Data column")), self.value)
         self.form.addRow("", self.drop)
         self._reload()
 
@@ -308,11 +309,11 @@ class SplitForm(OperationForm):
         self.aggregate = QComboBox(self)
         self.aggregate.addItems(sb.SPLIT_AGGREGATES)
         self.aggregate.setToolTip(_("How two rows for the same group and label are combined."))
-        self.form.addRow(_("Table:"), self.table)
-        self.form.addRow(_("Split by:"), self.label)
-        self.form.addRow(_("Values:"), self.value)
-        self.form.addRow(_("Group by:"), self.groups)
-        self.form.addRow(_("Combine:"), self.aggregate)
+        self.form.addRow(field_label(_("Table")), self.table)
+        self.form.addRow(field_label(_("Split by")), self.label)
+        self.form.addRow(field_label(_("Values")), self.value)
+        self.form.addRow(field_label(_("Group by")), self.groups)
+        self.form.addRow(field_label(_("Combine")), self.aggregate)
         self._reload()
 
     def _reload(self, *_args: object) -> None:
@@ -340,9 +341,9 @@ class TransposeForm(OperationForm):
         self.table = self.table_combo(self._reload)
         self.label = self.combo()
         self.chosen = _check_list(self)
-        self.form.addRow(_("Table:"), self.table)
-        self.form.addRow(_("Name columns by:"), self.label)
-        self.form.addRow(_("Transpose:"), self.chosen)
+        self.form.addRow(field_label(_("Table")), self.table)
+        self.form.addRow(field_label(_("Name columns by")), self.label)
+        self.form.addRow(field_label(_("Transpose")), self.chosen)
         self._reload()
 
     def _reload(self, *_args: object) -> None:
@@ -380,10 +381,10 @@ class RecodeForm(OperationForm):
         self.mapping.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
         self.new_column = QLineEdit(self)
         self.new_column.setPlaceholderText(_("empty: replace the column"))
-        self.form.addRow(_("Table:"), self.table)
-        self.form.addRow(_("Column:"), self.column)
+        self.form.addRow(field_label(_("Table")), self.table)
+        self.form.addRow(field_label(_("Column")), self.column)
         self.form.addRow(self.mapping)
-        self.form.addRow(_("New column:"), self.new_column)
+        self.form.addRow(field_label(_("New column")), self.new_column)
         self._reload()
 
     def _reload(self, *_args: object) -> None:
@@ -438,13 +439,13 @@ class BinForm(OperationForm):
                              ("midpoints", _("Midpoints"))):
             self.labels.addItem(label, style)
         self.new_column = QLineEdit(self)
-        self.form.addRow(_("Table:"), self.table)
-        self.form.addRow(_("Column:"), self.column)
-        self.form.addRow(_("Bins:"), self.method)
-        self.form.addRow(_("How many:"), self.count)
-        self.form.addRow(_("Edges:"), self.edges)
-        self.form.addRow(_("Labels:"), self.labels)
-        self.form.addRow(_("New column:"), self.new_column)
+        self.form.addRow(field_label(_("Table")), self.table)
+        self.form.addRow(field_label(_("Column")), self.column)
+        self.form.addRow(field_label(_("Bins")), self.method)
+        self.form.addRow(field_label(_("How many")), self.count)
+        self.form.addRow(field_label(_("Edges")), self.edges)
+        self.form.addRow(field_label(_("Labels")), self.labels)
+        self.form.addRow(field_label(_("New column")), self.new_column)
         self.method.currentIndexChanged.connect(self._show_rows)
         self._reload()
         self._show_rows()
@@ -486,10 +487,10 @@ class GroupForm(OperationForm):
         self.aggregate.addItems(AGGREGATES)
         self.aggregate.setCurrentText("AVG")
         self.measured = _check_list(self)
-        self.form.addRow(_("Table:"), self.table)
-        self.form.addRow(_("Group by:"), self.groups)
-        self.form.addRow(_("Statistic:"), self.aggregate)
-        self.form.addRow(_("Of:"), self.measured)
+        self.form.addRow(field_label(_("Table")), self.table)
+        self.form.addRow(field_label(_("Group by")), self.groups)
+        self.form.addRow(field_label(_("Statistic")), self.aggregate)
+        self.form.addRow(field_label(_("Of")), self.measured)
         self._reload()
 
     def _reload(self, *_args: object) -> None:

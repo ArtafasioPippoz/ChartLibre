@@ -3,6 +3,7 @@ live updates, ruler), resize modes, zoom, background and the figure's geometry, 
 does to its chart (copy, save, export, templates, delete)."""
 from __future__ import annotations
 
+from app.styles.style import field_label
 import csv
 import html
 import json
@@ -1941,7 +1942,7 @@ class ChartToolsMixin(_Host):
         if not names:
             QMessageBox.information(self, _("Apply a template"), _("No template saved yet: save one from a figure first."))
             return
-        name, accepted = QInputDialog.getItem(self, _("Apply a template"), _("Template:"), names, 0, False)
+        name, accepted = QInputDialog.getItem(self, _("Apply a template"), field_label(_("Template")), names, 0, False)
         if not accepted:
             return
         try:
@@ -1963,7 +1964,7 @@ class ChartToolsMixin(_Host):
         if not names:
             QMessageBox.information(self, _("Delete a template"), _("No template saved yet."))
             return
-        name, accepted = QInputDialog.getItem(self, _("Delete a template"), _("Template:"), names, 0, False)
+        name, accepted = QInputDialog.getItem(self, _("Delete a template"), field_label(_("Template")), names, 0, False)
         if accepted:
             graph_templates.delete_template(str(name))
             applogger.info("Graph template %r deleted.", name)

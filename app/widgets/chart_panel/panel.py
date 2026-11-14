@@ -6,6 +6,7 @@ FigureCanvasQTAgg is the scroll area's widget directly.
 """
 from __future__ import annotations
 
+from app.styles.style import field_label
 import math
 from typing import Any, Final
 
@@ -2197,7 +2198,7 @@ class ChartPanel(ChartToolsMixin, QFrame):
         decided here; the type is a plain text note.
         """
         text, accepted = QInputDialog.getText(
-            self, _("Add annotation"), _("Annotation text:")
+            self, _("Add annotation"), field_label(_("Annotation text"))
         )
         if not accepted or not text.strip():
             return

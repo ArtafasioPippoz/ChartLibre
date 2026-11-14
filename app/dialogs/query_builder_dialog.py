@@ -13,6 +13,7 @@ and only on demand.
 """
 from __future__ import annotations
 
+from app.styles.style import field_label
 from typing import Any
 
 from PySide6.QtCore import Qt
@@ -225,7 +226,7 @@ class QueryBuilderDialog(SettingsTableDialog):
             show_message(self, "query.invalid", error=self._status.text())
             return False
         suggested = self._repo.free_table_name((self._current_name or "query_table").replace(" ", "_"))
-        name, accepted = QInputDialog.getText(self, _("Save as table"), _("Table name:"), text=suggested)
+        name, accepted = QInputDialog.getText(self, _("Save as table"), field_label(_("Table name")), text=suggested)
         if not accepted or not name.strip():
             return False
         try:
@@ -438,7 +439,7 @@ class QueryBuilderDialog(SettingsTableDialog):
             return suggested
 
         name, accepted = QInputDialog.getText(
-            self, _("Save query"), _("Query name:"), text=suggested
+            self, _("Save query"), field_label(_("Query name")), text=suggested
         )
         if not accepted:
             return None

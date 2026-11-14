@@ -15,6 +15,7 @@ short, complete renderer to read alongside it.
 """
 from __future__ import annotations
 
+from app.styles.style import field_label
 import re
 from pathlib import Path
 
@@ -198,22 +199,22 @@ class RendererHelperDialog(DeveloperDialogBase):
         self._category_combo.setEditable(True)
         self._category_combo.addItems(EXISTING_CATEGORIES)
         self._category_combo.setCurrentText("User")
-        form.addRow(_("Category:"), self._category_combo)
+        form.addRow(field_label(_("Category")), self._category_combo)
 
         super().add_fields(form, card)
 
         self._link_edit = QLineEdit(card)
         self._link_edit.setPlaceholderText(_("Matplotlib documentation URL (optional)"))
-        form.addRow(_("Link:"), self._link_edit)
+        form.addRow(field_label(_("Link")), self._link_edit)
 
         self._required_roles_edit = QLineEdit(card)
         self._required_roles_edit.setText("x, y")
         self._required_roles_edit.setPlaceholderText(_("comma-separated, e.g. x, y"))
-        form.addRow(_("Required roles:"), self._required_roles_edit)
+        form.addRow(field_label(_("Required roles")), self._required_roles_edit)
 
         self._optional_roles_edit = QLineEdit(card)
         self._optional_roles_edit.setPlaceholderText(_("comma-separated, optional"))
-        form.addRow(_("Optional roles:"), self._optional_roles_edit)
+        form.addRow(field_label(_("Optional roles")), self._optional_roles_edit)
 
     def validate_fields(self) -> str:
         if not _parse_roles(self._required_roles_edit.text()):

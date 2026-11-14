@@ -18,6 +18,7 @@ notes. See app/analysis/linear_model.py for the arithmetic.
 """
 from __future__ import annotations
 
+from app.styles.style import field_label
 import html
 import math
 from collections.abc import Mapping
@@ -193,32 +194,32 @@ class FitModelDialog(RolesOperationDialogBase):
             self._personality.addItem(_(label), key)
         self._personality.setToolTip(_("How the responses are modelled."))
         self._personality.currentIndexChanged.connect(lambda _i: self._on_personality_changed())
-        form.addRow(_("Personality:"), self._personality)
+        form.addRow(field_label(_("Personality")), self._personality)
         self._emphasis = QComboBox()
         for key, label, _charts in EMPHASES:
             self._emphasis.addItem(_(label), key)
         self._emphasis.setToolTip(_("Which charts the report opens with; each can still be ticked or not."))
         self._emphasis.currentIndexChanged.connect(lambda _i: self._apply_emphasis())
-        form.addRow(_("Emphasis:"), self._emphasis)
+        form.addRow(field_label(_("Emphasis")), self._emphasis)
         self._family = QComboBox()
         for key, label in lm.FAMILIES:
             self._family.addItem(_(label), key)
         self._family.setToolTip(_("The response's distribution; its canonical link (log for Gamma)."))
         self._family.currentIndexChanged.connect(lambda _i: self.inputs_changed())
-        form.addRow(_("Distribution:"), self._family)
+        form.addRow(field_label(_("Distribution")), self._family)
         self._penalty = QComboBox()
         for key, label in lm.PENALTIES:
             self._penalty.addItem(_(label), key)
         self._penalty.setToolTip(_("Lasso drops the terms that do not help, Ridge shrinks them all, Elastic Net "
                                    "mixes the two; the strength is chosen by cross-validation."))
         self._penalty.currentIndexChanged.connect(lambda _i: self.inputs_changed())
-        form.addRow(_("Estimation method:"), self._penalty)
+        form.addRow(field_label(_("Estimation method")), self._penalty)
         self._direction = QComboBox()
         for key, label in lm.STEPWISE:
             self._direction.addItem(_(label), key)
         self._direction.setToolTip(_("Backward drops terms from the full model; forward adds them to the mean."))
         self._direction.currentIndexChanged.connect(lambda _i: self.inputs_changed())
-        form.addRow(_("Direction:"), self._direction)
+        form.addRow(field_label(_("Direction")), self._direction)
         self._std_errors = QComboBox()
         for key, label in lm.STD_ERRORS:
             self._std_errors.addItem(_(label), key)
@@ -226,11 +227,11 @@ class FitModelDialog(RolesOperationDialogBase):
                                       "valid when the variance of the residuals changes with the factors; "
                                       "clustered ones when rows of a group are not independent."))
         self._std_errors.currentIndexChanged.connect(lambda _i: self._on_personality_changed())
-        form.addRow(_("Standard errors:"), self._std_errors)
+        form.addRow(field_label(_("Standard errors")), self._std_errors)
         self._cluster = QComboBox()
         self._cluster.setToolTip(_("The column whose values name the groups of rows that may be correlated."))
         self._cluster.currentIndexChanged.connect(lambda _i: self.inputs_changed())
-        form.addRow(_("Cluster by:"), self._cluster)
+        form.addRow(field_label(_("Cluster by")), self._cluster)
         for combo in (self._personality, self._emphasis, self._family, self._penalty, self._direction,
                       self._std_errors, self._cluster):
             # Long names elide instead of widening the window.

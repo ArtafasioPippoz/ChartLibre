@@ -13,6 +13,7 @@ series shown in the dialog and is returned in metadata/callbacks.
 
 from __future__ import annotations
 
+from app.styles.style import field_label
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, ClassVar
@@ -457,7 +458,7 @@ class SeriesSmoothingDialog(DataOperationDialogBase):
 
         panel = self.model_form_card(
             "smoothingModelCard",
-            [(_("Data type:"), self.dimension_combo), (_("Model:"), self.method_combo)],
+            [(field_label(_("Data type")), self.dimension_combo), (field_label(_("Model")), self.method_combo)],
         )
         self._doc_link.setToolTip(_("Open documentation for the selected method."))
         return panel

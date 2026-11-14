@@ -7,6 +7,7 @@ imported/exported as text files.
 """
 from __future__ import annotations
 
+from app.styles.style import field_label
 import ast
 import html
 import json
@@ -258,7 +259,7 @@ class SeriesFunctionDialog(DataOperationDialogBase):
         docs = QWidget(library); form = QFormLayout(docs); form.setContentsMargins(0, 0, 0, 0)
         form.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-        form.addRow(_("Docs:"), self._doc_link); ll.addWidget(docs)
+        form.addRow(field_label(_("Docs")), self._doc_link); ll.addWidget(docs)
 
         # The stored functions - which one, New, Save, Import, Export - over the editor of the one shown.
         # The function on one row, what to do with it on the next: on one row they were wider than the panel.
@@ -267,7 +268,7 @@ class SeriesFunctionDialog(DataOperationDialogBase):
         self._stored_bar = QWidget(function_page)
         bar = QVBoxLayout(self._stored_bar); bar.setContentsMargins(0, 0, 0, 0)
         stored = QHBoxLayout()
-        stored.addWidget(QLabel(_("Stored:"), self._stored_bar))
+        stored.addWidget(QLabel(field_label(_("Stored")), self._stored_bar))
         self._stored_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         stored.addWidget(self._stored_combo, 1)
         bar.addLayout(stored)
@@ -683,7 +684,7 @@ class SeriesFunctionDialog(DataOperationDialogBase):
             self._apply_serialised(data)
 
     def _new_function(self) -> None:
-        name, ok = QInputDialog.getText(self, _("New function"), _("Function name:"))
+        name, ok = QInputDialog.getText(self, _("New function"), field_label(_("Function name")))
         name = name.strip()
         if not ok or not name:
             return

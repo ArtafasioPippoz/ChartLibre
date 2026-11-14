@@ -8,6 +8,7 @@ window's edges and dropped files).
 """
 from __future__ import annotations
 
+from app.styles.style import field_label
 import gc
 import json
 import logging
@@ -890,7 +891,7 @@ class MainWindow(QMainWindow):
         table_name, accepted = QInputDialog.getText(
             self,
             _("New Blank Table"),
-            _("Table name:"),
+            field_label(_("Table name")),
             text="New_Table",
         )
         if not accepted:

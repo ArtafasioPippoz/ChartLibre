@@ -14,6 +14,7 @@ at the bottom of the selector section.
 """
 from __future__ import annotations
 
+from app.styles.style import field_label
 import json
 from collections.abc import Callable, Mapping, Sequence
 from functools import cache
@@ -136,13 +137,13 @@ class AxisSeriesSelector(QWidget):
 
     def _create_widgets(self) -> None:
         """Create child widgets and configure compact sizing."""
-        self.figure_label = QLabel(_("Figure:"), self)
+        self.figure_label = QLabel(field_label(_("Figure")), self)
         self.figure_combo = QComboBox(self)
 
-        self.axis_label = QLabel(_("Axis:"), self)
+        self.axis_label = QLabel(field_label(_("Axis")), self)
         self.axis_combo = QComboBox(self)
 
-        self.series_label = QLabel(_("Series:"), self)
+        self.series_label = QLabel(field_label(_("Series")), self)
         self.series_list = QListWidget(self, sortingEnabled=True)
 
         # What kind of data the current selection actually is - 2D, a 3D

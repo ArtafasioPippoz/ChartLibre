@@ -7,6 +7,7 @@ link can later be refreshed through exactly the same code path.
 """
 from __future__ import annotations
 
+from app.styles.style import field_label
 import re
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -513,16 +514,16 @@ class ImportDataDialog(SettingsTableDialog):
                                       "above 12 is a day - and, when they do not tell, follows this computer's "
                                       "own date order."))
         stdSizeAndlayout(self._date_order)
-        values_form.addRow(_("Dates:"), self._date_order)
+        values_form.addRow(field_label(_("Dates")), self._date_order)
         self._date_format = QLineEdit(str(cfg.get("date_format") or ""), values.card)
         self._date_format.setPlaceholderText("%d.%m.%Y %H:%M")
         self._date_format.setToolTip(_("The dates' format, in strftime codes: %d day, %m month, %Y year, "
                                        "%H:%M:%S time, %b month name."))
-        values_form.addRow(_("Format:"), self._date_format)
+        values_form.addRow(field_label(_("Format")), self._date_format)
         self._missing_codes = QLineEdit(", ".join(cfg.get("missing", import_cleaning.DEFAULT_MISSING)), values.card)
         self._missing_codes.setToolTip(_("Values that mean \"no value\", separated by commas: they are imported "
                                          "as empty cells."))
-        values_form.addRow(_("Missing values:"), self._missing_codes)
+        values_form.addRow(field_label(_("Missing values")), self._missing_codes)
         self._empty_missing = QCheckBox(_("Empty or blank text is missing"), values.card)
         self._empty_missing.setChecked(bool(cfg.get("empty_is_missing", True)))
         values_form.addRow("", self._empty_missing)

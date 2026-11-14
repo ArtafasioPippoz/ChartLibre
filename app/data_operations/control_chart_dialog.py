@@ -53,6 +53,7 @@ two families have to disagree about: see
 
 from __future__ import annotations
 
+from app.styles.style import field_label
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any, ClassVar
@@ -474,7 +475,7 @@ class SeriesControlChartDialog(DataOperationDialogBase):
         )
         if self._parameter_form is not None:
             self._parameter_form.addRow(
-                _("Sample size column:"), self._size_column_combo
+                field_label(_("Sample size column")), self._size_column_combo
             )
         return widget
 

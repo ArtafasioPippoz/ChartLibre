@@ -5,6 +5,7 @@ OK creates a new SQLite source table; Cancel makes no changes.
 """
 from __future__ import annotations
 
+from app.styles.style import field_label
 import html
 import itertools
 import re
@@ -202,7 +203,7 @@ class DOEExperimentDialog(SettingsTableDialog):
 
         model_form = QFormLayout()
         self._configure_form(model_form)
-        model_form.addRow(_("Model:"), self.model_combo)
+        model_form.addRow(field_label(_("Model")), self.model_combo)
         left_layout.addLayout(model_form)
 
         parameter_host = QWidget(left)
@@ -220,16 +221,16 @@ class DOEExperimentDialog(SettingsTableDialog):
                 self._parameter_labels[widget] = label
             grid.addWidget(widget, row, column + 1, 1, span)
 
-        place(_("Table name:"), self.table_name, 0, 0, span=3)
-        place(_("Factors:"), self.factor_count, 1, 0)
-        place(_("Responses:"), self.response_count, 1, 2)
-        place(_("Levels:"), self.levels, 2, 0)
-        place(_("Replicates:"), self.replicates, 2, 2)
-        place(_("Seed:"), self.seed, 3, 0)
+        place(field_label(_("Table name")), self.table_name, 0, 0, span=3)
+        place(field_label(_("Factors")), self.factor_count, 1, 0)
+        place(field_label(_("Responses")), self.response_count, 1, 2)
+        place(field_label(_("Levels")), self.levels, 2, 0)
+        place(field_label(_("Replicates")), self.replicates, 2, 2)
+        place(field_label(_("Seed")), self.seed, 3, 0)
         grid.addWidget(self.randomize, 3, 2, 1, 2)
-        place(_("Center points:"), self.center_points, 4, 0)
-        place(_("LHS samples:"), self.samples, 4, 2)
-        place(_("LHS algorithm:"), self.lhs_algorithm, 5, 0, span=3)
+        place(field_label(_("Center points")), self.center_points, 4, 0)
+        place(field_label(_("LHS samples")), self.samples, 4, 2)
+        place(field_label(_("LHS algorithm")), self.lhs_algorithm, 5, 0, span=3)
         grid.setColumnStretch(1, 1)
         grid.setColumnStretch(3, 1)
         self.table_name.setMinimumHeight(self.factor_count.sizeHint().height())

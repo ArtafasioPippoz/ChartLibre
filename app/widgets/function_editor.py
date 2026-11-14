@@ -15,6 +15,7 @@ the project's, shared by every chart of the function. New Chart shows the values
 """
 from __future__ import annotations
 
+from app.styles.style import field_label
 import ast
 import math
 from collections.abc import Mapping
@@ -122,7 +123,7 @@ class RangeRow(QWidget):
         layout.addLayout(ends)
         # Points and Scale a line each, labelled: Chart properties is narrow, and a label beside an expanding
         # field was squeezed to nothing.
-        labels = [QLabel(text, self) for text in (_("Points:"), _("Scale:"))]
+        labels = [QLabel(text, self) for text in (field_label(_("Points")), field_label(_("Scale")))]
         width = max(label.sizeHint().width() for label in labels)
         for label, field in zip(labels, (self.points, self.spacing), strict=True):
             label.setFixedWidth(width)
@@ -224,12 +225,12 @@ class FunctionEditor(QFrame):
         # As tall as its lines: a wrapped label left Preferred took the card's spare height (Chart properties).
         self._symbols_note.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
         self.text = _GrowingText(self)
-        self._text_label = QLabel(_("Expression:"), self)
+        self._text_label = QLabel(field_label(_("Expression")), self)
         self.x_row = RangeRow(self)
         self.y_row = RangeRow(self, axis="y")
-        form.addRow(_("Kind:"), self.kind)
-        form.addRow(_("Description:"), self.description)
-        form.addRow(_("Parameters:"), self.symbols)
+        form.addRow(field_label(_("Kind")), self.kind)
+        form.addRow(field_label(_("Description")), self.description)
+        form.addRow(field_label(_("Parameters")), self.symbols)
         form.addRow("", self._symbols_note)
         form.addRow(self._text_label, self.text)
         form.addRow(self.x_row)
@@ -404,7 +405,7 @@ class FunctionEditor(QFrame):
 
     def _formula_changed(self, *_args: Any) -> None:
         code = self.source_type() == CODE
-        self._text_label.setText(_("Code:") if code else _("Expression:"))
+        self._text_label.setText(field_label(_("Code")) if code else field_label(_("Expression")))
         self.text.setFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont if code else
                                                    QFontDatabase.SystemFont.GeneralFont))
         self.text.setPlaceholderText(f"def {self._name or 'f'}(a, b):\n    f_numeric = a*x**2 + b\n"

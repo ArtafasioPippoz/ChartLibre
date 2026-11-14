@@ -12,6 +12,7 @@ series and the parameter table, and lays the result out.
 """
 from __future__ import annotations
 
+from app.styles.style import field_label
 import math
 from collections.abc import Callable, Sequence
 from dataclasses import replace
@@ -304,11 +305,11 @@ class SeriesFitDialog(DataOperationDialogBase):
                                    )
         self._btn_use_fit_params.setEnabled(False)
         self._btn_use_fit_params.hide()
-        self._lbl_degree = QLabel(_("Degree:"), self)
+        self._lbl_degree = QLabel(field_label(_("Degree")), self)
         self._spin_degree = QSpinBox(self)
-        self._lbl_knots = QLabel(_("Knots:"), self)
+        self._lbl_knots = QLabel(field_label(_("Knots")), self)
         self._spin_knots = QSpinBox(self)
-        self._lbl_spacing = QLabel(_("Spacing:"), self)
+        self._lbl_spacing = QLabel(field_label(_("Spacing")), self)
         self._combo_knot_spacing = QComboBox(self)
 
         self._residual_axis_id: int | None = None
@@ -339,9 +340,9 @@ class SeriesFitDialog(DataOperationDialogBase):
 
         family_row = QHBoxLayout()
         stdSizeAndlayout(family_row)
-        family_row.addWidget(QLabel(_("Family:"), multi_box))
+        family_row.addWidget(QLabel(field_label(_("Family")), multi_box))
         family_row.addWidget(self._multi_family_combo)
-        family_row.addWidget(QLabel(_("Peaks:"), multi_box))
+        family_row.addWidget(QLabel(field_label(_("Peaks")), multi_box))
         family_row.addWidget(self._multi_count_spin)
         family_row.addStretch(1)
         multi_layout.addLayout(family_row)
@@ -416,7 +417,7 @@ class SeriesFitDialog(DataOperationDialogBase):
         option_layout.addStretch(1)
         layout.addWidget(option_row)
 
-        layout.addWidget(QLabel(_("Expression:"), outer))
+        layout.addWidget(QLabel(field_label(_("Expression")), outer))
         layout.addWidget(self._function_expression_html)
         layout.addWidget(self._param_legend)
 
@@ -463,7 +464,7 @@ class SeriesFitDialog(DataOperationDialogBase):
             max(0, self._combo_optimizer.findData(DEFAULT_OPTIMIZER))
         )
         self._combo_optimizer.currentIndexChanged.connect(self._refresh_optimizer_help)
-        fit_options_layout.addRow(_("Algorithm:"), self._combo_optimizer)
+        fit_options_layout.addRow(field_label(_("Algorithm")), self._combo_optimizer)
 
         for key, label in LOSSES:
             self._combo_loss.addItem(_(label), key)
@@ -474,7 +475,7 @@ class SeriesFitDialog(DataOperationDialogBase):
                 "fit. Only the least-squares algorithms use it."
             )
         )
-        fit_options_layout.addRow(_("Loss:"), self._combo_loss)
+        fit_options_layout.addRow(field_label(_("Loss")), self._combo_loss)
 
         run_row = QWidget(fit_options)
         run_row_layout = QHBoxLayout(run_row)
@@ -483,7 +484,7 @@ class SeriesFitDialog(DataOperationDialogBase):
         self._max_nfev_edit.setToolTip(_("Maximum number of function evaluations for the optimizer."))
         run_row_layout.addWidget(self._max_nfev_edit)
         run_row_layout.addStretch(1)
-        fit_options_layout.addRow(_("Max evals:"), run_row)
+        fit_options_layout.addRow(field_label(_("Max evals")), run_row)
 
         for key, label in (("none", "Equal"), ("relative", "Relative (1/|y|)"), ("errors", "Error bars (yerr)")):
             self._combo_weights.addItem(_(label), key)
@@ -495,7 +496,7 @@ class SeriesFitDialog(DataOperationDialogBase):
                 "own errors - so a precise point counts more."
             )
         )
-        fit_options_layout.addRow(_("Weights:"), self._combo_weights)
+        fit_options_layout.addRow(field_label(_("Weights")), self._combo_weights)
 
         self._btn_estimate.setToolTip(
             _(
@@ -1183,7 +1184,7 @@ class SeriesFitDialog(DataOperationDialogBase):
         )
         self._fit_mode_combo.currentIndexChanged.connect(self._set_fit_mode)
         row_layout.addWidget(self._fit_mode_combo)
-        row_layout.addWidget(QLabel(_("Shared:"), self._shared_row))
+        row_layout.addWidget(QLabel(field_label(_("Shared")), self._shared_row))
         self._shared_button = QPushButton(self._shared_row)
         self._shared_button.setToolTip(_("One value for every series, fitted to all of them together."))
         self._shared_menu = QMenu(self._shared_button)

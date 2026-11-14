@@ -16,6 +16,7 @@ formula. See base_function's own docstring for the full contract.
 """
 from __future__ import annotations
 
+from app.styles.style import field_label
 from pathlib import Path
 
 from PySide6.QtWidgets import QFormLayout, QLineEdit, QWidget
@@ -156,7 +157,7 @@ class FunctionCreatorDialog(DeveloperDialogBase):
         self._params_edit = QLineEdit(card)
         self._params_edit.setText("intercept, slope")
         self._params_edit.setPlaceholderText(_("comma-separated, e.g. intercept, slope"))
-        form.addRow(_("Parameters:"), self._params_edit)
+        form.addRow(field_label(_("Parameters")), self._params_edit)
 
     def validate_fields(self) -> str:
         if not _parse_params(self._params_edit.text()):

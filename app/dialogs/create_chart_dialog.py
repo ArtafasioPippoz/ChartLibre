@@ -11,6 +11,7 @@ scatter plot next to the words "Scatter Plot" is decoration, not information.
 """
 from __future__ import annotations
 
+from app.styles.style import field_label
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any, cast
@@ -236,7 +237,7 @@ class NewPlotTabDialog(ColumnsDialog):
         stdSizeAndlayout(fig_layout)
         fig_layout.addRow(self._rb_new_figure)
         fig_layout.addRow(self._rb_current_figure)
-        fig_layout.addRow(_("Name:"), self._edit_figure_name)
+        fig_layout.addRow(field_label(_("Name")), self._edit_figure_name)
         fig_main.addWidget(fig_form)
 
         self._rb_new_axis = QRadioButton(_("Add new axis"))
@@ -254,7 +255,7 @@ class NewPlotTabDialog(ColumnsDialog):
         stdSizeAndlayout(axis_layout)
         axis_layout.addRow(self._rb_new_axis)
         axis_layout.addRow(self._rb_existing_axis)
-        axis_layout.addRow(_("Axis name:"), self._edit_axis_name)
+        axis_layout.addRow(field_label(_("Axis name")), self._edit_axis_name)
         # One axis per value of a column (B-13): the same series on each,
         # filtered to that value - small multiples, one panel per group.
         self._combo_axes_by = QComboBox()
@@ -264,13 +265,13 @@ class NewPlotTabDialog(ColumnsDialog):
             "each with every series, filtered to that value."
         ))
         self._combo_axes_by.currentIndexChanged.connect(lambda _index: self._sync_controls())
-        axis_layout.addRow(_("Separate axes by:"), self._combo_axes_by)
+        axis_layout.addRow(field_label(_("Separate axes by")), self._combo_axes_by)
         self._axis_form_layout = axis_layout
 
         axis_row = QWidget(fig_group.card)
         axis_row_layout = QHBoxLayout(axis_row)
         stdSizeAndlayout(axis_row_layout)
-        axis_row_layout.addWidget(QLabel(_("Axis:")))
+        axis_row_layout.addWidget(QLabel(field_label(_("Axis"))))
         axis_row_layout.addWidget(self._combo_axes, 1)
         axis_layout.addRow(axis_row)
         fig_main.addWidget(axis_form)
@@ -382,13 +383,13 @@ class NewPlotTabDialog(ColumnsDialog):
         editor_form = QWidget(editor_group.card)
         editor_form_layout = QFormLayout(editor_form)
         stdSizeAndlayout(editor_form_layout)
-        editor_form_layout.addRow(_("Data source:"), self._combo_table)
+        editor_form_layout.addRow(field_label(_("Data source")), self._combo_table)
         editor_form_layout.addRow(self._function_panel)
         editor_form_layout.setRowVisible(self._function_panel, False)
-        editor_form_layout.addRow(_("Series name:"), self._edit_series_name)
-        editor_form_layout.addRow(_("Query:"), self._edit_sql)
+        editor_form_layout.addRow(field_label(_("Series name")), self._edit_series_name)
+        editor_form_layout.addRow(field_label(_("Query")), self._edit_sql)
         editor_form_layout.addRow(self._roles_scroll)
-        editor_form_layout.addRow(_("Group by:"), self._combo_group)
+        editor_form_layout.addRow(field_label(_("Group by")), self._combo_group)
         self._editor_form_layout = editor_form_layout
         self._show_group_by()
         editor_layout.addWidget(editor_form, 1)

@@ -6,6 +6,7 @@ or without a dialog in front of it.
 """
 from __future__ import annotations
 
+from app.styles.style import field_label
 from collections.abc import Sequence
 from typing import Any
 
@@ -206,7 +207,7 @@ class GroupAggregateDialog(SettingsTableDialog):
         side = table_card.layout()
         options = QHBoxLayout()
         side.addLayout(options)
-        options.addWidget(QLabel(_("Name:"), self), 0)
+        options.addWidget(QLabel(field_label(_("Name")), self), 0)
         self.name = QLineEdit(self)
         self.name.textChanged.connect(lambda _t: self._schedule())
         options.addWidget(self.name, 1)
@@ -330,13 +331,13 @@ class ComputedColumnDialog(SettingsTableDialog):
         self.add_settings_card(_("New column")).layout().addLayout(form)
         self.name = QLineEdit(self)
         self.name.setPlaceholderText("new_column")
-        form.addRow(_("Name:"), self.name)
+        form.addRow(field_label(_("Name")), self.name)
         self.kind = QComboBox(self)
         self.kind.addItem(_("Automatic"), None)
         for kind in ("REAL", "INTEGER", "TEXT"):
             self.kind.addItem(kind, kind)
         self.kind.setToolTip(_("Automatic keeps each value as the expression gives it."))
-        form.addRow(_("Type:"), self.kind)
+        form.addRow(field_label(_("Type")), self.kind)
 
         self.expression = QPlainTextEdit(self)
         self.expression.setFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
@@ -434,9 +435,9 @@ class FillMissingDialog(PanelDialog):
         self.method = QComboBox(self)
         for label, key in FILL_CHOICES:
             self.method.addItem(_(label), key)
-        form.addRow(_("Fill with:"), self.method)
+        form.addRow(field_label(_("Fill with")), self.method)
         self.value = QLineEdit(self)
-        form.addRow(_("Value:"), self.value)
+        form.addRow(field_label(_("Value")), self.value)
         # The import's codes, so that a code means the same here as when the file was read.
         self.codes = QLineEdit(", ".join(DEFAULT_MISSING), self)
         self.codes.setPlaceholderText(_("-999, NA, n/a"))
@@ -444,7 +445,7 @@ class FillMissingDialog(PanelDialog):
                                 "cells. Text is matched whatever its case (na is NA); a number by its value "
                                 "(-999 is -999.0). Empty cells - NULL and blank text - are always filled."))
         self.codes.setCursorPosition(0)  # the list from its start, not its last codes
-        form.addRow(_("Also missing:"), self.codes)
+        form.addRow(field_label(_("Also missing")), self.codes)
         self.method.currentIndexChanged.connect(self._follow_method)
         self._follow_method()
         self.add_action("apply", self.accept, default=True)
@@ -468,14 +469,14 @@ class FindReplaceDialog(PanelDialog):
         stdSizeAndlayout(form)
         self.add_card(_("Find and replace"), "findReplaceCard").layout().addLayout(form)
         self.find_edit = QLineEdit(self)
-        form.addRow(_("Find:"), self.find_edit)
+        form.addRow(field_label(_("Find")), self.find_edit)
         self.replace_edit = QLineEdit(self)
-        form.addRow(_("Replace with:"), self.replace_edit)
+        form.addRow(field_label(_("Replace with")), self.replace_edit)
         self.scope = QComboBox(self)
         if column:
             self.scope.addItem(_("Column '{column}'").format(column=column), column)
         self.scope.addItem(_("Whole table"), None)
-        form.addRow(_("In:"), self.scope)
+        form.addRow(field_label(_("In")), self.scope)
         self.whole_cell = QCheckBox(_("Only cells that match exactly"), self)
         form.addRow("", self.whole_cell)
         self.add_action("apply", self.accept, default=True)

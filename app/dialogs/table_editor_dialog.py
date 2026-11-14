@@ -25,6 +25,7 @@ editing is.
 """
 from __future__ import annotations
 
+from app.styles.style import field_label
 from typing import Any
 
 from PySide6.QtCore import QModelIndex, QPersistentModelIndex, Qt
@@ -533,7 +534,7 @@ class TableEditorDialog(SettingsTableDialog):
             return
         if kind is None:
             kind, ok = QInputDialog.getItem(
-                self, _("Add column"), _("Type:"), list(COLUMN_TYPES), 0, False
+                self, _("Add column"), field_label(_("Type")), list(COLUMN_TYPES), 0, False
             )
             if not ok:
                 return

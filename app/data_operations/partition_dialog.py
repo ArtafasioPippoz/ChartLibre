@@ -9,6 +9,7 @@ report in its notes. The engine is app.analysis.partition.
 """
 from __future__ import annotations
 
+from app.styles.style import field_label
 import html
 from collections.abc import Mapping
 from typing import Any, ClassVar
@@ -170,7 +171,7 @@ class PartitionDialog(RolesOperationDialogBase):
             row.addWidget(button)
         row.addStretch(1)
         grow.card.layout().addLayout(row)
-        link = QLabel(f"{html.escape(_('JMP documentation:'))} <a href='{PARTITION_DOC}'>{html.escape(_('Partition'))}</a>")
+        link = QLabel(f"{html.escape(field_label(_('JMP documentation')))} <a href='{PARTITION_DOC}'>{html.escape(_('Partition'))}</a>")
         link.setOpenExternalLinks(True)
         link.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
         grow.card.layout().addWidget(link)

@@ -7,6 +7,7 @@ any other - so every operation reads a table without knowing it does.
 """
 from __future__ import annotations
 
+from app.styles.style import field_label
 from typing import Any
 
 import pandas as pd
@@ -75,10 +76,10 @@ class TableSourceSelector(QWidget):
         grid.setContentsMargins(0, 0, 0, 0)
         grid.setHorizontalSpacing(8)
         grid.setVerticalSpacing(6)
-        for row, (text, widget) in enumerate(((_("Table:"), self.table_combo), (_("X:"), self.x_combo))):
+        for row, (text, widget) in enumerate(((field_label(_("Table")), self.table_combo), (field_label(_("X")), self.x_combo))):
             grid.addWidget(QLabel(text, self), row, 0)
             grid.addWidget(widget, row, 1)
-        grid.addWidget(QLabel(_("Y:"), self), 2, 0, Qt.AlignmentFlag.AlignTop)
+        grid.addWidget(QLabel(field_label(_("Y")), self), 2, 0, Qt.AlignmentFlag.AlignTop)
         grid.addWidget(self.y_list, 2, 1)
         # The chart is picked on the Charts tab (the dialog places it there), not here with the columns.
         if self.chart_combo.count() <= 1:

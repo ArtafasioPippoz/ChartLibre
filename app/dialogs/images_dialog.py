@@ -5,6 +5,7 @@ its licence, shown here and editable, so a chart that uses one can credit it.
 """
 from __future__ import annotations
 
+from app.styles.style import field_label
 from pathlib import Path
 from typing import Any
 
@@ -198,7 +199,7 @@ class ImagesDialog(PanelDialog):
         if not data:
             QMessageBox.information(self, _("Pictures"), _("The clipboard holds no picture."))
             return
-        name, ok = QInputDialog.getText(self, _("Paste picture"), _("Name of the picture:"))
+        name, ok = QInputDialog.getText(self, _("Paste picture"), field_label(_("Name of the picture")))
         if ok and name.strip():
             added = self._add(name.strip(), data, _("Clipboard"))
             if added:
@@ -208,7 +209,7 @@ class ImagesDialog(PanelDialog):
         stored = self._current()
         if stored is None:
             return
-        name, ok = QInputDialog.getText(self, _("Rename picture"), _("New name:"), text=stored.name)
+        name, ok = QInputDialog.getText(self, _("Rename picture"), field_label(_("New name")), text=stored.name)
         name = name.strip()
         if not ok or not name or name == stored.name:
             return

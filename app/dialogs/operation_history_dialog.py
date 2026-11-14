@@ -8,6 +8,7 @@ any other report.
 """
 from __future__ import annotations
 
+from app.styles.style import field_label
 import html
 import re
 from pathlib import Path
@@ -167,7 +168,7 @@ class OperationHistoryDialog(PanelDialog):
         if len(picked) != 1:
             return
         record = picked[0]
-        name, accepted = QInputDialog.getText(self, _("Save as function"), _("Function name:"),
+        name, accepted = QInputDialog.getText(self, _("Save as function"), field_label(_("Function name")),
                                               text=re.sub(r"\W+", "_", record.operation.lower()).strip("_"))
         name = name.strip()
         if not accepted or not name:

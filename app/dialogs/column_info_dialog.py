@@ -15,6 +15,7 @@ saves them.
 """
 from __future__ import annotations
 
+from app.styles.style import field_label
 from typing import Any
 
 import pandas as pd
@@ -86,26 +87,26 @@ class ColumnInfoDialog(ColumnsDialog):
         stdSizeAndlayout(form)
         self.add_column_card(0, _("Column"), "columnInfoCard").layout().addLayout(form)
         self.name = QLineEdit(self)
-        form.addRow(_("Name:"), self.name)
+        form.addRow(field_label(_("Name")), self.name)
         self.data_type = QComboBox(self)
         self.data_type.setToolTip(_("How the values are stored. Changing it converts them; a value that cannot "
                                     "be read in the new type is left empty."))
-        form.addRow(_("Data type:"), self.data_type)
+        form.addRow(field_label(_("Data type")), self.data_type)
         self.modelling = QComboBox(self)
         for key, label in MODELLING_TYPES:
             self.modelling.addItem(_(label), key)
         self.modelling.setToolTip(_("How the analyses take the column: as measurements (continuous), ordered "
                                     "levels (ordinal) or categories (nominal). Forced here, it is the column's "
                                     "type in every analysis."))
-        form.addRow(_("Modelling type:"), self.modelling)
+        form.addRow(field_label(_("Modelling type")), self.modelling)
         self.label = QLineEdit(self)
-        form.addRow(_("Label:"), self.label)
+        form.addRow(field_label(_("Label")), self.label)
         self.unit = QLineEdit(self)
         self.unit.setPlaceholderText(_("mm, °C, mV..."))
-        form.addRow(_("Unit:"), self.unit)
+        form.addRow(field_label(_("Unit")), self.unit)
         self.notes = QPlainTextEdit(self)
         self.notes.setFixedHeight(self.notes.fontMetrics().height() * 3 + 12)
-        form.addRow(_("Notes:"), self.notes)
+        form.addRow(field_label(_("Notes")), self.notes)
 
         # How the values are shown - in the table preview, for now; the values stay as stored.
         self.format = QComboBox(self)
@@ -120,10 +121,10 @@ class ColumnInfoDialog(ColumnsDialog):
         format_layout.setContentsMargins(0, 0, 0, 0)
         format_layout.addWidget(self.format, 1)
         format_layout.addWidget(self.decimals)
-        form.addRow(_("Format:"), format_row)
+        form.addRow(field_label(_("Format")), format_row)
         self.pattern = QLineEdit(self)
         self.pattern.setToolTip(_("strftime codes: %d day, %m month, %Y year, %H:%M:%S time, %b month name."))
-        form.addRow(_("Pattern:"), self.pattern)
+        form.addRow(field_label(_("Pattern")), self.pattern)
         self._pattern_label = form.labelForField(self.pattern)
         self.example = QLabel("", self)
         self.example.setProperty("muted", True)

@@ -31,6 +31,7 @@ means by cluster and, with automatic k, the silhouette of each k tried.
 
 from __future__ import annotations
 
+from app.styles.style import field_label
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, ClassVar, Final
@@ -367,10 +368,10 @@ class SeriesClusterDialog(DataOperationDialogBase):
         return self.model_form_card(
             "clusterModelCard",
             [
-                (_("Family:"), self.method_combo),
-                (_("Algorithm:"), self.scipy_tool_combo),
-                (_("Features:"), self.feature_combo),
-                (_("Render as:"), self.render_mode_combo),
+                (field_label(_("Family")), self.method_combo),
+                (field_label(_("Algorithm")), self.scipy_tool_combo),
+                (field_label(_("Features")), self.feature_combo),
+                (field_label(_("Render as")), self.render_mode_combo),
             ],
         )
 

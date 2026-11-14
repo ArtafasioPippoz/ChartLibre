@@ -13,6 +13,7 @@ number used as a category (a machine number, a 1/2/3 level) is nominal.
 """
 from __future__ import annotations
 
+from app.styles.style import field_label
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
@@ -157,7 +158,7 @@ class ColumnRolesWidget(QWidget):
         self._column_list.customContextMenuRequested.connect(self._show_column_menu)
         columns.addWidget(self._column_list, 1)
         type_row = QHBoxLayout()
-        type_row.addWidget(QLabel(_("Type:"), self))
+        type_row.addWidget(QLabel(field_label(_("Type")), self))
         self._kind_combo = QComboBox(self)
         self._kind_combo.setToolTip(_("How the selected columns enter a model: as numbers, or as labels."))
         for value, label in KINDS:

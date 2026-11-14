@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from app.styles.style import field_label
 from collections.abc import Callable
 from typing import Any
 
@@ -207,7 +208,7 @@ class SqlWorkpadPanel(NavPanel):
         repo = self._repo()
         if repo is None or not self._last_select:
             return
-        name, ok = QInputDialog.getText(self, _("Save as query"), _("Name of the query:"))
+        name, ok = QInputDialog.getText(self, _("Save as query"), field_label(_("Name of the query")))
         if not ok or not name.strip():
             return
         try:
