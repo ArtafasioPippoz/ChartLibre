@@ -1254,22 +1254,20 @@ QRadioButton::indicator:checked {
   background: palette(highlight);
   border: 1px solid palette(highlight);
 }
-QLabel#inspectorSectionCaption {
-  color: palette(placeholder-text);
-  background: transparent;
-}
 QToolButton#inspectorSectionTitle {
   border: none;
   background: transparent;
   text-align: left;
-  padding: 3px 4px;
-  color: palette(placeholder-text);
+  padding: 2px 0 4px 0;
+  color: palette(window-text);
+  font-size: 11pt;
+  font-weight: 600;
 }
 QToolButton#inspectorSectionTitle:checked,
 QToolButton#inspectorSectionTitle:hover {
   background: transparent;
   border: none;
-  color: palette(placeholder-text);
+  color: palette(window-text);
 }
 QFrame#inspectorHairline {
   background: rgba(@SHADOW_RGB@, 0.10);

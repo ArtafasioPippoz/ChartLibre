@@ -262,18 +262,12 @@ class InspectorSection(QWidget):
         self._header = QToolButton(self)
         self._header.setObjectName("inspectorSectionTitle")
         self._title = title
-        self._header.setText(title.upper())  # a small grey caption above its list
+        self._header.setText(title)  # as every section title of the app: black, standard case
         self._header.setCheckable(True)
         self._header.setChecked(is_open)
         self._header.setAutoRaise(True)
         self._header.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         self._header.setIconSize(QSize(10, 10))
-        # The system font at its normal size, one weight up: the platforms' own section headings.
-        font = self._header.font()
-        font.setWeight(QFont.Weight.DemiBold)
-        font.setPointSizeF(max(8.0, font.pointSizeF() * 0.86))
-        font.setLetterSpacing(QFont.SpacingType.PercentageSpacing, 104)
-        self._header.setFont(font)
         self._header.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self._header.toggled.connect(self._on_toggled)
         self.body = QWidget(self)
@@ -285,8 +279,8 @@ class InspectorSection(QWidget):
         else:
             self.body.setObjectName("inspectorSectionPlain")
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 10, 0, 10)
-        layout.setSpacing(5)
+        layout.setContentsMargins(0, 6, 0, 6)
+        layout.setSpacing(4)
         layout.addWidget(self._header)
         layout.addWidget(self.body)
         self._foldable = foldable and not fixed
@@ -294,10 +288,9 @@ class InspectorSection(QWidget):
             self._header.setChecked(True)
             self._forced_open = True
             # A caption label, left-aligned: a tool button with no icon centres its text.
-            caption = QLabel(title.upper(), self)
+            caption = QLabel(title, self)
             caption.setObjectName("inspectorSectionCaption")
-            caption.setFont(self._header.font())
-            caption.setContentsMargins(4, 3, 0, 3)
+            caption.setProperty("sectionTitle", True)  # the sheet's section title: bold, black, standard case
             layout.replaceWidget(self._header, caption)
             self._header.hide()
         if fixed:  # no title, no fold: the card is always there (its own first row says what it is)
@@ -312,10 +305,10 @@ class InspectorSection(QWidget):
     def set_title(self, title: str) -> None:
         """Rename the section (a title that names what it follows: Ticks and grid - X)."""
         self._title = title
-        self._header.setText(title.upper())
+        self._header.setText(title)
         caption = self.findChild(QLabel, "inspectorSectionCaption")
         if caption is not None:
-            caption.setText(title.upper())
+            caption.setText(title)
 
     def is_open(self) -> bool:
         return self._header.isChecked()
@@ -329,7 +322,7 @@ class InspectorSection(QWidget):
         # A thin chevron before the title: right when closed, down when open (as Claude's own sections).
         if getattr(self, "_foldable", True):
             self._header.setIcon(_chevron_icon(down=is_open, color=self._header.palette().color(
-                QPalette.ColorRole.PlaceholderText)))
+                QPalette.ColorRole.WindowText)))
         self.body.setVisible(is_open or self._forced_open)
 
     def changeEvent(self, event) -> None:  # noqa: N802 - Qt override
