@@ -79,3 +79,43 @@ def test_the_module_level_names_need_a_project(repo) -> None:
         assert analysis_api.Chart("Scatter Plot", "t", ["value"], x="value").figure_id
     finally:
         analysis_api.use_project(None)
+
+
+def test_settings_are_kept_in_a_file_and_run_or_opened_again(repo, tmp_path) -> None:
+    import json
+
+    result = analysis_api.run_analysis(repo, "Are there differences?", "t",
+                                       {"response": ["value"], "group": ["group"]})
+    path = tmp_path / "a.json"
+    settings = result.save(path)
+    assert json.loads(path.read_text())["analysis"] == "Are there differences?" and settings["table"] == "t"
+    assert analysis_api.load_settings(path)["roles"] == {"response": ["value"], "group": ["group"]}
+    again = analysis_api.run_settings(repo, analysis_api.load_settings(path))
+    assert again.operation_id != result.operation_id and again.report_text
+    dialog = analysis_api.open_settings_dialog(repo, analysis_api.load_settings(path))
+    assert dialog.table == "t" and dialog.roles_widget.casting().roles == {"response": ["value"], "group": ["group"]}
+    dialog.close()
+    (tmp_path / "bad.json").write_text('{"format": "other"}')
+    with pytest.raises(analysis_api.AnalysisError, match="not an analysis settings file"):
+        analysis_api.load_settings(tmp_path / "bad.json")
+
+
+def test_the_history_becomes_a_script_and_runs_again(repo, tmp_path) -> None:
+    analysis_api.run_analysis(repo, "Are there differences?", "t", {"response": ["value"], "group": ["group"]})
+    records = repo.operations()
+    script = analysis_api.history_script(records, "a.dhub")
+    compile(script, "script", "exec")  # a Python file
+    assert "Analysis('Are there differences?', 't'" in script and "use_project" in script
+    outcomes = analysis_api.run_records(repo, records)
+    assert len(outcomes) == 1 and isinstance(outcomes[0], analysis_api.AnalysisResult)
+    assert len(repo.operations()) == 2
+
+
+def test_the_workpad_runs_a_settings_file(repo, tmp_path) -> None:
+    from app.workpad.engine import Workpad
+
+    path = tmp_path / "w.json"
+    analysis_api.run_analysis(repo, "Are there differences?", "t",
+                              {"response": ["value"], "group": ["group"]}).save(path)
+    pad = Workpad(lambda: repo)
+    assert "Are there differences?" in repr(pad.run(f"Analysis.from_file({str(path)!r})")[1])

@@ -70,6 +70,10 @@ class AnalysisResult:
         return call_text("Analysis", self.name, self.source, self.roles, self.parameters,
                          model=self.model, draw_on=self.draw_on)
 
+    def save(self, path: Any) -> dict[str, Any]:
+        """Write this analysis' settings to a JSON file, to open or run again."""
+        return save_settings(path, self)
+
     def rerun(self, table: str | None = None, **parameters: Any) -> AnalysisResult:
         """The same analysis again - on *table* when given (its columns must have the same names), with
         *parameters* changed where given."""
@@ -169,6 +173,44 @@ def _list_of_columns(value: Any) -> list[str]:
     return [str(item) for item in value]
 
 
+def _filled_dialog(repo: Any, analysis: str, table: str, roles: Mapping[str, Any] | None,
+                   parameters: Mapping[str, Any] | None, model: str, draw_on: str,
+                   current_figure: Callable[[], int | None]) -> tuple[Any, str, dict[str, list[str]]]:
+    """The analysis' dialog built on *table* and filled: (dialog, its name, the roles as set). Not run, not shown."""
+    from app.scanners.data_operation_scanner import import_class_from_file
+
+    name, entry = find_analysis(analysis)
+    table = find_table(repo, table)
+    casting = {str(key): find_columns(repo, table, _list_of_columns(columns))
+               for key, columns in dict(roles or {}).items()}
+    cls = import_class_from_file(entry)
+    if cls is None:  # its file went, or did not load: the log says why
+        raise AnalysisError(f"The analysis '{name}' could not be loaded; the log says why.")
+    dialog = cls(repo=repo, table=table)
+    try:
+        if dialog.reads_chart():  # the dialog remembers it was last used on a chart: here, a table is named
+            dialog.source_table_radio.setChecked(True)
+            dialog._load_tables(table)
+        if dialog.table != table:
+            raise AnalysisError(f"No table named '{table}'.")
+        dialog.current_figure_id = current_figure()
+        dialog.roles_widget.set_casting(casting)
+        for form in dialog.parameter_forms():
+            form.set_values(dict(parameters or {}))
+        if model and getattr(dialog, "model_combo", None) is not None:
+            index = dialog.model_combo.findData(model)
+            if index < 0:
+                raise AnalysisError(f"'{model}' is not one of {name}'s models.")
+            dialog.model_combo.setCurrentIndex(index)
+        combo = getattr(dialog, "destination_combo", None)
+        if combo is not None and combo.findData(draw_on) >= 0:
+            combo.setCurrentIndex(combo.findData(draw_on))
+    except BaseException:
+        dialog.close()
+        raise
+    return dialog, name, casting
+
+
 def run_analysis(repo: Any, analysis: str, table: str, roles: Mapping[str, Any] | None = None,
                  parameters: Mapping[str, Any] | None = None, *, model: str = "", draw_on: str = "new_figure",
                  current_figure: Callable[[], int | None] = lambda: None,
@@ -183,38 +225,12 @@ def run_analysis(repo: Any, analysis: str, table: str, roles: Mapping[str, Any] 
     """
     from PySide6.QtWidgets import QApplication
 
-    from app.scanners.data_operation_scanner import import_class_from_file
-
-    name, entry = find_analysis(analysis)
-    table = find_table(repo, table)
-    casting = {str(key): find_columns(repo, table, _list_of_columns(columns))
-               for key, columns in dict(roles or {}).items()}
-    values = dict(parameters or {})
     tables_before = set(repo.list_user_tables()["Table"].astype(str))
     operations_before = {record.id for record in repo.operations()}
-    cls = import_class_from_file(entry)
-    if cls is None:  # its file went, or did not load: the log says why
-        raise AnalysisError(f"The analysis '{name}' could not be loaded; the log says why.")
     started = time.monotonic()
-    dialog = cls(repo=repo, table=table)
+    dialog, name, casting = _filled_dialog(repo, analysis, table, roles, parameters, model, draw_on, current_figure)
+    table = dialog.table
     try:
-        if dialog.reads_chart():  # the dialog remembers it was last used on a chart: here, a table is named
-            dialog.source_table_radio.setChecked(True)
-            dialog._load_tables(table)
-        if dialog.table != table:
-            raise AnalysisError(f"No table named '{table}'.")
-        dialog.current_figure_id = current_figure()
-        dialog.roles_widget.set_casting(casting)
-        for form in dialog.parameter_forms():
-            form.set_values(values)
-        if model and getattr(dialog, "model_combo", None) is not None:
-            index = dialog.model_combo.findData(model)
-            if index < 0:
-                raise AnalysisError(f"'{model}' is not one of {name}'s models.")
-            dialog.model_combo.setCurrentIndex(index)
-        combo = getattr(dialog, "destination_combo", None)
-        if combo is not None and combo.findData(draw_on) >= 0:
-            combo.setCurrentIndex(combo.findData(draw_on))
         problems = dialog.problems()
         if problems:
             raise AnalysisError("; ".join(problems))
@@ -233,10 +249,114 @@ def run_analysis(repo: Any, analysis: str, table: str, roles: Mapping[str, Any] 
     written = sorted(set(repo.list_user_tables()["Table"].astype(str)) - tables_before)
     new_operations = [record.id for record in repo.operations() if record.id not in operations_before]
     return AnalysisResult(
-        name=name, source=table, roles=casting, parameters=values, model=model, report_html=report_html,
-        report_text=plain_text(report_html), tables=written, figures=[int(figure) for figure in figures],
+        name=name, source=table, roles=casting, parameters=dict(parameters or {}), model=model,
+        report_html=report_html, report_text=plain_text(report_html), tables=written,
+        figures=[int(figure) for figure in figures],
         operation_id=new_operations[-1] if new_operations else None, seconds=time.monotonic() - started,
         _repo=repo, draw_on=draw_on)
+
+
+# ----------------------------------------------------------------------
+# Settings files: an analysis kept as a file, to open or run again
+# ----------------------------------------------------------------------
+SETTINGS_FORMAT = "chartlibre-analysis"
+SETTINGS_VERSION = 1
+
+
+def settings_of(source: Any) -> dict[str, Any]:
+    """An analysis' settings as a plain dict - from a result, or a recorded operation of the history."""
+    from app import APP_VERSION
+
+    if isinstance(source, AnalysisResult):
+        name, table, roles, parameters, model = (source.name, source.source, source.roles, source.parameters,
+                                                 source.model)
+    else:
+        sources = list(source.sources)
+        if len(sources) != 1 or not sources[0].get("table") or not sources[0].get("roles"):
+            raise AnalysisError(f"{source.operation} was run on a chart's series: it has no table to name.")
+        name, table, roles = str(source.operation), str(sources[0]["table"]), sources[0]["roles"]
+        parameters = {key: value for key, value in dict(source.parameters).items() if key != "model"}
+        model = str(dict(source.parameters).get("model") or dict(source.entries).get("model_combo") or "")
+    return {"format": SETTINGS_FORMAT, "version": SETTINGS_VERSION, "analysis": name, "table": table,
+            "roles": {key: list(value) for key, value in dict(roles).items()}, "parameters": dict(parameters),
+            "model": model, "app_version": str(APP_VERSION)}
+
+
+def save_settings(path: Any, source: Any) -> dict[str, Any]:
+    """Write the settings of *source* (a result or a recorded operation) to the JSON file *path*."""
+    import json
+    from pathlib import Path
+
+    settings = settings_of(source)
+    Path(path).write_text(json.dumps(settings, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    return settings
+
+
+def load_settings(path: Any) -> dict[str, Any]:
+    """The settings in the file *path*, checked to be an analysis' (AnalysisError otherwise)."""
+    import json
+    from pathlib import Path
+
+    try:
+        settings = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as error:
+        raise AnalysisError(f"Cannot read {path}: {error}") from error
+    if not isinstance(settings, dict) or settings.get("format") != SETTINGS_FORMAT:
+        raise AnalysisError(f"{path} is not an analysis settings file.")
+    if int(settings.get("version", 0)) > SETTINGS_VERSION:
+        raise AnalysisError(f"{path} was written by a newer ChartLibre (settings version {settings['version']}).")
+    for key in ("analysis", "table"):
+        if not settings.get(key):
+            raise AnalysisError(f"{path} has no {key}.")
+    return settings
+
+
+def run_settings(repo: Any, settings: Mapping[str, Any], table: str | None = None, **parameters: Any) -> AnalysisResult:
+    """Run the analysis the settings describe - on *table* when given - with *parameters* changed where given."""
+    return run_analysis(repo, str(settings["analysis"]), table or str(settings["table"]), settings.get("roles"),
+                        {**dict(settings.get("parameters") or {}), **parameters}, model=str(settings.get("model") or ""))
+
+
+def open_settings_dialog(repo: Any, settings: Mapping[str, Any], parent: Any = None, table: str | None = None) -> Any:
+    """The analysis' own dialog, filled from *settings*, shown for the user to look at and press OK (modal)."""
+    dialog, _name, _casting = _filled_dialog(repo, str(settings["analysis"]), table or str(settings["table"]),
+                                             settings.get("roles"), settings.get("parameters"),
+                                             str(settings.get("model") or ""), "new_figure", lambda: None)
+    if parent is not None:
+        dialog.setParent(parent, dialog.windowFlags())
+    return dialog
+
+
+def run_records(repo: Any, records: Iterable[Any]) -> list[AnalysisResult | AnalysisError]:
+    """Run recorded operations again, in order; each gives its result, or the error that stopped it (the rest go on)."""
+    outcomes: list[AnalysisResult | AnalysisError] = []
+    for record in records:
+        try:
+            outcomes.append(run_settings(repo, settings_of(record)))
+        except AnalysisError as error:
+            outcomes.append(error)
+    return outcomes
+
+
+def history_script(records: Iterable[Any], project: str = "") -> str:
+    """A Python script that makes the recorded operations again on a project file given on the command line."""
+    calls = []
+    for record in records:
+        call = record_call(record)
+        calls.append(f"    {call}" if call else f"    # {record.operation}: run on a chart's series, not on a table")
+    body = "\n".join(calls) or "    pass"
+    return (f'"""The analyses of {project or "a ChartLibre project"}, as calls.\n\n'
+            f'    python this_script.py path/to/project.dhub\n"""\n'
+            "import sys\n\n"
+            "from PySide6.QtWidgets import QApplication\n\n"
+            "from app.analysis_api import Analysis, use_project\n"
+            "from app.data.sqlite_repo import SqliteRepo\n\n\n"
+            "def run_all():\n"
+            f"{body}\n\n\n"
+            'if __name__ == "__main__":\n'
+            "    application = QApplication.instance() or QApplication([])\n"
+            "    use_project(SqliteRepo(db_path=sys.argv[1]))\n"
+            "    run_all()\n")
 
 
 def describe_analysis(analysis: str) -> str:
@@ -425,6 +545,13 @@ def make_callables(repo_getter: Callable[[], Any], *, current_figure: Callable[[
         on_change([result.figure_id])
         return result
 
+    def from_file(path: str, table: str | None = None, **parameters: Any) -> AnalysisResult:
+        """Run the analysis kept in a settings file (see AnalysisResult.save): Analysis.from_file("a.json")."""
+        result = run_settings(repo_getter(), load_settings(path), table, **parameters)
+        on_change(result.figures)
+        return result
+
+    Analysis.from_file = from_file  # type: ignore[attr-defined]
     return Analysis, Chart
 
 

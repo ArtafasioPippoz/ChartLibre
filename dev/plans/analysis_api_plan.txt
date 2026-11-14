@@ -1,6 +1,9 @@
 Analyses and charts as Python (ID02, ID01's base; proposed by the owner 2026-11-13)
-Status 2026-11-13: A, B, C and D done (app/analysis_api.py; the workpad's Analysis, Chart, analysis_names,
-describe_analysis); E (export, re-run all), F (manual) to do. D: Project history has a picker, Copy as Python and Save as
+Status 2026-11-14: A, B, C, D and E done (app/analysis_api.py; the workpad's Analysis, Chart, analysis_names,
+describe_analysis); F (manual) to do. E: settings in a JSON file (format "chartlibre-analysis", version 1; JSON, not XML,
+like the templates), Save / Open settings, Export script, Run again in Project history > More; result.save(path),
+Analysis.from_file(path) in the workpad; run_settings, open_settings_dialog, history_script, run_records in
+app/analysis_api.py. D: Project history has a picker, Copy as Python and Save as
 function... (the project's __analysis_functions__; the workpad defines them, functions() lists them).
 Decided: English names only; a saved function is a Python function that calls Analysis(), usable everywhere.
 ==================================================================================

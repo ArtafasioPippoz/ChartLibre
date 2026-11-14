@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import html
 import re
+from pathlib import Path
 from collections.abc import Sequence
 from datetime import datetime
 from typing import Any
@@ -19,6 +20,8 @@ from PySide6.QtWidgets import (
     QComboBox,
     QHBoxLayout,
     QInputDialog,
+    QFileDialog,
+    QMenu,
     QMessageBox,
     QPushButton,
     QSizePolicy,
@@ -57,9 +60,19 @@ class OperationHistoryDialog(PanelDialog):
             _("Keep this analysis as a Python function of the project, to call from the workpad"))
         self._save_function_button.clicked.connect(self.save_as_function)
         self._record_combo.currentIndexChanged.connect(self._update_code_buttons)
+        # The rest in a menu: settings as a file to keep and open, a script, the analysis run again.
+        self._more_button = QPushButton(_("More..."), card)
+        menu = QMenu(self._more_button)
+        self._save_settings_action = menu.addAction(_("Save settings..."), self.save_settings)
+        menu.addAction(_("Open settings..."), self.open_settings)
+        menu.addAction(_("Export script..."), self.export_script)
+        menu.addSeparator()
+        self._rerun_action = menu.addAction(_("Run again"), self.run_again)
+        self._more_button.setMenu(menu)
         bar.addWidget(self._record_combo, 1)
         bar.addWidget(self._copy_code_button)
         bar.addWidget(self._save_function_button)
+        bar.addWidget(self._more_button)
         card.layout().addLayout(bar)
         self._view = HtmlResultsView(card)
         card.layout().addWidget(self._view, 1)
@@ -95,7 +108,54 @@ class OperationHistoryDialog(PanelDialog):
         picked = self._picked()
         self._copy_code_button.setEnabled(bool(picked))
         single = self._record_combo.currentData() is not None
-        self._save_function_button.setEnabled(single and bool(picked) and analysis_api.record_call(picked[0]) is not None)
+        runnable = bool(picked) and all(analysis_api.record_call(record) is not None for record in picked)
+        self._save_function_button.setEnabled(single and runnable)
+        self._save_settings_action.setEnabled(single and runnable)
+        self._rerun_action.setEnabled(any(analysis_api.record_call(record) is not None for record in picked))
+
+    def save_settings(self) -> None:
+        """The picked operation's settings in a JSON file."""
+        picked = self._picked()
+        if len(picked) != 1:
+            return
+        name = re.sub(r"\W+", "_", picked[0].operation.lower()).strip("_") or "analysis"
+        path, _filter = QFileDialog.getSaveFileName(self, _("Save settings"), f"{name}.json", "JSON (*.json)")
+        if path:
+            analysis_api.save_settings(path, picked[0])
+
+    def open_settings(self) -> None:
+        """An analysis' own window, filled from a settings file."""
+        path, _filter = QFileDialog.getOpenFileName(self, _("Open settings"), "", "JSON (*.json)")
+        if not path:
+            return
+        try:
+            dialog = analysis_api.open_settings_dialog(self._repo, analysis_api.load_settings(path), self)
+        except analysis_api.AnalysisError as error:
+            QMessageBox.warning(self, _("Open settings"), str(error))
+            return
+        dialog.exec()
+        self._reload()
+
+    def export_script(self) -> None:
+        """The picked operation (all of them) as a Python script."""
+        path, _filter = QFileDialog.getSaveFileName(self, _("Export script"), "analyses.py", "Python (*.py)")
+        if path:
+            project = Path(str(self._repo.db_path)).name if getattr(self._repo, "db_path", None) else ""
+            Path(path).write_text(analysis_api.history_script(self._picked(), project), encoding="utf-8")
+
+    def run_again(self) -> None:
+        """The picked operations run again on this project (all of them in order), after asking."""
+        picked = [record for record in self._picked() if analysis_api.record_call(record) is not None]
+        if not picked or QMessageBox.question(
+                self, _("Run again"),
+                _("Run {count} operation(s) again? Each writes its tables and figure anew.").format(count=len(picked)),
+        ) != QMessageBox.StandardButton.Yes:
+            return
+        outcomes = analysis_api.run_records(self._repo, picked)
+        failed = [str(outcome) for outcome in outcomes if isinstance(outcome, analysis_api.AnalysisError)]
+        self._reload()
+        if failed:
+            QMessageBox.warning(self, _("Run again"), "\n".join(failed))
 
     def copy_code(self) -> None:
         """The picked operation's call (all of them: one a line) on the clipboard."""
