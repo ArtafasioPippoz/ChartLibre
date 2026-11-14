@@ -83,6 +83,12 @@ TOOLS: dict[str, tuple[str, str, str, tuple[str, ...]]] = {
         "fattoriale box-behnken central composite composito centrale latin hypercube runs prove",
         ("experiment",),
     ),
+    "predict_model": (
+        "Predict with a saved model",
+        "Apply a model kept in the project to a table: its predictions in a new table.",
+        "predici previsione modello salvato predict prediction score scoring saved model apply applica",
+        ("predict",),
+    ),
     "import": (
         "Import from file",
         "Create a table from a file: CSV, Excel, JSON.",

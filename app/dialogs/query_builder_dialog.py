@@ -47,7 +47,7 @@ from app.utils.dialog_state import (
 )
 from app.utils.i18n import _
 from app.utils.messages import ask, show_message
-from app.widgets.table_preview import DataFrameTableModel
+from app.widgets.table_preview import DataFrameTableModel, style_data_table
 
 # Rows fetched by Run.  Enough to see whether the query is right, few enough
 # that pressing Run on a full-table select is not a mistake.
@@ -260,8 +260,7 @@ class QueryBuilderDialog(SettingsTableDialog):
 
         card = self.add_content_card(_("Result preview"), stretch=3)
         self._result_view = QTableView(card)
-        self._result_view.setAlternatingRowColors(True)
-        mark_editor_panel(self._result_view)
+        style_data_table(self._result_view)  # the look of the Data page's table
         card.layout().addWidget(self._result_view, 1)
 
     # ------------------------------------------------------------------

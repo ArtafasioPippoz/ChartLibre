@@ -1,6 +1,6 @@
 # ChartLibre — Prioritized Roadmap
 
-**State:** `app/` has 119,330 lines of code in 333 Python files; `dev/tests` has 30,252 lines in 260 files (measured at this commit).
+**State:** `app/` has 119,401 lines of code in 333 Python files; `dev/tests` has 30,329 lines in 260 files (measured at this commit).
 
 **Audience:** engineers, scientists, and students who need an affordable desktop workflow from raw data to analysed, documented figures and reports.
 
@@ -21,8 +21,7 @@ ID101 |3|x| Revise tralsations: if "cm" and "cm:" use a single string _("cm")+":
 | ID02 | 2 | 3 | **Reproducible analysis** (H-01, I-07) | Re-run every recorded operation and export an equivalent Python script. | **Core**; essential for papers, theses, and lab records. |
 | ID03 | 3 | 4 | **Graph Builder** (G-01) | Build charts by dragging columns onto visual roles; change marks and grouping live. | **JMP**; a major discoverability and chart-authoring gap. |
 | ID04 | 4 | 2 | **Local data filtering** (G-04) | A filter by column values for every chart and report of a table (selecting rows on a chart and Show only Selected are done). | **JMP**; fundamental exploratory-analysis workflow. |
-| ID05 | 5 | 3 | **Templates and batch reporting** (H-03, I-08) | Apply a figure design and operations to new files; run a folder batch. | **JMP / Origin**; repeated lab workflows. |
-| ID06 | 6 | 2 | **Publication-ready export** (H-05) | Presets for journal sizes, embedded fonts, PDF/SVG, and Word/LaTex result tables. | **Origin / Matplotlib**; high-value final-mile workflow. |
+
 | ID07 | 7 | 3 | **Units and uncertainty propagation** (H-02) | Assign units to columns; carry them through axes, fits, and error calculations. | **Engineering/science tools**; critical for physical-science work. |
 | ID08 | 8 | 3 | **Model comparison and validation** (G-03, AN-12) | Compare models on shared validation data with R², RMSE, AUC, bootstrap, permutation, and cross-validation options. | **JMP / scikit-learn**; safer model choice. |
 | ID09 | 9 | 2 | **Plain-language errors and onboarding** (H-11, H-08) | Actionable import/SQL errors, a demo dataset, guided first-run flow, and product tour. | **Core**; improves activation and support load. |
@@ -50,7 +49,7 @@ ID101 |3|x| Revise tralsations: if "cm" and "cm:" use a single string _("cm")+":
 | ID35 | 35 | 4 | **Functional Data Explorer** (G-09) | Analyse one curve per ID with smoothing, functional PCA, clusters, and shape models. | **JMP**; advanced, specialist capability. |
 | ID36 | 36 | 4 | **Mixed models and power analysis** (AN-09) | Add REML mixed models plus power and sample-size tools. | **JMP / statsmodels**; high value for research, complex delivery. |
 | ID37 | 37 | 2 | **Assistant transparency and Windows release polish** (AI-02, AI-03) | Show requests/cache activity; package Anthropic/keyring support and document secure key storage. | **Core**; improve trust and Windows usability. |
-| ID38 | 38 | 2 | **Windows UI parity** (H-12) | Test dialogs at 1366×768 and 125% scaling in CI. | **Core**; prevents platform-specific friction. |
+
 | ID41 | 41 | 4 | **Text Explorer** (G-11) | Add word counts, n-grams, and topics for text columns. | **JMP**; weak fit for the primary audience. |
 | ID46 | 46 | 2 | **Marker editor and rotation** (dev/plans/line_editor_plan.txt B, C) | Still missing: a point/SVG-path marker editor and a `__markers__` table of saved markers; marker rotation by a constant or a column (arrows), with an Arrow entry; custom dashes for overlay/reference lines. Custom dashes and markers (character, mathtext, polygon tuple) are done. | **Origin / matplotlib**; vector-field and wind-direction charts. |
 | ID48 | 48 | 2 | **Preferences: icons and an advanced mode** (requested 2026-11-11) | Each section with an icon of its own (not alike); an "Advanced mode" setting - off, the window hides the assistant, the workpads (SymPy, SQL) and the other expert tools. | **Core**; a simpler first contact for students. |

@@ -851,8 +851,22 @@ class MainWindow(QMainWindow):
         """A tool of the Analysis panel: the design of experiments, or New chart on a chart type ("chart:<type>")."""
         if tool == "doe":
             self._on_new_table_from_doe()
+        elif tool == "predict_model":
+            self._on_predict_model()
         elif tool.startswith("chart:"):
             self._on_new_plot_tab(chart_type=tool.split(":", 1)[1])
+
+    def _on_predict_model(self) -> None:
+        """Predict with a saved model: a model of the project on a table, the predictions in a new table."""
+        if self._repo is None:
+            return
+        from app.dialogs.predict_dialog import PredictDialog
+
+        dialog = PredictDialog(self._repo, self)
+        dialog.applied.connect(self._table_panel.reload)
+        dialog.exec()
+        if dialog.created_table_name:
+            self._show_table(dialog.created_table_name)
 
     def _on_new_table_from_doe(self) -> None:
         from app.dialogs.doe_dialog import DOEExperimentDialog
@@ -1593,6 +1607,7 @@ class MainWindow(QMainWindow):
                 return
             handlers = {
                 "doe": self._on_new_table_from_doe,
+                "predict_model": self._on_predict_model,
                 "import": self._on_import_data,
                 "import_web": self._on_import_web,
                 "import_clipboard": self._on_import_clipboard,

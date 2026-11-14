@@ -89,3 +89,80 @@ def test_a_partition_model_is_fitted_kept_and_applied_through_the_api(qapp, tmp_
             model("nope")
     finally:
         repo.close()
+
+
+def test_the_predict_dialog_writes_a_new_table_and_counts_what_it_could_not_read(qapp, tmp_path, monkeypatch) -> None:
+    from app.dialogs.predict_dialog import PredictDialog
+
+    trusted: list[str] = []
+    monkeypatch.setattr(models, "get_value", lambda key, default=None: list(trusted) if key == models.TRUST_KEY else default)
+    monkeypatch.setattr(models, "set_value", lambda key, value: (trusted.clear(), trusted.extend(value)))
+    frame = _frame()
+    result = partition(frame, PartitionSpec(response="mass", factors=["x", "group"],
+                                            kinds={"mass": CONTINUOUS, "x": CONTINUOUS, "group": NOMINAL}, splits=6))
+    repo = SqliteRepo(db_path=tmp_path / "d.dhub")
+    try:
+        repo.import_dataframe(frame, table_name="Birds", normalize_columns=False)
+        new = pd.DataFrame({"x": [1.0, 2.0, np.nan], "group": ["red", "blue", "green"]})
+        repo.import_dataframe(new, table_name="Fresh", normalize_columns=False)
+        models.save_model(repo, "birds", result.model)
+        dialog = PredictDialog(repo, None, table="Fresh")
+        assert dialog._apply.isEnabled() and "Reads: x, group" in dialog._about.text()
+        assert dialog._name_edit.text() == "Fresh_birds"
+        dialog.apply()
+        written = repo.query_df('SELECT * FROM "Fresh_birds"')
+        assert list(written.columns)[-1] == "Prediction" and len(written) == 3
+        assert written["Prediction"].notna().tolist() == [True, True, False]
+        assert dialog.created_table_name == "Fresh_birds" and "missing value" in dialog._result.text()
+        dialog._table_combo.setCurrentIndex(dialog._table_combo.findData("Birds"))
+        assert dialog._apply.isEnabled()  # Birds has x and group too
+        dialog.done(0)
+    finally:
+        repo.close()
+
+
+def test_the_predict_dialog_says_what_the_table_lacks(qapp, tmp_path, monkeypatch) -> None:
+    from app.dialogs.predict_dialog import PredictDialog
+
+    trusted: list[str] = []
+    monkeypatch.setattr(models, "get_value", lambda key, default=None: list(trusted) if key == models.TRUST_KEY else default)
+    monkeypatch.setattr(models, "set_value", lambda key, value: (trusted.clear(), trusted.extend(value)))
+    frame = _frame()
+    result = partition(frame, PartitionSpec(response="mass", factors=["x", "group"],
+                                            kinds={"mass": CONTINUOUS, "x": CONTINUOUS, "group": NOMINAL}, splits=4))
+    repo = SqliteRepo(db_path=tmp_path / "e.dhub")
+    try:
+        repo.import_dataframe(pd.DataFrame({"x": [1.0]}), table_name="Short", normalize_columns=False)
+        models.save_model(repo, "birds", result.model)
+        dialog = PredictDialog(repo, None)
+        assert not dialog._apply.isEnabled() and "Missing in the table: group" in dialog._about.text()
+        dialog.done(0)
+    finally:
+        repo.close()
+
+
+def test_save_as_model_keeps_what_the_window_fitted(qapp, tmp_path, monkeypatch) -> None:
+    from PySide6.QtWidgets import QInputDialog
+
+    from app import analysis_api
+
+    trusted: list[str] = []
+    monkeypatch.setattr(models, "get_value", lambda key, default=None: list(trusted) if key == models.TRUST_KEY else default)
+    monkeypatch.setattr(models, "set_value", lambda key, value: (trusted.clear(), trusted.extend(value)))
+    repo = SqliteRepo(db_path=tmp_path / "s.dhub")
+    try:
+        repo.import_dataframe(_frame(), table_name="Birds", normalize_columns=False)
+        dialog, _name, _casting = analysis_api._filled_dialog(
+            repo, "Partition", "Birds", {"response": ["mass"], "factor": ["x", "group"]}, {}, "", "new_figure",
+            lambda: None)
+        assert type(dialog).__name__ == "PartitionDialog" and not dialog._save_model_button.isEnabled()
+        result = partition(_frame(), PartitionSpec(response="mass", factors=["x"], kinds={"mass": CONTINUOUS,
+                                                                                         "x": CONTINUOUS}))
+        dialog.format_results(result)
+        assert dialog._save_model_button.isEnabled()
+        monkeypatch.setattr(QInputDialog, "getText", staticmethod(lambda *a, **k: ("mine", True)))
+        dialog.save_model()
+        assert [row["name"] for row in repo.models()] == ["mine"]
+        dialog.close()
+    finally:
+        repo.close()

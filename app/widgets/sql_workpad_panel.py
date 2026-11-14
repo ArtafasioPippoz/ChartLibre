@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app.widgets.table_preview import style_data_table
 from app.data.sql_workpad import RefusedStatement, SqlSession
 from app.utils.i18n import _
 from app.widgets.nav_bar import NavPanel
@@ -80,6 +81,7 @@ class SqlWorkpadPanel(NavPanel):
         self._result.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Ignored)
         self._result.setMinimumHeight(120)
         self._result.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        style_data_table(self._result)  # the look of the Data page's table
         result_box = QWidget(self)
         result_column = QVBoxLayout(result_box)
         result_column.setContentsMargins(0, 0, 0, 0)

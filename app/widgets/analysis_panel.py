@@ -96,6 +96,16 @@ def doe_tool() -> dict:
     }
 
 
+def predict_tool() -> dict:
+    return {
+        "value": "Predict with a saved model", "kind": TOOL, "tool": "predict_model",
+        "icon": '<circle cx="6" cy="17" r="1.6"/><circle cx="12" cy="11" r="1.6"/><circle cx="18" cy="6" r="1.6"/>'
+                '<path d="M4 20h16M4 20V4"/>',
+        "category": "Predictive and Specialized Modeling", "order": 900,
+        "description": "Apply a model kept in the project to a table: its predictions in a new table.",
+    }
+
+
 def quality_charts() -> list[dict]:
     """The charts JMP lists under Quality and Process: Pareto Plot and the Ishikawa diagram (its Diagram).
 
@@ -133,6 +143,7 @@ def panel_entries() -> list[dict]:
                 if reads_roles(operation) and operation.get("category") != "Quick answers"]
     entries += quality_charts()
     entries.append(doe_tool())
+    entries.append(predict_tool())
     return entries
 
 

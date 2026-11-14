@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
 )
 
 from app.data.sqlite_repo import SqliteRepo
+from app.widgets.table_preview import style_data_table
 
 PREVIEW_ROWS = 200
 
@@ -61,7 +62,7 @@ class TablesInventoryDialog(QDialog):
 
         self.preview = QTableWidget(0, 0, self)
         self.preview.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        self.preview.setAlternatingRowColors(True)
+        style_data_table(self.preview)  # as the Data page's table
         self.caption = QLabel("", self)
         self.caption.setProperty("muted", True)
         right = QWidget(self)
