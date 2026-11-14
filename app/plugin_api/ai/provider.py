@@ -98,6 +98,12 @@ class ProviderOption:
 class AIProvider:
     """An AI service the Assistant can talk to. Subclasses set Name and implement the methods below."""
 
+    def option_choices(self, key: str) -> list[str]:
+        """The values the setting *key* may take, for a drop-down list in Settings (Ollama's installed models);
+        empty: a line to type in."""
+        del key
+        return []
+
     #: How the provider is listed in Settings.
     Name: str = ""
     Description: str = ""

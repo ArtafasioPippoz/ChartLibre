@@ -259,6 +259,15 @@ class OllamaProvider(AIProvider):
         tagged = [installed for installed in names if installed.startswith(f"{name}:")]
         return tagged[0] if len(tagged) == 1 else name
 
+    def option_choices(self, key: str) -> list[str]:
+        """The models Ollama has, for the two model settings; empty when it does not answer (a line to type in)."""
+        if key not in ("accurate_model", "fast_model"):
+            return []
+        try:
+            return self.installed()
+        except (ProviderHTTPError, ValueError, OSError):
+            return []
+
     def installed(self) -> list[str]:
         """The models Ollama has (/api/tags)."""
         answer = get_json(f"{self.address.rstrip('/')}/api/tags")

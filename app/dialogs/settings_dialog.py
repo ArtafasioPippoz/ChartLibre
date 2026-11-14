@@ -32,6 +32,7 @@ from typing import Any
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
+    QSizePolicy,
     QCheckBox,
     QComboBox,
     QFormLayout,
@@ -181,6 +182,30 @@ def _mpl_style_choices() -> list[tuple[str, str] | None]:
 def _tile_icon(icon_id: str, colour: str, size: int = 24) -> QIcon:
     """*icon_id*'s glyph on a lit tile of *colour* (style.tile_icon), as System Settings' sidebar."""
     return tile_icon(load_icon(icon_id), colour, size)
+
+
+class _EditableChoice(QComboBox):
+    """A drop-down list that can also be typed in, read and set like a line (text, setText, setPlaceholderText)."""
+
+    def __init__(self, parent: QWidget, choices: Sequence[str], empty_label: str = "") -> None:
+        super().__init__(parent)
+        self.setEditable(True)
+        self.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+        self.addItem("")  # empty: the setting's default (or, for the fast model, the model above)
+        self.addItems(list(choices))
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        del empty_label
+
+    def text(self) -> str:
+        return self.currentText()
+
+    def setText(self, value: str) -> None:  # noqa: N802 - the QLineEdit name this stands in for
+        self.setCurrentText(value)
+
+    def setPlaceholderText(self, text: str) -> None:  # noqa: N802
+        line = self.lineEdit()
+        if line is not None:
+            line.setPlaceholderText(text)
 
 
 class SettingsDialog(PanelDialog):
@@ -503,16 +528,18 @@ class SettingsDialog(PanelDialog):
         form.addRow(tr("API key"), key_field)
         # Each provider's own settings (Ollama's address and models...): the rows of the one chosen shown.
         self._assistant_form = form
-        self._assistant_options: dict[str, dict[str, tuple[QLineEdit, str]]] = {}
+        self._assistant_options: dict[str, dict[str, tuple[Any, str]]] = {}
         for entry in ai_providers:
             cls = provider_class(entry)
             if cls is None:  # its file went, or did not load (logged): no settings to show for it
                 continue
-            rows: dict[str, tuple[QLineEdit, str]] = {}
+            rows: dict[str, tuple[Any, str]] = {}
             reader = cls()
             for spec in cls.OPTIONS:
-                edit = QLineEdit(card)
                 value = reader.option(spec.key)
+                choices = reader.option_choices(spec.key)
+                # A drop-down list of what the provider has (Ollama's installed models), still typeable.
+                edit = _EditableChoice(card, choices, spec.default) if choices else QLineEdit(card)
                 edit.setText(value)
                 edit.setPlaceholderText(spec.default)
                 edit.setToolTip(tr(spec.tooltip))
