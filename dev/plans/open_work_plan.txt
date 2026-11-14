@@ -54,7 +54,7 @@ plugin tools (Importer Builder, "Reload", the documentation and examples: the pl
 
 5. The roadmap, in the todo's own order (each one a plan of its own before code)
 ---------------------------------------------------------------------------------
-5.1 FIRST (your choice, 2026-11-13): analyses and charts as Python - dev/plans/analysis_api_plan.txt (steps A-F:
+5.1 DONE 2026-11-14 (A-F; to look at in the app): analyses and charts as Python - dev/plans/analysis_api_plan.txt (steps A-F:
     the engine out of the assistant, Analysis()/Chart(), the SymPy workpad, Copy as Python / Save as function,
     export and re-run a whole history = ID02). Then ID01 saved models, ID14 imputation and preprocessing,
     ID04 local data filtering.

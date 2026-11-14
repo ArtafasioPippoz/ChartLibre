@@ -61,5 +61,6 @@
 #include "sections/statistics.typ"
 #include "sections/output.typ"
 #include "sections/settings.typ"
+#include "sections/scripting.typ"
 #include "sections/advanced.typ"
 #include "sections/equivalents.typ"

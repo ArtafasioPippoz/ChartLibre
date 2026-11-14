@@ -1,6 +1,6 @@
 Analyses and charts as Python (ID02, ID01's base; proposed by the owner 2026-11-13)
-Status 2026-11-14: A, B, C, D and E done (app/analysis_api.py; the workpad's Analysis, Chart, analysis_names,
-describe_analysis); F (manual) to do. E: settings in a JSON file (format "chartlibre-analysis", version 1; JSON, not XML,
+Status 2026-11-14: A-F done (F: docs/manual/sections/scripting.typ; the PDF is not rebuilt here) (app/analysis_api.py; the workpad's Analysis, Chart, analysis_names,
+describe_analysis); E: settings in a JSON file (format "chartlibre-analysis", version 1; JSON, not XML,
 like the templates), Save / Open settings, Export script, Run again in Project history > More; result.save(path),
 Analysis.from_file(path) in the workpad; run_settings, open_settings_dialog, history_script, run_records in
 app/analysis_api.py. D: Project history has a picker, Copy as Python and Save as
