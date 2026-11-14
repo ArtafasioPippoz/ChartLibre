@@ -65,3 +65,17 @@ def test_hiding_spines_on_a_polar_or_3d_axes_is_skipped_not_an_error(caplog) -> 
     plain = Figure().add_subplot()
     _apply_spines(plain, {"hide_spine_top": True})
     assert not plain.spines["top"].get_visible()
+
+
+def test_ticks_off_remove_the_marks_of_a_3d_axes_too() -> None:
+    from app.plugin_api.charts import axis_options
+    from app.plugin_api.charts.render_figure import _apply_ticks
+
+    ax = Figure().add_subplot(projection="3d")
+    options = {axis_options.tick_key(axis, "major"): axis_options.OFF for axis in axis_options.AXES}
+    _apply_ticks(ax, options)
+    for axis in ("xaxis", "yaxis", "zaxis"):
+        tick = getattr(ax, axis)._axinfo["tick"]
+        assert tick["inward_factor"] == 0.0 and tick["outward_factor"] == 0.0
+    untouched = Figure().add_subplot(projection="3d")
+    assert untouched.xaxis._axinfo["tick"]["outward_factor"] > 0.0  # only what is set to Off

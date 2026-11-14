@@ -1347,12 +1347,23 @@ def _apply_ticks(ax: Any, options: dict[str, Any]) -> None:
                 # ticks" is about the marks, and a chart with no numbers on it
                 # is a different request.
                 _tick_params(ax, axis=axis, which=which, length=0.0)
+                _hide_3d_tick_marks(ax, axis)
                 continue
 
             if setting != axis_options.ON:
                 _tick_params(ax, axis=axis, which=which, direction=setting)
 
     _apply_tick_sizes(ax, options)
+
+
+def _hide_3d_tick_marks(ax: Any, axis: str) -> None:
+    """The tick marks of a 3D axes' axis off: mplot3d draws them as lines whose length is its own _axinfo factors,
+    so tick_params(length=0) leaves them on."""
+    info = getattr(getattr(ax, f"{axis}axis", None), "_axinfo", None)
+    tick = info.get("tick") if isinstance(info, dict) else None
+    if isinstance(tick, dict):
+        tick["inward_factor"] = 0.0
+        tick["outward_factor"] = 0.0
 
 
 def _apply_tick_sizes(ax: Any, options: dict[str, Any]) -> None:
