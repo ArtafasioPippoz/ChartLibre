@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import os
 import threading
+import time
 import urllib.parse
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any
@@ -233,8 +234,30 @@ class OllamaProvider(AIProvider):
         return ""
 
     def models(self) -> Mapping[str, str]:
-        accurate = self.option("accurate_model").strip() or DEFAULT_MODEL
-        return {ACCURATE: accurate, FAST: self.option("fast_model").strip() or accurate}
+        accurate = self.resolved(self.option("accurate_model").strip() or DEFAULT_MODEL)
+        return {ACCURATE: accurate, FAST: self.resolved(self.option("fast_model").strip()) or accurate}
+
+    #: The installed models, kept a few seconds: models() is asked often and each ask would be a request.
+    _installed_cache: tuple[float, list[str]] | None = None
+
+    def resolved(self, name: str) -> str:
+        """*name* as Ollama has it: a name typed without its tag (qwen3.8) is the one installed model that has one
+        (qwen3.8:27b); an exact name, "name:latest" or an unknown one is left as it is."""
+        if not name:
+            return name
+        now = time.monotonic()
+        cached = self._installed_cache
+        if cached is None or now - cached[0] > 10.0:
+            try:
+                cached = (now, self.installed())
+            except (ProviderHTTPError, ValueError, OSError):
+                return name
+            self._installed_cache = cached
+        names = cached[1]
+        if name in names or f"{name}:latest" in names:
+            return name
+        tagged = [installed for installed in names if installed.startswith(f"{name}:")]
+        return tagged[0] if len(tagged) == 1 else name
 
     def installed(self) -> list[str]:
         """The models Ollama has (/api/tags)."""
@@ -268,7 +291,7 @@ class OllamaProvider(AIProvider):
         size = sizes.get(accurate) or sizes.get(f"{accurate}:latest") or 0
         if size > memory * 0.4:
             return (f"'{accurate}' takes {size / 2**30:.1f} GB of this computer's {memory / 2**30:.0f} GB: everything "
-                    "will slow down. Choose a smaller model (llama3.2).")
+                    "will slow down or fail. Choose a smaller model (qwen2.5:3b, llama3.2).")
         return ""
 
     def classify(self, text: str, *, api_key: str) -> str:
