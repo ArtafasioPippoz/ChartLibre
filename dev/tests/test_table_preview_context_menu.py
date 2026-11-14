@@ -115,7 +115,8 @@ def test_a_selected_block_can_be_exported(qapp, tmp_db_path: Path) -> None:
         selection.select(model.index(row, 0), QItemSelectionModel.SelectionFlag.Select)
     menu = panel._build_context_menu(QPoint(0, 0))
     assert menu is not None
-    assert "Export selected rows..." in {action.text() for action in menu.actions()}
+    # Exporting a block is a button of the Data title now (main_window's data bar), not a menu item.
+    assert "Export selected rows..." not in {action.text() for action in menu.actions()}
 
 
 def test_create_query_from_selection_selects_those_columns_and_rows(qapp, tmp_db_path: Path) -> None:

@@ -449,14 +449,9 @@ class TablePreviewPanel(QWidget):
         if column or lazy_model is not None:
             menu.addSeparator()
 
-        # The cells selected here; the whole table - edit, export, reload -
-        # is the table list's, right above this panel on the Data page: an
-        # action belongs to one menu, not both.
-        rows, positions = self._selected_block()
-        trailing_items: tuple[MenuItem | None, ...] = (
-            (MenuItem(_("Export selected rows..."), callback=self._export_rows, icon="export_rows"),)
-            if len(rows) * len(positions) > 1 else ()
-        )
+        # The whole table - edit, export, reload - is the table list's, right above this panel on the Data page: an
+        # action belongs to one menu, not both. Exporting the cells selected here is a button of the Data title.
+        trailing_items: tuple[MenuItem | None, ...] = ()
 
         for item in trailing_items:
             if item is None:

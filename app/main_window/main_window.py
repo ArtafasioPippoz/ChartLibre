@@ -690,6 +690,8 @@ class MainWindow(QMainWindow):
             ("chart_from_columns", _("A chart of the selected columns: a histogram of one, else New plot"),
              lambda _button: self._preview.chart()),
             ("copy", _("Copy the selected cells"), lambda _button: self._preview._copy_selection()),
+            ("export_rows", _("Export the selected cells, or every visible row, as CSV or Excel"),
+             lambda _button: self._preview._export_rows()),
             ("table_more", _("More"), lambda button: self._preview.show_menu_at(
                 button.mapToGlobal(button.rect().bottomLeft()))),
         ])

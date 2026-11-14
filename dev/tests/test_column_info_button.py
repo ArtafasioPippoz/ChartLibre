@@ -35,3 +35,16 @@ def test_a_timestamp_column_is_a_date_in_the_header_as_in_column_info() -> None:
 
     assert {_type_code(kind) for kind in ("TIMESTAMP", "timestamp", "DATE", "DATETIME", "TIMESTAMP WITH TIME ZONE")} == {"DT"}
     assert _type_code("TEXT") == "S" and _type_code("REAL") == "F"
+
+
+def test_export_is_a_button_of_the_data_title(qapp, tmp_path) -> None:
+    from PySide6.QtWidgets import QToolButton
+
+    repo = SqliteRepo(db_path=tmp_path / "e.dhub")
+    repo.import_dataframe(pd.DataFrame({"x": [1, 2]}), table_name="t", normalize_columns=False)
+    window = MainWindow(repo, tmp_path / "e.dhub")
+    try:
+        tips = [button.toolTip() for button in window.findChildren(QToolButton)]
+        assert any(tip.startswith("Export the selected cells") for tip in tips)
+    finally:
+        window.close()
