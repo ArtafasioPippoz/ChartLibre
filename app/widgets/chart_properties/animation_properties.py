@@ -9,7 +9,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QSize, Qt, Signal
+from PySide6.QtGui import QPalette
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -26,7 +27,7 @@ from PySide6.QtWidgets import (
 )
 
 from app.plugin_api.charts import animation as anim
-from app.widgets.inspector import InspectorCard
+from app.widgets.inspector import InspectorCard, drawn_icon
 from app.styles.style import MARGIN_TOOLBOX_PAGE, fit_spin_width, stdSizeAndlayout
 from app.utils.i18n import _
 from app.widgets.chart_properties.base_properties import BaseProperties
@@ -68,6 +69,7 @@ class AnimationPropertiesWidget(BaseProperties):
         what = InspectorCard(self, _("Play along"), "animationPlay", prefix="animation")
         form = QFormLayout()
         stdSizeAndlayout(form)
+        form.setVerticalSpacing(10)
         self._enabled = QCheckBox(_("Animate this figure"), what.card)
         self._enabled.setToolTip(_("Play the figure one frame at a time, with the bar under the chart"))
         self._source = QComboBox(what.card)
@@ -118,6 +120,7 @@ class AnimationPropertiesWidget(BaseProperties):
         how = InspectorCard(self, _("Playing"), "animationPlaying", prefix="animation")
         how_form = QFormLayout()
         stdSizeAndlayout(how_form)
+        how_form.setVerticalSpacing(10)  # the platform's spacing between check boxes, not a tight stack
         self._fps = QDoubleSpinBox(how.card)
         self._fps.setRange(0.5, 30.0)
         self._fps.setSingleStep(0.5)
@@ -133,17 +136,21 @@ class AnimationPropertiesWidget(BaseProperties):
         how_form.addRow(self._caption)
         how.card.layout().addLayout(how_form)
 
-        # The player: what the chart shows now, and the GIF.
+        # The player: big round buttons - back, play (the accent one), forward - then what the chart shows now.
         row = QHBoxLayout()
-        row.setSpacing(4)
-        self._back = self._tool("⏮", _("A frame back"), lambda: self._player and self._player.step(-1))
-        self._play = self._tool("▶", _("Play"), lambda: self._player and self._player.toggle())
-        self._forward = self._tool("⏭", _("A frame forward"), lambda: self._player and self._player.step(1))
+        row.setSpacing(14)
+        self._back = self._tool("step_back", _("A frame back"), lambda: self._player and self._player.step(-1), 40)
+        self._play = self._tool("play", _("Play"), lambda: self._player and self._player.toggle(), 52, accent=True)
+        self._forward = self._tool("step_forward", _("A frame forward"),
+                                   lambda: self._player and self._player.step(1), 40)
+        row.addStretch(1)
         for button in (self._back, self._play, self._forward):
-            row.addWidget(button)
-        self._frame_label = QLabel("", how.card)
-        row.addWidget(self._frame_label, 1)
+            row.addWidget(button, 0, Qt.AlignmentFlag.AlignVCenter)
+        row.addStretch(1)
         how.card.layout().addLayout(row)
+        self._frame_label = QLabel("", how.card)
+        self._frame_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        how.card.layout().addWidget(self._frame_label)
         self._slider = QSlider(Qt.Orientation.Horizontal, how.card)
         self._slider.setToolTip(_("The frames; at the right end, all the data"))
         self._slider.valueChanged.connect(lambda value: self._player and self._player.go_to(value))
@@ -159,13 +166,26 @@ class AnimationPropertiesWidget(BaseProperties):
             fit_spin_width(spin)
         self._cards = (what, how)
 
-    def _tool(self, text: str, tooltip: str, action: Any) -> QToolButton:
+    def _tool(self, kind: str, tooltip: str, action: Any, size: int, *, accent: bool = False) -> QToolButton:
+        """A round player button: its glyph drawn here (white on the accent one), its look from the style sheet."""
         button = QToolButton(self)
-        button.setText(text)
+        button.setObjectName("playerPlay" if accent else "playerButton")
+        button.setProperty("glyph", kind)
+        button.setFixedSize(size, size)
+        button.setIconSize(QSize(int(size * 0.46), int(size * 0.46)))
         button.setToolTip(tooltip)
-        button.setAutoRaise(True)
+        button.setCursor(Qt.CursorShape.PointingHandCursor)
         button.clicked.connect(lambda _checked=False: action())
+        self._draw_glyph(button, kind)
         return button
+
+    def _draw_glyph(self, button: QToolButton, kind: str) -> None:
+        """The button's glyph, in the colour that reads on its ground (white on the accent button)."""
+        palette = self.palette()
+        colour = palette.color(QPalette.ColorRole.HighlightedText if button.objectName() == "playerPlay"
+                               else QPalette.ColorRole.WindowText)
+        button.setIcon(drawn_icon(kind, colour, 24))
+        button.setProperty("glyph", kind)
 
     # ------------------------------------------------------------------
     # The chart's player
@@ -193,7 +213,7 @@ class AnimationPropertiesWidget(BaseProperties):
         self._slider.setValue(min(player.index, count) if player is not None else 0)
         self._slider.blockSignals(False)
         playing = player is not None and player.playing
-        self._play.setText("⏸" if playing else "▶")
+        self._draw_glyph(self._play, "pause" if playing else "play")
         self._play.setToolTip(_("Pause") if playing else _("Play"))
         self._frame_label.setText(player.label() if count else _("Apply the settings to play"))
         for widget in (self._back, self._play, self._forward, self._slider, self._save):

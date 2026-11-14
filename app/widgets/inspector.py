@@ -77,6 +77,20 @@ def _draw_page_icon(painter: QPainter, kind: str, rect: QRectF, colour: QColor) 
         painter.drawEllipse(QRectF(x + 0.08 * w, y + 0.08 * h, 0.84 * w, 0.84 * h))
         painter.setBrush(colour)
         painter.drawPolygon([pt(0.42, 0.33), pt(0.42, 0.67), pt(0.7, 0.5)])
+    elif kind in ("play", "pause", "step_back", "step_forward"):  # the player's glyphs, filled
+        painter.setBrush(colour)
+        painter.setPen(Qt.PenStyle.NoPen)
+        if kind == "play":
+            painter.drawPolygon([pt(0.26, 0.14), pt(0.26, 0.86), pt(0.88, 0.5)])
+        elif kind == "pause":
+            painter.drawRoundedRect(QRectF(x + 0.22 * w, y + 0.16 * h, 0.2 * w, 0.68 * h), 1.5, 1.5)
+            painter.drawRoundedRect(QRectF(x + 0.58 * w, y + 0.16 * h, 0.2 * w, 0.68 * h), 1.5, 1.5)
+        elif kind == "step_back":
+            painter.drawRoundedRect(QRectF(x + 0.14 * w, y + 0.18 * h, 0.14 * w, 0.64 * h), 1.5, 1.5)
+            painter.drawPolygon([pt(0.86, 0.18), pt(0.86, 0.82), pt(0.34, 0.5)])
+        else:
+            painter.drawRoundedRect(QRectF(x + 0.72 * w, y + 0.18 * h, 0.14 * w, 0.64 * h), 1.5, 1.5)
+            painter.drawPolygon([pt(0.14, 0.18), pt(0.14, 0.82), pt(0.66, 0.5)])
     elif kind == "folder":  # a folder
         painter.drawPolyline([pt(0.08, 0.3), pt(0.08, 0.8), pt(0.92, 0.8), pt(0.92, 0.3), pt(0.5, 0.3),
                               pt(0.42, 0.18), pt(0.08, 0.18), pt(0.08, 0.3)])

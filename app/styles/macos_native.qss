@@ -1254,6 +1254,43 @@ QRadioButton::indicator:checked {
   background: palette(highlight);
   border: 1px solid palette(highlight);
 }
+/* The player's round buttons (Chart properties > Animation): grey discs, and the accent one for Play. */
+QToolButton#playerButton {
+  background: rgba(@SHADOW_RGB@, 0.08);
+  border: none;
+  border-radius: 20px;
+  padding: 0;
+  min-width: 40px;
+  max-width: 40px;
+  min-height: 40px;
+  max-height: 40px;
+}
+QToolButton#playerButton:hover {
+  background: rgba(@SHADOW_RGB@, 0.15);
+}
+QToolButton#playerButton:pressed {
+  background: rgba(@SHADOW_RGB@, 0.22);
+}
+QToolButton#playerPlay {
+  background: palette(highlight);
+  border: none;
+  border-radius: 26px;
+  padding: 0;
+  min-width: 52px;
+  max-width: 52px;
+  min-height: 52px;
+  max-height: 52px;
+}
+QToolButton#playerPlay:hover {
+  background: rgba(@ACCENT_RGB@, 0.88);
+}
+QToolButton#playerPlay:pressed {
+  background: rgba(@ACCENT_RGB@, 0.72);
+}
+QToolButton#playerButton:disabled,
+QToolButton#playerPlay:disabled {
+  background: rgba(@SHADOW_RGB@, 0.06);
+}
 QToolButton#inspectorSectionTitle {
   border: none;
   background: transparent;
