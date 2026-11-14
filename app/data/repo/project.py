@@ -99,6 +99,8 @@ def _convert(value: Any, kind: str) -> Any:
 OPERATIONS_TABLE = "__operations__"
 #: The project's saved analysis functions (Python that calls Analysis(): name, code, description).
 ANALYSIS_FUNCTIONS_TABLE = "__analysis_functions__"
+#: The project's saved prediction models (app/analysis/models.py).
+MODELS_TABLE = "__models__"
 
 
 @dataclass(frozen=True, slots=True)
@@ -1630,6 +1632,76 @@ class ProjectMixin(_Host):
         assert self._con is not None
         self.create_analysis_functions_table()
         self._con.execute(f"DELETE FROM {ANALYSIS_FUNCTIONS_TABLE} WHERE name = ?", (str(name),))
+        self._commit()
+
+    # ==================================================================
+    # Models: the ``__models__`` record (app/analysis/models.py writes and reads it).
+    # ==================================================================
+    @ensure_connection_wrapper
+    def create_models_table(self) -> None:
+        assert self._con is not None
+        self._con.execute(
+            f"""
+            CREATE TABLE IF NOT EXISTS {MODELS_TABLE} (
+                name        TEXT PRIMARY KEY,
+                kind        TEXT NOT NULL,
+                form        TEXT NOT NULL,
+                header_json TEXT NOT NULL,
+                payload     BLOB NOT NULL,
+                fingerprint TEXT NOT NULL
+            )
+            """
+        )
+
+    @ensure_connection_wrapper
+    def save_model_record(self, *, name: str, kind: str, form: str, payload: bytes, fingerprint: str,
+                          header: Mapping[str, Any]) -> None:
+        """Keep (or replace) a model: its kind, its form (json or pickle), its payload and its header (response,
+        features, summary, when...)."""
+        assert self._con is not None
+        self.create_models_table()
+        self._con.execute(
+            f"INSERT OR REPLACE INTO {MODELS_TABLE} (name, kind, form, header_json, payload, fingerprint) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (str(name), str(kind), str(form), _json(dict(header)), bytes(payload), str(fingerprint)),
+        )
+        self._commit()
+
+    @ensure_connection_wrapper
+    def models(self) -> list[dict[str, Any]]:
+        """The saved models, by name, without their payloads: name, kind, form, header (a dict)."""
+        assert self._con is not None
+        self.create_models_table()
+        rows = self._con.execute(
+            f"SELECT name, kind, form, header_json, fingerprint FROM {MODELS_TABLE} ORDER BY name").fetchall()
+        return [{"name": str(r[0]), "kind": str(r[1]), "form": str(r[2]), "header": _parsed(r[3], {}),
+                 "fingerprint": str(r[4])} for r in rows]
+
+    @ensure_connection_wrapper
+    def model_record(self, name: str) -> dict[str, Any] | None:
+        """One saved model with its payload, or None."""
+        assert self._con is not None
+        self.create_models_table()
+        row = self._con.execute(
+            f"SELECT name, kind, form, header_json, payload, fingerprint FROM {MODELS_TABLE} WHERE name = ?",
+            (str(name),)).fetchone()
+        if row is None:
+            return None
+        return {"name": str(row[0]), "kind": str(row[1]), "form": str(row[2]), "header": _parsed(row[3], {}),
+                "payload": row[4], "fingerprint": str(row[5])}
+
+    @ensure_connection_wrapper
+    def delete_model(self, name: str) -> None:
+        assert self._con is not None
+        self.create_models_table()
+        self._con.execute(f"DELETE FROM {MODELS_TABLE} WHERE name = ?", (str(name),))
+        self._commit()
+
+    @ensure_connection_wrapper
+    def rename_model(self, old: str, new: str) -> None:
+        assert self._con is not None
+        self.create_models_table()
+        self._con.execute(f"UPDATE {MODELS_TABLE} SET name = ? WHERE name = ?", (str(new), str(old)))
         self._commit()
 
     # ==================================================================
