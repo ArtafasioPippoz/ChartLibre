@@ -36,6 +36,7 @@ import numpy as np
 import pandas as pd
 
 from app.analysis import Stopped
+from app.analysis.models import PICKLED, Feature, SavedModel
 from app.utils.coercion import column_of, to_numbers
 from app.utils.config import get_constant
 
@@ -99,6 +100,8 @@ class ResponseFit:
     #: (nominal ones at their most frequent level), and its 95% confidence
     #: band. Columns Factor, Coded, Value, Predicted, Lower, Upper.
     profile: pd.DataFrame = field(default_factory=pd.DataFrame)
+    #: The fitted model as a SavedModel (least squares only, so far): keep it, or score new rows with it.
+    model: Any = None
     #: A note for the report when the model cannot test anything (no error
     #: degrees of freedom, say).
     note: str = ""
@@ -384,6 +387,7 @@ def _fit_one(frame: pd.DataFrame, spec: ModelSpec, response: str, *,
         personality=spec.personality,
         diagnostics=diagnostics,
         std_errors_note=std_errors_note,
+        model=_kept_linear(response, model, prep, spec, summary),
     )
 
 
@@ -1031,3 +1035,64 @@ def _lack_of_fit(model, data: pd.DataFrame, factor_columns: list[str]) -> pd.Dat
 def ranked_effects(effects: pd.DataFrame, column: str) -> pd.DataFrame:
     """The effect tests, the most important first by *column* (LogWorth, or the F ratio's p); missing last."""
     return effects.sort_values(column, ascending=False, na_position="last")
+
+
+# ----------------------------------------------------------------------
+# The model kept for later (ID01)
+# ----------------------------------------------------------------------
+@SavedModel.register
+class LinearFormModel(SavedModel):
+    """A least-squares model that can score new rows: the statsmodels result (its formula and design as fitted) and
+    how each factor was coded - a continuous one centred and scaled to -1..+1, a nominal one by its levels. Gives the
+    Prediction and its 95 % prediction interval. A pickled kind: kept in the project, run where it is trusted."""
+
+    KIND = "linear"
+    FORM = PICKLED
+
+    def __init__(self, response: str, features: list[Feature], results: Any, safe: dict[str, str],
+                 codes: dict[str, tuple[float, float]], *, summary: dict[str, Any], alpha: float = 0.05) -> None:
+        super().__init__(response, features, response_kind=CONTINUOUS, summary=summary)
+        self.results = results
+        self.safe = dict(safe)
+        self.codes = {name: (float(c), float(h)) for name, (c, h) in codes.items()}
+        self.alpha = float(alpha)
+
+    def predict_matrix(self, frame: pd.DataFrame) -> pd.DataFrame:
+        percent = f"{round((1 - self.alpha) * 100):d}%"
+        columns = ["Prediction", f"Lower ({percent})", f"Upper ({percent})"]
+        if frame.empty:
+            return pd.DataFrame(columns=columns)
+        data = pd.DataFrame(index=frame.index)
+        for feature in self.features:
+            if feature.kind == NOMINAL:
+                data[self.safe[feature.name]] = frame[feature.name].astype("string")
+            else:
+                centre, half = self.codes[feature.name]
+                data[self.safe[feature.name]] = (pd.to_numeric(frame[feature.name], errors="coerce") - centre) / half
+        try:
+            table = self.results.get_prediction(data).summary_frame(alpha=self.alpha)
+            return pd.DataFrame({columns[0]: table["mean"], columns[1]: table["obs_ci_lower"],
+                                 columns[2]: table["obs_ci_upper"]}, index=frame.index)
+        except Exception:  # no degrees of freedom left for an interval: the prediction alone
+            return pd.DataFrame({columns[0]: self.results.predict(data)}, index=frame.index).reindex(columns=columns)
+
+
+def _kept_linear(response: str, model: Any, prep: _Prepared, spec: ModelSpec, summary: dict[str, Any]) -> Any:
+    """The least-squares *model* as a LinearFormModel, or None for a personality that has none (a plain OLS only)."""
+    if spec.personality not in ("standard", "stepwise") and not spec.reduce:
+        return None
+    import copy
+
+    features = []
+    for factor in spec.factors:
+        column = prep.safe[factor.name]
+        levels = sorted({str(v) for v in prep.data[column].dropna()}) if factor.kind == NOMINAL else []
+        features.append(Feature(factor.name, NOMINAL if factor.kind == NOMINAL else CONTINUOUS, levels))
+    try:
+        kept = copy.deepcopy(model)
+        kept.remove_data()  # the rows are not part of a model that scores new ones
+    except Exception:
+        return None
+    return LinearFormModel(response, features, kept, prep.safe, prep.codes,
+                           summary={key: value for key, value in summary.items() if isinstance(value, (int, float))},
+                           alpha=spec.alpha)

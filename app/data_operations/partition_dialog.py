@@ -91,6 +91,7 @@ class PartitionDialog(RolesOperationDialogBase):
     """Partition: split the rows by the factors that best separate the response."""
 
     Name = "Partition"
+    FITS_MODEL = True
     Description = (
         "Decision tree of a continuous or nominal response on many factors: "
         "split and prune a step at a time, or automatically on validation rows; "
@@ -223,45 +224,8 @@ class PartitionDialog(RolesOperationDialogBase):
         )
         return pt.partition(frame, spec)
 
-    def build_extra_action_buttons(self, layout: QHBoxLayout) -> None:
-        """Save as model...: keep the fitted model in the project, to score new rows (Predict with a saved model)."""
-        self._save_model_button = QPushButton(_("Save as model..."), self)
-        self._save_model_button.setToolTip(_("Keep this fitted model in the project, to predict new rows with it"))
-        self._save_model_button.setEnabled(False)
-        self._save_model_button.clicked.connect(self.save_model)
-        layout.addWidget(self._save_model_button)
-
-    def save_model(self) -> None:
-        """Ask a name, then keep the model this window last fitted."""
-        from PySide6.QtWidgets import QInputDialog, QMessageBox
-
-        from app.analysis import models
-
-        if self.fitted_model is None:
-            return
-        method = {pt.TREE: "tree", pt.FOREST: "forest", pt.BOOSTED: "boosted"}.get(self.fitted_model.method, "model")
-        name, accepted = QInputDialog.getText(self, _("Save as model"), _("Model name:"),
-                                              text=f"{self.fitted_model.response}_{method}")
-        if not accepted or not name.strip():
-            return
-        replace = False
-        if any(row["name"] == name.strip() for row in self._repo.models()):
-            if QMessageBox.question(self, _("Save as model"),
-                                    _("A model called {name} exists. Replace it?").format(name=name.strip())
-                                    ) != QMessageBox.StandardButton.Yes:
-                return
-            replace = True
-        try:
-            models.save_model(self._repo, name.strip(), self.fitted_model, replace=replace)
-        except models.ModelError as error:
-            QMessageBox.warning(self, _("Save as model"), str(error))
-
     def format_results(self, result: pt.PartitionResult) -> str:
-        if result.model is not None:  # the model of what is on screen: Save as model keeps it
-            result.model.source_table = self.table
-            self.fitted_model = result.model
-            if getattr(self, "_save_model_button", None) is not None:
-                self._save_model_button.setEnabled(True)
+        self._remember_fitted(result)  # the model of what is on screen: Save as model... keeps it
         if self._auto and self._parameter_form_spec is not None and result.method == pt.TREE:
             # What Automatic chose becomes the count Split and Prune go on from.
             self._parameter_form_spec.set_values({"splits": result.splits})
@@ -333,9 +297,7 @@ class PartitionDialog(RolesOperationDialogBase):
         return lines
 
     def apply_results(self, result: pt.PartitionResult) -> list[dict[str, Any]]:
-        if result.model is not None:  # kept for "Save as model" and for result.fitted in the Python API
-            result.model.source_table = self.table
-            self.fitted_model = result.model
+        self._remember_fitted(result)  # also when OK runs without Preview: result.fitted in the Python API
         repo = self._repo
         charts = self.charts()
         # A forest or a boosted model has no single tree: no leaves to write or draw.

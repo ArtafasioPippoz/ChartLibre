@@ -166,3 +166,33 @@ def test_save_as_model_keeps_what_the_window_fitted(qapp, tmp_path, monkeypatch)
         dialog.close()
     finally:
         repo.close()
+
+
+def test_a_least_squares_model_reproduces_the_fit_and_gives_an_interval(tmp_path, monkeypatch) -> None:
+    from app.analysis import linear_model as lm
+
+    frame = _frame()
+    factors = [lm.Factor("x", CONTINUOUS), lm.Factor("group", NOMINAL)]
+    spec = lm.ModelSpec(factors=factors, responses=["mass"], terms=lm.main_effects(factors))
+    fit = lm.fit_models(frame, spec)[0]
+    assert fit.model is not None and fit.model.KIND == "linear"
+    again = fit.model.predict(frame)
+    assert again.notes == []
+    np.testing.assert_allclose(again.table["Prediction"].to_numpy(), fit.predicted.reindex(frame.index).to_numpy())
+    assert (again.table["Lower (95%)"] < again.table["Prediction"]).all()
+    assert (again.table["Upper (95%)"] > again.table["Prediction"]).all()
+    new = pd.DataFrame({"x": [2.0, 7.0], "group": ["red", "purple"]})
+    table = fit.model.predict(new).table
+    assert table["Prediction"].notna().tolist() == [True, False]
+
+    trusted: list[str] = []
+    monkeypatch.setattr(models, "get_value", lambda key, default=None: list(trusted) if key == models.TRUST_KEY else default)
+    monkeypatch.setattr(models, "set_value", lambda key, value: (trusted.clear(), trusted.extend(value)))
+    repo = SqliteRepo(db_path=tmp_path / "l.dhub")
+    try:
+        models.save_model(repo, "lin", fit.model)
+        reloaded = models.load_model(repo, "lin")
+        np.testing.assert_allclose(reloaded.predict(frame).table["Prediction"].to_numpy(),
+                                   again.table["Prediction"].to_numpy())
+    finally:
+        repo.close()

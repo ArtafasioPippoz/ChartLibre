@@ -103,6 +103,7 @@ PROFILER_DOC = _JMP_HELP + "overview-of-the-prediction-profiler.shtml"
 class FitModelDialog(RolesOperationDialogBase):
     """Fit Model: responses on factors, by least squares."""
 
+    FITS_MODEL = True
     Name = "Fit Model"
     Description = (
         "Least-squares model of one or more responses on continuous and nominal "

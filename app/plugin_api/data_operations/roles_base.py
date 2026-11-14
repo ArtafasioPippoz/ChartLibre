@@ -212,8 +212,61 @@ class RolesOperationDialogBase(DataOperationDialogBase):
         else:
             self.reject()
 
+    #: True for an analysis that fits a model worth keeping: its window gets Save as model...
+    FITS_MODEL: ClassVar[bool] = False
+
+    def build_extra_action_buttons(self, layout: Any) -> None:
+        """Save as model... for the analyses that fit a model (FITS_MODEL)."""
+        if not self.FITS_MODEL:
+            return
+        from PySide6.QtWidgets import QPushButton
+
+        self._save_model_button = QPushButton(_("Save as model..."), self)
+        self._save_model_button.setToolTip(_("Keep this fitted model in the project, to predict new rows with it"))
+        self._save_model_button.setEnabled(False)
+        self._save_model_button.clicked.connect(self.save_model)
+        layout.addWidget(self._save_model_button)
+
+    def _remember_fitted(self, result: Any) -> None:
+        """The models of what is on screen (a result, or a list of them: one a response): Save as model keeps them."""
+        items = list(result) if isinstance(result, (list, tuple)) else [result]
+        kept = [item.model for item in items if getattr(item, "model", None) is not None]
+        for model in kept:
+            model.source_table = self.table
+        self.fitted_models = kept
+        self.fitted_model = kept[0] if kept else None
+        button = getattr(self, "_save_model_button", None)
+        if button is not None:
+            button.setEnabled(bool(kept))
+
+    def save_model(self) -> None:
+        """Ask a name (one per response when there are several), then keep the model(s) this window fitted."""
+        from PySide6.QtWidgets import QInputDialog, QMessageBox
+
+        from app.analysis import models
+
+        for model in getattr(self, "fitted_models", []) or ([self.fitted_model] if self.fitted_model else []):
+            name, accepted = QInputDialog.getText(self, _("Save as model"), _("Model name:"),
+                                                  text=f"{model.response}_{model.KIND}")
+            name = name.strip()
+            if not accepted or not name:
+                return
+            replace_it = False
+            if any(row["name"] == name for row in self._repo.models()):
+                if QMessageBox.question(self, _("Save as model"),
+                                        _("A model called {name} exists. Replace it?").format(name=name)
+                                        ) != QMessageBox.StandardButton.Yes:
+                    continue
+                replace_it = True
+            try:
+                models.save_model(self._repo, name, model, replace=replace_it)
+            except models.ModelError as error:
+                QMessageBox.warning(self, _("Save as model"), str(error))
+                return
+
     def format_results(self, result: Any, /) -> str:
         """The report of *result*, as HTML (report_document unless an analysis does more)."""
+        self._remember_fitted(result)
         return self.report_document(result)
 
     def apply_results(self, result: Any) -> list[dict[str, Any]]:
