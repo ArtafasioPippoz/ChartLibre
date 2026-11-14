@@ -25,6 +25,8 @@ import numpy as np
 import pandas as pd
 from scipy import linalg, stats
 
+from app.analysis.models import CONTINUOUS, NOMINAL, PORTABLE, Feature, SavedModel
+
 LINEAR = "linear"
 QUADRATIC = "quadratic"
 METHODS: tuple[tuple[str, str], ...] = ((LINEAR, "Linear (common covariance)"), (QUADRATIC, "Quadratic (own covariance)"))
@@ -54,6 +56,8 @@ class DiscriminantResult:
     probabilities: pd.DataFrame
     scores: pd.DataFrame
     notes: list[str] = field(default_factory=list)
+    #: The classifier as a SavedModel (portable, JSON): keep it, or classify new rows with it.
+    model: Any = None
 
 
 def _ordered_levels(values: pd.Series) -> list[Any]:
@@ -190,8 +194,72 @@ def discriminant(
     unclassified = int(np.count_nonzero(~complete))
     if unclassified:
         notes.append(f"{unclassified} row(s) with a missing covariate are neither fitted nor classified.")
+    own = ([np.cov(x[codes == level], rowvar=False).reshape(p, p) for level in range(k)]
+           if method == QUADRATIC else [])
+    kept = DiscriminantModel(response, covariates, levels, method, means, pooled, own, log_prior,
+                             summary={key: float(value) for key, value in summary.items()})
     return DiscriminantResult(
         response=response, covariates=list(covariates), levels=levels, method=method, summary=summary,
         canonical=canonical, coefficients=coefficients, means=class_means, confusion=confusion,
-        predicted=predicted, probabilities=probabilities, scores=scores, notes=notes,
+        predicted=predicted, probabilities=probabilities, scores=scores, notes=notes, model=kept,
     )
+
+
+@SavedModel.register
+class DiscriminantModel(SavedModel):
+    """A linear or quadratic discriminant classifier that can place new rows: the groups' means, the pooled (or each
+    group's own) covariance and the priors - plain numbers, kept as JSON, readable and safe anywhere."""
+
+    KIND = "discriminant"
+    FORM = PORTABLE
+
+    def __init__(self, response: str, covariates: list[str], levels: list[Any], method: str, means: np.ndarray,
+                 pooled: np.ndarray, own: list[np.ndarray], log_prior: np.ndarray, *,
+                 summary: dict[str, float] | None = None, source_table: str = "") -> None:
+        super().__init__(response, [Feature(name, CONTINUOUS) for name in covariates], response_kind=NOMINAL,
+                         levels=[str(level) for level in levels], summary=summary, source_table=source_table)
+        self.group_values = list(levels)
+        self.method = method
+        self.means = np.asarray(means, dtype=float)
+        self.pooled = np.asarray(pooled, dtype=float)
+        self.own = [np.asarray(matrix, dtype=float) for matrix in own]
+        self.log_prior = np.asarray(log_prior, dtype=float)
+
+    def _scores(self, points: np.ndarray) -> np.ndarray:
+        k = len(self.group_values)
+        if self.method == LINEAR:
+            weights = linalg.solve(self.pooled, self.means.T, assume_a="pos")
+            constant = -0.5 * np.sum(self.means.T * weights, axis=0) + self.log_prior
+            return points @ weights + constant
+        out = np.empty((points.shape[0], k))
+        for level in range(k):
+            factor = linalg.cholesky(self.own[level], lower=True)
+            z = linalg.solve_triangular(factor, (points - self.means[level]).T, lower=True)
+            out[:, level] = -0.5 * np.sum(z * z, axis=0) - np.sum(np.log(np.diag(factor))) + self.log_prior[level]
+        return out
+
+    def predict_matrix(self, frame: pd.DataFrame) -> pd.DataFrame:
+        names = [f"Prob({level})" for level in self.levels]
+        if frame.empty:
+            return pd.DataFrame(columns=["Prediction", *names])
+        points = frame[[feature.name for feature in self.features]].to_numpy(float)
+        scores = self._scores(points)
+        shifted = np.exp(scores - scores.max(axis=1, keepdims=True))
+        posterior = shifted / shifted.sum(axis=1, keepdims=True)
+        table = pd.DataFrame(posterior, index=frame.index, columns=names)
+        table.insert(0, "Prediction", np.asarray(self.levels, dtype=object)[np.argmax(posterior, axis=1)])
+        return table
+
+    def state(self) -> dict[str, Any]:
+        return {"method": self.method, "group_values": [value.item() if hasattr(value, "item") else value
+                                                          for value in self.group_values],
+                "means": self.means.tolist(), "pooled": self.pooled.tolist(),
+                "own": [matrix.tolist() for matrix in self.own], "log_prior": self.log_prior.tolist()}
+
+    @classmethod
+    def from_state(cls, header: dict[str, Any], state: dict[str, Any]) -> DiscriminantModel:
+        return cls(str(header["response"]), [feature["name"] for feature in header["features"]],
+                   list(state["group_values"]), str(state["method"]), np.array(state["means"]),
+                   np.array(state["pooled"]), [np.array(matrix) for matrix in state["own"]],
+                   np.array(state["log_prior"]), summary=header.get("summary"),
+                   source_table=str(header.get("source_table", "")))

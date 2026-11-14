@@ -32,6 +32,7 @@ from app.utils.i18n import _
 class DiscriminantDialog(RolesOperationDialogBase):
     """Discriminant analysis: classify the rows into the groups of Y from the X measures."""
 
+    FITS_MODEL = True
     Name = "Discriminant"
     Description = (
         "Which group a row belongs to, from continuous measures: linear or quadratic "

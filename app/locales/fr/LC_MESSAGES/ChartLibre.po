@@ -34,9 +34,6 @@ msgstr "'{name}' : la formule est celle du projet ; les valeurs et la plage so
 msgid "'{part}' is not a parameter's name."
 msgstr "'{part}' n'est pas le nom d'un paramètre."
 
-msgid "(Default)"
-msgstr "(Par défaut)"
-
 msgid "(Embedded style)"
 msgstr "(Style intégré)"
 
@@ -196,6 +193,9 @@ msgstr "Un cadre en▁arrière"
 msgid "A frame forward"
 msgstr "Un cadre▁vers l'avant"
 
+msgid "A function called {name} exists. Replace it?"
+msgstr "Une fonction appelée {name} existe. La remplacer ?"
+
 msgid "A function's parameter"
 msgstr "Paramètre d'une▁fonction"
 
@@ -219,6 +219,9 @@ msgstr "Un dé mesuré au-dessus est rangé haut ; vide : pas de limite supér
 
 msgid "A measured die below it is binned Low; empty: no lower limit."
 msgstr "Un dé mesuré en dessous est rangé bas ; vide : pas de limite inférieure."
+
+msgid "A model called {name} exists. Replace it?"
+msgstr "Un modèle appelé {name} existe. Le remplacer ?"
 
 msgid "A model of {response} on its strongest factors: {factors}"
 msgstr "Un modèle de {response} sur ses facteurs les plus forts : {factors}"
@@ -469,6 +472,9 @@ msgstr "Toutes les séries cochées"
 msgid "All groups"
 msgstr "Tous les groupes"
 
+msgid "All operations"
+msgstr "Toutes les opérations"
+
 msgid "All rows"
 msgstr "Toutes les lignes"
 
@@ -640,8 +646,8 @@ msgstr "Appliquer le modèle"
 msgid "Apply the settings to play"
 msgstr "▁Appliquer les▁paramètres pour▁jouer"
 
-msgid "Apply to all figures"
-msgstr "Appliquer à tous les chiffres"
+msgid "Apply to all"
+msgstr "Appliquer à tout"
 
 msgid "Are there differences in {response} across {factor}?"
 msgstr "Existe-t-il des différences dans {response} à travers {factor} ?"
@@ -673,14 +679,14 @@ msgstr "Assistant"
 msgid "Asymmetry. Smaller pushes the baseline further below the peaks; it should stay well under 0.5."
 msgstr "Asymétrie. Plus petit pousse la ligne de base plus bas sous les pics ; elle doit rester bien en dessous de 0,5."
 
+msgid "At start"
+msgstr "Au démarrage"
+
 msgid "Attenuation (dB):"
 msgstr "Atténuation (dB) :"
 
 msgid "Author"
 msgstr "Auteur"
-
-msgid "Author:"
-msgstr "Auteur :"
 
 msgid "Auto"
 msgstr "Auto"
@@ -841,6 +847,9 @@ msgstr "Ramenez les lignes masquées sélectionnées dans les graphiques et les 
 msgid "Browse…"
 msgstr "Parcourir…"
 
+msgid "Browse… Pick a .mplstyle file from the mplstyles folder"
+msgstr "Parcourir… Choisir un fichier .mplstyle dans le dossier mplstyles"
+
 msgid "Build"
 msgstr "Construire"
 
@@ -972,6 +981,9 @@ msgstr "Tchebychev II"
 
 msgid "Check one or more series. One-sample tests are calculated for each checked series. Paired and independent tests are calculated for every pair, and the group comparison for all of them, when two or more series are checked."
 msgstr "Cochez une ou plusieurs séries. Les tests à un échantillon sont calculés pour chaque série cochée. Les tests appariés et indépendants sont calculés pour chaque paire, et la comparaison de groupes pour toutes ensemble, lorsque deux séries ou plus sont cochées."
+
+msgid "Check the open project's database, offer to fix what is wrong, then compact the file."
+msgstr "Vérifier la base de données du projet ouvert, proposer de corriger ce qui ne va pas, puis compacter le fichier."
 
 msgid "Checked when a query is saved or typed, and when a project is opened: UPDATE, DELETE, DROP and the like are refused. Charts are never slowed down by it."
 msgstr "Vérifié quand une requête est enregistrée ou saisie, et quand un projet est ouvert : UPDATE, DELETE, DROP et autres sont refusés. Les graphiques n'en sont jamais ralentis."
@@ -1168,6 +1180,9 @@ msgstr "Les noms de colonnes doivent être uniques."
 msgid "Column names, separated by commas:"
 msgstr "Noms des colonnes, séparés par des virgules :"
 
+msgid "Column span"
+msgstr "Nombre de colonnes"
+
 msgid "Column {number} of {count}"
 msgstr "Colonne {number} sur {count}"
 
@@ -1282,6 +1297,9 @@ msgstr "Convertir en décibels"
 msgid "Copy"
 msgstr "Copier"
 
+msgid "Copy as Python"
+msgstr "Copier en tant que Python"
+
 msgid "Copy figure"
 msgstr "Copier la figure"
 
@@ -1378,9 +1396,6 @@ msgstr "Créé"
 msgid "Created {date}"
 msgstr "Créée {date}"
 
-msgid "Created:"
-msgstr "Créé :"
-
 msgid "Credits"
 msgstr "Crédits"
 
@@ -1464,9 +1479,6 @@ msgstr "Type de données :"
 
 msgid "Database"
 msgstr "Base de données"
-
-msgid "Database Info"
-msgstr "Informations sur la base de données"
 
 msgid "Database saved."
 msgstr "Base de données enregistrée."
@@ -1897,9 +1909,6 @@ msgstr "Vider l'éditeur"
 msgid "Encoding"
 msgstr "Encodage"
 
-msgid "Encoding:"
-msgstr "Encodage :"
-
 msgid "End of the range to evaluate over."
 msgstr "Fin de la plage à évaluer."
 
@@ -2026,8 +2035,14 @@ msgstr "Exporter le rapport…"
 msgid "Export rows"
 msgstr "Exporter les lignes"
 
-msgid "Export selected rows..."
-msgstr "Exporter les lignes sélectionnées..."
+msgid "Export script"
+msgstr "Exporter le script"
+
+msgid "Export script..."
+msgstr "Exporter le script..."
+
+msgid "Export the selected cells, or every visible row, as CSV or Excel"
+msgstr "Exporter les cellules sélectionnées, ou chaque ligne visible, au format CSV ou Excel"
 
 msgid "Export view as CSV"
 msgstr "Exporter la vue en CSV"
@@ -2122,9 +2137,6 @@ msgstr "Disposition"
 msgid "Figure name"
 msgstr "Nom de la figure"
 
-msgid "Figure options"
-msgstr "Options de la figure"
-
 msgid "Figure properties"
 msgstr "Propriétés de la figure"
 
@@ -2145,9 +2157,6 @@ msgstr "Figures"
 
 msgid "File"
 msgstr "Fichier"
-
-msgid "File created:"
-msgstr "Fichier créé :"
 
 msgid "Files of programs whose format has no free reader: export them as CSV or Excel."
 msgstr "Fichiers de programmes dont le format n'a pas de lecteur libre : exportez-les au format CSV ou Excel."
@@ -2296,6 +2305,9 @@ msgstr "Oublier un modèle enregistré"
 msgid "Forget the list of recently opened projects"
 msgstr "Oublier la liste des projets récemment ouverts"
 
+msgid "Forget the operations listed here"
+msgstr "Oublier les opérations répertoriées ici"
+
 msgid "Forget the pending point without finishing the measurement."
 msgstr "Oublier le point en attente sans terminer la mesure."
 
@@ -2358,6 +2370,9 @@ msgstr "Jauge R&R {percent}% de la variation de l'étude : la partie que le sys
 
 msgid "Gamma"
 msgstr "Gamma"
+
+msgid "Gap H"
+msgstr "Écart H"
 
 msgid "Gap V"
 msgstr "Écart V"
@@ -2463,9 +2478,6 @@ msgstr "Deviner les paramètres de départ des modèles non linéaires."
 
 msgid "Guided analysis"
 msgstr "Analyse guidée"
-
-msgid "H"
-msgstr "H"
 
 msgid "HTML - one file, opens in any browser"
 msgstr "HTML - un seul fichier, s'ouvre dans tout navigateur"
@@ -2893,9 +2905,6 @@ msgstr "Paramètres de départ JSON pour les modèles non linéaires series_fit.
 msgid "Jarque-Bera normality"
 msgstr "Normalité de Jarque-Bera"
 
-msgid "Journal"
-msgstr "Journal"
-
 msgid "Journal column…"
 msgstr "Colonne Journal…"
 
@@ -2920,8 +2929,14 @@ msgstr "▁Gardez les▁limites de l'ensemble des▁données, de▁sorte que les
 msgid "Keep this SELECT as a saved query of the project"
 msgstr "▁Garder ce SELECT▁comme▁requête▁enregistrée du▁projet"
 
+msgid "Keep this analysis as a Python function of the project, to call from the workpad"
+msgstr "Conserver cette analyse en tant que fonction Python du projet, pour l'appeler depuis le workpad"
+
 msgid "Keep this figure's style, axes and series look under a name"
 msgstr "Conserver sous un nom le style, les axes et l'aspect des séries de cette figure"
+
+msgid "Keep this fitted model in the project, to predict new rows with it"
+msgstr "Conserver ce modèle ajusté dans le projet, afin de prédire de nouvelles lignes avec celui-ci"
 
 msgid "Keep:"
 msgstr "Conserver :"
@@ -2964,9 +2979,6 @@ msgstr "Kurtosis"
 
 msgid "Kurtosis test"
 msgstr "Test d'aplatissement"
-
-msgid "Kwargs"
-msgstr "Kwargs"
 
 msgid "L2 regularization strength."
 msgstr "Force de la régularisation L2."
@@ -3018,9 +3030,6 @@ msgstr "Plus grand décalage à conserver. 0 conserve tous les décalages."
 
 msgid "Lasso drops the terms that do not help, Ridge shrinks them all, Elastic Net mixes the two; the strength is chosen by cross-validation."
 msgstr "Lasso laisse tomber les termes qui n'aident pas, Ridge les rétrécit tous, Elastic Net mélange les deux ; la force est choisie par validation croisée."
-
-msgid "Last modified:"
-msgstr "Dernière modification :"
 
 msgid "Latin hypercube"
 msgstr "Hypercube latin"
@@ -3157,9 +3166,6 @@ msgstr "Link : une chaîne pour une table liée à sa source, Q pour une requê
 msgid "Linkage method:"
 msgstr "Méthode de liaison :"
 
-msgid "Linked"
-msgstr "Liée"
-
 msgid "Linked to its source"
 msgstr "Liée à sa source"
 
@@ -3279,6 +3285,9 @@ msgstr "Taille du marqueur en points. La valeur par défaut laisse le choix au s
 
 msgid "Match:"
 msgstr "Correspondance :"
+
+msgid "Matplotlib"
+msgstr "Matplotlib"
 
 msgid "Matplotlib Style (*.mplstyle);;All Files (*)"
 msgstr "Style Matplotlib (*.mplstyle);;Tous les fichiers (*)"
@@ -3460,11 +3469,20 @@ msgstr "Axe de symétrie"
 msgid "Misclassification {percent}%: the model puts {count} of {rows} rows in another group than their own. These are the rows it was fitted to: on new rows it usually does a little worse."
 msgstr "Erreur de classification {percent}% : le modèle place {count} des {rows} lignes dans un autre groupe que le leur. Ce sont les rangées sur lesquelles il a été ajusté : sur les nouvelles rangées, il fait généralement un peu moins bien."
 
+msgid "Missing in the table: {columns}."
+msgstr "Manquant dans le tableau : {columns}."
+
 msgid "Missing values:"
 msgstr "Valeurs manquantes :"
 
 msgid "Model"
 msgstr "Modèle"
+
+msgid "Model and table"
+msgstr "Modèle et tableau"
+
+msgid "Model name:"
+msgstr "Nom du modèle :"
 
 msgid "Model:"
 msgstr "Modèle :"
@@ -3495,6 +3513,9 @@ msgstr "Plus"
 
 msgid "More accurate on smooth data than the trapezoidal rule. Assumes the curve is well approximated by parabolas."
 msgstr "Plus précis que la méthode des trapèzes sur des données lisses. Suppose que la courbe est bien approchée par des paraboles."
+
+msgid "More..."
+msgstr "Plus..."
 
 msgid "Morlet central frequency w0. Higher values resolve frequency more finely at the cost of time resolution; 6 is the usual compromise and the value at which the wavelet is near-admissible."
 msgstr "Fréquence centrale w0 de Morlet. Des valeurs plus élevées résolvent plus finement la fréquence au détriment de la résolution temporelle ; 6 est le compromis habituel et la valeur à laquelle l'ondelette est quasi admissible."
@@ -3655,6 +3676,9 @@ msgstr "Nouveau, ouvrir, importer et enregistrer"
 msgid "Next"
 msgstr "Suivant"
 
+msgid "Next axis"
+msgstr "Axe suivant"
+
 msgid "No"
 msgstr "Non"
 
@@ -3708,9 +3732,6 @@ msgstr "Aucun point ne signale. Le processus est sous contrôle statistique - ce
 
 msgid "No preview"
 msgstr "Pas d'aperçu"
-
-msgid "No preview yet: it is drawn when the project is saved."
-msgstr "Pas encore d'aperçu : il est dessiné à l'enregistrement du projet."
 
 msgid "No recent projects"
 msgstr "Aucun projet récent"
@@ -3886,9 +3907,6 @@ msgstr "Une ligne par combinaison distincte. Aucune cochée : une ligne de totau
 msgid "One series at a time: the histogram, quantiles, moments and normality tests."
 msgstr "Une série à la fois : l'histogramme, les quantiles, les moments et les tests de normalité."
 
-msgid "One statement per Run · Ctrl+Return"
-msgstr "▁Une instruction par course · Ctrl+Retour"
-
 msgid "One tree you can read; a Bootstrap Forest (many trees on resampled rows, averaged); or a Boosted Tree (many small trees, each correcting the ones before)."
 msgstr "Un arbre que vous pouvez lire ; une forêt Bootstrap (de nombreux arbres sur des lignes rééchantillonnées, moyennées) ; ou un arbre boosté (de nombreux petits arbres, chacun corrigeant ceux d'avant)."
 
@@ -3937,6 +3955,12 @@ msgstr "Ouvrir la documentation de la méthode sélectionnée."
 msgid "Open recent"
 msgstr "Ouvrir un fichier récent"
 
+msgid "Open settings"
+msgstr "Ouvrir les paramètres"
+
+msgid "Open settings..."
+msgstr "Ouvrir les paramètres..."
+
 msgid "Open the Query Builder on the selected columns and rows of this table"
 msgstr "Ouvrez le Générateur de requêtes sur les colonnes et lignes sélectionnées de ce tableau"
 
@@ -3960,6 +3984,9 @@ msgstr "Opérateur"
 
 msgid "Operators"
 msgstr "Opérateurs"
+
+msgid "Optimize the project's database..."
+msgstr "Optimiser la base de données du projet..."
 
 msgid "Optional description"
 msgstr "Description facultative"
@@ -3990,6 +4017,9 @@ msgstr "Facultatif : les nœuds 'z, pour un champ dans l'espace."
 
 msgid "Optional: who measured. Without it, repeatability alone."
 msgstr "Facultatif : qui a mesuré. Sans cela, la répétabilité seule."
+
+msgid "Options"
+msgstr "Options"
 
 msgid "Order by:"
 msgstr "Trier par :"
@@ -4038,9 +4068,6 @@ msgstr "PNG"
 
 msgid "Page trend test"
 msgstr "Test de tendance de la page"
-
-msgid "Pages:"
-msgstr "Pages :"
 
 msgid "Paired difference summary"
 msgstr "Synthèse des différences appariées"
@@ -4117,9 +4144,6 @@ msgstr "Coller"
 msgid "Paste picture"
 msgstr "Coller l'image"
 
-msgid "Path:"
-msgstr "Chemin :"
-
 msgid "Pattern:"
 msgstr "Motif :"
 
@@ -4158,9 +4182,6 @@ msgstr "Personnalité :"
 
 msgid "Pick Role Variables"
 msgstr "Choisir les variables de rôle"
-
-msgid "Pick a .mplstyle file from the mplstyles folder"
-msgstr "Choisissez un fichier .mplstyle dans le dossier mplstyles"
 
 msgid "Pick a saved query."
 msgstr "Choisissez une requête enregistrée."
@@ -4249,6 +4270,9 @@ msgstr "Port"
 msgid "Position"
 msgstr "Position"
 
+msgid "Predict with a saved model"
+msgstr "Prédire avec un modèle enregistré"
+
 msgid "Predicted"
 msgstr "Prévu"
 
@@ -4297,6 +4321,9 @@ msgstr "Aperçu : les valeurs aberrantes de la série {count} sont colorées {c
 msgid "Preview: the outliers of {count} series are hidden."
 msgstr "Aperçu : les valeurs aberrantes de la série {count} sont cachées."
 
+msgid "Previous axis"
+msgstr "Axe précédent"
+
 msgid "Prewhitened CCF"
 msgstr "CCF pré-blanchie"
 
@@ -4315,26 +4342,20 @@ msgstr "Probabilité"
 msgid "Process capability"
 msgstr "Capacité du processus"
 
-msgid "Proj."
-msgstr "Proj."
-
 msgid "Project"
 msgstr "Projet"
 
 msgid "Project history"
 msgstr "Historique du projet"
 
-msgid "Project info"
-msgstr "Informations du projet"
-
-msgid "Project info saved."
-msgstr "Informations du projet enregistrées."
-
 msgid "Project information"
 msgstr "Informations sur le projet"
 
 msgid "Project report"
 msgstr "Rapport du projet"
+
+msgid "Projection"
+msgstr "Projection"
 
 msgid "Projects"
 msgstr "Projets"
@@ -4456,6 +4477,12 @@ msgstr "Lire comme : {name}"
 msgid "Read options"
 msgstr "Options de lecture"
 
+msgid "Read the application log, copy it or empty it."
+msgstr "Lire le journal de l’application, le copier ou le vider."
+
+msgid "Reads: {columns}."
+msgstr "Lectures : {columns}."
+
 msgid "Ready"
 msgstr "Prêt"
 
@@ -4554,6 +4581,9 @@ msgstr "Afficher comme :"
 
 msgid "Renderer not found."
 msgstr "Moteur de rendu introuvable."
+
+msgid "Renderer options"
+msgstr "Options de rendu"
 
 msgid "Renderers"
 msgstr "Moteurs de rendu"
@@ -4729,6 +4759,9 @@ msgstr "En gros, le nombre de voisins que chaque point est supposé avoir. Rédu
 msgid "Row"
 msgstr "Ligne"
 
+msgid "Row span"
+msgstr "Fusion de lignes"
+
 msgid "Rows"
 msgstr "Lignes"
 
@@ -4759,11 +4792,17 @@ msgstr "Règle"
 msgid "Run"
 msgstr "Exécuter"
 
+msgid "Run again"
+msgstr "Exécuter à nouveau"
+
 msgid "Run the project's functions on this computer: their code is shown first."
 msgstr "Exécutez les fonctions du projet sur cet ordinateur : leur code est affiché en premier."
 
 msgid "Run the project's functions?"
 msgstr "Exécuter les fonctions du projet ?"
+
+msgid "Run {count} operation(s) again? Each writes its tables and figure anew."
+msgstr "Exécuter {count} opération(s) à nouveau ? Chacune écrit à nouveau ses tableaux et son graphique."
 
 msgid "Runs"
 msgstr "Exécutions"
@@ -4798,23 +4837,14 @@ msgstr "SQL bloqué"
 msgid "SQL guard"
 msgstr "Garde SQL"
 
-msgid "SQL on the project's tables; changes are made on a copy and kept only with Apply"
-msgstr "SQL sur les tables du▁projet ; les modifications▁sont▁effectuées sur une▁copie et▁conservées▁uniquement avec Apply"
-
 msgid "SQL query (SELECT / WITH ...)"
 msgstr "Requête SQL (SELECT / WITH ...)"
-
-msgid "SQL workpad"
-msgstr "▁Bloc de travail SQL"
 
 msgid "SQLite file"
 msgstr "Fichier SQLite"
 
 msgid "SQLite type"
 msgstr "Type SQLite"
-
-msgid "SQLite version:"
-msgstr "Version de SQLite :"
 
 msgid "SS residual"
 msgstr "SS résiduel"
@@ -4864,6 +4894,18 @@ msgstr "Enregistrer en CSV"
 msgid "Save as GIF…"
 msgstr "▁Enregistrer▁sous GIF..."
 
+msgid "Save as function"
+msgstr "Enregistrer en tant que fonction"
+
+msgid "Save as function..."
+msgstr "Enregistrer en tant que fonction..."
+
+msgid "Save as model"
+msgstr "Enregistrer en tant que modèle"
+
+msgid "Save as model..."
+msgstr "Enregistrer en tant que modèle..."
+
 msgid "Save as picture"
 msgstr "Enregistrer comme image"
 
@@ -4893,6 +4935,12 @@ msgstr "Enregistrer les paramètres en CSV"
 
 msgid "Save query"
 msgstr "Enregistrer la requête"
+
+msgid "Save settings"
+msgstr "Enregistrer les paramètres"
+
+msgid "Save settings..."
+msgstr "Enregistrer les paramètres..."
 
 msgid "Save the rows currently on screen as a CSV file"
 msgstr "Enregistrer les lignes actuellement à l'écran dans un fichier CSV"
@@ -5233,8 +5281,8 @@ msgstr "Règle de Simpson :"
 msgid "Size"
 msgstr "Taille"
 
-msgid "Size on disk:"
-msgstr "Taille sur le disque :"
+msgid "Size on disk"
+msgstr "Taille sur le disque"
 
 msgid "Skewness"
 msgstr "Asymétrie"
@@ -5280,9 +5328,6 @@ msgstr "Espacement"
 
 msgid "Spacing:"
 msgstr "Espacement :"
-
-msgid "Span"
-msgstr "Étendue"
 
 msgid "Spectroscopy and XRD"
 msgstr "Spectroscopie et DRX"
@@ -5577,6 +5622,9 @@ msgstr "La base d'une échelle logarithmique."
 
 msgid "The baseline taken away has an area of {area} under it."
 msgstr "Le point de▁départ▁enlevé a une zone de {area}▁sous▁elle."
+
+msgid "The call that makes this analysis again; for all of them, a script"
+msgstr "L’appel qui effectue à nouveau cette analyse ; pour tous ces appels, un script"
 
 msgid "The change was declined: nothing was changed."
 msgstr "Le▁changement a▁été▁refusé :▁rien n'a▁été▁changé."
@@ -5938,6 +5986,9 @@ msgstr "▁Cela▁dessine {count} points. Le▁graphique les▁calcule à▁nouv
 msgid "This figure could not be drawn: {reason}"
 msgstr "Cette figure n'a pas pu être dessinée : {reason}"
 
+msgid "This figure has no style of its own: it uses the default chart style (Settings > Charts)."
+msgstr "Cette figure n’a pas de style propre : elle utilise le style de graphique par défaut (Paramètres > Graphiques)."
+
 msgid "This file is no longer there: {path}"
 msgstr "Ce fichier n'existe plus : {path}"
 
@@ -5946,6 +5997,9 @@ msgstr "Cette fonction ne prend aucun paramètre."
 
 msgid "This project contains SQL that would change the database. It has been blocked and will not run until it is edited:\n\n{items}"
 msgstr "Ce projet contient du SQL qui modifierait la base de données. Il a été bloqué et ne s'exécutera pas tant qu'il n'aura pas été modifié :\n\n{items}"
+
+msgid "This project has no saved model: keep one from an analysis that fits a model."
+msgstr "Ce projet n'a pas de modèle enregistré : conservez-en un issu d'une analyse qui correspond à un modèle."
 
 msgid "This project keeps functions that run code on this computer whenever they are drawn or fitted. Run them only if you trust where the project comes from."
 msgstr "Ce▁projet conserve les▁fonctions qui▁exécutent le code sur▁cet▁ordinateur▁chaque▁fois▁qu'elles▁sont▁dessinées ou▁ajustées. Exécutez-les▁seulement si▁vous▁faites▁confiance à l'origine du▁projet."
@@ -6258,6 +6312,9 @@ msgstr "Version"
 
 msgid "View"
 msgstr "▁Affichage"
+
+msgid "View the log…"
+msgstr "Afficher le journal…"
 
 msgid "Violin Plot"
 msgstr "Diagramme en violon"
@@ -6859,6 +6916,9 @@ msgstr "plage y"
 msgid "z range"
 msgstr "plage z"
 
+msgid "{amount} could be reclaimed (Preferences > Advanced)"
+msgstr "{amount} pourrait être récupéré (Préférences > Avancé)"
+
 msgid "{charts} cannot be played: it draws the whole table as one structure, with no frames to go through."
 msgstr "{charts} ne▁peut▁pas▁être▁joué : il▁dessine▁toute la table▁comme une▁seule structure, sans cadre à▁passer."
 
@@ -6867,12 +6927,6 @@ msgstr "{chart} dessine une série par axe : les {count} ci-dessous auront chacu
 
 msgid "{chart} draws up to {limit} series per axis: the {count} below will be split across {axes} axes."
 msgstr "{chart} dessine jusqu'à {limit} séries par axe : les {count} ci-dessous seront réparties sur {axes} axes."
-
-msgid "{count:,} x {size} B"
-msgstr "{count:,} x {size} o"
-
-msgid "{count:,} x {size} B, {amount} reclaimable by Optimize DB"
-msgstr "{count:,} x {size} o, {amount} récupérables par Optimiser la BD"
 
 msgid "{count} cell(s) changed."
 msgstr "{count} cellule(s) modifiée(s)."
@@ -7103,7 +7157,7 @@ msgid "{provider} answered."
 msgstr "{provider}▁répondu."
 
 msgid "{provider} · {level}"
-msgstr ""
+msgstr "{provider} · {level}"
 
 msgid "{p}: if {null}, a result at least this strong would come up by chance {how_often}."
 msgstr "{p} : si {null}, un▁résultat au▁moins ce▁fort▁serait par▁hasard {how_often}."
@@ -7119,6 +7173,9 @@ msgstr "{role} ne prend que {kinds} colonnes : {columns}."
 
 msgid "{role}: choose at least {count} column(s)."
 msgstr "{role} : choisissez au moins {count} colonne(s)."
+
+msgid "{rows} row(s) written to {table}."
+msgstr "{rows} ligne(s) écrite(s) dans {table}."
 
 msgid "{rows} rows"
 msgstr "{rows} lignes"
@@ -7169,7 +7226,7 @@ msgid "{x} did not change the odds of {y}"
 msgstr "{x} n'a▁pas▁changé les▁cotes de {y}"
 
 msgid "{y} - {x}"
-msgstr ""
+msgstr "{y} - {x}"
 
 msgid "{y} against {x}"
 msgstr "{y}▁contre {x}"
@@ -7185,6 +7242,93 @@ msgstr "{y} ne▁dépendait▁pas de {x}"
 
 msgid "▲ number · ● category · ◐ ordered category · ◷ date"
 msgstr "▁Numéro · ●▁catégorie ·▁Catégorie de▁commande · Date de▁commande"
+
+msgid "(Default)"
+msgstr "(Par défaut)"
+
+msgid "Apply to all figures"
+msgstr "Appliquer à tous les chiffres"
+
+msgid "Author:"
+msgstr "Auteur :"
+
+msgid "Created:"
+msgstr "Créé :"
+
+msgid "Database Info"
+msgstr "Informations sur la base de données"
+
+msgid "Encoding:"
+msgstr "Encodage :"
+
+msgid "Export selected rows..."
+msgstr "Exporter les lignes sélectionnées..."
+
+msgid "Figure options"
+msgstr "Options de la figure"
+
+msgid "File created:"
+msgstr "Fichier créé :"
+
+msgid "H"
+msgstr "H"
+
+msgid "Journal"
+msgstr "Journal"
+
+msgid "Kwargs"
+msgstr "Kwargs"
+
+msgid "Last modified:"
+msgstr "Dernière modification :"
+
+msgid "Linked"
+msgstr "Liée"
+
+msgid "No preview yet: it is drawn when the project is saved."
+msgstr "Pas encore d'aperçu : il est dessiné à l'enregistrement du projet."
+
+msgid "One statement per Run · Ctrl+Return"
+msgstr "▁Une instruction par course · Ctrl+Retour"
+
+msgid "Pages:"
+msgstr "Pages :"
+
+msgid "Path:"
+msgstr "Chemin :"
+
+msgid "Pick a .mplstyle file from the mplstyles folder"
+msgstr "Choisissez un fichier .mplstyle dans le dossier mplstyles"
+
+msgid "Proj."
+msgstr "Proj."
+
+msgid "Project info"
+msgstr "Informations du projet"
+
+msgid "Project info saved."
+msgstr "Informations du projet enregistrées."
+
+msgid "SQL on the project's tables; changes are made on a copy and kept only with Apply"
+msgstr "SQL sur les tables du▁projet ; les modifications▁sont▁effectuées sur une▁copie et▁conservées▁uniquement avec Apply"
+
+msgid "SQL workpad"
+msgstr "▁Bloc de travail SQL"
+
+msgid "SQLite version:"
+msgstr "Version de SQLite :"
+
+msgid "Size on disk:"
+msgstr "Taille sur le disque :"
+
+msgid "Span"
+msgstr "Étendue"
+
+msgid "{count:,} x {size} B"
+msgstr "{count:,} x {size} o"
+
+msgid "{count:,} x {size} B, {amount} reclaimable by Optimize DB"
+msgstr "{count:,} x {size} o, {amount} récupérables par Optimiser la BD"
 
 msgid "A new figure with this column's histogram, and its statistics in the figure's notes"
 msgstr "Une nouvelle figure avec l'histogramme de cette colonne, et ses statistiques dans les notes de la figure"
@@ -8856,9 +9000,6 @@ msgstr "Réponse du processus avec une valeur x optimale et une décroissance sy
 
 msgid "Process run - ready for a control chart"
 msgstr "Déroulement du processus - prêt pour une carte de contrôle"
-
-msgid "Projection"
-msgstr "Projection"
 
 msgid "Pseudo-Voigt peak"
 msgstr "Pic pseudo-Voigt"

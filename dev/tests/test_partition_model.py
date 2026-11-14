@@ -213,3 +213,26 @@ def test_a_pls_model_reproduces_its_predictions() -> None:
     new = frame.drop(columns="y").copy()
     new.loc[0, "w1"] = np.nan
     assert result.model.predict(new).table["Prediction"].isna().tolist()[:2] == [True, False]
+
+
+@pytest.mark.parametrize("method", ["linear", "quadratic"])
+def test_a_discriminant_model_is_portable_and_classifies_like_the_report(method, tmp_path) -> None:
+    from app.analysis.discriminant import discriminant
+
+    rng = np.random.default_rng(2)
+    frames = [pd.DataFrame({"a": rng.normal(c, 1.0, 40), "b": rng.normal(-c, 1.2, 40), "g": name})
+              for name, c in (("u", 0.0), ("v", 2.5), ("w", 5.0))]
+    frame = pd.concat(frames, ignore_index=True)
+    result = discriminant(frame, "g", ["a", "b"], method=method)
+    again = result.model.predict(frame)
+    assert again.table["Prediction"].tolist() == result.predicted.tolist()
+    np.testing.assert_allclose(again.table[[f"Prob({level})" for level in "uvw"]].to_numpy(),
+                               result.probabilities.to_numpy(), atol=1e-9)
+    repo = SqliteRepo(db_path=tmp_path / "d.dhub")
+    try:
+        models.save_model(repo, "disc", result.model)
+        assert repo.models()[0]["form"] == models.PORTABLE  # JSON: no trust needed
+        reloaded = models.load_model(repo, "disc")
+        assert reloaded.predict(frame).table["Prediction"].tolist() == result.predicted.tolist()
+    finally:
+        repo.close()
