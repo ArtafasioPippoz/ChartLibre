@@ -3,7 +3,7 @@
     python.nosync/bin/python3 dev/ChartLibreDeveloper.py
 
 Laid out as Preferences: a sidebar of sections - Write code (the creators, the workpads, the Qt style),
-Translation (the keys), Check (tests, NIST, size, chart previews) and Ship (bundle, libraries, manuals) - each page
+Localization (the catalogue and the translators' keys), Check (tests, NIST, size, chart previews) and Ship (bundle, libraries, manuals) - each page
 a heading with its icon and sentence over its buttons. The long ones run one at a time in the log below, with Stop. In English only: it is for people working on the code.
 """
 from __future__ import annotations
@@ -73,7 +73,7 @@ BUILD_WORK = Path.home() / "Library" / "Caches" / "ChartLibre-build"
 #: The sections, as Preferences draws its own: (title, icon, tile colour, sentence).
 SECTIONS: tuple[tuple[str, str, str, str], ...] = (
     ("Write code", "function_creator", "#3b82f6", "Helpers that write code for you, the workpads and the Qt style."),
-    ("Translation", "edit_localization", "#8b5cf6", "The keys of the online translators Edit Localization can use."),
+    ("Localization", "edit_localization", "#8b5cf6", "Edit the translation catalogue and set the keys of the online translators."),
     ("Check", "run", "#22a06b", "Run the tests, the NIST report, the size and the chart previews."),
     ("Ship", "export_rows", "#e8860c", "Build the package, update the libraries, compile the manuals."),
 )
@@ -107,7 +107,7 @@ class DeveloperWindow(QMainWindow):
             "QListWidget#settingsSidebar::item:selected { background: palette(highlight);"
             " color: palette(highlighted-text); }")
         stack = QStackedWidget(columns)
-        builders = {"Write code": self._code_column, "Translation": self._translation_column,
+        builders = {"Write code": self._code_column, "Localization": self._localization_column,
                     "Check": self._check_column, "Ship": self._ship_column}
         for title, icon_id, colour, sentence in SECTIONS:
             item = QListWidgetItem(tile_icon(load_icon(icon_id), colour, 24), title)
@@ -194,12 +194,10 @@ class DeveloperWindow(QMainWindow):
     def _code_column(self) -> NavPanel:
         from dev.developer.data_operation_helper import DataOperationBuilderDialog
         from dev.developer.function_creator_helper import FunctionCreatorDialog
-        from dev.developer.localization_helper import EditLocalizationDialog
         from dev.developer.renderer_helper import RendererHelperDialog
 
         page = NavPanel(self)
         page.add_buttons("Write code", [
-            NavButton("edit_localization", lambda: EditLocalizationDialog(self).exec(), described=True),
             NavButton("data_operation_builder", lambda: DataOperationBuilderDialog(self).exec(), described=True),
             NavButton("function_creator", lambda: FunctionCreatorDialog(self).exec(), described=True),
             NavButton("renderer_helper", lambda: RendererHelperDialog(self).exec(), described=True),
@@ -215,8 +213,13 @@ class DeveloperWindow(QMainWindow):
         ])
         return page
 
-    def _translation_column(self) -> NavPanel:
+    def _localization_column(self) -> NavPanel:
+        from dev.developer.localization_helper import EditLocalizationDialog
+
         page = NavPanel(self)
+        page.add_buttons("Localization", [
+            NavButton("edit_localization", lambda: EditLocalizationDialog(self).exec(), described=True),
+        ])
         # The one secret here: kept in user.json on this computer, sent to nobody but DeepL.
         key = QLineEdit(str(get_value(DEEPL_KEY_SETTING, "") or ""), self)
         key.setEchoMode(QLineEdit.EchoMode.PasswordEchoOnEdit)
