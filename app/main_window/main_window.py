@@ -1050,12 +1050,13 @@ class MainWindow(QMainWindow):
         # The assistant: a conversation with an AI about the project (app.ai), its provider a plugin.
         assistant_panel = self._assistant_panel = AssistantPanel(
             self, repo=lambda: self._repo,
-            current_figure=lambda: getattr(self._current_chart_panel(), "figure_id", None))
+            current_figure=lambda: getattr(self._current_chart_panel(), "figure_id", None),
+            current_table=lambda: self._table_panel.current)
         assistant_panel.project_changed.connect(self._on_assistant_changed)
         assistant_panel.settings_requested.connect(self._on_settings)
         assistant_panel.busy_changed.connect(self._on_assistant_busy)
         # The SymPy workpad: commands on the project's tables (app.workpad).
-        workpad_panel = self._workpad_panel = WorkpadPanel(self, repo=lambda: self._repo)
+        workpad_panel = self._workpad_panel = WorkpadPanel(self, repo=lambda: self._repo, current_table=lambda: self._table_panel.current)
         workpad_panel.project_changed.connect(self._on_assistant_changed)
         # The SQL workpad moved to ChartLibre Developer (dev/developer/sql_workpad_dialog.py).
 

@@ -85,3 +85,19 @@ def test_send_reaches_a_provider_whose_check_is_asynchronous(qapp, repo, monkeyp
     panel._send()
     assert asked == ["How many birds?"] and panel._ready
     panel.deleteLater()
+
+
+def test_columns_lists_only_the_selected_table(qapp, repo) -> None:
+    import pandas as pd
+
+    from app.widgets.insert_helper import InsertHelper
+
+    repo.import_dataframe(pd.DataFrame({"length": [1.0], "wing": [2.0]}), table_name="Fish", normalize_columns=False)
+    selected = {"table": "Fish"}
+    helper = InsertHelper(None, repo=lambda: repo, functions=lambda: [], current_table=lambda: selected["table"])
+    assert _labels(helper.columns_button.menu()) == ["length", "wing"]  # no sub-menu per table
+    selected["table"] = None
+    menu = helper.columns_button.menu()
+    menu.aboutToShow.emit()
+    assert [a.text() for a in menu.actions()] == ["Birds", "Fish"]  # none selected: a sub-menu per table
+    helper.deleteLater()

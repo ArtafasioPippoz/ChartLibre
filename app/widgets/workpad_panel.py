@@ -63,7 +63,8 @@ class WorkpadPanel(NavPanel):
     #: The project changed (a table or a chart): the figures made, to show.
     project_changed = Signal(list)
 
-    def __init__(self, parent: QWidget | None, *, repo: Callable[[], Any]) -> None:
+    def __init__(self, parent: QWidget | None, *, repo: Callable[[], Any],
+                 current_table: Callable[[], str | None] | None = None) -> None:
         super().__init__(parent)
         self._pad = Workpad(repo, changed=self.project_changed.emit)
         self._entries: list[str] = []
@@ -77,7 +78,8 @@ class WorkpadPanel(NavPanel):
         box = QWidget(self)
         column = QVBoxLayout(box)
         column.setContentsMargins(0, 0, 0, 0)
-        self._helper = InsertHelper(box, repo=repo, functions=self._available_functions, quote=True)
+        self._helper = InsertHelper(box, repo=repo, functions=self._available_functions, quote=True,
+                                   current_table=current_table)
         self._helper.insert.connect(self._insert)
         column.addWidget(self._helper)
         self._command = QPlainTextEdit(box)

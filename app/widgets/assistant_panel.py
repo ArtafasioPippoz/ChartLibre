@@ -69,7 +69,8 @@ class AssistantPanel(NavPanel):
     busy_changed = Signal(bool)
 
     def __init__(self, parent: QWidget | None, *, repo: Callable[[], Any],
-                 current_figure: Callable[[], int | None]) -> None:
+                 current_figure: Callable[[], int | None],
+                 current_table: Callable[[], str | None] | None = None) -> None:
         super().__init__(parent)
         self._repo = repo
         self._current_figure = current_figure
@@ -97,7 +98,7 @@ class AssistantPanel(NavPanel):
         note_row.addWidget(self._note, 1)
         note_row.addWidget(self._settings_button)
         column.addLayout(note_row)
-        self._helper = InsertHelper(ask, repo=repo, functions=self._available_requests)
+        self._helper = InsertHelper(ask, repo=repo, functions=self._available_requests, current_table=current_table)
         self._helper.insert.connect(self._insert)
         column.addWidget(self._helper)
         self._question = QPlainTextEdit(ask)

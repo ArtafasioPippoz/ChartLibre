@@ -10,7 +10,7 @@ from collections.abc import Callable, Sequence
 from typing import Any
 
 from PySide6.QtCore import Signal
-from PySide6.QtWidgets import QHBoxLayout, QMenu, QToolButton, QWidget
+from PySide6.QtWidgets import QHBoxLayout, QMenu, QPushButton, QWidget
 
 from app.logs.logger import applogger
 from app.utils.i18n import _
@@ -22,15 +22,21 @@ MAX_TABLES, MAX_COLUMNS = 40, 80
 
 
 class InsertHelper(QWidget):
-    """A row of three menu buttons over a text box; *repo()* is the open project."""
+    """A row of three menu buttons over a text box; *repo()* is the open project.
+
+    The buttons are push buttons with a menu - the pull-down button of the Mac, with its chevron - not tool
+    buttons. *current_table()* is the table selected in the window: with one, Columns lists only its columns.
+    """
 
     #: The text to put at the cursor.
     insert = Signal(str)
 
     def __init__(self, parent: QWidget | None, *, repo: Callable[[], Any],
-                 functions: Callable[[], Sequence[Function]], quote: bool = False) -> None:
+                 functions: Callable[[], Sequence[Function]], quote: bool = False,
+                 current_table: Callable[[], str | None] | None = None) -> None:
         super().__init__(parent)
         self._repo, self._functions, self._quote = repo, functions, quote
+        self._current_table = current_table
         row = QHBoxLayout(self)
         row.setContentsMargins(0, 0, 0, 0)
         row.setSpacing(6)
@@ -41,12 +47,11 @@ class InsertHelper(QWidget):
             row.addWidget(button)
         row.addStretch(1)
 
-    def _button(self, text: str, tooltip: str, fill: Callable[[QMenu], None]) -> QToolButton:
-        button = QToolButton(self)
+    def _button(self, text: str, tooltip: str, fill: Callable[[QMenu], None]) -> QPushButton:
+        button = QPushButton(self)
         button.setObjectName("insertHelperButton")
         button.setText(text)
         button.setToolTip(tooltip)
-        button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         menu = QMenu(button)
         menu.setToolTipsVisible(True)
         menu.aboutToShow.connect(lambda: self._refill(menu, fill))
@@ -83,6 +88,9 @@ class InsertHelper(QWidget):
 
     def _fill_columns(self, menu: QMenu) -> None:
         tables = self.table_names()
+        selected = self._current_table() if self._current_table is not None else None
+        if selected in tables:  # a table is selected in the window: only its columns
+            tables = [selected]
         for table in tables:
             # One table: its columns at once. Several: a menu a table, filled when it opens.
             target = menu if len(tables) == 1 else menu.addMenu(table)
