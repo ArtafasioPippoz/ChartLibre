@@ -9,6 +9,7 @@ from typing import Any
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import (
+    QFileDialog,
     QHBoxLayout,
     QPlainTextEdit,
     QPushButton,
@@ -68,6 +69,7 @@ class WorkpadPanel(NavPanel):
         super().__init__(parent)
         self._pad = Workpad(repo, changed=self.project_changed.emit)
         self._entries: list[str] = []
+        self._script: list[str] = []  # the commands that ran, for Save
         self._history: list[str] = []
 
         self._transcript = QTextBrowser(self)
@@ -92,6 +94,10 @@ class WorkpadPanel(NavPanel):
         clear = QPushButton(_("New session"), box)
         clear.clicked.connect(self.new_session)
         row.addWidget(clear)
+        self._save_button = QPushButton(_("Save..."), box)
+        self._save_button.setToolTip(_("Save the commands that worked as a Python file"))
+        self._save_button.clicked.connect(lambda: self.save_script())
+        row.addWidget(self._save_button)
         self._run_button = QPushButton(_("Run"), box)
         self._run_button.setDefault(True)
         self._run_button.clicked.connect(self.run)
@@ -126,6 +132,7 @@ class WorkpadPanel(NavPanel):
         """Forget every name and the session's text."""
         self._pad.reset()
         self._entries.clear()
+        self._script.clear()
         self._render()
 
     def run(self, source: str | None = None) -> None:
@@ -146,11 +153,31 @@ class WorkpadPanel(NavPanel):
                 entry += f"<pre style='margin:0;'>{html.escape(printed.rstrip())}</pre>"
             if value is not None:
                 entry += f"<pre style='margin:0;'>{html.escape(_shown(value))}</pre>"
+            self._script.append(text)
             if not isinstance(source, str):
                 self._command.clear()
         self._history.append(text)
         self._entries.append(entry)
         self._render()
+
+    def session_script(self) -> str:
+        """The commands that worked, in order, as Python: pasted into the workpad they give the same names."""
+        header = ("# A ChartLibre SymPy workpad session: the commands that worked, in order.\n"
+                  "# Paste them into the workpad (get, put, plot, Analysis, Chart... are its words), or run each\n"
+                  "# line there with Run.\n\nfrom sympy import *\n\n")
+        return header + "\n\n".join(self._script) + "\n"
+
+    def save_script(self, path: str | None = None) -> str | None:
+        """Write the session as a .py file (asked for when no *path*); the path written, or None."""
+        if not self._script:
+            return None
+        if path is None:
+            path, _filter = QFileDialog.getSaveFileName(self, _("Save the session"), "workpad.py", "Python (*.py)")
+        if not path:
+            return None
+        with open(path, "w", encoding="utf-8") as handle:
+            handle.write(self.session_script())
+        return path
 
     def _render(self) -> None:
         intro = f"<p style='color:#6b7280;font-size:9pt;'>{_HELP}</p>"

@@ -126,3 +126,19 @@ def test_menu_items_carry_an_icon_and_no_shortcut(qapp, repo) -> None:
         assert items and all(not a.icon().isNull() and a.isIconVisibleInMenu() for a in items)
         assert all(a.shortcut().isEmpty() for a in items)
     panel.deleteLater()
+
+
+def test_the_workpad_saves_its_session_as_python(qapp, repo, tmp_path) -> None:
+    from app.widgets.workpad_panel import WorkpadPanel
+
+    panel = WorkpadPanel(None, repo=lambda: repo)
+    panel.run("x = Symbol('x')")
+    panel.run("1 / 0")  # fails: not kept
+    panel.run("expand((x + 1)**2)")
+    path = panel.save_script(str(tmp_path / "session.py"))
+    text = open(path, encoding="utf-8").read()
+    assert "x = Symbol('x')" in text and "expand((x + 1)**2)" in text and "1 / 0" not in text
+    compile(text, "session.py", "exec")  # it is Python
+    panel.new_session()
+    assert panel.save_script(str(tmp_path / "empty.py")) is None
+    panel.deleteLater()
