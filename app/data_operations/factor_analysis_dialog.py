@@ -62,13 +62,13 @@ class FactorAnalysisDialog(RolesOperationDialogBase):
     DISTINCT_ROLES = (("response", "by", "The By column cannot also be one of the columns."),)
     PARAMETERS_TAB = "Factor Analysis"
     PARAMS = (
-        IntParam("factors", "Factors:", tooltip="0 takes as many as the correlations have eigenvalues above 1 "
+        IntParam("factors", "Factors", tooltip="0 takes as many as the correlations have eigenvalues above 1 "
                                                 "(see the scree plot).",
                  default_value=0, minimum=0, maximum=50),
-        ChoiceParam("method", "Method:", choices=tuple((label, key) for key, label in mv.FA_METHODS),
+        ChoiceParam("method", "Method", choices=tuple((label, key) for key, label in mv.FA_METHODS),
                     tooltip="Maximum Likelihood: JMP's default, for columns roughly normal. "
                             "Principal Axis: no assumption of normality, steadier with few rows."),
-        ChoiceParam("rotation", "Rotation:", choices=tuple((label, key) for key, label in mv.ROTATIONS),
+        ChoiceParam("rotation", "Rotation", choices=tuple((label, key) for key, label in mv.ROTATIONS),
                     tooltip="Varimax: each factor with few large loadings, the usual choice. Quartimax: each "
                             "column on few factors. Equamax: between the two. Promax: lets the factors "
                             "correlate, when the traits they stand for do."),

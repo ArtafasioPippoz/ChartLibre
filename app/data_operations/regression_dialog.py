@@ -19,6 +19,7 @@ points.
 """
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any, ClassVar
@@ -31,9 +32,11 @@ from app.analysis.regression import (
     KIND_ISOTONIC,
     KIND_RANDOM_FOREST,
     KIND_RANSAC,
+    RegressionModel,
     RegressionSettings,
     fit_regression,
 )
+from app.data.data_source import row_value
 from app.plugin_api import reading_guide
 from app.plugin_api.data_operations.dialog_base import (
     DataOperationDialogBase,
@@ -94,6 +97,20 @@ DEST_NEW_AXIS = DataOperationDialogBase.DEST_NEW_AXIS
 DEST_NEW_FIGURE = DataOperationDialogBase.DEST_NEW_FIGURE
 
 
+def source_names(sql: str, series: str) -> tuple[str, str, str]:
+    """(x column, y column, table) a series' query reads - what a model kept from it will ask a table for.
+
+    ``SELECT "month" AS "x", "co2" AS "y" FROM "t"`` gives ("month", "co2", "t"). An x or y that is not a plain
+    column (an expression, a function) keeps the role's own name, "x" or "y" - the series' name for y.
+    """
+    def column(role: str, default: str) -> str:
+        found = re.search(rf'(?:\bSELECT|,)\s*(?:"([^"]+)"|(\w+))\s+AS\s+"?{role}"?(?=\s*(?:,|FROM\b))', sql, re.IGNORECASE)
+        return (found.group(1) or found.group(2)) if found else default
+
+    table = re.search(r'\bFROM\s+(?:"([^"]+)"|(\w+))', sql, re.IGNORECASE)
+    return column("x", "x"), column("y", series or "y"), (table.group(1) or table.group(2)) if table else ""
+
+
 @dataclass(slots=True)
 class RegressionResult(XYResult):
     """One fitted curve for one source series."""
@@ -104,6 +121,8 @@ class RegressionResult(XYResult):
     x: np.ndarray
     y: np.ndarray
     metadata: dict[str, Any] = field(default_factory=dict)
+    #: The model that scores new rows (Save as model...); "model" above is the method's name.
+    fitted: Any = None
 
 
 class SeriesRegressionDialog(DataOperationDialogBase):
@@ -125,7 +144,7 @@ class SeriesRegressionDialog(DataOperationDialogBase):
     PARAMS = (
         IntParam(
             "max_trials",
-            "Max trials:",
+            "Max trials",
             tooltip="How many random subsets RANSAC tries before keeping the best one.",
             default_value=100,
             minimum=10,
@@ -134,7 +153,7 @@ class SeriesRegressionDialog(DataOperationDialogBase):
         ),
         FloatParam(
             "epsilon",
-            "Epsilon:",
+            "Epsilon",
             tooltip=(
                 "Robustness/efficiency trade-off: values closer to 1 down-weight "
                 "more points as outliers, larger values behave more like an "
@@ -147,7 +166,7 @@ class SeriesRegressionDialog(DataOperationDialogBase):
         ),
         FloatParam(
             "alpha",
-            "Regularization:",
+            "Regularization",
             tooltip="L2 regularization strength.",
             default_value=0.0001,
             minimum=0.0,
@@ -158,7 +177,7 @@ class SeriesRegressionDialog(DataOperationDialogBase):
         ),
         ChoiceParam(
             "increasing",
-            "Direction:",
+            "Direction",
             tooltip="Whether the fitted curve must rise, fall, or whichever the data itself suggests.",
             choices=(
                 ("Auto", "auto"),
@@ -170,7 +189,7 @@ class SeriesRegressionDialog(DataOperationDialogBase):
         ),
         IntParam(
             "n_estimators",
-            "Trees:",
+            "Trees",
             tooltip="Number of trees in the ensemble. More is smoother and slower.",
             default_value=100,
             minimum=10,
@@ -179,7 +198,7 @@ class SeriesRegressionDialog(DataOperationDialogBase):
         ),
         IntParam(
             "max_depth",
-            "Max depth:",
+            "Max depth",
             tooltip="Deepest a single tree may grow. 0 means unlimited.",
             default_value=0,
             minimum=0,
@@ -188,7 +207,7 @@ class SeriesRegressionDialog(DataOperationDialogBase):
         ),
         FloatParam(
             "learning_rate",
-            "Learning rate:",
+            "Learning rate",
             tooltip="How much each boosting stage corrects the previous one.",
             default_value=0.1,
             minimum=0.001,
@@ -220,12 +239,31 @@ class SeriesRegressionDialog(DataOperationDialogBase):
     # Computation
     # ------------------------------------------------------------------
 
-    def compute_series(
-        self, name: str, data: tuple[np.ndarray, np.ndarray], settings: tuple[str, dict[str, Any]]
-    ) -> RegressionResult:
+    def build_extra_action_buttons(self, layout: Any) -> None:
+        """Save as model...: the curve on screen kept, to predict the rows of a table with it."""
+        self.add_save_model_button(layout)
+
+    def read_series(self, row: Any, name: str) -> Any:
+        """x and y, and the columns and table they come from - a model kept from the fit reads that x column."""
+        x_values, y_values = self.series_xy(row, name)
+        sql = str(row_value(row, "sql_query", "query", "sql", default=""))
+        return x_values, y_values, source_names(sql, name)
+
+    def compute_series(self, name: str, data: tuple[Any, ...], settings: tuple[str, dict[str, Any]]) -> RegressionResult:
         model, params = settings
-        x_values, y_values = data
-        return self._fit_one(name, x_values, y_values, model, params)
+        x_values, y_values, *source = data
+        result = self._fit_one(name, x_values, y_values, model, params)
+        if source and result.fitted is not None:
+            x_column, y_column, table = source[0]
+            result.fitted = RegressionModel(y_column, x_column, result.fitted, _KIND[model],
+                                            summary=dict(result.metadata), source_table=table)
+        else:
+            result.fitted = None
+        return result
+
+    def format_results(self, results: Sequence[Any], /) -> str:
+        self.remember_models([result.fitted for result in results if getattr(result, "fitted", None) is not None])
+        return super().format_results(results)
 
     def _fit_one(
         self,
@@ -256,6 +294,7 @@ class SeriesRegressionDialog(DataOperationDialogBase):
             x=fitted.x,
             y=fitted.y,
             metadata=fitted.details,
+            fitted=fitted.estimator,
         )
 
     # ------------------------------------------------------------------

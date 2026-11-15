@@ -23,7 +23,7 @@ MEASURE_ROLES = ("y", "value", "values", "z")
 
 
 def chart_axes(repo, figure_id: int | None) -> list[tuple[str, tuple[str, AxisDescriptor]]]:
-    """The axes of *figure_id* - the figure the analysis was opened on - that draw a series, as the "Chart:"
+    """The axes of *figure_id* - the figure the analysis was opened on - that draw a series, as the "Chart"
     list shows them: (label, (figure, axis)), the label "Figure · axis". Another figure's axes are not
     offered: an analysis reads the chart it was opened from (todo ID48)."""
     if figure_id is None:

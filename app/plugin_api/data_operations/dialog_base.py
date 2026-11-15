@@ -414,7 +414,7 @@ class DataOperationDialogBase(QDialog):
     SHOWS_SERIES_SELECTOR: bool = True
 
     #: The charts a table's columns can be drawn as, the first the default:
-    #: with more than one, the Data page offers them ("Chart:"). Scatter Plot
+    #: with more than one, the Data page offers them ("Chart"). Scatter Plot
     #: reads x and y; a chart of one variable - Box Plot, Histogram - reads y
     #: as its value too (TableSourceSelector.chart_series).
     TABLE_CHARTS: tuple[str, ...] = ("Scatter Plot",)
@@ -431,7 +431,7 @@ class DataOperationDialogBase(QDialog):
     #: The combo's tooltip, when MODELS builds it.
     MODEL_TOOLTIP: ClassVar[str] = "Choose the model."
 
-    #: The combo's label, when MODELS builds it ("Operation:", "Method:"...).
+    #: The combo's label, when MODELS builds it ("Operation", "Method"...).
     MODEL_LABEL: ClassVar[str] = "Model:"
 
     #: Declared parameters.  An operation that sets this gets its parameter
@@ -1436,6 +1436,53 @@ class DataOperationDialogBase(QDialog):
                                      else self.DEFAULT_DESTINATION or self.DESTINATIONS[0])
         return values
 
+    # ------------------------------------------------------------------
+    # Save as model... (ID01): for the windows whose analysis fits a model worth keeping - the analyses on a
+    # table's columns (roles_base, FITS_MODEL) and the ones on a chart's series (Regression).
+    # ------------------------------------------------------------------
+    def add_save_model_button(self, layout: Any) -> None:
+        from PySide6.QtWidgets import QPushButton
+
+        self._save_model_button = QPushButton(_("Save as model..."), self)
+        self._save_model_button.setToolTip(_("Keep this fitted model in the project, to predict new rows with it"))
+        self._save_model_button.setEnabled(False)
+        self._save_model_button.clicked.connect(self.save_model)
+        layout.addWidget(self._save_model_button)
+
+    def remember_models(self, kept: list[Any]) -> None:
+        """The models of what is on screen: Save as model keeps them."""
+        self.fitted_models = list(kept)
+        self.fitted_model = kept[0] if kept else None
+        button = getattr(self, "_save_model_button", None)
+        if button is not None:
+            button.setEnabled(bool(kept))
+
+    def save_model(self) -> None:
+        """Ask a name (one per model when there are several), then keep the model(s) this window fitted."""
+        from PySide6.QtWidgets import QInputDialog, QMessageBox
+
+        from app.analysis import models
+
+        repo = self._repo
+        for model in getattr(self, "fitted_models", []) or ([self.fitted_model] if self.fitted_model else []):
+            name, accepted = QInputDialog.getText(self, _("Save as model"), field_label(_("Model name")),
+                                                  text=f"{model.response}_{model.KIND}")
+            name = name.strip()
+            if not accepted or not name:
+                return
+            replace_it = False
+            if any(row["name"] == name for row in repo.models()):
+                if QMessageBox.question(self, _("Save as model"),
+                                        _("A model called {name} exists. Replace it?").format(name=name)
+                                        ) != QMessageBox.StandardButton.Yes:
+                    continue
+                replace_it = True
+            try:
+                models.save_model(repo, name, model, replace=replace_it)
+            except models.ModelError as error:
+                QMessageBox.warning(self, _("Save as model"), str(error))
+                return
+
     def build_results_pane(self) -> QWidget:
         """Return the shared HTML results widget."""
         return self._results_label
@@ -1531,7 +1578,7 @@ class DataOperationDialogBase(QDialog):
         return (
             BoolParam("fs_auto", "Sampling rate from x", default_value=True, visible_for=visible_for,
                       tooltip="Take the sampling frequency from the spacing of the x role."),
-            FloatParam("fs", "fs:", default_value=1.0, minimum=1e-9, maximum=1e12, decimals=6, step=0.001,
+            FloatParam("fs", "fs", default_value=1.0, minimum=1e-9, maximum=1e12, decimals=6, step=0.001,
                        visible_for={**visible_for, "fs_auto": (False,)},
                        tooltip="Samples per unit of x, used when not derived."),
         )

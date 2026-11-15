@@ -110,7 +110,7 @@ class SeriesTransformDialog(DataOperationDialogBase):
     PARAMS = (
         ChoiceParam(
             "method",
-            "Method:",
+            "Method",
             tooltip=(
                 "Yeo-Johnson accepts any data; Box-Cox is often a better fit "
                 "but requires every value to be strictly positive."
@@ -124,7 +124,7 @@ class SeriesTransformDialog(DataOperationDialogBase):
         ),
         ChoiceParam(
             "output_distribution",
-            "Target shape:",
+            "Target shape",
             tooltip="The distribution the transformed values are mapped onto.",
             choices=(
                 ("Uniform", "uniform"),
@@ -135,7 +135,7 @@ class SeriesTransformDialog(DataOperationDialogBase):
         ),
         IntParam(
             "n_quantiles",
-            "Quantiles:",
+            "Quantiles",
             tooltip=(
                 "How finely the mapping is estimated. Clipped to the number of "
                 "points in the series when the series is shorter than this."
@@ -147,14 +147,14 @@ class SeriesTransformDialog(DataOperationDialogBase):
         ),
         BoolParam(
             "with_centering",
-            "Centre on the median:",
+            "Centre on the median",
             tooltip="Subtract the median before scaling.",
             default_value=True,
             visible_for={"model": (TRANSFORM_ROBUST,)},
         ),
         BoolParam(
             "with_scaling",
-            "Scale by the IQR:",
+            "Scale by the IQR",
             tooltip="Divide by the interquartile range.",
             default_value=True,
             visible_for={"model": (TRANSFORM_ROBUST,)},

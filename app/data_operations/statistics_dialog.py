@@ -1144,23 +1144,23 @@ class SeriesStatisticsDialog(DataOperationDialogBase):
     #: candidates are ranked - each shown for the models that use it; then the Charts tab's check boxes, the
     #: charts the model can draw. The distributions on offer follow the model (_sync_model_controls).
     PARAMS = (
-        FloatParam("popmean", "Reference value:", default_value=0.0, minimum=-1.0e12, maximum=1.0e12, decimals=8,
+        FloatParam("popmean", "Reference value", default_value=0.0, minimum=-1.0e12, maximum=1.0e12, decimals=8,
                    step=0.001, tooltip="Reference value for one-sample location tests."),
-        ChoiceParam("alternative", "Alternative:", choices=(("Two-sided", "two-sided"), ("Greater", "greater"),
+        ChoiceParam("alternative", "Alternative", choices=(("Two-sided", "two-sided"), ("Greater", "greater"),
                                                             ("Less", "less")),
                     tooltip="Alternative hypothesis for supported tests."),
-        IntParam("trim_percent", "Trimmed mean:", default_value=10, minimum=0, maximum=40, suffix=" %",
+        IntParam("trim_percent", "Trimmed mean", default_value=10, minimum=0, maximum=40, suffix=" %",
                  tooltip="Trim percentage used for trimmed mean."),
-        ChoiceParam("anderson_method", "Anderson method:",
+        ChoiceParam("anderson_method", "Anderson method",
                     choices=(("Anderson p-value: interpolated", "interpolate"),
                              ("Anderson p-value: Monte Carlo", "monte_carlo")),
                     tooltip="Choose how Anderson-Darling p-values are calculated when supported by SciPy."),
-        IntParam("monte_carlo_resamples", "MC resamples:", default_value=9999, minimum=100, maximum=1_000_000,
+        IntParam("monte_carlo_resamples", "MC resamples", default_value=9999, minimum=100, maximum=1_000_000,
                  step=1000, tooltip="Number of Monte Carlo resamples for Anderson-Darling p-values."),
-        IntParam("monte_carlo_batch", "MC batch:", default_value=0, minimum=0, maximum=1_000_000, step=1000,
+        IntParam("monte_carlo_batch", "MC batch", default_value=0, minimum=0, maximum=1_000_000, step=1000,
                  special_text="Auto", tooltip="Batch size for Monte Carlo resampling. Auto lets SciPy choose."),
         # Ranking and the exhaustive sweep only exist to order the candidates: the one model that ranks them.
-        ChoiceParam("rank_by", "Rank by:", choices=(("AIC (penalises free parameters)", "aic"),
+        ChoiceParam("rank_by", "Rank by", choices=(("AIC (penalises free parameters)", "aic"),
                                                     ("BIC (penalises them harder)", "bic"),
                                                     ("KS statistic (closest curve)", "ks")),
                     visible_for={"model": ("distribution",)},
@@ -1168,7 +1168,7 @@ class SeriesStatisticsDialog(DataOperationDialogBase):
                             "always favours the distributions with the most free parameters, whatever the data "
                             "really is."),
         # Which distribution the report ranks first and the histogram draws: only where a curve is drawn.
-        ChoiceParam("distribution", "Distribution:",
+        ChoiceParam("distribution", "Distribution",
                     visible_for={"model": _models_with(CHARTS_BY_MODEL, DISTRIBUTIONS_BY_MODEL)},
                     tooltip="Which fitted distribution the histogram draws. Best fit follows whichever candidate "
                             "ranks first for the series."),

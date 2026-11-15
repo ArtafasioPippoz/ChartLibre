@@ -56,7 +56,7 @@ class GageDialog(RolesOperationDialogBase):
                            for role, other in (("response", "part"), ("response", "operator"), ("part", "operator")))
     PARAMETERS_TAB = "Gage R&R"
     PARAMS = (
-        TextParam("tolerance", "Tolerance (USL - LSL):", placeholder="optional",
+        TextParam("tolerance", "Tolerance (USL - LSL)", placeholder="optional",
                   tooltip="The width of the specification: adds each source's share of it (% Tolerance)."),
     )
 

@@ -137,7 +137,7 @@ class FitModelDialog(RolesOperationDialogBase):
     PARAMS = (
         FloatParam(
             "alpha",
-            "Significance level (α):",
+            "Significance level (α)",
             tooltip=(
                 "A term is significant when its p-value is at most this; the "
                 "Stepwise personality adds or keeps only such terms."

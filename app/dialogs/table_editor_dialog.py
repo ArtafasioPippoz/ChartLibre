@@ -571,7 +571,7 @@ class TableEditorDialog(SettingsTableDialog):
         if column is None:
             return
         name, ok = QInputDialog.getText(
-            self, _("Rename column"), _("New name for '{column}':").format(column=column),
+            self, _("Rename column"), _("New name for '{column}'").format(column=column),
             QLineEdit.EchoMode.Normal, column,
         )
         name = (name or "").strip()
@@ -593,7 +593,7 @@ class TableEditorDialog(SettingsTableDialog):
             return
         if kind is None:
             kind, ok = QInputDialog.getItem(
-                self, _("Change type"), _("New type for '{column}':").format(column=column),
+                self, _("Change type"), _("New type for '{column}'").format(column=column),
                 list(CAST_TYPES), 0, False,
             )
             if not ok:

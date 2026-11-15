@@ -888,7 +888,7 @@ class TableListPanel(QWidget):
         if len(sources) != 1 or self._repo is None:
             return
         name, kind = sources[0]
-        new, ok = QInputDialog.getText(self, _("Rename"), _("New name for '{name}':").format(name=name),
+        new, ok = QInputDialog.getText(self, _("Rename"), _("New name for '{name}'").format(name=name),
                                        QLineEdit.EchoMode.Normal, name)
         new = (new or "").strip()
         if not ok or not new or new == name:

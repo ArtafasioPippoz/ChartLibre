@@ -56,7 +56,7 @@ class MultivariateDialog(RolesOperationDialogBase):
     )
     PARAMETERS_TAB = "Multivariate"
     PARAMS = (
-        ChoiceParam("method", "Correlation:", choices=tuple((label, key) for key, label in mv.METHODS),
+        ChoiceParam("method", "Correlation", choices=tuple((label, key) for key, label in mv.METHODS),
                     tooltip="Pearson measures a straight-line relation; Spearman and Kendall any relation "
                             "that keeps going one way, and are not swayed by outliers."),
     )

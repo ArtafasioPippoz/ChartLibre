@@ -289,7 +289,7 @@ class SeriesControlChartDialog(DataOperationDialogBase):
     """Draw a Shewhart control chart - variables or attributes - for a series."""
 
     MODELS = CONTROL_CHARTS
-    MODEL_LABEL = "Chart:"
+    MODEL_LABEL = "Chart"
     MODEL_TOOLTIP = "Measurements above the line, counts below it."
 
     Name: str = "Control Chart"
@@ -321,7 +321,7 @@ class SeriesControlChartDialog(DataOperationDialogBase):
     PARAMS = (
         IntParam(
             "subgroup",
-            "Subgroup size:",
+            "Subgroup size",
             tooltip=(
                 "Consecutive points averaged into each plotted subgroup. "
                 "Rational subgrouping: choose it so variation within a "
@@ -334,7 +334,7 @@ class SeriesControlChartDialog(DataOperationDialogBase):
         ),
         FloatParam(
             "sigma_limit",
-            "Limits at sigma:",
+            "Limits at sigma",
             tooltip=(
                 "3 is the Shewhart convention: on a stable normal process it "
                 "gives about one false alarm per 370 points, which balances "
@@ -348,7 +348,7 @@ class SeriesControlChartDialog(DataOperationDialogBase):
         ),
         BoolParam(
             "nelson",
-            "Nelson rules:",
+            "Nelson rules",
             tooltip=(
                 "Flags runs, trends and other patterns that stay inside the "
                 "limits - the signals a limits-only chart misses. The zone "
@@ -356,32 +356,32 @@ class SeriesControlChartDialog(DataOperationDialogBase):
             ),
             default_value=True,
         ),
-        FloatParam("ewma_lambda", "EWMA weight (lambda):", default_value=0.2, minimum=0.01, maximum=1.0, decimals=2,
+        FloatParam("ewma_lambda", "EWMA weight (lambda)", default_value=0.2, minimum=0.01, maximum=1.0, decimals=2,
                    step=0.05, visible_for={"model": (special.CHART_EWMA,)},
                    tooltip="The newest value's weight: 0.05-0.25 for small shifts (smaller, smaller shifts); 1 is "
                            "an individuals chart. Limits at the sigma above (2.7-3 with 0.1-0.2)."),
-        FloatParam("cusum_k", "CUSUM k (sigma):", default_value=0.5, minimum=0.0, maximum=3.0, decimals=2, step=0.25,
+        FloatParam("cusum_k", "CUSUM k (sigma)", default_value=0.5, minimum=0.0, maximum=3.0, decimals=2, step=0.25,
                    visible_for={"model": (special.CHART_CUSUM,)},
                    tooltip="Half the shift to detect, in sigmas: 0.5 for a shift of one sigma."),
-        FloatParam("cusum_h", "CUSUM h (sigma):", default_value=5.0, minimum=0.5, maximum=20.0, decimals=2, step=0.5,
+        FloatParam("cusum_h", "CUSUM h (sigma)", default_value=5.0, minimum=0.5, maximum=20.0, decimals=2, step=0.5,
                    visible_for={"model": (special.CHART_CUSUM,)},
                    tooltip="The decision interval: 4 or 5 sigmas, with k = 0.5."),
-        TextParam("process_mean", "Mean (target):", placeholder="from the data",
+        TextParam("process_mean", "Mean (target)", placeholder="from the data",
                   visible_for={"model": REFERENCED},
                   tooltip="EWMA and CUSUM: the target the process should stay at. Levey-Jennings: the control "
                           "material's assigned mean. Empty: the data's own."),
-        TextParam("process_sigma", "Sigma:", placeholder="from the data",
+        TextParam("process_sigma", "Sigma", placeholder="from the data",
                   visible_for={"model": REFERENCED},
                   tooltip="EWMA and CUSUM: the process sigma (empty: the moving range's). Levey-Jennings: the "
                           "material's assigned standard deviation (empty: the data's)."),
         BoolParam(
             "draw_center",
-            "Centre line:",
+            "Centre line",
             tooltip="The process mean the limits are built around.",
             default_value=True, tab="charts"),
         BoolParam(
             "draw_limits",
-            "Control limits:",
+            "Control limits",
             tooltip=(
                 "The upper and lower limits. Without them the chart is a run "
                 "chart - the points, but nothing to judge them against."
@@ -389,7 +389,7 @@ class SeriesControlChartDialog(DataOperationDialogBase):
             default_value=True, tab="charts"),
         BoolParam(
             "draw_zones",
-            "1 and 2 sigma lines:",
+            "1 and 2 sigma lines",
             tooltip=(
                 "The A/B/C zones the run rules are phrased in: \"two of three "
                 "beyond two sigma\" is a statement about a line worth seeing."
@@ -397,12 +397,12 @@ class SeriesControlChartDialog(DataOperationDialogBase):
             default_value=False, tab="charts"),
         BoolParam(
             "draw_violations",
-            "Highlight flagged:",
+            "Highlight flagged",
             tooltip="Draws the signalling points again as separate markers.",
             default_value=True, tab="charts"),
         BoolParam(
             "exclude_violations",
-            "Exclude flagged points:",
+            "Exclude flagged points",
             tooltip=(
                 "Recomputes the limits without the points they flagged - the "
                 "trial-limits-then-revised-limits pass every SPC text runs. "
@@ -410,17 +410,17 @@ class SeriesControlChartDialog(DataOperationDialogBase):
                 "have removed; otherwise it hides the problem."
             ),
             default_value=False, advanced=True),
-        TextParam("lsl", "Lower spec (LSL):", placeholder="none",
+        TextParam("lsl", "Lower spec (LSL)", placeholder="none",
                   tooltip="With a specification limit the report gives the process capability: Cp, Cpk, Pp, "
                           "Ppk and the share out of specification. Empty when there is none.",
                   visible_for={"model": CAPABLE}),
-        TextParam("usl", "Upper spec (USL):", placeholder="none",
+        TextParam("usl", "Upper spec (USL)", placeholder="none",
                   tooltip="With a specification limit the report gives the process capability: Cp, Cpk, Pp, "
                           "Ppk and the share out of specification. Empty when there is none.",
                   visible_for={"model": CAPABLE}),
-        TextParam("target", "Target:", placeholder="none", tooltip="For Cpm; needs both limits.",
+        TextParam("target", "Target", placeholder="none", tooltip="For Cpm; needs both limits.",
                   visible_for={"model": CAPABLE}),
-        ChoiceParam("distribution", "Distribution:", choices=(
+        ChoiceParam("distribution", "Distribution", choices=(
             ("Normal", "normal"), ("Best fit (AIC)", "best"), ("Lognormal", "lognormal"),
             ("Weibull", "weibull"), ("Gamma", "gamma")),
                     tooltip="The process' distribution for the capability. Not normal: the percentile method "

@@ -32,7 +32,21 @@ from app.ai.tools import AssistantTools
 from app.styles.style import create_action_button, stdSizeAndlayout
 from app.utils.background import run_in_background
 from app.utils.i18n import _
+from app.widgets.insert_helper import InsertHelper
 from app.widgets.nav_bar import NavPanel
+
+
+#: What the assistant can do, for the Functions menu: (shown, the request it writes, what happens).
+_REQUESTS: tuple[tuple[str, str, str], ...] = (
+    ("Describe a table", "Describe the table ", "Statistics of every column: counts, missing values, mean"),
+    ("Count or average", "What is the average of ", "A query on the project: counts, averages, largest rows"),
+    ("Compare groups", "Is  different between the groups of ?", "The right test is chosen for you"),
+    ("Find what matters", "Which factors affect  the most?", "The factors ranked by their effect on a result"),
+    ("Draw a chart", "Draw a scatter chart of  against ", "A chart of the columns you name"),
+    ("Run an analysis", "Run the analysis  on ", "One of the application's analyses"),
+    ("List the charts", "Which chart types are there?", "The chart types that can be drawn"),
+    ("List the analyses", "Which analyses are there?", "The analyses that can be run"),
+)
 
 
 def _load_provider(name: str) -> Any:
@@ -83,6 +97,9 @@ class AssistantPanel(NavPanel):
         note_row.addWidget(self._note, 1)
         note_row.addWidget(self._settings_button)
         column.addLayout(note_row)
+        self._helper = InsertHelper(ask, repo=repo, functions=self._available_requests)
+        self._helper.insert.connect(self._insert)
+        column.addWidget(self._helper)
         self._question = QPlainTextEdit(ask)
         self._question.setPlaceholderText(_("Ask about the data - e.g. Is body mass different between species?"))
         self._question.setFixedHeight(self._question.fontMetrics().lineSpacing() * 4 + 12)
@@ -188,12 +205,21 @@ class AssistantPanel(NavPanel):
             self._assistant_settings = wanted
         return self._assistant
 
+    def _available_requests(self) -> list[tuple[str, str, str]]:
+        """What the assistant can do, as requests to start from: (shown, written, what it does)."""
+        return [(_(label), _(text), _(tip)) for label, text, tip in _REQUESTS]
+
+    def _insert(self, text: str) -> None:
+        self._question.insertPlainText(text)
+        self._question.setFocus()
+
     def _send(self) -> None:
         text = self._question.toPlainText().strip()
         if not text or self._busy:
             return
-        self.refresh()
         if not self._ready:
+            # Checked again, off the GUI thread for a local server: the note says what is missing.
+            self.refresh()
             return
         self._question.clear()
         self._entries.append(f"**{_('You')}:** {text}")

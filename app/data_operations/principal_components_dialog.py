@@ -62,7 +62,7 @@ class PrincipalComponentsDialog(RolesOperationDialogBase):
     MAX_GROUPS = 20
     PARAMETERS_TAB = "Principal Components"
     PARAMS = (
-        ChoiceParam("on", "On:", choices=tuple((label, key) for key, label in mv.PCA_ON),
+        ChoiceParam("on", "On", choices=tuple((label, key) for key, label in mv.PCA_ON),
                     tooltip="Correlations weigh every column the same, whatever its unit - the usual choice. "
                             "Covariances let the columns with the widest spread lead, for columns in one unit."),
         # The charts, each its own box: all four are scatter plots, so a box per chart type could not tell them

@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
 )
 
 from app.utils.i18n import _
+from app.widgets.insert_helper import Function, InsertHelper
 from app.widgets.nav_bar import NavPanel
 from app.workpad.engine import UnsafeCommand, Workpad
 
@@ -27,6 +28,32 @@ _HELP = (
     "save(table, {'x': xs, 'y': ys}) - also put, store, write<br>"
     "plot('Scatter', x=xs, y=ys, group=g, title='...') · plot('Box Plot', table='T', y='col', group='col')<br>"
     "mean, std, median, minimum, maximum, count · everything in SymPy · Ctrl+Return runs"
+)
+
+
+#: The session's own words, for the Functions menu: (shown, written, what it does). "" is a separator.
+_FUNCTIONS: tuple[Function, ...] = (
+    ("get(table, column)", "get('', '')", "A column's values: numbers as an array, else a list"),
+    ("get(table)", "get('')", "Every column of a table, as a dict"),
+    ("tables()", "tables()", "The project's tables"),
+    ("columns(table)", "columns('')", "A table's columns"),
+    ("save(table, {...})", "save('', {'x': xs, 'y': ys})", "A new table from columns of values"),
+    ("plot(type, x=, y=, group=)", "plot('Scatter', x=xs, y=ys)", "A chart of values, or of a table's columns"),
+    ("", "", ""),
+    ("mean(data)", "mean()", "The mean, missing values left out"),
+    ("std(data)", "std()", "The standard deviation (n - 1)"),
+    ("median(data)", "median()", "The median"),
+    ("minimum(data)", "minimum()", "The smallest value"),
+    ("maximum(data)", "maximum()", "The largest value"),
+    ("count(data)", "count()", "How many values"),
+    ("", "", ""),
+    ("Analysis(name, table, columns)", "Analysis('', '', [])", "Run an analysis of the application"),
+    ("analysis_names()", "analysis_names()", "The analyses there are"),
+    ("describe_analysis(name)", "describe_analysis('')", "What an analysis reads and its parameters"),
+    ("Chart(type, table, ...)", "Chart('', '')", "Draw a chart of a table"),
+    ("Model(name).predict(table)", "Model('').predict('')", "Predict with a saved model"),
+    ("models()", "models()", "The project's saved models"),
+    ("functions()", "functions()", "The project's saved functions"),
 )
 
 
@@ -50,6 +77,9 @@ class WorkpadPanel(NavPanel):
         box = QWidget(self)
         column = QVBoxLayout(box)
         column.setContentsMargins(0, 0, 0, 0)
+        self._helper = InsertHelper(box, repo=repo, functions=self._available_functions, quote=True)
+        self._helper.insert.connect(self._insert)
+        column.addWidget(self._helper)
         self._command = QPlainTextEdit(box)
         self._command.setPlaceholderText(_("e.g. m = get('Penguins', 'body_mass_g'); mean(m)"))
         self._command.setFixedHeight(self._command.fontMetrics().lineSpacing() * 4 + 12)
@@ -71,6 +101,24 @@ class WorkpadPanel(NavPanel):
         self._names.setMaximumHeight(110)
         self.add_frame(_("Names"), self._names, object_name="workpadNamesCard")
         self._render()
+
+    def _available_functions(self) -> list[Function]:
+        """The session's words, then the project's saved functions (each written as a call)."""
+        offered = [(label, text, _(tip) if tip else "") for label, text, tip in _FUNCTIONS]
+        try:
+            saved = dict(self._pad.namespace["functions"]()) if "functions" in self._pad.namespace else {}
+        except Exception:
+            saved = {}
+        if saved:
+            offered.append(("", "", ""))
+            offered.extend((f"{name}(...)", f"{name}()", str(description or "")) for name, description in
+                           sorted(saved.items()))
+        return offered
+
+    def _insert(self, text: str) -> None:
+        """A name chosen in the helper, at the cursor; inside a call's quotes or brackets when it has them."""
+        self._command.insertPlainText(text)
+        self._command.setFocus()
 
     def new_session(self) -> None:
         """Forget every name and the session's text."""

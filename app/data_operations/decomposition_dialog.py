@@ -164,7 +164,7 @@ class SeriesDecompositionDialog(DataOperationDialogBase):
     PARAMS = (
         IntParam(
             "n_grid",
-            "Grid points:",
+            "Grid points",
             tooltip=(
                 "Every selected series is linearly resampled onto this many "
                 "evenly spaced points across their shared x range, before "
@@ -176,7 +176,7 @@ class SeriesDecompositionDialog(DataOperationDialogBase):
         ),
         IntParam(
             "n_components",
-            "Components:",
+            "Components",
             tooltip="How many components to extract. Clamped to the number of selected series.",
             default_value=3,
             minimum=1,
@@ -185,7 +185,7 @@ class SeriesDecompositionDialog(DataOperationDialogBase):
         ),
         FloatParam(
             "perplexity",
-            "Perplexity:",
+            "Perplexity",
             tooltip=(
                 "Roughly, how many neighbours each point is assumed to have. "
                 "Lowered automatically if it does not fit the sample count."
@@ -197,7 +197,7 @@ class SeriesDecompositionDialog(DataOperationDialogBase):
         ),
         IntParam(
             "n_neighbors",
-            "Neighbors:",
+            "Neighbors",
             tooltip=(
                 "How many nearby points each one is connected to. Lowered "
                 "automatically if it does not fit the sample count."

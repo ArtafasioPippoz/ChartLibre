@@ -75,44 +75,44 @@ class TimeSeriesDialog(RolesOperationDialogBase):
     )
     PARAMETERS_TAB = "Time Series"
     PARAMS = (
-        ChoiceParam("model", "Forecast:", choices=tuple((label, key) for key, label in tsa.MODELS),
+        ChoiceParam("model", "Forecast", choices=tuple((label, key) for key, label in tsa.MODELS),
                     tooltip="ARIMA: the next value from the last ones (p), the changes (d) and the last "
                             "errors (q), with a season (P, D, Q) of its own. ARIMA, order chosen by AIC: the "
                             "differences from the stationarity tests, then the p, q, P, Q with the lowest AIC. "
                             "Exponential smoothing: a level, a trend and a season that each follow the newest "
                             "values most. State space: a level and a slope that wander a little each step (a "
                             "local linear trend), with a season - estimated by the Kalman filter."),
-        IntParam("p", "ARIMA p (autoregressive):", tooltip="How many past values the next depends on: the "
+        IntParam("p", "ARIMA p (autoregressive)", tooltip="How many past values the next depends on: the "
                                                          "lags where the PACF stands out.",
                  default_value=1, minimum=0, maximum=10),
-        IntParam("d", "ARIMA d (differences):", tooltip="1 for a series that wanders or has a trend; 0 for one "
+        IntParam("d", "ARIMA d (differences)", tooltip="1 for a series that wanders or has a trend; 0 for one "
                                                        "that comes back to its mean.",
                  default_value=0, minimum=0, maximum=2),
-        IntParam("q", "ARIMA q (moving average):", tooltip="How many past errors the next value depends on: the "
+        IntParam("q", "ARIMA q (moving average)", tooltip="How many past errors the next value depends on: the "
                                                           "lags where the ACF stands out.",
                  default_value=0, minimum=0, maximum=10),
-        IntParam("P", "Seasonal P:", tooltip="ARIMA with a season: how many past seasons the next value "
+        IntParam("P", "Seasonal P", tooltip="ARIMA with a season: how many past seasons the next value "
                                              "depends on (the ACF's spikes at the season's multiples).",
                  default_value=0, minimum=0, maximum=3),
-        IntParam("D", "Seasonal D:", tooltip="1 takes away last season's value: for a season that repeats "
+        IntParam("D", "Seasonal D", tooltip="1 takes away last season's value: for a season that repeats "
                                              "steadily.",
                  default_value=0, minimum=0, maximum=1),
-        IntParam("Q", "Seasonal Q:", tooltip="How many past seasons' errors the next value depends on.",
+        IntParam("Q", "Seasonal Q", tooltip="How many past seasons' errors the next value depends on.",
                  default_value=0, minimum=0, maximum=3),
-        IntParam("season", "Season length:", tooltip="0 finds it from the dates (12 for months, 7 for days, "
+        IntParam("season", "Season length", tooltip="0 finds it from the dates (12 for months, 7 for days, "
                                                      "4 for quarters); 1 means none.",
                  default_value=0, minimum=0, maximum=400),
-        IntParam("horizon", "Forecast periods:", tooltip="How many times ahead to forecast.",
+        IntParam("horizon", "Forecast periods", tooltip="How many times ahead to forecast.",
                  default_value=12, minimum=1, maximum=1000),
         BoolParam("input_in_model", "X, input in the model (transfer function)",
                   tooltip="ARIMA only: the input enters the model at the lag where its prewhitened "
                           "cross-correlation is strongest; its coefficient says how much Y moves per unit of X. "
                           "Ahead of that lag the forecast uses X's own forecast.",
                   default_value=False, advanced=True),
-        TextParam("intervention", "Intervention at:", placeholder="2020-03-01",
+        TextParam("intervention", "Intervention at", placeholder="2020-03-01",
                   tooltip="ARIMA only: a date (or a number of the time column) when something changed - a new "
                           "process, a policy, a fault. Its estimate is the change it made.", advanced=True),
-        ChoiceParam("intervention_kind", "Intervention:", choices=(("Step (lasting)", "step"),
+        ChoiceParam("intervention_kind", "Intervention", choices=(("Step (lasting)", "step"),
                                                                    ("Pulse (one time)", "pulse")),
                     tooltip="A step lasts from then on; a pulse affects that one time only.", advanced=True),
         BoolParam("validate", "Rolling-origin validation",
@@ -120,7 +120,7 @@ class TimeSeriesDialog(RolesOperationDialogBase):
                           "the model refitted each time; its errors beside those of the naive forecast (the "
                           "last value). Below 1 relative to naive: the model forecasts better than it.",
                   default_value=True),
-        IntParam("lags", "Lags:", tooltip="How far back the autocorrelations look.",
+        IntParam("lags", "Lags", tooltip="How far back the autocorrelations look.",
                  default_value=25, minimum=1, maximum=500, advanced=True),
         BoolParam(
             "show_residual_runs",

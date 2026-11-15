@@ -124,23 +124,23 @@ class PartitionDialog(RolesOperationDialogBase):
     PARAMETERS_TAB = "Tree"
 
     PARAMS = (
-        ChoiceParam("method", "Method:", choices=tuple((label, key) for key, label in pt.METHODS),
+        ChoiceParam("method", "Method", choices=tuple((label, key) for key, label in pt.METHODS),
                     tooltip="One tree you can read; a Bootstrap Forest (many trees on resampled rows, averaged); "
                             "or a Boosted Tree (many small trees, each correcting the ones before)."),
-        IntParam("splits", "Splits:", tooltip="How many times the rows are split: one fewer than the leaves. "
+        IntParam("splits", "Splits", tooltip="How many times the rows are split: one fewer than the leaves. "
                                               "For a Boosted Tree, the splits of each tree.",
                  default_value=3, minimum=1, maximum=60),
-        IntParam("trees", "Trees:", tooltip="How many trees a Bootstrap Forest or a Boosted Tree grows.",
+        IntParam("trees", "Trees", tooltip="How many trees a Bootstrap Forest or a Boosted Tree grows.",
                  default_value=100, minimum=1, maximum=2000),
-        FloatParam("learning_rate", "Learning rate:",
+        FloatParam("learning_rate", "Learning rate",
                    tooltip="Boosted Tree: how much each tree corrects the ones before. Smaller needs more trees.",
                    default_value=0.1, minimum=0.01, maximum=1.0, decimals=2, step=0.05),
-        IntParam("min_leaf", "Minimum leaf size:", tooltip="The fewest rows a leaf may hold.",
+        IntParam("min_leaf", "Minimum leaf size", tooltip="The fewest rows a leaf may hold.",
                  default_value=5, minimum=1, maximum=10_000, advanced=True),
-        FloatParam("validation_fraction", "Validation share:",
+        FloatParam("validation_fraction", "Validation share",
                    tooltip="With no validation column: this share of rows, at random, judges the tree. 0 for none.",
                    default_value=0.0, minimum=0.0, maximum=0.6, decimals=2, step=0.05, advanced=True),
-        IntParam("seed", "Random seed:", tooltip="Which rows the validation share draws.",
+        IntParam("seed", "Random seed", tooltip="Which rows the validation share draws.",
                  default_value=1, minimum=0, maximum=1_000_000, advanced=True),
         # The Charts tab: only the charts the Y allows are offered (chart_context).
         *(BoolParam(f"chart_{key}", label, default_value=ticked, tab="charts",

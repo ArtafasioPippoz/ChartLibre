@@ -174,7 +174,7 @@ class SeriesOutlierDialog(DataOperationDialogBase):
     PARAMS = (
         ChoiceParam(
             "action",
-            "Outliers:",
+            "Outliers",
             tooltip=(
                 "Hide takes the outliers off the chart (they stay in the table, "
                 "flagged Hide). Colour keeps them on the chart and draws them "
@@ -185,14 +185,14 @@ class SeriesOutlierDialog(DataOperationDialogBase):
         ),
         ColorParam(
             "colour",
-            "Colour:",
+            "Colour",
             tooltip="The colour the outliers are drawn in.",
             default_value="#d62728",
             visible_for={"action": (ACTION_COLOUR,)},
         ),
         FloatParam(
             "threshold",
-            "Threshold:",
+            "Threshold",
             tooltip="Threshold multiplier applied to the method's spread estimate.",
             default_value=3.0,
             minimum=0.1,
@@ -201,7 +201,7 @@ class SeriesOutlierDialog(DataOperationDialogBase):
         ),
         FloatParam(
             "iqr_factor",
-            "IQR multiplier:",
+            "IQR multiplier",
             tooltip="Multiplier applied to IQR outlier bounds.",
             default_value=1.5,
             minimum=0.5,
@@ -210,7 +210,7 @@ class SeriesOutlierDialog(DataOperationDialogBase):
         ),
         IntParam(
             "window",
-            "Window size:",
+            "Window size",
             tooltip="Rolling window size, in points, used to compute the local median.",
             default_value=11,
             minimum=3,
@@ -220,7 +220,7 @@ class SeriesOutlierDialog(DataOperationDialogBase):
         ),
         FloatParam(
             "contamination",
-            "Contamination:",
+            "Contamination",
             tooltip="Expected fraction of points that are outliers.",
             default_value=0.05,
             minimum=0.001,
@@ -235,7 +235,7 @@ class SeriesOutlierDialog(DataOperationDialogBase):
         ),
         IntParam(
             "n_neighbors",
-            "Neighbours:",
+            "Neighbours",
             tooltip="Number of neighbours each point's local density is compared against.",
             default_value=20,
             minimum=1,
@@ -244,7 +244,7 @@ class SeriesOutlierDialog(DataOperationDialogBase):
         ),
         FloatParam(
             "nu",
-            "Nu:",
+            "Nu",
             tooltip=(
                 "Upper bound on the fraction of training errors and lower "
                 "bound on the fraction of support vectors."

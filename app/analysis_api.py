@@ -658,8 +658,24 @@ class ModelHandle:
 
         try:
             self._model = models.load_model(repo, name)
+        except (models.ModelError, models.UntrustedModel) as error:
+            raise AnalysisError(str(error)) from error
+
+    def export(self, path: Any) -> str:
+        """Write the model to a file another project can import (Model.import_file); returns the path."""
+        from app.analysis import models
+
+        return str(models.export_model(self._repo, self.name, path))
+
+    def rename(self, new: str) -> str:
+        """Give the model another name in the project."""
+        from app.analysis import models
+
+        try:
+            self.name = models.rename_model(self._repo, self.name, new)
         except models.ModelError as error:
             raise AnalysisError(str(error)) from error
+        return self.name
 
     def describe(self) -> dict[str, Any]:
         """Its kind, response, features, the fit's numbers and the table it was made from."""

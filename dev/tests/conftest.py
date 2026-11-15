@@ -182,6 +182,7 @@ def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line(
         "markers", "background: Preview and Apply compute on a worker thread, as in the app"
     )
+    sys.path.insert(0, str(Path(__file__).parent))  # slow_tests.py, beside this file
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -192,6 +193,32 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         default=True,
         help="Save rendered matplotlib figures to the plots dir",
     )
+    parser.addoption(
+        "--all",
+        action="store_true",
+        default=False,
+        help="Run the slow tests too (dev/tests/slow_tests.py lists them)",
+    )
+
+
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    """Leave the slow tests out of a run of the whole folder; --all, or naming a file, runs them."""
+    from slow_tests import SLOW_TESTS
+
+    named = {Path(arg.split("::")[0]).name for arg in config.args if ".py" in arg}
+    quick, slow, met = [], [], set()
+    for item in items:
+        file, _, test = item.nodeid.rpartition("/")[2].partition("::")
+        spellings = {file, f"{file}::{test}", f"{file}::{test.partition('[')[0]}"}
+        found = spellings & SLOW_TESTS
+        met |= found
+        (slow if found and file not in named else quick).append(item)
+    if not named and not config.getoption("keyword") and SLOW_TESTS - met:
+        # A renamed test would otherwise slip back into the normal run unnoticed.
+        raise pytest.UsageError(f"slow_tests.py names tests that are gone: {sorted(SLOW_TESTS - met)}")
+    if slow and not config.getoption("--all"):
+        config.hook.pytest_deselected(items=slow)
+        items[:] = quick
 
 
 @pytest.fixture(scope="session")

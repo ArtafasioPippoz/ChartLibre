@@ -108,3 +108,50 @@ def test_a_pickle_changed_after_saving_is_refused(repo) -> None:
     repo._con.commit()
     with pytest.raises(ModelError, match="changed after"):
         models.load_model(repo, "p")
+
+
+def test_a_model_goes_to_a_file_and_into_another_project(repo, tmp_path) -> None:
+    models.save_model(repo, "line", _line())
+    path = models.export_model(repo, "line", tmp_path / "line")
+    assert path.suffix == models.FILE_SUFFIX and path.exists()
+    other = SqliteRepo(db_path=tmp_path / "other.dhub")
+    try:
+        assert models.import_model(other, path) == "line"
+        assert models.import_model(other, path) == "line 2"  # never over a model that is there
+        frame = pd.DataFrame({"x": [1.0], "g": ["b"]})
+        assert models.load_model(other, "line").predict(frame).table["Prediction"].tolist() == [12.0]
+    finally:
+        other.close()
+
+
+def test_an_imported_pickle_waits_to_be_trusted(repo, tmp_path) -> None:
+    models.save_model(repo, "p", _line(_Pickled))
+    path = models.export_model(repo, "p", tmp_path / "p.clmodel")
+    repo.trusted.clear()  # another computer
+    name = models.import_model(repo, path, name="from file")
+    assert models.needs_trust(repo, name)
+    with pytest.raises(models.UntrustedModel):
+        models.load_model(repo, name)
+    models.trust_model(repo, name)
+    assert not models.needs_trust(repo, name) and isinstance(models.load_model(repo, name), _Pickled)
+
+
+def test_a_file_changed_after_export_or_not_a_model_is_refused(repo, tmp_path) -> None:
+    models.save_model(repo, "line", _line())
+    path = models.export_model(repo, "line", tmp_path / "line.clmodel")
+    path.write_text(path.read_text().replace('"test_line"', '"test_pickled"'))
+    with pytest.raises(ModelError, match="changed"):
+        models.import_model(repo, path)
+    junk = tmp_path / "junk.clmodel"
+    junk.write_text("not json")
+    with pytest.raises(ModelError, match="not a model file"):
+        models.import_model(repo, junk)
+
+
+def test_rename_never_takes_another_models_name(repo) -> None:
+    models.save_model(repo, "a", _line())
+    models.save_model(repo, "b", _line())
+    with pytest.raises(ModelError, match="exists"):
+        models.rename_model(repo, "a", "b")
+    assert models.rename_model(repo, "a", " c ") == "c"
+    assert [row["name"] for row in repo.models()] == ["b", "c"]

@@ -159,7 +159,7 @@ class SeriesRootsDialog(DataOperationDialogBase):
     """Solve y(x) = level for x, on every crossing the samples bracket."""
 
     MODELS = ROOT_MODELS
-    MODEL_LABEL = "Solver:"
+    MODEL_LABEL = "Solver"
     MODEL_TOOLTIP = (
         "How each bracketed crossing is refined. The three bracketing "
         "solvers cannot leave the interval they were given; Newton "
@@ -187,7 +187,7 @@ class SeriesRootsDialog(DataOperationDialogBase):
     PARAMS = (
         FloatParam(
             "level",
-            "Level:",
+            "Level",
             tooltip=(
                 "The y value to solve for. 0 finds the zeros; any other "
                 "value finds where the series crosses that level, which is "
@@ -201,7 +201,7 @@ class SeriesRootsDialog(DataOperationDialogBase):
         ),
         ChoiceParam(
             "interpolation",
-            "Between samples:",
+            "Between samples",
             tooltip=(
                 "What the series is assumed to do between two points. "
                 "Linear claims nothing the samples do not; the two curved "
@@ -216,7 +216,7 @@ class SeriesRootsDialog(DataOperationDialogBase):
         ),
         IntParam(
             "tolerance_digits",
-            "Tolerance (digits):",
+            "Tolerance (digits)",
             tooltip=(
                 "How many decimal places of x the solver has to settle "
                 "before it stops. Nine is far below the precision of any "
@@ -227,7 +227,7 @@ class SeriesRootsDialog(DataOperationDialogBase):
             maximum=14, advanced=True),
         IntParam(
             "max_iter",
-            "Maximum iterations:",
+            "Maximum iterations",
             tooltip=(
                 "Per crossing. Brent and TOMS 748 rarely need ten; the "
                 "limit is what stops a pathological bracket from hanging "
@@ -238,7 +238,7 @@ class SeriesRootsDialog(DataOperationDialogBase):
             maximum=10_000, advanced=True),
         IntParam(
             "limit",
-            "Report at most:",
+            "Report at most",
             tooltip=(
                 "Keeps the first crossings in x order when a noisy series "
                 "crosses the level hundreds of times."

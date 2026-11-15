@@ -178,12 +178,12 @@ class DemoSession(ChatSession):
             return
         head, _sep, report = result.content.partition("\nReport:\n")
         if not report and "," in head:  # a query's answer: CSV
-            script.found.append(_("What the database answers:") + "\n\n" + _markdown_table(result.content))
+            script.found.append(_("What the database answers") + "\n\n" + _markdown_table(result.content))
             return
         # Its first sentences - the title repeated and the tables' headings after them left out.
         lines = [line.strip() for line in report.splitlines() if line.strip()][1:7]
         script.found.append(head.split(" done.")[0].join(("**", "**")) + " - "
-                            + _("written to the project; the report begins:") + "\n\n"
+                            + _("written to the project; the report begins") + "\n\n"
                             + "\n".join(f"> {line}  " for line in lines))
 
     def _change_or_answer(self, model: str, script: _Script, on_text: Callable[[str], None],

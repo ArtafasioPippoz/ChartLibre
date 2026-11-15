@@ -210,7 +210,7 @@ class SeriesCalculusDialog(DataOperationDialogBase):
     PARAMS = (
         IntParam(
             "window",
-            "Smoothing window:",
+            "Smoothing window",
             tooltip=(
                 "Points per polynomial fit. Larger smooths more and rounds "
                 "sharp features; must exceed the polynomial order."
@@ -223,7 +223,7 @@ class SeriesCalculusDialog(DataOperationDialogBase):
         ),
         IntParam(
             "polyorder",
-            "Polynomial order:",
+            "Polynomial order",
             tooltip="Order of the polynomial fitted over each window.",
             default_value=3,
             minimum=1,
@@ -232,7 +232,7 @@ class SeriesCalculusDialog(DataOperationDialogBase):
         ),
         IntParam(
             "order",
-            "Derivative order:",
+            "Derivative order",
             tooltip="1 for the slope, 2 for the curvature.",
             default_value=1,
             minimum=1,
@@ -241,7 +241,7 @@ class SeriesCalculusDialog(DataOperationDialogBase):
         ),
         IntParam(
             "smoothing",
-            "Spline smoothing:",
+            "Spline smoothing",
             tooltip=(
                 "0 interpolates every point exactly; larger values allow the "
                 "spline to depart from noisy data."
@@ -253,7 +253,7 @@ class SeriesCalculusDialog(DataOperationDialogBase):
         ),
         ChoiceParam(
             "baseline",
-            "Baseline:",
+            "Baseline",
             tooltip=(
                 "Removed before integrating. Without this, a raised baseline "
                 "contributes its offset times the width to the area."
@@ -267,7 +267,7 @@ class SeriesCalculusDialog(DataOperationDialogBase):
         ),
         BoolParam(
             "simpson",
-            "Simpson's rule:",
+            "Simpson's rule",
             tooltip=(
                 "More accurate on smooth data than the trapezoidal rule. "
                 "Assumes the curve is well approximated by parabolas."

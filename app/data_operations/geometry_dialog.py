@@ -372,7 +372,7 @@ class SeriesGeometryDialog(DataOperationDialogBase):
     PARAMS = (
         FloatParam(
             "angle",
-            "Angle (°):",
+            "Angle (°)",
             tooltip=(
                 "Counter-clockwise, about the centre below. The query "
                 "spells this out as cos(radians(...)) rather than as a "
@@ -383,91 +383,91 @@ class SeriesGeometryDialog(DataOperationDialogBase):
         ),
         FloatParam(
             "angle_x",
-            "Rotation x (°):",
+            "Rotation x (°)",
             tooltip="Applied first. Positive turns y towards z (right-hand rule).",
             default_value=0.0, minimum=-360.0, maximum=360.0, decimals=4, step=15.0,
             visible_for={"model": _ROTATING, "dims": ("3D",)},
         ),
         FloatParam(
             "angle_y",
-            "Rotation y (°):",
+            "Rotation y (°)",
             tooltip="Applied second. Positive turns z towards x.",
             default_value=0.0, minimum=-360.0, maximum=360.0, decimals=4, step=15.0,
             visible_for={"model": _ROTATING, "dims": ("3D",)},
         ),
         FloatParam(
             "angle_z",
-            "Rotation z (°):",
+            "Rotation z (°)",
             tooltip="Applied last. Positive turns x towards y - the 2D rotation.",
             default_value=30.0, minimum=-360.0, maximum=360.0, decimals=4, step=15.0,
             visible_for={"model": _ROTATING, "dims": ("3D",)},
         ),
         ChoiceParam(
             "mirror_line",
-            "Mirror across:",
+            "Mirror across",
             tooltip="The line to reflect in, through the centre below. In 3D, z is left alone.",
             choices=MIRROR_LINES,
             visible_for={"model": (MIRROR,)},
         ),
         FloatParam(
             "dx",
-            "Move x by:",
+            "Move x by",
             tooltip="Added to every x, after any rotation. Negative moves left.",
             default_value=0.0, minimum=-1.0e12, maximum=1.0e12, decimals=6, step=1.0,
             visible_for={"model": _MOVING},
         ),
         FloatParam(
             "dy",
-            "Move y by:",
+            "Move y by",
             tooltip="Added to every y, after any rotation. Negative moves down.",
             default_value=0.0, minimum=-1.0e12, maximum=1.0e12, decimals=6, step=1.0,
             visible_for={"model": _MOVING},
         ),
         FloatParam(
             "dz",
-            "Move z by:",
+            "Move z by",
             tooltip="Added to every z, after any rotation.",
             default_value=0.0, minimum=-1.0e12, maximum=1.0e12, decimals=6, step=1.0,
             visible_for={"model": _MOVING, "dims": ("3D",)},
         ),
         FloatParam(
             "sx",
-            "Scale x by:",
+            "Scale x by",
             tooltip="1 leaves x alone; 2 doubles it about the centre below.",
             default_value=1.0, minimum=-1.0e6, maximum=1.0e6, decimals=6, step=0.1,
             visible_for={"model": (SCALE,)},
         ),
         FloatParam(
             "sy",
-            "Scale y by:",
+            "Scale y by",
             tooltip="1 leaves y alone; 2 doubles it about the centre below.",
             default_value=1.0, minimum=-1.0e6, maximum=1.0e6, decimals=6, step=0.1,
             visible_for={"model": (SCALE,)},
         ),
         FloatParam(
             "sz",
-            "Scale z by:",
+            "Scale z by",
             tooltip="1 leaves z alone; 2 doubles it about the centre below.",
             default_value=1.0, minimum=-1.0e6, maximum=1.0e6, decimals=6, step=0.1,
             visible_for={"model": (SCALE,), "dims": ("3D",)},
         ),
         FloatParam(
             "kx",
-            "Shear x per y:",
+            "Shear x per y",
             tooltip="Adds this much x for each unit of y above the centre.",
             default_value=0.0, minimum=-1.0e6, maximum=1.0e6, decimals=6, step=0.1,
             visible_for={"model": (SHEAR,)},
         ),
         FloatParam(
             "ky",
-            "Shear y per x:",
+            "Shear y per x",
             tooltip="Adds this much y for each unit of x right of the centre.",
             default_value=0.0, minimum=-1.0e6, maximum=1.0e6, decimals=6, step=0.1,
             visible_for={"model": (SHEAR,)},
         ),
         ChoiceParam(
             "matrix_form",
-            "Matrix:",
+            "Matrix",
             tooltip=(
                 "Each new coordinate is its row of the matrix times x and y "
                 "(and z, for a 3D series), about the centre below. With "
@@ -564,7 +564,7 @@ class SeriesGeometryDialog(DataOperationDialogBase):
         ),
         FloatParam(
             "cx",
-            "Centre x:",
+            "Centre x",
             tooltip=(
                 "The fixed point. Rotation, scaling, mirroring and shearing "
                 "all leave this point exactly where it is; a translation "
@@ -575,14 +575,14 @@ class SeriesGeometryDialog(DataOperationDialogBase):
         ),
         FloatParam(
             "cy",
-            "Centre y:",
+            "Centre y",
             tooltip="The other half of the fixed point.",
             default_value=0.0, minimum=-1.0e12, maximum=1.0e12, decimals=6, step=1.0,
             visible_for={"model": _CENTRED},
         ),
         FloatParam(
             "cz",
-            "Centre z:",
+            "Centre z",
             tooltip="The fixed point's z.",
             default_value=0.0, minimum=-1.0e12, maximum=1.0e12, decimals=6, step=1.0,
             visible_for={"model": _CENTRED, "dims": ("3D",)},

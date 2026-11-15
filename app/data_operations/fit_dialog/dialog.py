@@ -186,11 +186,11 @@ class SeriesFitDialog(DataOperationDialogBase):
     #: The Charts tab: the curve, its bands, the extra charts. The accessory charts cost a new axis
     #: each, so neither is drawn unless asked: judging a fit needs more than the curve on the data.
     PARAMS = (
-        IntParam("curve_points", "Points:", default_value=200, minimum=0, maximum=100_000, step=100,
+        IntParam("curve_points", "Points", default_value=200, minimum=0, maximum=100_000, step=100,
                  special_text="At the data", tab="charts", section="Fitted curve",
                  tooltip="How many points the fitted curve is drawn with, evenly spaced; "
                          "0 draws it only at the data's x."),
-        FloatParam("curve_extend", "Extend:", default_value=0.0, minimum=0.0, maximum=1000.0, decimals=0,
+        FloatParam("curve_extend", "Extend", default_value=0.0, minimum=0.0, maximum=1000.0, decimals=0,
                    step=10.0, suffix=" %", tab="charts", section="Fitted curve",
                    tooltip="Draw the curve past the data, on each side, by this share of "
                            "the data's x range: 10 % extrapolates a tenth either way."),

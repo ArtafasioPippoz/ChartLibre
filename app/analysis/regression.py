@@ -12,11 +12,13 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
+import pandas as pd
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 from sklearn.isotonic import IsotonicRegression
 from sklearn.linear_model import HuberRegressor, RANSACRegressor
 
 from app.analysis import NUMERICAL_FAILURES
+from app.analysis.models import CONTINUOUS, PICKLED, Feature, SavedModel
 from app.utils.config import get_constant
 
 KIND_RANSAC = "ransac"
@@ -55,6 +57,8 @@ class Regression:
     y: np.ndarray
     #: "inliers" (RANSAC), "outliers" (Huber), "r2" where the model scores.
     details: dict[str, Any] = field(default_factory=dict)
+    #: The fitted scikit-learn estimator, for a model kept for later (RegressionModel).
+    estimator: Any = None
 
 
 def fit_regression(
@@ -74,7 +78,7 @@ def fit_regression(
         )
         estimator = IsotonicRegression(increasing=increasing, out_of_bounds="clip")
         estimator.fit(x, y)
-        return Regression(x_grid, np.asarray(estimator.predict(x_grid), dtype=float), details)
+        return Regression(x_grid, np.asarray(estimator.predict(x_grid), dtype=float), details, estimator)
 
     features = x.reshape(-1, 1)
     features_grid = x_grid.reshape(-1, 1)
@@ -118,4 +122,33 @@ def fit_regression(
         details["r2"] = float(estimator.score(features, y))
     except NUMERICAL_FAILURES:  # a degenerate sample cannot be scored
         pass
-    return Regression(x_grid, np.asarray(y_grid, dtype=float), details)
+    return Regression(x_grid, np.asarray(y_grid, dtype=float), details, estimator)
+
+
+# ----------------------------------------------------------------------
+# The model kept for later (ID01)
+# ----------------------------------------------------------------------
+@SavedModel.register
+class RegressionModel(SavedModel):
+    """A series' regression that scores new rows: y from one x column, by the estimator that drew the curve.
+
+    A pickled kind (a scikit-learn estimator): kept in the project and run on a computer that trusts it. Outside
+    the x range it was fitted on, an isotonic model holds its end value and a forest its last leaf; the linear
+    ones (RANSAC, Huber) extend their line.
+    """
+
+    KIND = "series_regression"
+    FORM = PICKLED
+
+    def __init__(self, response: str, predictor: str, estimator: Any, kind: str, *,
+                 summary: dict[str, Any] | None = None, source_table: str = "") -> None:
+        super().__init__(response, [Feature(predictor, CONTINUOUS)], summary=summary, source_table=source_table)
+        self.estimator = estimator
+        self.kind = kind
+
+    def predict_matrix(self, frame: pd.DataFrame) -> pd.DataFrame:
+        if frame.empty:
+            return pd.DataFrame(columns=["Prediction"])
+        x = pd.to_numeric(frame[self.features[0].name], errors="coerce").to_numpy(dtype=float)
+        values = self.estimator.predict(x if self.kind == KIND_ISOTONIC else x.reshape(-1, 1))
+        return pd.DataFrame({"Prediction": np.asarray(values, dtype=float)}, index=frame.index)

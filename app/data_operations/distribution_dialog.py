@@ -121,7 +121,7 @@ class DistributionDialog(DataOperationDialogBase):
     SELECTS_ALL_SERIES = True
 
     PARAMS = (
-        ChoiceParam("distribution", "Distribution:",
+        ChoiceParam("distribution", "Distribution",
                     choices=(*FITTED, ("Best fit (AIC)", BEST)), default_value="norm",
                     tooltip="Fitted to each series: its curve on the histogram, the Q-Q plot against it, its "
                             "parameters and goodness of fit in the report. Best fit: the one of these with the "

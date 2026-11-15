@@ -1377,6 +1377,16 @@
       "title": "Save animation",
       "text": "The animation could not be saved:\n{error}"
     },
+    "model.confirm_delete": {
+      "level": "question",
+      "title": "Delete model",
+      "text": "Delete the model \u201c{name}\u201d? The tables it predicted stay."
+    },
+    "model.trust": {
+      "level": "question",
+      "title": "Trust model",
+      "text": "\u201c{name}\u201d is a pickled model ({kind}) that was not made on this computer. Running it runs the code inside it.\n\nTrust it only if you know where it comes from. Trust it?"
+    },
     "project.save_untitled": {
       "level": "question",
       "title": "Save project",

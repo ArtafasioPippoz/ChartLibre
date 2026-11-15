@@ -132,39 +132,39 @@ _WITH_RESPONSE = {"model": tuple(name for name, spec in FILTERS.items() if spec.
 FILTER_PARAMS = (
     *DataOperationDialogBase.sampling_rate_params(
         {"model": tuple(name for name, spec in FILTERS.items() if spec.needs_fs)}),
-    ChoiceParam("family", "Family:", choices=_choices(IIR_FAMILY_LABELS), visible_for=_IIR,
+    ChoiceParam("family", "Family", choices=_choices(IIR_FAMILY_LABELS), visible_for=_IIR,
                 tooltip="The filter family. Butterworth is maximally flat; "
                         "Chebyshev/Elliptic trade ripple for a sharper roll-off."),
-    ChoiceParam("response", "Response:", choices=_choices(RESPONSE_LABELS), visible_for=_WITH_RESPONSE,
+    ChoiceParam("response", "Response", choices=_choices(RESPONSE_LABELS), visible_for=_WITH_RESPONSE,
                 tooltip="Which band the filter keeps."),
-    IntParam("order", "Order:", default_value=4, minimum=1, maximum=20, visible_for=_IIR,
+    IntParam("order", "Order", default_value=4, minimum=1, maximum=20, visible_for=_IIR,
              tooltip="Filter order. Higher is a sharper roll-off and more phase distortion before sosfiltfilt "
                      "cancels it."),
-    IntParam("numtaps", "Taps:", default_value=101, minimum=3, maximum=20001, visible_for=_FIR,
+    IntParam("numtaps", "Taps", default_value=101, minimum=3, maximum=20001, visible_for=_FIR,
              tooltip="Number of FIR coefficients. More taps sharpen the transition band at the cost of needing "
                      "more samples."),
-    ChoiceParam("window", "Window:", choices=FIR_WINDOWS, visible_for=_FIR,
+    ChoiceParam("window", "Window", choices=FIR_WINDOWS, visible_for=_FIR,
                 tooltip="Taper applied to the FIR coefficients."),
     # 0 is "Auto": a fraction of fs, worked out when the filter runs. A fixed default (it was 1) is in the
     # units of x, and for a series dated in seconds fs is about 1e-5 - the default sat far above the
     # Nyquist frequency and Preview failed until the user found the box.
-    FloatParam("cutoff1", "Cutoff:", default_value=0.0, minimum=0.0, maximum=1e12, decimals=6, step=0.001,
+    FloatParam("cutoff1", "Cutoff", default_value=0.0, minimum=0.0, maximum=1e12, decimals=6, step=0.001,
                special_text="Auto", visible_for=_WITH_RESPONSE,
                tooltip=f"Cutoff frequency (same units as fs). Auto is {AUTO_CUTOFF1:g} of the sampling frequency."),
-    FloatParam("cutoff2", "Second cutoff:", default_value=0.0, minimum=0.0, maximum=1e12, decimals=6, step=0.001,
+    FloatParam("cutoff2", "Second cutoff", default_value=0.0, minimum=0.0, maximum=1e12, decimals=6, step=0.001,
                special_text="Auto",
                visible_for={**_WITH_RESPONSE, "response": tuple(key for key in RESPONSE_LABELS if two_cutoffs(key))},
                tooltip=f"Second cutoff, for a bandpass/bandstop response. Auto is {AUTO_CUTOFF2:g} of the "
                        "sampling frequency."),
-    FloatParam("ripple", "Ripple (dB):", default_value=1.0, minimum=0.001, maximum=20.0, decimals=3, step=0.1,
+    FloatParam("ripple", "Ripple (dB)", default_value=1.0, minimum=0.001, maximum=20.0, decimals=3, step=0.1,
                visible_for={**_IIR, "family": tuple(key for key, terms in IIR_FAMILIES.items() if terms.ripple)},
                tooltip="Passband ripple, in dB (Chebyshev I / Elliptic)."),
-    FloatParam("atten", "Attenuation (dB):", default_value=40.0, minimum=1.0, maximum=200.0, decimals=1, step=1.0,
+    FloatParam("atten", "Attenuation (dB)", default_value=40.0, minimum=1.0, maximum=200.0, decimals=1, step=1.0,
                visible_for={**_IIR, "family": tuple(key for key, terms in IIR_FAMILIES.items() if terms.attenuation)},
                tooltip="Minimum stopband attenuation, in dB (Chebyshev II / Elliptic)."),
-    ChoiceParam("analytic", "Output:", choices=_choices(ANALYTIC_LABELS), visible_for={"model": (FILTER_ANALYTIC,)},
+    ChoiceParam("analytic", "Output", choices=_choices(ANALYTIC_LABELS), visible_for={"model": (FILTER_ANALYTIC,)},
                 tooltip="What to derive from the analytic signal."),
-    ChoiceParam("detrend", "Trend:", choices=_choices(DETREND_LABELS), visible_for={"model": (FILTER_DETREND,)},
+    ChoiceParam("detrend", "Trend", choices=_choices(DETREND_LABELS), visible_for={"model": (FILTER_DETREND,)},
                 tooltip="Linear removes a best-fit line; constant removes only the mean."),
 )
 
@@ -196,7 +196,7 @@ class SeriesFilterDialog(DataOperationDialogBase):
     Description = "Filter, detrend or demodulate a series (scipy.signal)"
 
     MODELS = FILTERS
-    MODEL_LABEL = "Operation:"
+    MODEL_LABEL = "Operation"
     MODEL_TOOLTIP = "Choose the operation."
     PARAMS = FILTER_PARAMS
 

@@ -111,7 +111,7 @@ class SeriesPeaksDialog(DataOperationDialogBase):
 
     MODELS = PEAK_MODELS
     MODEL_TOOLTIP = "Which turning points to look for."
-    MODEL_LABEL = "Find:"
+    MODEL_LABEL = "Find"
 
     Name: str = "Peaks"
     Description = "Find and measure peaks"
@@ -131,7 +131,7 @@ class SeriesPeaksDialog(DataOperationDialogBase):
     PARAMS = (
         ChoiceParam(
             "filter_by",
-            "Filter by:",
+            "Filter by",
             tooltip=(
                 "Prominence measures a peak against its own surroundings and "
                 "survives a sloping baseline. Height compares it to zero, "
@@ -144,7 +144,7 @@ class SeriesPeaksDialog(DataOperationDialogBase):
         ),
         FloatParam(
             "threshold",
-            "Minimum:",
+            "Minimum",
             tooltip=(
                 "As a fraction of the signal's full range. 0.1 keeps peaks "
                 "standing at least a tenth of the range above their "
@@ -158,7 +158,7 @@ class SeriesPeaksDialog(DataOperationDialogBase):
         ),
         IntParam(
             "distance",
-            "Minimum separation:",
+            "Minimum separation",
             tooltip=(
                 "Points. Of any two peaks closer than this, the more "
                 "prominent is kept - which is how a single noisy peak stops "
@@ -170,7 +170,7 @@ class SeriesPeaksDialog(DataOperationDialogBase):
         ),
         FloatParam(
             "min_width",
-            "Minimum width:",
+            "Minimum width",
             tooltip=(
                 "Points at half prominence. Raise it to reject single-sample "
                 "spikes, which are usually instrument artefacts rather than "
@@ -184,7 +184,7 @@ class SeriesPeaksDialog(DataOperationDialogBase):
         ),
         IntParam(
             "limit",
-            "Report at most:",
+            "Report at most",
             tooltip="Keeps the most prominent peaks when many are found.",
             default_value=50,
             minimum=1,

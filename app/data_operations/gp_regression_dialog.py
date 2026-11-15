@@ -88,7 +88,7 @@ class SeriesGPRegressionDialog(DataOperationDialogBase):
 
     MODELS = GP_KERNELS
     MODEL_TOOLTIP = "Choose the kernel."
-    MODEL_LABEL = "Kernel:"
+    MODEL_LABEL = "Kernel"
 
     Name: str = "Gaussian Process"
     Description = "Gaussian process regression with an uncertainty band"
@@ -103,7 +103,7 @@ class SeriesGPRegressionDialog(DataOperationDialogBase):
     PARAMS = (
         FloatParam(
             "length_scale",
-            "Length scale:",
+            "Length scale",
             tooltip=(
                 "Starting guess for how quickly the fit can vary with x. "
                 "Re-optimized automatically while fitting - a starting point, "
@@ -115,7 +115,7 @@ class SeriesGPRegressionDialog(DataOperationDialogBase):
         ),
         FloatParam(
             "noise_level",
-            "Noise level:",
+            "Noise level",
             tooltip=(
                 "Starting guess for the observation noise variance, added to "
                 "the kernel. Also re-optimized while fitting."

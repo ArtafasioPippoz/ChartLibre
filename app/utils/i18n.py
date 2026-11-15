@@ -593,7 +593,18 @@ def tr(message: str) -> str:
     # title in a report read "Content-Type: text/plain; charset=UTF-8".
     if _language == DEFAULT_LANGUAGE or not message:
         return message
-    return _translation(_language).gettext(message)
+    catalogue = _translation(_language)
+    text = catalogue.gettext(message)
+    if text != message or len(message) > 60:
+        return text
+    # A label is one string with or without its colon (the colon is the platform's: style.field_label).
+    # A catalogue that still has the other spelling answers for both.
+    bare = message.rstrip()
+    if bare.endswith(":"):
+        other = catalogue.gettext(bare[:-1])
+        return other + ":" if other != bare[:-1] else text
+    other = catalogue.gettext(bare + ":")
+    return other.rstrip().rstrip(":：").rstrip() if other != bare + ":" else text
 
 
 #: The conventional gettext alias, and what the application calls.

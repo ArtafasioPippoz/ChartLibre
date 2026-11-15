@@ -183,31 +183,31 @@ _CORRELATION = _methods(lambda _name, method: not method.frequency)
 #: The settings, each shown for the methods that use it.
 SPECTRAL_PARAMS = (
     *DataOperationDialogBase.sampling_rate_params(_methods(lambda _name, method: method.frequency)),
-    IntParam("nperseg", "Segment length:", default_value=256, minimum=8, maximum=1_048_576, visible_for=_WELCH,
+    IntParam("nperseg", "Segment length", default_value=256, minimum=8, maximum=1_048_576, visible_for=_WELCH,
              tooltip="Samples per Welch segment. Longer segments resolve finer frequency detail; shorter ones "
                      "average away more noise."),
-    FloatParam("overlap", "Segment overlap:", default_value=0.5, minimum=0.0, maximum=0.95, decimals=2, step=0.05,
+    FloatParam("overlap", "Segment overlap", default_value=0.5, minimum=0.0, maximum=0.95, decimals=2, step=0.05,
                visible_for=_WELCH, tooltip="Fraction of each segment shared with the next."),
-    ChoiceParam("window", "Window:", choices=WINDOWS, visible_for=_WELCH,
+    ChoiceParam("window", "Window", choices=WINDOWS, visible_for=_WELCH,
                 tooltip="Taper applied to each segment before the FFT."),
-    FloatParam("sigma", "Damping (sigma):", default_value=0.0, minimum=0.0, maximum=1e6, decimals=6, step=0.1,
+    FloatParam("sigma", "Damping (sigma)", default_value=0.0, minimum=0.0, maximum=1e6, decimals=6, step=0.1,
                visible_for={"model": (METHOD_LAPLACE,)},
                tooltip="Damping sigma of the Laplace variable s = sigma + i*omega. Zero reduces the transform to "
                        "the Fourier transform; increasing it weights early samples more and suppresses late ones, "
                        "which is what makes a decaying or unstable signal integrable."),
-    FloatParam("wavelet_w0", "Morlet w0:", default_value=6.0, minimum=3.0, maximum=30.0, decimals=1, step=0.5,
+    FloatParam("wavelet_w0", "Morlet w0", default_value=6.0, minimum=3.0, maximum=30.0, decimals=1, step=0.5,
                visible_for={"model": (METHOD_WAVELET,)},
                tooltip="Morlet central frequency w0. Higher values resolve frequency more finely at the cost of "
                        "time resolution; 6 is the usual compromise and the value at which the wavelet is "
                        "near-admissible."),
-    IntParam("wavelet_scales", "Scales:", default_value=64, minimum=8, maximum=512,
+    IntParam("wavelet_scales", "Scales", default_value=64, minimum=8, maximum=512,
              visible_for={"model": (METHOD_WAVELET,)},
              tooltip="How many scales to evaluate between the longest period the record supports and the Nyquist "
                      "frequency, spaced logarithmically."),
-    ChoiceParam("detrend", "Detrend:", choices=DETREND_MODES, visible_for=_WELCH,
+    ChoiceParam("detrend", "Detrend", choices=DETREND_MODES, visible_for=_WELCH,
                 tooltip="Remove a constant or linear trend from each segment first. A trend leaks into the lowest "
                         "frequency bins and hides everything near it."),
-    ChoiceParam("scaling", "Scaling:", choices=("density", "spectrum"), visible_for={"model": (METHOD_PSD, METHOD_CSD)},
+    ChoiceParam("scaling", "Scaling", choices=("density", "spectrum"), visible_for={"model": (METHOD_PSD, METHOD_CSD)},
                 tooltip="density: power per unit frequency. spectrum: power per segment."),
     # One-sided always for the STFT: a dominant frequency is a positive one.
     BoolParam("one_sided", "One-sided spectrum", default_value=True,
@@ -216,9 +216,9 @@ SPECTRAL_PARAMS = (
     BoolParam("decibels", "Convert to decibels",
               visible_for={"model": (METHOD_PSD, METHOD_CSD, METHOD_MAGNITUDE, METHOD_LAPLACE, METHOD_WAVELET)},
               tooltip="Express the result as 10*log10 of the value."),
-    IntParam("max_lags", "Max lags:", default_value=0, minimum=0, maximum=1_000_000, special_text="all lags",
+    IntParam("max_lags", "Max lags", default_value=0, minimum=0, maximum=1_000_000, special_text="all lags",
              visible_for=_CORRELATION, tooltip="Largest lag to keep. 0 keeps every lag."),
-    ChoiceParam("correlation_norm", "Normalisation:", choices=CORRELATION_NORMALISATIONS, visible_for=_CORRELATION,
+    ChoiceParam("correlation_norm", "Normalisation", choices=CORRELATION_NORMALISATIONS, visible_for=_CORRELATION,
                 tooltip="unbiased divides by the overlap at each lag; biased divides by N; none returns the raw sum "
                         "of products."),
 )
@@ -230,7 +230,7 @@ class SeriesSpectralDialog(DataOperationDialogBase):
     MODELS = SPECTRAL_METHODS
     PARAMS = SPECTRAL_PARAMS
     MODEL_TOOLTIP = "Choose the spectral or correlation estimator."
-    MODEL_LABEL = "Method:"
+    MODEL_LABEL = "Method"
 
     # format_results builds a table; without this the pane would show the
     # markup as literal text.

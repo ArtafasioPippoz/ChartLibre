@@ -61,10 +61,10 @@ class DiscriminantDialog(RolesOperationDialogBase):
     DISTINCT_ROLES = (("response", "covariate", "{columns} is both Y and X."),)
     PARAMETERS_TAB = "Discriminant"
     PARAMS = (
-        ChoiceParam("method", "Method:", choices=tuple((label, key) for key, label in da.METHODS),
+        ChoiceParam("method", "Method", choices=tuple((label, key) for key, label in da.METHODS),
                     tooltip="Linear: the groups share one covariance, the boundaries are planes. "
                             "Quadratic: each group has its own, the boundaries curve; it needs more rows."),
-        ChoiceParam("priors", "Prior probabilities:", choices=tuple((label, key) for key, label in da.PRIORS),
+        ChoiceParam("priors", "Prior probabilities", choices=tuple((label, key) for key, label in da.PRIORS),
                     tooltip="How likely each group is before the measures are seen: its share of the rows, "
                             "or the same for every group."),
     )

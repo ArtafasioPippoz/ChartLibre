@@ -93,7 +93,7 @@ class SeriesBaselineDialog(DataOperationDialogBase):
 
     MODELS = BASELINE_MODELS
     MODEL_TOOLTIP = "Choose the baseline estimator."
-    MODEL_LABEL = "Method:"
+    MODEL_LABEL = "Method"
 
     Name: str = "Baseline Correction"
     Description = "Subtract a spectrum's background (AsLS or rubber band)"
@@ -106,17 +106,17 @@ class SeriesBaselineDialog(DataOperationDialogBase):
     RUN_IN_BACKGROUND = True
 
     PARAMS = (
-        FloatParam("lam", "Lambda:", tooltip="Smoothness. Larger makes the baseline stiffer, so it bends "
+        FloatParam("lam", "Lambda", tooltip="Smoothness. Larger makes the baseline stiffer, so it bends "
                                              "less to follow narrow peaks.",
                    default_value=100_000.0, minimum=10.0, maximum=1e10, decimals=0, step=10_000.0,
                    visible_for={"model": (BASELINE_ASLS,)}),
-        FloatParam("p", "p:", tooltip="Asymmetry. Smaller pushes the baseline further below the "
+        FloatParam("p", "p", tooltip="Asymmetry. Smaller pushes the baseline further below the "
                                       "peaks; it should stay well under 0.5.",
                    default_value=0.01, minimum=0.0001, maximum=0.5, decimals=4, step=0.001,
                    visible_for={"model": (BASELINE_ASLS,)}),
-        IntParam("iterations", "Iterations:", tooltip="Re-weighting passes.",
+        IntParam("iterations", "Iterations", tooltip="Re-weighting passes.",
                  default_value=10, minimum=1, maximum=50, visible_for={"model": (BASELINE_ASLS,)}, advanced=True),
-        BoolParam("draw_baseline", "Baseline:", tooltip="Draw the estimated baseline itself.",
+        BoolParam("draw_baseline", "Baseline", tooltip="Draw the estimated baseline itself.",
                   default_value=True),
     )
 

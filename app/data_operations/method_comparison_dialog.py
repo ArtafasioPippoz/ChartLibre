@@ -57,10 +57,10 @@ class MethodComparisonDialog(RolesOperationDialogBase):
     DISTINCT_ROLES = (("response", "factor", "The method tested cannot also be the reference."),)
     PARAMETERS_TAB = "Method Comparison"
     PARAMS = (
-        FloatParam("ratio", "Error variance ratio:", default_value=1.0, minimum=0.001, maximum=1000.0, decimals=3,
+        FloatParam("ratio", "Error variance ratio", default_value=1.0, minimum=0.001, maximum=1000.0, decimals=3,
                    tooltip="Deming: the method tested's error variance over the reference's - 1 when they are "
                            "alike (each one's repeatability, squared)."),
-        FloatParam("confidence", "Confidence:", default_value=0.95, minimum=0.5, maximum=0.999, decimals=3,
+        FloatParam("confidence", "Confidence", default_value=0.95, minimum=0.5, maximum=0.999, decimals=3,
                    step=0.01, tooltip="The level of every interval."),
     )
 

@@ -15,12 +15,14 @@ counted in the notes the call returns, not hidden.
 """
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import pickle
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any, ClassVar
 
 import numpy as np
@@ -230,6 +232,85 @@ def load_model(repo: Any, name: str) -> SavedModel:
     if not isinstance(model, SavedModel):
         raise ModelError(f"{name} is not a model.")
     return model
+
+
+# ----------------------------------------------------------------------
+# A model as a file: out of one project, into another
+# ----------------------------------------------------------------------
+#: The file's own mark and version, its first key.
+FILE_MARK = "chartlibre_model"
+FILE_SUFFIX = ".clmodel"
+
+
+def needs_trust(repo: Any, name: str) -> bool:
+    """True for a pickled model this computer has not accepted yet (made elsewhere, or imported from a file)."""
+    row = repo.model_record(name)
+    return row is not None and row["form"] == PICKLED and not is_trusted(row["fingerprint"])
+
+
+def trust_model(repo: Any, name: str) -> None:
+    """Accept the pickled model *name* on this computer: it may run from now on."""
+    row = repo.model_record(name)
+    if row is not None:
+        trust([row["fingerprint"]])
+
+
+def rename_model(repo: Any, old: str, new: str) -> str:
+    """Give the model *old* the name *new*; never over another model."""
+    clean = str(new).strip()
+    if not clean:
+        raise ModelError("A model needs a name.")
+    names = {row["name"] for row in repo.models()}
+    if old not in names:
+        raise ModelError(f"No model called {old}.")
+    if clean != old and clean in names:
+        raise ModelError(f"A model called {clean} exists.")
+    repo.rename_model(old, clean)
+    return clean
+
+
+def export_model(repo: Any, name: str, path: Any) -> Path:
+    """Write the model *name* to a file (JSON; a pickled payload inside as base64), as it is kept in the project."""
+    row = repo.model_record(name)
+    if row is None:
+        raise ModelError(f"No model called {name}.")
+    target = Path(path)
+    if target.suffix != FILE_SUFFIX:
+        target = target.with_name(target.name + FILE_SUFFIX)
+    target.write_text(json.dumps({
+        FILE_MARK: 1, "name": row["name"], "kind": row["kind"], "form": row["form"], "header": row["header"],
+        "fingerprint": row["fingerprint"],
+        "payload": base64.b64encode(bytes(row["payload"])).decode("ascii"),
+    }, ensure_ascii=False, indent=1), encoding="utf-8")
+    return target
+
+
+def import_model(repo: Any, path: Any, name: str | None = None) -> str:
+    """Add the model of a file to the project; returns the name it took (numbered when the name is taken).
+
+    Nothing of the file is run: a pickled model stays untrusted - and unloaded - until this computer accepts it
+    (trust_model). A file whose payload does not match its fingerprint was changed, and is refused.
+    """
+    try:
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+        payload = base64.b64decode(data["payload"], validate=True)
+        kind, form, header = str(data["kind"]), str(data["form"]), dict(data["header"])
+        mark = data[FILE_MARK]
+    except Exception as error:
+        raise ModelError(f"{Path(path).name} is not a model file ({type(error).__name__}).") from error
+    if mark != 1 or form not in (PORTABLE, PICKLED):
+        raise ModelError(f"{Path(path).name} was written by a newer ChartLibre: it is not read.")
+    fingerprint_ = fingerprint(kind, form, payload)
+    if fingerprint_ != str(data.get("fingerprint", "")):
+        raise ModelError(f"{Path(path).name} was changed after it was exported: it is not imported.")
+    taken = {row["name"] for row in repo.models()}
+    stem = str(name or data.get("name") or Path(path).stem).strip() or "model"
+    clean, number = stem, 2
+    while clean in taken:
+        clean, number = f"{stem} {number}", number + 1
+    repo.save_model_record(name=clean, kind=kind, form=form, payload=payload, fingerprint=fingerprint_,
+                           header=header)
+    return clean
 
 
 def predict_table(repo: Any, name: str, source: str | pd.DataFrame) -> Prediction:

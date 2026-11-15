@@ -59,10 +59,10 @@ class PLSDialog(RolesOperationDialogBase):
     DISTINCT_ROLES = (("response", "predictor", "{columns} is both Y and X."),)
     PARAMETERS_TAB = "PLS"
     PARAMS = (
-        IntParam("components", "Components:", tooltip="0 chooses them by cross-validation: another component only while "
+        IntParam("components", "Components", tooltip="0 chooses them by cross-validation: another component only while "
                                                       "it cuts the prediction error by 5% or more.",
                  default_value=0, minimum=0, maximum=pl.MAX_COMPONENTS),
-        IntParam("folds", "Cross-validation folds:", tooltip="Into how many parts the rows are split; each part "
+        IntParam("folds", "Cross-validation folds", tooltip="Into how many parts the rows are split; each part "
                                                              "is predicted by a model fitted on the others.",
                  default_value=7, minimum=2, maximum=20, advanced=True),
         BoolParam("scale", "Scale X to unit variance", tooltip="For X in different units. Off for a spectrum: "
