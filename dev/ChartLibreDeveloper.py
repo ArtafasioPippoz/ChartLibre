@@ -2,9 +2,9 @@
 
     python.nosync/bin/python3 dev/ChartLibreDeveloper.py
 
-Three columns as the app's Project page: writing code (the creators, localization, the Qt style), checking it
-(tests, NIST, size, chart previews) and shipping it (bundle, libraries, manuals). The long ones run one at a
-time in the log below, with Stop. In English only: it is for people working on the code.
+Laid out as Preferences: a sidebar of sections - Write code (the creators, the workpads, the Qt style),
+Translation (the keys), Check (tests, NIST, size, chart previews) and Ship (bundle, libraries, manuals) - each page
+a heading with its icon and sentence over its buttons. The long ones run one at a time in the log below, with Stop. In English only: it is for people working on the code.
 """
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ from app.utils.qt_plugins import ensure_visible_plugins  # noqa: E402
 
 ensure_visible_plugins()  # before Qt: macOS may have flagged the environment's Qt plugins hidden
 
-from PySide6.QtCore import QProcess, QProcessEnvironment, Qt, QUrl  # noqa: E402
+from PySide6.QtCore import QProcess, QProcessEnvironment, QSize, Qt, QUrl  # noqa: E402
 from PySide6.QtGui import QDesktopServices, QFont, QTextCursor  # noqa: E402
 from PySide6.QtWidgets import (  # noqa: E402
     QApplication,
@@ -37,17 +37,27 @@ from PySide6.QtWidgets import (  # noqa: E402
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QListWidget,
+    QListWidgetItem,
     QMainWindow,
     QMessageBox,
     QPlainTextEdit,
     QPushButton,
     QSplitter,
+    QStackedWidget,
     QTextBrowser,
     QVBoxLayout,
     QWidget,
 )
 
-from app.styles.style import apply_platform_style, ensure_icon_theme  # noqa: E402
+from app.styles.style import (  # noqa: E402
+    CardFrame,
+    TitledCard,
+    apply_platform_style,
+    ensure_icon_theme,
+    load_icon,
+    tile_icon,
+)
 from app.utils.config import get_value, set_value  # noqa: E402
 from app.utils.machine_translation import DEEPL_KEY_SETTING, MYMEMORY_EMAIL_SETTING  # noqa: E402
 from app.widgets.nav_bar import NavButton, NavPanel  # noqa: E402
@@ -60,8 +70,17 @@ JUNIT = RESULTS / "junit.xml"
 BUILD_WORK = Path.home() / "Library" / "Caches" / "ChartLibre-build"
 
 
+#: The sections, as Preferences draws its own: (title, icon, tile colour, sentence).
+SECTIONS: tuple[tuple[str, str, str, str], ...] = (
+    ("Write code", "function_creator", "#3b82f6", "Helpers that write code for you, the workpads and the Qt style."),
+    ("Translation", "edit_localization", "#8b5cf6", "The keys of the online translators Edit Localization can use."),
+    ("Check", "run", "#22a06b", "Run the tests, the NIST report, the size and the chart previews."),
+    ("Ship", "export_rows", "#e8860c", "Build the package, update the libraries, compile the manuals."),
+)
+
+
 class DeveloperWindow(QMainWindow):
-    """The tools as buttons in three columns; the log of the one running below them."""
+    """The tools in sections beside a sidebar; the log of the one running below them."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -73,10 +92,33 @@ class DeveloperWindow(QMainWindow):
         columns = QWidget(self)
         row = QHBoxLayout(columns)
         row.setContentsMargins(12, 12, 12, 0)
-        row.setSpacing(12)
-        row.addWidget(self._code_column(), 1)
-        row.addWidget(self._check_column(), 1)
-        row.addWidget(self._ship_column(), 1)
+        row.setSpacing(16)
+        sidebar = QListWidget(columns)
+        sidebar.setObjectName("settingsSidebar")
+        sidebar.setIconSize(QSize(24, 24))
+        sidebar.setFixedWidth(200)
+        sidebar.setSpacing(2)
+        sidebar.setFrameShape(QListWidget.Shape.NoFrame)
+        # The same sidebar as Preferences: a light grey column, the chosen row a rounded accent.
+        sidebar.setStyleSheet(
+            "QListWidget#settingsSidebar { background: rgba(127, 127, 127, 0.08); border-radius: 10px;"
+            " padding: 6px; }"
+            "QListWidget#settingsSidebar::item { padding: 4px 6px; border-radius: 7px; }"
+            "QListWidget#settingsSidebar::item:selected { background: palette(highlight);"
+            " color: palette(highlighted-text); }")
+        stack = QStackedWidget(columns)
+        builders = {"Write code": self._code_column, "Translation": self._translation_column,
+                    "Check": self._check_column, "Ship": self._ship_column}
+        for title, icon_id, colour, sentence in SECTIONS:
+            item = QListWidgetItem(tile_icon(load_icon(icon_id), colour, 24), title)
+            item.setSizeHint(QSize(180, 36))
+            sidebar.addItem(item)
+            stack.addWidget(self._section_page(title, icon_id, colour, sentence, builders[title]()))
+        sidebar.currentRowChanged.connect(stack.setCurrentIndex)
+        sidebar.setCurrentRow(0)
+        self._sidebar = sidebar
+        row.addWidget(sidebar)
+        row.addWidget(stack, 1)
 
         # The log as a titled card of the app's pages, its buttons in the title's row.
         log_page = NavPanel(self)
@@ -115,11 +157,39 @@ class DeveloperWindow(QMainWindow):
         split.setStretchFactor(1, 1)
         self.setCentralWidget(split)
         self.resize(1180, 820)
-        split.setSizes([400, 420])  # the columns whole, without a scroll bar
+        split.setSizes([540, 280])  # the page whole, without a scroll bar
 
     # ------------------------------------------------------------------
-    # The three columns
+    # The sections
     # ------------------------------------------------------------------
+
+    def _section_page(self, title: str, icon_id: str, colour: str, sentence: str, panel: NavPanel) -> QWidget:
+        """A section's page: its heading (icon, title, sentence), then its buttons."""
+        page = QWidget(self)
+        column = QVBoxLayout(page)
+        column.setContentsMargins(0, 0, 0, 0)
+        column.setSpacing(12)
+        heading = CardFrame(page, f"developer{title.replace(' ', '')}Heading")
+        layout = heading.layout()
+        picture = QLabel(heading)
+        picture.setPixmap(tile_icon(load_icon(icon_id), colour, 44).pixmap(44, 44))
+        picture.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(picture)
+        caption = QLabel(title, heading)
+        caption.setProperty("role", "title")
+        caption.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(caption)
+        words = QLabel(sentence, heading)
+        words.setProperty("muted", True)
+        words.setWordWrap(True)
+        words.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(words)
+        column.addWidget(heading)
+        for card in panel.findChildren(TitledCard):  # the heading says it already
+            if card.title_label.text() == title:
+                card.title_label.hide()
+        column.addWidget(panel, 1)
+        return page
 
     def _code_column(self) -> NavPanel:
         from dev.developer.data_operation_helper import DataOperationBuilderDialog
@@ -143,6 +213,10 @@ class DeveloperWindow(QMainWindow):
                       tooltip="Edit one of app/styles/*.qss and try it live on the app's widgets, light or dark.",
                       described=True),
         ])
+        return page
+
+    def _translation_column(self) -> NavPanel:
+        page = NavPanel(self)
         # The one secret here: kept in user.json on this computer, sent to nobody but DeepL.
         key = QLineEdit(str(get_value(DEEPL_KEY_SETTING, "") or ""), self)
         key.setEchoMode(QLineEdit.EchoMode.PasswordEchoOnEdit)

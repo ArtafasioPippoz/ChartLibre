@@ -25,3 +25,20 @@ def test_c_launchers_take_the_script_from_a_macro():
     assert "LAUNCH_SCRIPT" in (SOURCE / "chartlibre_mac_launcher.c").read_text()
     windows = (SOURCE / "chartlibre_launcher.c").read_text()
     assert "DEVELOPER_LAUNCHER" in windows and "ChartLibreDeveloper.py" in windows
+
+
+def test_developer_window_has_a_sidebar_page_per_section():
+    import importlib.util
+    import os
+
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    from PySide6.QtWidgets import QApplication
+
+    app = QApplication.instance() or QApplication([])
+    spec = importlib.util.spec_from_file_location("developer_window", ml.PROJECT_DIR / "dev" / "ChartLibreDeveloper.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    window = module.DeveloperWindow()
+    assert [window._sidebar.item(i).text() for i in range(window._sidebar.count())] == [s[0] for s in module.SECTIONS]
+    window.close()
+    del app
