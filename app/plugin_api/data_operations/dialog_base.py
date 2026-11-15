@@ -3006,8 +3006,10 @@ class DataOperationDialogBase(QDialog):
     def _refresh_after_preview_state_change(self) -> None:
         """Notify the owner window that chart/data panes must refresh."""
         try:
-            self.applied.emit()
+            # The figure first: applied makes the window refresh the figure it shows, and after a rollback that
+            # one (a report figure of the Preview) is gone - "No figure descriptor found" five times in the log.
             self.sync_preview_figure()
+            self.applied.emit()
         except Exception:
             applogger.exception("Failed to emit preview refresh signal.")
 

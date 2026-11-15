@@ -184,3 +184,19 @@ def test_data_from_chart_offers_only_the_current_figures_axes(qapp, tmp_path) ->
     finally:
         dialog.close()
         repo.close()
+
+
+def test_cancel_tells_the_window_the_figure_went_before_it_refreshes(qapp, repo: SqliteRepo) -> None:
+    """Applied makes the window reload the figure it shows: that one must already be dropped (-1)."""
+    dialog = _dialog(repo)
+    events: list[str] = []
+    dialog.preview_drawn.connect(lambda figure: events.append(f"drawn {figure}"))
+    dialog.applied.connect(lambda: events.append("applied"))
+    try:
+        dialog.preview()
+        wait_for_job(qapp, dialog)
+        events.clear()
+        dialog.reject()
+        assert events.index("drawn -1") < events.index("applied")
+    finally:
+        dialog.close()
