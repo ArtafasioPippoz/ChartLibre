@@ -55,14 +55,12 @@ class ChangeSeriesResult(OperationResult):
         return self.answer.series
 
     def preview(self, dialog: ChangeDialog, axis_id: int) -> None:
-        del axis_id
-        self.draw(dialog)
+        del dialog, axis_id
 
     def apply(self, dialog: ChangeDialog, axis_id: int) -> None:
-        del axis_id
-        self.draw(dialog)
+        del dialog, axis_id
 
-    def draw(self, dialog: ChangeDialog) -> None:
+    def report_panels(self, dialog: ChangeDialog) -> list[tuple[Any, ...]]:
         """The measure over time, with its trend line or the two medians, in a figure of its own."""
         name = self.source_name
         measured = measured_query(self.query, self.x_column, self.y_column)
@@ -85,8 +83,8 @@ class ChangeSeriesResult(OperationResult):
         if self.answer.temporal:
             options.update(tsa.gap_options(frame["Order"]))
         panel = ("Time Series", _("{measure} over time").format(measure=name), self.x_column, name, series, options)
-        dialog.create_report_figure(f"{_(dialog.Name)} · {name}",
-                                    dialog.results_document(name, dialog.report_for(self)), [panel])
+        del dialog
+        return [panel]
 
 
 class ChangeDialog(DataOperationDialogBase):

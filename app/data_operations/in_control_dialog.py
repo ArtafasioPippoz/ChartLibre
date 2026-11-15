@@ -54,14 +54,12 @@ class ControlSeriesResult(OperationResult):
         return self.answer.series
 
     def preview(self, dialog: InControlDialog, axis_id: int) -> None:
-        del axis_id
-        self.draw(dialog)
+        del dialog, axis_id
 
     def apply(self, dialog: InControlDialog, axis_id: int) -> None:
-        del axis_id
-        self.draw(dialog)
+        del dialog, axis_id
 
-    def draw(self, dialog: InControlDialog) -> None:
+    def report_panels(self, dialog: InControlDialog) -> list[tuple[Any, ...]]:
         """The individuals chart: its limits, the values and the signals, in a figure of its own."""
         name, answer = self.source_name, self.answer
         frame = answer.series
@@ -86,8 +84,8 @@ class ControlSeriesResult(OperationResult):
             options.update(tsa.gap_options(frame["Order"]))
         panel = ("Time Series", _("{measure}: control chart").format(measure=name), self.x_column, name, series,
                  options)
-        dialog.create_report_figure(f"{_(dialog.Name)} · {name}",
-                                    dialog.results_document(name, dialog.report_for(self)), [panel])
+        del dialog
+        return [panel]
 
 
 class InControlDialog(DataOperationDialogBase):

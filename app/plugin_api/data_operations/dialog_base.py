@@ -2940,6 +2940,24 @@ class DataOperationDialogBase(QDialog):
         del results
         return []
 
+    @staticmethod
+    def _draws_report_panels(results: Sequence[Any]) -> bool:
+        """Whether every result gives report_panels: the panels of ONE figure all the series share."""
+        return bool(results) and all(callable(getattr(result, "report_panels", None)) for result in results)
+
+    def draw_report_panels(self, results: Sequence[Any]) -> None:
+        """One report figure for every series: each result's panels (report_panels), the whole report in its notes.
+
+        One figure per series left only the last one shown in the window while the others sat in tabs.
+        """
+        panels: list[tuple[Any, ...]] = []
+        for result in results:
+            panels.extend(result.report_panels(self))
+        subtitle = ", ".join(str(getattr(result, "source_name", "")) for result in results if
+                             getattr(result, "source_name", ""))
+        self.create_report_figure(f"{_(self.Name)} · {subtitle}" if subtitle else _(self.Name),
+                                  self.format_results(results), panels)
+
     def apply_results_to_axis(self, axis_id: int, results: Sequence[Any]) -> None:
         """Write every result as a table plus a chart series on *axis_id*.
 
@@ -2951,6 +2969,9 @@ class DataOperationDialogBase(QDialog):
         after committing instead.
         """
         self.remove_previous_generated_series(axis_id)
+        if self._draws_report_panels(results):
+            self.draw_report_panels(results)
+            return
         for result in results:
             if isinstance(result, OperationResult):
                 result.apply(self, axis_id)
@@ -3011,6 +3032,9 @@ class DataOperationDialogBase(QDialog):
 
     def preview_results_to_axis(self, axis_id: int, results: Sequence[Any]) -> None:
         self.remove_preview_artifacts(axis_id)
+        if self._draws_report_panels(results):
+            self.draw_report_panels(results)
+            return
         for result in results:
             if isinstance(result, OperationResult):
                 result.preview(self, axis_id)

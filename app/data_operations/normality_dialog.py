@@ -76,19 +76,16 @@ class NormalityResult(OperationResult):
         return self.answer.qq
 
     def preview(self, dialog: NormalityDialog, axis_id: int) -> None:
-        del axis_id
-        self.draw(dialog)
+        del dialog, axis_id  # drawn once for every series: DataOperationDialogBase.draw_report_panels
 
     def apply(self, dialog: NormalityDialog, axis_id: int) -> None:
-        del axis_id
-        self.draw(dialog)
+        del dialog, axis_id
 
-    def draw(self, dialog: NormalityDialog) -> None:
-        """The normal Q-Q plot of the series, in a figure of its own."""
+    def report_panels(self, dialog: NormalityDialog) -> list[tuple[Any, ...]]:
+        """The normal Q-Q plot of the series: one panel of the figure all the series share."""
+        del dialog
         series = value_series(self.source_name, self.query, self.column)
-        dialog.create_report_figure(f"{_(dialog.Name)} · {self.source_name}",
-                                    dialog.results_document(self.source_name, dialog.report_for(self)),
-                                    [qq_panel(self.source_name, series, "norm")])
+        return [qq_panel(self.source_name, series, "norm")]
 
 
 class NormalityDialog(DataOperationDialogBase):

@@ -81,23 +81,21 @@ class DistributionSeriesResult(OperationResult):
         return self.report.quantiles
 
     def preview(self, dialog: DistributionDialog, axis_id: int) -> None:
-        del axis_id
-        self.draw(dialog)
+        del dialog, axis_id  # drawn once for every series: draw_report_panels
 
     def apply(self, dialog: DistributionDialog, axis_id: int) -> None:
-        del axis_id
-        self.draw(dialog)
+        del dialog, axis_id  # drawn once for every series: draw_report_panels
 
-    def draw(self, dialog: DistributionDialog) -> None:
-        """The histogram with the fitted curve, and the Q-Q plot against it, in a figure of their own."""
+    def report_panels(self, dialog: DistributionDialog) -> list[tuple[Any, ...]]:
+        """The histogram with the fitted curve, and the Q-Q plot against it: two panels of the shared figure."""
+        del dialog
         key = self.fit.name if self.fit is not None else "norm"
         series = value_series(self.source_name, self.query, self.column)
         panels = [
             ("Histogram", self.source_name, self.source_name, _("Density"), series, {"distribution_fit": key}),
             qq_panel(self.source_name, series, key),
         ]
-        dialog.create_report_figure(f"{_(dialog.Name)} · {self.source_name}",
-                                    dialog.results_document(self.source_name, dialog.report_for(self)), panels)
+        return panels
 
 
 class DistributionDialog(DataOperationDialogBase):
