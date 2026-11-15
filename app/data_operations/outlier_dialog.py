@@ -535,7 +535,8 @@ class SeriesOutlierDialog(DataOperationDialogBase):
             if colour is not None:
                 rows.append((_("Colour"), colour))
             sections.append(report_html.section(str(result.source_name), report_html.summary_table(rows)))
-        return "".join(sections)
+        # The "How to read" box after every series, not under the first.
+        return "".join(sections) + report_html.READING_GUIDE_MARK
 
     def result_series_spec(self, axis_id: int, table_name: str, result: OutlierResult) -> ResultSeriesSpec:
         del axis_id, table_name, result
@@ -551,7 +552,8 @@ class SeriesOutlierDialog(DataOperationDialogBase):
 
     def how_to_read(self, results: Sequence[OutlierResult]) -> list[str]:
         result = results[0]
-        return [reading_guide.outliers(result.outlier_count, total=len(result.y), method=result.model)]
+        return [reading_guide.outliers(sum(item.outlier_count for item in results),
+                                       total=sum(len(item.y) for item in results), method=result.model)]
 
     def format_results(self, results: Sequence[OutlierResult]) -> str:
         return self._format_results(results, self._colour_choice())
@@ -625,14 +627,20 @@ class SeriesOutlierDialog(DataOperationDialogBase):
         return ""
 
     def _apply_colour_results(self, results: Sequence[OutlierResult], colour: str) -> None:
-        """Colour the outliers' rows and make each series draw that column."""
+        """Colour the outliers' rows and make each series draw that column.
+
+        One colouring per table: set_row_colours leaves exactly the rows it is given coloured, so doing it
+        series by series (the species of one table) kept only the last series' outliers red.
+        """
+        by_table: dict[str, list[int]] = {}
         for result in results:
-            table = result.source_table
+            rowids = by_table.setdefault(result.source_table, [])
+            rowids.extend(int(rowid) for rowid in result.outlier_rowids)
+        for table, rowids in by_table.items():
             if table not in self._preview_colour_snapshots:
                 self._preview_colour_snapshots[table] = self._repo.colour_snapshot(table, COLOUR_COLUMN)
-            self._repo.set_row_colours(
-                table, COLOUR_COLUMN, [int(rowid) for rowid in result.outlier_rowids], colour
-            )
+            self._repo.set_row_colours(table, COLOUR_COLUMN, rowids, colour)
+        for result in results:
             series_id = result.metadata.get("source_series_id")
             if series_id is not None:
                 self._repo.update_series_sql_query(

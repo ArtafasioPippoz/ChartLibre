@@ -253,3 +253,34 @@ def test_after_ok_the_series_no_longer_returns_the_hidden_rows(qapp, repo: Sqlit
     finally:
         dialog.close()
     assert len(repo.query_df(_series_sql(repo, axis_id))) == 58
+
+
+def test_several_series_of_one_table_all_keep_their_coloured_outliers(qapp, repo: SqliteRepo) -> None:
+    """Colouring series by series reset the column each time: only the last series' outliers stayed red."""
+    figure_id, axis_id = _figure(repo, "SELECT n AS x, v AS y FROM t WHERE n < 30")
+    repo.create_series_descriptor(axis_id=axis_id, series_index=1, name="second",
+                                  sql_query="SELECT n AS x, v AS y FROM t WHERE n >= 30",
+                                  roles={"x": "x", "y": "y"}, style={})
+    dialog = _dialog(repo, figure_id, ACTION_COLOUR)
+    try:
+        assert dialog.preview() is True
+        dialog.ok()
+    finally:
+        dialog.close()
+    coloured = repo.query_df(f'SELECT rowid AS r FROM t WHERE "{COLOUR_COLUMN}" IS NOT NULL')
+    assert sorted(coloured["r"]) == [11, 41]  # one outlier in each series
+
+
+def test_the_reading_guide_comes_after_every_series(qapp, repo: SqliteRepo) -> None:
+    figure_id, axis_id = _figure(repo, "SELECT n AS x, v AS y FROM t WHERE n < 30")
+    repo.create_series_descriptor(axis_id=axis_id, series_index=1, name="second",
+                                  sql_query="SELECT n AS x, v AS y FROM t WHERE n >= 30",
+                                  roles={"x": "x", "y": "y"}, style={})
+    dialog = _dialog(repo, figure_id, ACTION_COLOUR)
+    try:
+        results = dialog.compute_results()
+        html = dialog.results_report(results)
+    finally:
+        dialog.close()
+    assert html.count("report-section") >= 2
+    assert "How to read this" in html and html.rindex("report-section") < html.index("How to read this")
