@@ -544,6 +544,7 @@ def make_windows_exe(target_dir: Path, developer: bool = False) -> Path | None:
     ``ZIG=/path/to/zig`` or a ``zig`` on the PATH. Without one the .exe is
     left as it is - the .bat does the same job.
     """
+    target_dir = target_dir.resolve()  # the compiler runs in a work folder: a relative path would land there
     zig = os.environ.get("ZIG") or shutil.which("zig")
     if not zig:
         print("zig not found: ChartLibre.exe not rebuilt (set ZIG=/path/to/zig).")
