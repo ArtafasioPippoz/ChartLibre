@@ -38,15 +38,20 @@ from app.widgets.nav_bar import NavPanel
 
 
 #: What the assistant can do, for the Functions menu: (shown, the request it writes, what happens).
-_REQUESTS: tuple[tuple[str, str, str], ...] = (
-    ("Describe a table", "Describe the table ", "Statistics of every column: counts, missing values, mean"),
-    ("Count or average", "What is the average of ", "A query on the project: counts, averages, largest rows"),
-    ("Compare groups", "Is  different between the groups of ?", "The right test is chosen for you"),
-    ("Find what matters", "Which factors affect  the most?", "The factors ranked by their effect on a result"),
-    ("Draw a chart", "Draw a scatter chart of  against ", "A chart of the columns you name"),
-    ("Run an analysis", "Run the analysis  on ", "One of the application's analyses"),
-    ("List the charts", "Which chart types are there?", "The chart types that can be drawn"),
-    ("List the analyses", "Which analyses are there?", "The analyses that can be run"),
+_REQUESTS: tuple[tuple[str, str, str, str], ...] = (
+    ("Describe a table", "Describe the table ", "Statistics of every column: counts, missing values, mean",
+     "column_info"),
+    ("Count or average", "What is the average of ", "A query on the project: counts, averages, largest rows",
+     "query_builder"),
+    ("Compare groups", "Is  different between the groups of ?", "The right test is chosen for you",
+     "column_stats"),
+    ("Find what matters", "Which factors affect  the most?", "The factors ranked by their effect on a result",
+     "nav_analysis"),
+    ("Draw a chart", "Draw a scatter chart of  against ", "A chart of the columns you name",
+     "chart_from_columns"),
+    ("Run an analysis", "Run the analysis  on ", "One of the application's analyses", "nav_analysis"),
+    ("List the charts", "Which chart types are there?", "The chart types that can be drawn", "chart_from_columns"),
+    ("List the analyses", "Which analyses are there?", "The analyses that can be run", "nav_analysis"),
 )
 
 
@@ -207,9 +212,9 @@ class AssistantPanel(NavPanel):
             self._assistant_settings = wanted
         return self._assistant
 
-    def _available_requests(self) -> list[tuple[str, str, str]]:
+    def _available_requests(self) -> list[tuple[str, str, str, str]]:
         """What the assistant can do, as requests to start from: (shown, written, what it does)."""
-        requests = [(_(label), _(text), _(tip)) for label, text, tip in _REQUESTS]
+        requests = [(_(label), _(text), _(tip), icon) for label, text, tip, icon in _REQUESTS]
         # Then the analyses it may run, each writing the request that names it (a small model cannot guess them).
         try:
             from app.analysis_api import analysis_names
@@ -219,8 +224,8 @@ class AssistantPanel(NavPanel):
             applogger.exception("Could not list the analyses.")
             names = []
         if names:
-            requests.append(("", "", ""))
-            requests += [(_(name), _("Run the analysis {name} on ").format(name=name), _("Run this analysis"))
+            requests.append(("", "", "", ""))
+            requests += [(_(name), _("Run the analysis {name} on ").format(name=name), _("Run this analysis"), "nav_analysis")
                          for name in names]
         return requests
 

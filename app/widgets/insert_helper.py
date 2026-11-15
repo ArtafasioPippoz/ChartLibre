@@ -13,10 +13,12 @@ from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QHBoxLayout, QMenu, QPushButton, QWidget
 
 from app.logs.logger import applogger
+from app.styles.style import load_icon
 from app.utils.i18n import _
 
-#: A function offered: what the menu shows, what is written, what it does (the item's tooltip).
-Function = tuple[str, str, str]
+#: A function offered: what the menu shows, what is written, what it does (the item's tooltip) and, optionally,
+#: its icon (an action id).
+Function = tuple[str, str, str] | tuple[str, str, str, str]
 #: Menus stay readable: a project with more than this shows the first ones.
 MAX_TABLES, MAX_COLUMNS = 40, 80
 
@@ -76,15 +78,20 @@ class InsertHelper(QWidget):
     def column_names(self, table: str) -> list[str]:
         return [str(name) for name in self._repo().get_columns(table) if not str(name).startswith("_")][:MAX_COLUMNS]
 
-    def _add(self, menu: QMenu, label: str, text: str, tooltip: str = "") -> None:
+    def _add(self, menu: QMenu, label: str, text: str, tooltip: str = "", icon: str = "") -> None:
         action = menu.addAction(label)
+        if icon:
+            # An icon on every item, the Mac included (Qt hides them in its menus there unless told per item);
+            # no shortcut: these items are typed into a text box, not commands.
+            action.setIcon(load_icon(icon))
+            action.setIconVisibleInMenu(True)
         if tooltip:
             action.setToolTip(tooltip)
         action.triggered.connect(lambda _checked=False, text=text: self.insert.emit(text))
 
     def _fill_tables(self, menu: QMenu) -> None:
         for table in self.table_names():
-            self._add(menu, table, self._name(table))
+            self._add(menu, table, self._name(table), icon="database_info")
 
     def _fill_columns(self, menu: QMenu) -> None:
         tables = self.table_names()
@@ -102,11 +109,11 @@ class InsertHelper(QWidget):
     def _columns_of(self, menu: QMenu, table: str) -> None:
         menu.clear()
         for column in self.column_names(table):
-            self._add(menu, column, self._name(column))
+            self._add(menu, column, self._name(column), icon="column_info")
 
     def _fill_functions(self, menu: QMenu) -> None:
-        for label, text, tooltip in self._functions():
+        for label, text, tooltip, *icon in self._functions():
             if not label:
                 menu.addSeparator()
                 continue
-            self._add(menu, label, text, tooltip)
+            self._add(menu, label, text, tooltip, icon[0] if icon else "function_creator")

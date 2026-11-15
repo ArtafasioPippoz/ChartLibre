@@ -113,3 +113,16 @@ def test_the_assistant_functions_menu_lists_the_analyses(qapp, repo) -> None:
     action.trigger()
     assert panel._question.toPlainText() == "Run the analysis Partition on "
     panel.deleteLater()
+
+
+def test_menu_items_carry_an_icon_and_no_shortcut(qapp, repo) -> None:
+    from app.widgets.assistant_panel import AssistantPanel
+
+    panel = AssistantPanel(None, repo=lambda: repo, current_figure=lambda: None)
+    for button in (panel._helper.tables_button, panel._helper.functions_button):
+        menu = button.menu()
+        menu.aboutToShow.emit()
+        items = [a for a in menu.actions() if not a.isSeparator()]
+        assert items and all(not a.icon().isNull() and a.isIconVisibleInMenu() for a in items)
+        assert all(a.shortcut().isEmpty() for a in items)
+    panel.deleteLater()
