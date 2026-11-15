@@ -109,7 +109,7 @@ class CardFrame(QFrame):
         return self._box_layout
 
 
-def _chevron_icon(*, down: bool, color: QtGui.QColor) -> QIcon:
+def chevron_icon(*, down: bool, color: QtGui.QColor) -> QIcon:
     """A thin chevron, right or down, 10 px: the platforms' own arrows were heavy and of every size."""
     pixmap = QPixmap(40, 40)
     pixmap.fill(Qt.GlobalColor.transparent)
@@ -206,7 +206,7 @@ class TitledCard(QWidget):
         self.disclosure.blockSignals(True)
         self.disclosure.setChecked(not collapsed)
         self.disclosure.blockSignals(False)
-        self.disclosure.setIcon(_chevron_icon(down=not collapsed, color=self.title_label.palette().color(
+        self.disclosure.setIcon(chevron_icon(down=not collapsed, color=self.title_label.palette().color(
             QtGui.QPalette.ColorRole.WindowText)))
 
     def eventFilter(self, watched: QtCore.QObject, event: QtCore.QEvent) -> bool:
@@ -265,8 +265,19 @@ def mark_icon_only(button: QtWidgets.QAbstractButton) -> QtWidgets.QAbstractButt
     return button
 
 
+#: Whether form labels end in a colon. Set by apply_platform_style from the sheet in use (macOS: yes; Windows 11
+#: and GNOME: no); None until a style is applied, when the platform decides.
+_label_colon: bool | None = None
+
+
+def set_label_colon(on: bool | None) -> None:
+    """The style in use says whether a form label ends in a colon (None: the platform decides)."""
+    global _label_colon
+    _label_colon = on
+
+
 def field_label(text: str) -> str:
-    """A form label as the platform writes it: with a colon on macOS and Windows, without on Linux (GNOME's way).
+    """A form label as the style in use writes it: "Title:" on macOS, "Title" on Windows 11 and GNOME.
 
     The translated word is kept whole - "cm" and "cm:" are one string - and the colon is put on or taken off
     here. Text that is a question, a sentence's end, an ellipsis or rich text is left alone.
@@ -275,7 +286,8 @@ def field_label(text: str) -> str:
     if not plain or plain.startswith("<") or plain.endswith(("…", "...", "?", "!", ".")):
         return text
     bare = plain.rstrip(":：").rstrip()
-    if sys.platform.startswith("linux"):
+    colon = _label_colon if _label_colon is not None else sys.platform == "darwin"
+    if not colon:
         return bare
     return plain if plain.endswith("：") else bare + ":"
 

@@ -17,7 +17,6 @@ from PySide6.QtGui import QBrush, QColor, QIcon, QPainter, QPen, QTextOption
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
-    QFormLayout,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -32,11 +31,11 @@ from PySide6.QtWidgets import (
 from app.logs.logger import applogger
 from app.plugin_api.charts.kwarg_spec import DEFAULT
 from app.styles.style import (
-    mark_destructive_button,
     MARGIN_PANEL,
     TitledCard,
     create_action_button,
     create_hidpi_pixmap,
+    mark_destructive_button,
     stdSizeAndlayout,
 )
 from app.utils.config import get_constant
@@ -199,9 +198,7 @@ class SeriesPropertiesWidget(BaseProperties):
         self._selector_section = self._build_selector_section()
         root.addWidget(self._selector_section, 0)
 
-        # Built for its controls; what shows is its four cards (Query, Legend, Line, Marker).
-        self._options_section = self._build_options_section()
-        self._options_section.setVisible(False)
+        self._build_groups()
         for card in self._groups:
             root.addWidget(card, 0)
 
@@ -398,19 +395,9 @@ class SeriesPropertiesWidget(BaseProperties):
             return
         self._sql_query_edit.setPlainText(with_sort(sql, column) if on else without_sort(sql))
 
-    def _build_options_section(self) -> QWidget:
-        """Create editable series style controls."""
-        section = TitledCard(self, _("Properties"), "seriesOptionsCard")
-        stdSizeAndlayout(section)
-        section.setSizePolicy(
-            QSizePolicy.Policy.Expanding,
-            QSizePolicy.Policy.Expanding,
-        )
-
-
-        form = QFormLayout()
-        stdSizeAndlayout(form)
-
+    def _build_groups(self) -> None:
+        """Create the series' controls and their sections (self._groups): Legend, Line, Marker, Query."""
+        section = self
         self._legend_label_edit = QLineEdit(section)
         stdSizeAndlayout(self._legend_label_edit)
 
@@ -483,14 +470,6 @@ class SeriesPropertiesWidget(BaseProperties):
             group(_("Query"), "query", [("", self._sql_query_edit), ("", self._sort_x_check)], collapsed=True,
               foldable=True),
         ]
-
-        raw_layout = section.card.layout()
-        if not isinstance(raw_layout, QVBoxLayout):
-            raise RuntimeError("TitledCard did not create a vertical box layout")
-
-        raw_layout.addLayout(form, 0)
-
-        return section
 
     # ------------------------------------------------------------------
     # Public API

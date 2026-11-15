@@ -34,9 +34,6 @@ msgstr "'{name}': 式はプロジェクトです。値と範囲はこのシリ�
 msgid "'{part}' is not a parameter's name."
 msgstr "'{part}' はパラメータの名前ではありません。"
 
-msgid "(Default)"
-msgstr "（デフォルト）"
-
 msgid "(Embedded style)"
 msgstr "（埋め込みスタイル）"
 
@@ -196,6 +193,9 @@ msgstr "フレームバック"
 msgid "A frame forward"
 msgstr "フレームを先に進めて下さい"
 
+msgid "A function called {name} exists. Replace it?"
+msgstr "{name}という名前の関数が存在します。置き換えますか？"
+
 msgid "A function's parameter"
 msgstr "関数のパラメーター"
 
@@ -219,6 +219,9 @@ msgstr "上記に測定されたダイは、大きめで、空:上限はあり�
 
 msgid "A measured die below it is binned Low; empty: no lower limit."
 msgstr "下の測定されたダイスは低いです;空:低い限界無し。"
+
+msgid "A model called {name} exists. Replace it?"
+msgstr "{name}というモデルが存在します。置き換えますか？"
 
 msgid "A model of {response} on its strongest factors: {factors}"
 msgstr "最強の要因に関する {response} のモデル：{factors}"
@@ -469,6 +472,9 @@ msgstr "すべてのチェックされたシリーズ"
 msgid "All groups"
 msgstr "すべてのグループ"
 
+msgid "All operations"
+msgstr "すべての演算"
+
 msgid "All rows"
 msgstr "すべての行"
 
@@ -505,6 +511,9 @@ msgstr "オルタナティブ"
 msgid "Alternative hypothesis for supported tests."
 msgstr "サポートされているテストの代替仮説。"
 
+msgid "Alternative:"
+msgstr "代替案："
+
 msgid "Amplitude envelope"
 msgstr "振幅エンベロープ"
 
@@ -540,6 +549,9 @@ msgstr "分散の解析"
 
 msgid "Anderson method"
 msgstr "アンダーソン法"
+
+msgid "Anderson method:"
+msgstr "アンダーソン法："
 
 msgid "Anderson p-value: Monte Carlo"
 msgstr "アンダーソンp値：モンテカルロ"
@@ -616,6 +628,9 @@ msgstr "応用。Undo はそれの全体を取り戻します。"
 msgid "Apply"
 msgstr "申し込み"
 
+msgid "Apply a model kept in the project to this table: its predictions in a new table"
+msgstr "プロジェクトに保存されているモデルをこのテーブルに適用します。その予測は新しいテーブルに表示されます。"
+
 msgid "Apply a preset…"
 msgstr "プリセットを適用…"
 
@@ -634,8 +649,8 @@ msgstr "テンプレートを適用"
 msgid "Apply the settings to play"
 msgstr "プレイする設定を適用します。"
 
-msgid "Apply to all figures"
-msgstr "すべてのフィギュアに適用"
+msgid "Apply to all"
+msgstr "すべてに適用"
 
 msgid "Are there differences in {response} across {factor}?"
 msgstr "{factor}に{response}の違いはありますか?"
@@ -666,6 +681,9 @@ msgstr "アシスタント"
 
 msgid "Asymmetry. Smaller pushes the baseline further below the peaks; it should stay well under 0.5."
 msgstr "非対称性。より小さいと、ベースラインがピークよりもさらに下に押し出されます。0.5よりもはるかに下にとどまるはずです。"
+
+msgid "At start"
+msgstr "開始時"
 
 msgid "Attenuation (dB):"
 msgstr "減衰（ dB ） ："
@@ -826,6 +844,9 @@ msgstr "選択した列をチャートに戻って、分析(非表示 = 0)。"
 msgid "Browse…"
 msgstr "閲覧…"
 
+msgid "Browse… Pick a .mplstyle file from the mplstyles folder"
+msgstr "参照… mplstylesフォルダから.mplstyleファイルを選択します"
+
 msgid "Build"
 msgstr "ビルド"
 
@@ -892,6 +913,9 @@ msgstr "中央"
 msgid "Centre line"
 msgstr "中心線"
 
+msgid "Centre line:"
+msgstr "中心線："
+
 msgid "Centre on the data"
 msgstr "データセンターのデータ"
 
@@ -931,6 +955,9 @@ msgstr "グラフのプロパティ"
 msgid "Chart type:"
 msgstr "チャートのタイプ:"
 
+msgid "Chart:"
+msgstr "グラフ："
+
 msgid "ChartLibre"
 msgstr "ChartLibre"
 
@@ -951,6 +978,9 @@ msgstr "チェビシェフII"
 
 msgid "Check one or more series. One-sample tests are calculated for each checked series. Paired and independent tests are calculated for every pair, and the group comparison for all of them, when two or more series are checked."
 msgstr "1つ以上のシリーズを確認してください。 チェックされたシリーズごとに1つのサンプルテストが計算されます。 2つ以上の系列がチェックされている場合、ペアと独立したテストがすべてのペアに対して計算され、すべてのペアのグループ比較が計算されます。"
+
+msgid "Check the open project's database, offer to fix what is wrong, then compact the file."
+msgstr "開いているプロジェクトのデータベースを確認し、問題の修正を提案してから、ファイルを圧縮します。"
 
 msgid "Checked when a query is saved or typed, and when a project is opened: UPDATE, DELETE, DROP and the like are refused. Charts are never slowed down by it."
 msgstr "クエリが保存または入力されたとき、およびプロジェクトが開かれたときにチェックされます。更新、削除、削除などが拒否されます。 チャートの速度が低下することはありません。"
@@ -1093,6 +1123,9 @@ msgstr "クラスタ"
 msgid "Clusters on two principal components"
 msgstr "2つの主要コンポーネントのクラスタ"
 
+msgid "Clusters:"
+msgstr "クラスター："
+
 msgid "Cochran-Mantel-Haenszel test (odds ratio = 1)"
 msgstr "Cochran-Mantel-Haenszelテスト(odds Ratio = 1)"
 
@@ -1110,6 +1143,9 @@ msgstr "色"
 
 msgid "Colour them"
 msgstr "それらを着色する"
+
+msgid "Colour:"
+msgstr "色："
 
 msgid "Cols"
 msgstr "Cols"
@@ -1137,6 +1173,9 @@ msgstr "列名は一意である必要があります。"
 
 msgid "Column names, separated by commas:"
 msgstr "カラム名（カンマ区切り） ："
+
+msgid "Column span"
+msgstr "列の結合"
 
 msgid "Column {number} of {count}"
 msgstr "{count} の列 {number}"
@@ -1179,6 +1218,9 @@ msgstr "コンポーネント2"
 
 msgid "Components"
 msgstr "コンポーネント"
+
+msgid "Components:"
+msgstr "コンポーネント:"
 
 msgid "Compute metrics"
 msgstr "計算メトリック"
@@ -1242,6 +1284,9 @@ msgstr "デシベルに変換"
 
 msgid "Copy"
 msgstr "コピー"
+
+msgid "Copy as Python"
+msgstr "Pythonとしてコピー"
 
 msgid "Copy figure"
 msgstr "フィギュアをコピー"
@@ -1423,9 +1468,6 @@ msgstr "データタイプ"
 msgid "Database"
 msgstr "データベース"
 
-msgid "Database Info"
-msgstr "データベース情報"
-
 msgid "Database saved."
 msgstr "データベースが保存されました。"
 
@@ -1464,6 +1506,9 @@ msgstr "保存された関数の名前で def {name}(...) を定義します。"
 
 msgid "Degree"
 msgstr "度"
+
+msgid "Degree:"
+msgstr "角度："
 
 msgid "Delete"
 msgstr "削除"
@@ -1612,6 +1657,9 @@ msgstr "差別化または統合"
 msgid "Direction"
 msgstr "方向"
 
+msgid "Direction:"
+msgstr "方向："
+
 msgid "Discard the changes?"
 msgstr "変更を破棄しますか？"
 
@@ -1635,6 +1683,9 @@ msgstr "コンテンツ"
 
 msgid "Distribution fit"
 msgstr "ディストリビューションフィット"
+
+msgid "Distribution:"
+msgstr "分布："
 
 msgid "Divergence"
 msgstr "ダイバージェンス"
@@ -1966,8 +2017,14 @@ msgstr "レポートをエクスポート…"
 msgid "Export rows"
 msgstr "行をエクスポート"
 
-msgid "Export selected rows..."
-msgstr "選択した行をエクスポート..."
+msgid "Export script"
+msgstr "スクリプトをエクスポート"
+
+msgid "Export script..."
+msgstr "スクリプトをエクスポート..."
+
+msgid "Export the selected cells, or every visible row, as CSV or Excel"
+msgstr "選択したセル、または表示されているすべての行をCSVまたはExcelとしてエクスポートします"
 
 msgid "Export view as CSV"
 msgstr "ビューをCSV形式でエクスポート"
@@ -2026,6 +2083,9 @@ msgstr "学位への因数分解"
 msgid "Factors"
 msgstr "要因"
 
+msgid "Factors:"
+msgstr "係数："
+
 msgid "Failed to load renderer kwargs schema."
 msgstr "レンダラーkwargsスキーマの読み込みに失敗しました。"
 
@@ -2034,6 +2094,9 @@ msgstr "偽陽性率"
 
 msgid "Family"
 msgstr "家族"
+
+msgid "Family:"
+msgstr "ファミリー:"
 
 msgid "Feather / Arrow"
 msgstr "フェザー/矢印"
@@ -2056,9 +2119,6 @@ msgstr "図のレイアウト"
 msgid "Figure name"
 msgstr "フィギュア名"
 
-msgid "Figure options"
-msgstr "図のオプション"
-
 msgid "Figure properties"
 msgstr "図のプロパティ"
 
@@ -2076,9 +2136,6 @@ msgstr "図"
 
 msgid "File"
 msgstr "ファイル"
-
-msgid "File created:"
-msgstr "作成されたファイル："
 
 msgid "Files of programs whose format has no free reader: export them as CSV or Excel."
 msgstr "無料のリーダーを持たないプログラムのファイル:CSVやExcelとしてエクスポートします。"
@@ -2119,6 +2176,9 @@ msgstr "安全でないコマンドをフィルタリングする"
 msgid "Filter, detrend or demodulate a series (scipy.signal)"
 msgstr "フィルタ、デトレンド、またはシリーズを解体(scipy.signal)"
 
+msgid "Find"
+msgstr "検索"
+
 msgid "Find a column"
 msgstr "列を検索する"
 
@@ -2134,8 +2194,8 @@ msgstr "検索したいものの関数を見つける"
 msgid "Find where a series crosses a level"
 msgstr "シリーズがレベルを交差させる場所を見つける"
 
-msgid "Find"
-msgstr "検索"
+msgid "Find:"
+msgstr "検索:"
 
 msgid "Finish the measurement at this point."
 msgstr "この時点で測定を終了します。"
@@ -2218,11 +2278,17 @@ msgstr "新着情報"
 msgid "Forecast periods:"
 msgstr "予測期間:"
 
+msgid "Forecast:"
+msgstr "予測："
+
 msgid "Forget a saved template"
 msgstr "保存したテンプレートを忘れる"
 
 msgid "Forget the list of recently opened projects"
 msgstr "最近開いたプロジェクトのリストを忘れます"
+
+msgid "Forget the operations listed here"
+msgstr "ここにリストされている操作を忘れる"
 
 msgid "Forget the pending point without finishing the measurement."
 msgstr "測定を完了せずに保留中のポイントを忘れます。"
@@ -2283,6 +2349,9 @@ msgstr "Gage R&R {percent}%の研究のバリエーション: 測定システム
 
 msgid "Gamma"
 msgstr "ガンマ"
+
+msgid "Gap H"
+msgstr "ギャップH"
 
 msgid "Gap V"
 msgstr "ギャップV"
@@ -2386,9 +2455,6 @@ msgstr "非線形モデルの開始パラメータを推測します。"
 msgid "Guided analysis"
 msgstr "ガイド付き分析"
 
-msgid "H"
-msgstr "H"
-
 msgid "HTML - one file, opens in any browser"
 msgstr "HTML - 1つのファイル、任意のブラウザで開きます"
 
@@ -2429,7 +2495,7 @@ msgid "Help me choose…"
 msgstr "お問い合わせ"
 
 msgid "Here it follows {measure} one step behind: the model predicts little beyond the last value. A model that fits better (ARIMA chosen by AIC, a season) brings it onto the data."
-msgstr ""
+msgstr "ここでは、{measure}が1ステップ遅れています。モデルは最後の値を超えてほとんど予測しません。より適合性の高いモデル（AICによって選択されたARIMA、季節性）が、それをデータに当てはめます。"
 
 msgid "Hide"
 msgstr "非表示"
@@ -2536,6 +2602,9 @@ msgstr "結び目がXに沿ってどのように分布しているか。"
 msgid "How likely each group is before the measures are seen: its share of the rows, or the same for every group."
 msgstr "各グループが対策の前にどのようになるか:行のシェア、またはグループごとに同じ。"
 
+msgid "How many"
+msgstr "数"
+
 msgid "How many components to extract. Clamped to the number of selected series."
 msgstr "抽出するコンポーネントの数。選択したシリーズの数に締め金で止める。"
 
@@ -2583,9 +2652,6 @@ msgstr "行が分割される回数:葉よりも1回。 植木の場合、各ツ
 
 msgid "How many trees a Bootstrap Forest or a Boosted Tree grows."
 msgstr "ブーツストラップフォレストやボオステッドツリーが育つ樹木はいくつあります。"
-
-msgid "How many"
-msgstr "数"
 
 msgid "How much each boosting stage corrects the previous one."
 msgstr "ステージを上回るごとに、前のステージを補正する量はどのくらいかかります。"
@@ -2785,6 +2851,9 @@ msgstr "{measure} は正常ですか?"
 msgid "Iterations"
 msgstr "イテレーション"
 
+msgid "Iterations:"
+msgstr "反復:"
+
 msgid "Its arguments are the parameters only: x and y are given, not passed."
 msgstr "その引数は、x と y のみが渡されないパラメータです。"
 
@@ -2806,14 +2875,14 @@ msgstr "JCAMP-DXスペクトル"
 msgid "JMP documentation"
 msgstr "JMPドキュメンテーション"
 
+msgid "JMP documentation:"
+msgstr "JMPドキュメント："
+
 msgid "JSON starting parameters for nonlinear series_fit models."
 msgstr "非線形series_fitモデルのJSON開始パラメータ。"
 
 msgid "Jarque-Bera normality"
 msgstr "Jarque - Bera正規性"
-
-msgid "Journal"
-msgstr "学会発表"
 
 msgid "Journal column…"
 msgstr "ジャーナルコラム..."
@@ -2830,6 +2899,9 @@ msgstr "K-meansのしきい値:"
 msgid "KS statistic (closest curve)"
 msgstr "KS統計（最も近い曲線）"
 
+msgid "Keep"
+msgstr "保って下さい"
+
 msgid "Keep every change made here"
 msgstr "ここで行われたすべての変更を保持する"
 
@@ -2839,11 +2911,14 @@ msgstr "データの限界を保ち、軸はフレームからフレームにジ
 msgid "Keep this SELECT as a saved query of the project"
 msgstr "このSELECTをプロジェクトの保存クエリとして保存しておく"
 
+msgid "Keep this analysis as a Python function of the project, to call from the workpad"
+msgstr "この分析をプロジェクトのPython関数として保持し、ワークパッドから呼び出します"
+
 msgid "Keep this figure's style, axes and series look under a name"
 msgstr "このフィギュアのスタイル、軸、シリーズの外観を名前の下に保ちます"
 
-msgid "Keep"
-msgstr "保って下さい"
+msgid "Keep this fitted model in the project, to predict new rows with it"
+msgstr "この適合モデルをプロジェクトに残して、これを使用して新しい行を予測します"
 
 msgid "Keeps the first crossings in x order when a noisy series crosses the level hundreds of times."
 msgstr "騒々しいシリーズが数百回レベルを交差させるとき、x の順序で最初の交差を保ちます。"
@@ -2856,6 +2931,9 @@ msgstr "このコンピュータ上のシステムキーホルダーによって
 
 msgid "Kept with the figure in the project, and printed under it in reports."
 msgstr "プロジェクト内の数字を保管し、レポートの下に印刷しました。"
+
+msgid "Kernel:"
+msgstr "カーネル："
 
 msgid "Kind"
 msgstr "種類"
@@ -2877,9 +2955,6 @@ msgstr "Kurtosis"
 
 msgid "Kurtosis test"
 msgstr "カートシステスト"
-
-msgid "Kwargs"
-msgstr "クワーグス"
 
 msgid "L2 regularization strength."
 msgstr "L2正規化強度。"
@@ -2928,9 +3003,6 @@ msgstr "最大の遅延を維持します。0はすべての遅延を維持し�
 
 msgid "Lasso drops the terms that do not help, Ridge shrinks them all, Elastic Net mixes the two; the strength is chosen by cross-validation."
 msgstr "Lassoは役に立たない用語を落とし、Ridgeはそれらをすべて縮小し、Elastic Netは2つを混合します。強度は交差検証によって選択されます。"
-
-msgid "Last modified:"
-msgstr "最終更新日："
 
 msgid "Latin hypercube"
 msgstr "ラテンハイパーキューブ"
@@ -3064,9 +3136,6 @@ msgstr "リンク: そのソースにリンクされたテーブルのための�
 msgid "Linkage method:"
 msgstr "リンク方法:"
 
-msgid "Linked"
-msgstr "リンク済み"
-
 msgid "Linked to its source"
 msgstr "そのソースにリンクされています"
 
@@ -3187,6 +3256,9 @@ msgstr "ポイントのマーカーサイズ。デフォルトはスタイルに
 msgid "Match"
 msgstr "マッチ"
 
+msgid "Matplotlib"
+msgstr "Matplotlib"
+
 msgid "Matplotlib Style (*.mplstyle);;All Files (*)"
 msgstr "Matplotlibスタイル(*.mplstyle);;すべてのファイル(*)"
 
@@ -3198,6 +3270,9 @@ msgstr "Matplotlibデフォルト"
 
 msgid "Matrix"
 msgstr "マトリックス"
+
+msgid "Matrix:"
+msgstr "行列："
 
 msgid "Max"
 msgstr "最大"
@@ -3316,6 +3391,9 @@ msgstr "方法"
 msgid "Method Comparison"
 msgstr "方法比較"
 
+msgid "Method:"
+msgstr "メソッド："
+
 msgid "Midpoints"
 msgstr "ミッドポイント"
 
@@ -3346,6 +3424,9 @@ msgstr "最小ストップバンド減衰（ dB ） （ Chebyshev II/Elliptic �
 msgid "Minimum width:"
 msgstr "最小幅:"
 
+msgid "Minimum:"
+msgstr "最小値："
+
 msgid "Minor"
 msgstr "軽微"
 
@@ -3358,11 +3439,20 @@ msgstr "ミラーライン"
 msgid "Misclassification {percent}%: the model puts {count} of {rows} rows in another group than their own. These are the rows it was fitted to: on new rows it usually does a little worse."
 msgstr "Misclassification {percent}%: モデルは {count} の {rows} を別のグループに置きます。 これらは、新しい行で、通常は少し悪化します。"
 
+msgid "Missing in the table: {columns}."
+msgstr "テーブルに欠落しているもの: {columns}。"
+
 msgid "Missing values"
 msgstr "値の欠損"
 
 msgid "Model"
 msgstr "モデル"
+
+msgid "Model and table"
+msgstr "モデルとテーブル"
+
+msgid "Model name"
+msgstr "モデル名"
 
 msgid "Modelling type"
 msgstr "モデリングタイプ"
@@ -3390,6 +3480,9 @@ msgstr "もっと詳しく"
 
 msgid "More accurate on smooth data than the trapezoidal rule. Assumes the curve is well approximated by parabolas."
 msgstr "台形ルールよりもスムーズなデータにもっと正確です。 曲線は、パラボラスによってよく似ています。"
+
+msgid "More..."
+msgstr "その他..."
 
 msgid "Morlet central frequency w0. Higher values resolve frequency more finely at the cost of time resolution; 6 is the usual compromise and the value at which the wavelet is near-admissible."
 msgstr "モーレット中心周波数w 0. より高い値は、時間分解能を犠牲にしてより細かく周波数を解決します。6は、通常の妥協であり、ウェーブレットがほぼ許容される値です。"
@@ -3508,14 +3601,14 @@ msgstr "新しい数字"
 msgid "New function"
 msgstr "新しい機能"
 
+msgid "New name"
+msgstr "新しい名前"
+
 msgid "New name for '{column}':"
 msgstr "'{column}'の新しい名前:"
 
 msgid "New name for '{name}':"
 msgstr "'{name}' の新しい名前:"
-
-msgid "New name"
-msgstr "新しい名前"
 
 msgid "New query, not saved yet."
 msgstr "新しいクエリはまだ保存されていません。"
@@ -3543,6 +3636,9 @@ msgstr "新規、開く、インポートして保存"
 
 msgid "Next"
 msgstr "次へ »"
+
+msgid "Next axis"
+msgstr "次の軸"
 
 msgid "No"
 msgstr "いいえ"
@@ -3597,9 +3693,6 @@ msgstr "ポイント信号はありません。プロセスは統計制御され
 
 msgid "No preview"
 msgstr "プレビューなし"
-
-msgid "No preview yet: it is drawn when the project is saved."
-msgstr "プレビューはまだありません：プロジェクトが保存されると描画されます。"
 
 msgid "No recent projects"
 msgstr "最近のプロジェクトはありません"
@@ -3772,9 +3865,6 @@ msgstr "個別の組み合わせごとに1行。 何もチェックされてい�
 msgid "One series at a time: the histogram, quantiles, moments and normality tests."
 msgstr "一度に1つのシリーズ:ヒストグラム、クエンタイル、瞬間および正常性テスト。"
 
-msgid "One statement per Run · Ctrl+Return"
-msgstr "実行ごとの1つのステートメント・Ctrl+Return"
-
 msgid "One tree you can read; a Bootstrap Forest (many trees on resampled rows, averaged); or a Boosted Tree (many small trees, each correcting the ones before)."
 msgstr "あなたが読むことができる1つのツリー。 ブーツストラップフォレスト(再サンプルされた列のマニの木、平均); またはブーステッドツリー(小さな木、各々が前のものを修正)。"
 
@@ -3823,6 +3913,12 @@ msgstr "選択したメソッドのドキュメントを開きます。"
 msgid "Open recent"
 msgstr "最近開いたものを開く"
 
+msgid "Open settings"
+msgstr "設定を開く"
+
+msgid "Open settings..."
+msgstr "設定を開く..."
+
 msgid "Open the Query Builder on the selected columns and rows of this table"
 msgstr "選択した列とこのテーブルの行のクエリビルダーを開きます。"
 
@@ -3838,11 +3934,17 @@ msgstr "操作"
 msgid "Operation history"
 msgstr "操作履歴"
 
+msgid "Operation:"
+msgstr "操作："
+
 msgid "Operator"
 msgstr "運営会社"
 
 msgid "Operators"
 msgstr "オペレータ"
+
+msgid "Optimize the project's database..."
+msgstr "プロジェクトのデータベースを最適化..."
 
 msgid "Optional description"
 msgstr "オプションの記述"
@@ -3874,6 +3976,9 @@ msgstr "オプション: ノードの z は、スペース内のフィールド�
 msgid "Optional: who measured. Without it, repeatability alone."
 msgstr "任意:測定される人。それなしで、反復性単独で。"
 
+msgid "Options"
+msgstr "オプション"
+
 msgid "Order by"
 msgstr "注文"
 
@@ -3895,6 +4000,12 @@ msgstr "その他:"
 msgid "Outliers"
 msgstr "外れ値"
 
+msgid "Outliers:"
+msgstr "外れ値："
+
+msgid "Output:"
+msgstr "出力:"
+
 msgid "Overlay properties"
 msgstr "オーバーレイプロパティ"
 
@@ -3915,9 +4026,6 @@ msgstr "PNG"
 
 msgid "Page trend test"
 msgstr "ページのトレンドテスト"
-
-msgid "Pages:"
-msgstr "ページ："
 
 msgid "Paired difference summary"
 msgstr "ペアリングされた差分の概要"
@@ -3991,9 +4099,6 @@ msgstr "ペースト"
 msgid "Paste picture"
 msgstr "映像を貼り付けて下さい"
 
-msgid "Path:"
-msgstr "パス："
-
 msgid "Pattern"
 msgstr "パターン"
 
@@ -4002,6 +4107,9 @@ msgstr "パデュース"
 
 msgid "Peak ({x} &rarr; {y})"
 msgstr "ピーク ({x} &rarr; {y})"
+
+msgid "Peaks"
+msgstr "ピークスピークス："
 
 msgid "Pearson chi-squared"
 msgstr "ピアソンのカイ二乗"
@@ -4026,9 +4134,6 @@ msgstr "パーソナリティ"
 
 msgid "Pick Role Variables"
 msgstr "ロール変数を選択"
-
-msgid "Pick a .mplstyle file from the mplstyles folder"
-msgstr "mplstyles フォルダーから .mplstyle ファイルを選択します。"
 
 msgid "Pick a saved query."
 msgstr "保存されたクエリを選択します。"
@@ -4096,6 +4201,9 @@ msgstr "点プロット"
 msgid "Points. Of any two peaks closer than this, the more prominent is kept - which is how a single noisy peak stops being reported as several."
 msgstr "ポイント。 これよりも近い2つのピークのうち、より顕著に保たれている - 単一の騒々しいピークがいくつか報告されているのはどのようにして止まっているか。"
 
+msgid "Points:"
+msgstr "ポイント："
+
 msgid "Poisson yield {value}%: the share of dies expected free of defects at this defect density and die area. Defects in clusters spoil fewer dies than this predicts."
 msgstr "Poisson yield {value}%:この欠陥密度とダイ領域で欠陥の自由を期待するダイのシェア。 クラスターの欠陥はこの予測よりも少数の死を台無しにします。"
 
@@ -4113,6 +4221,12 @@ msgstr "ポート"
 
 msgid "Position"
 msgstr "求人情報"
+
+msgid "Predict with a saved model"
+msgstr "保存されたモデルで予測する"
+
+msgid "Predict with a saved model…"
+msgstr "保存されたモデルで予測…"
 
 msgid "Predicted"
 msgstr "予測"
@@ -4162,6 +4276,9 @@ msgstr "プレビュー：{count}シリーズの外れ値は {colour} に色付�
 msgid "Preview: the outliers of {count} series are hidden."
 msgstr "プレビュー：{count}シリーズの外れ値は非表示になっています。"
 
+msgid "Previous axis"
+msgstr "前の軸"
+
 msgid "Prewhitened CCF"
 msgstr "プリホワイト CCF"
 
@@ -4180,26 +4297,20 @@ msgstr "確率"
 msgid "Process capability"
 msgstr "プロセス機能"
 
-msgid "Proj."
-msgstr "Proj."
-
 msgid "Project"
 msgstr "プロジェクト"
 
 msgid "Project history"
 msgstr "プロジェクト履歴"
 
-msgid "Project info"
-msgstr "プロジェクト情報"
-
-msgid "Project info saved."
-msgstr "プロジェクト情報が保存されました。"
-
 msgid "Project information"
 msgstr "プロジェクト情報"
 
 msgid "Project report"
 msgstr "プロジェクトレポート"
+
+msgid "Projection"
+msgstr "予測"
 
 msgid "Projects"
 msgstr "プロジェクト"
@@ -4243,6 +4354,9 @@ msgstr "品質・プロセス"
 msgid "Quantiles"
 msgstr "クアンティル"
 
+msgid "Quantiles:"
+msgstr "分位点:"
+
 msgid "Quantity"
 msgstr "注文数量"
 
@@ -4259,7 +4373,7 @@ msgid "Quick answers"
 msgstr "簡単な回答"
 
 msgid "Q² = {value}: on rows left out of each fit, the model accounts for {percent}% of how much {y} varies - its R² for prediction."
-msgstr ""
+msgstr "Q² = {value}：各近似から除外された行において、モデルは{y}の変動量の{percent}%を説明します。これが予測のR²です。"
 
 msgid "R"
 msgstr "フリガナ"
@@ -4315,6 +4429,12 @@ msgstr "として読む: {name}"
 msgid "Read options"
 msgstr "オプションを読む"
 
+msgid "Read the application log, copy it or empty it."
+msgstr "アプリケーションログを読み取るか、コピーするか、または空にします。"
+
+msgid "Reads: {columns}."
+msgstr "読み取り数: {columns}。"
+
 msgid "Ready"
 msgstr "準備完了"
 
@@ -4338,6 +4458,9 @@ msgstr "基準値"
 
 msgid "Reference value for one-sample location tests."
 msgstr "1検体ロケーションテストの基準値。"
+
+msgid "Reference value:"
+msgstr "基準値："
 
 msgid "References"
 msgstr "参考文献"
@@ -4410,6 +4533,9 @@ msgstr "レンダリング形式"
 
 msgid "Renderer not found."
 msgstr "レンダラーが見つかりません。"
+
+msgid "Renderer options"
+msgstr "レンダラーオプション"
 
 msgid "Renderers"
 msgstr "レンダラー"
@@ -4495,6 +4621,9 @@ msgstr "応答 {name}"
 msgid "Response {number} has no name."
 msgstr "応答 {number} には名前がありません。"
 
+msgid "Response:"
+msgstr "応答:"
+
 msgid "Responses"
 msgstr "回答"
 
@@ -4567,11 +4696,17 @@ msgstr "回転y (°):"
 msgid "Rotation z (°):"
 msgstr "回転z (°):"
 
+msgid "Rotation:"
+msgstr "回転："
+
 msgid "Roughly, how many neighbours each point is assumed to have. Lowered automatically if it does not fit the sample count."
 msgstr "当然のことながら、各ポイントが持つと想定されるのはいくつものネグブラーです。サンプルカウントに合わないと自動的に下げられます。"
 
 msgid "Row"
 msgstr "行"
+
+msgid "Row span"
+msgstr "行スパン"
 
 msgid "Rows"
 msgstr "行"
@@ -4603,17 +4738,23 @@ msgstr "ルール"
 msgid "Run"
 msgstr "ログイン"
 
+msgid "Run again"
+msgstr "再度実行"
+
 msgid "Run the project's functions on this computer: their code is shown first."
 msgstr "このコンピュータでプロジェクトの関数を実行します。コードは最初に表示されます。"
 
 msgid "Run the project's functions?"
 msgstr "プロジェクトの機能を実行しますか?"
 
+msgid "Run {count} operation(s) again? Each writes its tables and figure anew."
+msgstr "{count}件の操作をもう一度実行しますか？それぞれが表と図を新たに書き込みます。"
+
 msgid "Runs"
 msgstr "実行"
 
 msgid "R² = {value}: the fit accounts for {percent}% of how much {y} varies from row to row; the other {rest}% it leaves unexplained. Near 1 is a close fit - how close is enough depends on the field."
-msgstr ""
+msgstr "R² = {value}：近似度は、{y}が列ごとにどれだけ変動するかを{percent}%説明します。残りの{rest}% itは説明されません。1に近いほど近似度が高くなります。どの程度近似していれば十分かは、分野によって異なります。"
 
 msgid "SAS"
 msgstr "SAS(サース)"
@@ -4642,23 +4783,14 @@ msgstr "SQLがブロックされました"
 msgid "SQL guard"
 msgstr "SQLガード"
 
-msgid "SQL on the project's tables; changes are made on a copy and kept only with Apply"
-msgstr "プロジェクトのテーブルのSQL;変更はコピー上に行われ、Applyでのみ保存されます。"
-
 msgid "SQL query (SELECT / WITH ...)"
 msgstr "SQLクエリ(SELECT/WITH...)"
-
-msgid "SQL workpad"
-msgstr "SQL のワークパッド"
 
 msgid "SQLite file"
 msgstr "SQLiteファイル"
 
 msgid "SQLite type"
 msgstr "SQLiteタイプ"
-
-msgid "SQLite version:"
-msgstr "SQLiteのバージョン:"
 
 msgid "SS residual"
 msgstr "SS残留"
@@ -4708,6 +4840,18 @@ msgstr "CSV形式で保存"
 msgid "Save as GIF…"
 msgstr "GIFとして保存..."
 
+msgid "Save as function"
+msgstr "関数として保存"
+
+msgid "Save as function..."
+msgstr "関数として保存..."
+
+msgid "Save as model"
+msgstr "モデルとして保存"
+
+msgid "Save as model..."
+msgstr "モデルとして保存..."
+
 msgid "Save as picture"
 msgstr "画像として保存"
 
@@ -4737,6 +4881,12 @@ msgstr "パラメーターをCSVとして保存"
 
 msgid "Save query"
 msgstr "クエリを保存"
+
+msgid "Save settings"
+msgstr "設定を保存"
+
+msgid "Save settings..."
+msgstr "設定を保存..."
 
 msgid "Save the rows currently on screen as a CSV file"
 msgstr "現在画面に表示されている行をCSVファイルとして保存する"
@@ -5068,8 +5218,8 @@ msgstr "シンプソンのルール:"
 msgid "Size"
 msgstr "サイズ:"
 
-msgid "Size on disk:"
-msgstr "ディスク上のサイズ："
+msgid "Size on disk"
+msgstr "ディスク上のサイズ"
 
 msgid "Skewness"
 msgstr "歪み"
@@ -5081,7 +5231,7 @@ msgid "Skip top rows"
 msgstr "一番上の行をスキップ"
 
 msgid "Slope {value}: {y} changes by about {value} for each unit of {x} (95% interval {low} to {high})."
-msgstr ""
+msgstr "勾配{value}：{y}は、{x}の各単位ごとに約{value}変化します（95% i区間{low}から{high}）。"
 
 msgid "Smooth s:"
 msgstr "滑らかなs:"
@@ -5094,6 +5244,9 @@ msgstr "滑らかさ。大きければ大きいほどベースラインが硬く
 
 msgid "Solver"
 msgstr "ソルバー"
+
+msgid "Solver:"
+msgstr "ソルバー："
 
 msgid "Some lie outside the data's range: there they are a guess, and the further out, the less to trust them."
 msgstr "データの範囲の外にある人もいます: 推測があり、さらには、それらを信頼するのは少ないです。"
@@ -5110,8 +5263,8 @@ msgstr "ソーステーブル"
 msgid "Spacing"
 msgstr "間隔"
 
-msgid "Span"
-msgstr "スパン"
+msgid "Spacing:"
+msgstr "間隔："
 
 msgid "Spectroscopy and XRD"
 msgstr "分光とXRD"
@@ -5236,11 +5389,11 @@ msgstr "停止"
 msgid "Stopped. Nothing was changed."
 msgstr "停止しました。何も変更されませんでした。"
 
-msgid "Stored function: its values on its range"
-msgstr "保存機能:その範囲のその値"
-
 msgid "Stored"
 msgstr "貯えられる"
+
+msgid "Stored function: its values on its range"
+msgstr "保存機能:その範囲のその値"
 
 msgid "Straight line"
 msgstr "ストレートライン"
@@ -5259,6 +5412,9 @@ msgstr "スタイル"
 
 msgid "Subgroup size"
 msgstr "サブグループサイズ"
+
+msgid "Subgroup size:"
+msgstr "サブグループのサイズ："
 
 msgid "Subtract a spectrum's background (AsLS or rubber band)"
 msgstr "スペクトルの背景(AsLSまたはゴムバンド)を抽出する"
@@ -5329,14 +5485,17 @@ msgstr "ターゲット"
 msgid "Target shape:"
 msgstr "ターゲット形:"
 
+msgid "Target:"
+msgstr "ターゲット："
+
 msgid "Template"
 msgstr "テンプレート"
 
-msgid "Template name (an existing name is replaced):"
-msgstr "テンプレート名（既存の名前が置き換えられます） ："
-
 msgid "Template name"
 msgstr "テンプレート名"
+
+msgid "Template name (an existing name is replaced):"
+msgstr "テンプレート名（既存の名前が置き換えられます） ："
 
 msgid "Template saved: {path}"
 msgstr "保存されたテンプレート: {path}"
@@ -5391,6 +5550,9 @@ msgstr "対数目盛の基底。"
 
 msgid "The baseline taken away has an area of {area} under it."
 msgstr "ベースラインは、その下に {area} の領域を持っています。"
+
+msgid "The call that makes this analysis again; for all of them, a script"
+msgstr "この分析を再度実行する呼び出し。すべてに対して、スクリプト"
 
 msgid "The change was declined: nothing was changed."
 msgstr "変更が減りました。何も変更されませんでした。"
@@ -5752,6 +5914,9 @@ msgstr "これは {count} ポイントを描画します。チャートは描画
 msgid "This figure could not be drawn: {reason}"
 msgstr "この図を描画できませんでした: {reason}"
 
+msgid "This figure has no style of its own: it uses the default chart style (Settings > Charts)."
+msgstr "この図には独自のスタイルがありません。デフォルトのグラフスタイル（設定 > グラフ）を使用しています。"
+
 msgid "This file is no longer there: {path}"
 msgstr "このファイルはもう存在しません: {path}"
 
@@ -5760,6 +5925,9 @@ msgstr "この関数はパラメータを取りません。"
 
 msgid "This project contains SQL that would change the database. It has been blocked and will not run until it is edited:\n\n{items}"
 msgstr "このプロジェクトには、データベースを変更するSQLが含まれています。 ブロックされており、編集されるまで実行されません。\n\n{items}"
+
+msgid "This project has no saved model: keep one from an analysis that fits a model."
+msgstr "このプロジェクトには保存されたモデルがありません。モデルに適合する分析から1つを保持してください。"
 
 msgid "This project keeps functions that run code on this computer whenever they are drawn or fitted. Run them only if you trust where the project comes from."
 msgstr "このプロジェクトは、描画や装着時に、このコンピュータ上でコードを実行する機能を保持します。プロジェクトがどこから来るかを信頼すれば、それらを実行します。"
@@ -5850,6 +6018,9 @@ msgstr "木:"
 
 msgid "Trend"
 msgstr "傾向"
+
+msgid "Trend:"
+msgstr "傾向："
 
 msgid "Tries the assistant without a key or a connection: a fixed script that uses the real tools. Nothing leaves the computer."
 msgstr "キーやコネクションなしでアシスタントを試す: 実際のツールを使用する固定スクリプト。 何もコンピュータを離れません。"
@@ -6061,6 +6232,9 @@ msgstr "バージョン"
 msgid "View"
 msgstr "プロフィール"
 
+msgid "View the log…"
+msgstr "ログを表示…"
+
 msgid "Violin Plot"
 msgstr "ヴァイオリン・プロット"
 
@@ -6157,14 +6331,14 @@ msgstr "Breslow-Dayテストが拒否されると、1つのプールされたオ
 msgid "When the project was created. A project older than this record shows the date its file was created."
 msgstr "プロジェクトが作成されたとき。 このレコードより古いプロジェクトには、ファイルが作成された日付が表示されます。"
 
+msgid "Where"
+msgstr "所在地"
+
 msgid "Where the notch or flat is drawn: the data is in the wafer's own frame, the mark where the map shows it."
 msgstr "ノッチまたはフラットが描画される場所:データはウェーハ独自のフレームにある、マップが示すマークです。"
 
 msgid "Where the result is drawn: on the axis of its data (the first chart only), in the current figure as new axes, or in a figure of its own."
 msgstr "結果が描画される場所:そのデータの軸線(最初のチャートのみ)、現在の図は新しい軸として、または独自の図で。"
-
-msgid "Where"
-msgstr "所在地"
 
 msgid "Whether the fitted curve must rise, fall, or whichever the data itself suggests."
 msgstr "取り付けられた曲線が上昇し、落ちる、またはデータ自体が示唆するかどうか。"
@@ -6219,6 +6393,9 @@ msgstr "ウィンドウ"
 
 msgid "Window size:"
 msgstr "窓のサイズ:"
+
+msgid "Window:"
+msgstr "ウィンドウ："
 
 msgid "With a specification limit the report gives the process capability: Cp, Cpk, Pp, Ppk and the share out of specification. Empty when there is none."
 msgstr "仕様の制限により、レポートは、Cp、Cpk、Ppk、および仕様の共有のプロセス機能を提供します。 誰にもない場合、空にしてください。"
@@ -6652,6 +6829,9 @@ msgstr "y範囲"
 msgid "z range"
 msgstr "z範囲"
 
+msgid "{amount} could be reclaimed (Preferences > Advanced)"
+msgstr "{amount}を再利用できます（設定 > 詳細設定）"
+
 msgid "{charts} cannot be played: it draws the whole table as one structure, with no frames to go through."
 msgstr "{charts} は再生できません。1つの構造としてテーブル全体を描画し、フレームを外すことはできません。"
 
@@ -6661,12 +6841,6 @@ msgstr "{chart} は軸ごとに1つの系列を描画します：下の {count} 
 msgid "{chart} draws up to {limit} series per axis: the {count} below will be split across {axes} axes."
 msgstr "{chart} は軸ごとに最大 {limit} シリーズを描画します：以下の {count} は {axes} 軸に分割されます。"
 
-msgid "{count:,} x {size} B"
-msgstr "{count:,} x {size} B"
-
-msgid "{count:,} x {size} B, {amount} reclaimable by Optimize DB"
-msgstr "{count:,} x {size} B、 {amount} 最適化DBで回収可能"
-
 msgid "{count} cell(s) changed."
 msgstr "{count} 個のセルが変更されました。"
 
@@ -6674,7 +6848,7 @@ msgid "{count} could not be drawn"
 msgstr "{count} を描画できませんでした"
 
 msgid "{count} crossings of {level}; the first at x = {x}, going {way}. Each is where the curve, as interpolated between the points, passes the level - finer data move it less."
-msgstr ""
+msgstr "{level}の{count}回の交差；最初の交差はx = {x}で、{way}方向に進みます。それぞれは、点間で補間された曲線がレベルを通過する場所です。より細かいデータほど、移動が少なくなります。"
 
 msgid "{count} factor(s) were enough to explain the correlations"
 msgstr "{count} の要因は相関を説明するのに十分でした"
@@ -6686,7 +6860,7 @@ msgid "{count} further candidates fitted worse and are not shown."
 msgstr "さらに {count} 人の候補者が悪くなり、表示されません。"
 
 msgid "{count} generated tables are used by no chart and no saved query:\n\n{names}\n\nDelete them? Undo takes them back."
-msgstr ""
+msgstr "{count}個の生成されたテーブルは、どのチャートにも保存されたクエリにも使用されていません。\n\n{names}\n\n削除しますか？元に戻すことで元に戻せます。"
 
 msgid "{count} of {total} points signal. The process is not in statistical control."
 msgstr "{count}/{total}ポイント信号。 プロセスは統計管理下にありません。"
@@ -6815,7 +6989,7 @@ msgid "{measure}: control chart"
 msgstr "{measure}: 制御チャート"
 
 msgid "{method} over {points} points: the curve keeps the slow trend and loses the quick wiggles. A feature narrower than the window is flattened along with the noise - compare it with the original before reading peaks or edges from it."
-msgstr ""
+msgstr "{method}／{points}ポイント：曲線は緩やかな傾向を維持し、急激な変動を失います。ウィンドウよりも狭い特徴は、ノイズと共に平坦化されます。ピークやエッジを読み取る前に、オリジナルと比較してください。"
 
 msgid "{model} applied to {points} points: positions change, distances and angles keep what the motion keeps (a rotation or a shift keeps both, a scaling neither). The original rows are left as they were; the moved ones are in a new query."
 msgstr "{model} は {points} ポイントに適用される: 位置変更、距離および角度は、動きが何を維持するか(回転またはシフトが両方を保持する、スケーリングなし)。 元の行は、彼らがいたように残されます。 移動された行は、新しいクエリにあります。"
@@ -6913,6 +7087,9 @@ msgstr "{role} は {kinds} 列のみを取ります: {columns}。"
 msgid "{role}: choose at least {count} column(s)."
 msgstr "{role}：少なくとも {count} 列を選択してください。"
 
+msgid "{rows} row(s) written to {table}."
+msgstr "{rows}行が{table}に書き込まれました。"
+
 msgid "{rows} rows"
 msgstr "{rows} 行"
 
@@ -6962,7 +7139,7 @@ msgid "{x} did not change the odds of {y}"
 msgstr "{x} は {y} のオッズを変更しなかった"
 
 msgid "{y} - {x}"
-msgstr ""
+msgstr "{y} - {x}"
 
 msgid "{y} against {x}"
 msgstr "{y} から {x}"
@@ -6978,6 +7155,84 @@ msgstr "{y} は {x} に依存しなかった"
 
 msgid "▲ number · ● category · ◐ ordered category · ◷ date"
 msgstr "▲ナンバー・●カテゴリ・注文品カテゴリ・ ⁇ 日"
+
+msgid "(Default)"
+msgstr "（デフォルト）"
+
+msgid "Apply to all figures"
+msgstr "すべてのフィギュアに適用"
+
+msgid "Database Info"
+msgstr "データベース情報"
+
+msgid "Export selected rows..."
+msgstr "選択した行をエクスポート..."
+
+msgid "Figure options"
+msgstr "図のオプション"
+
+msgid "File created:"
+msgstr "作成されたファイル："
+
+msgid "H"
+msgstr "H"
+
+msgid "Journal"
+msgstr "学会発表"
+
+msgid "Kwargs"
+msgstr "クワーグス"
+
+msgid "Last modified:"
+msgstr "最終更新日："
+
+msgid "Linked"
+msgstr "リンク済み"
+
+msgid "No preview yet: it is drawn when the project is saved."
+msgstr "プレビューはまだありません：プロジェクトが保存されると描画されます。"
+
+msgid "One statement per Run · Ctrl+Return"
+msgstr "実行ごとの1つのステートメント・Ctrl+Return"
+
+msgid "Pages:"
+msgstr "ページ："
+
+msgid "Path:"
+msgstr "パス："
+
+msgid "Pick a .mplstyle file from the mplstyles folder"
+msgstr "mplstyles フォルダーから .mplstyle ファイルを選択します。"
+
+msgid "Proj."
+msgstr "Proj."
+
+msgid "Project info"
+msgstr "プロジェクト情報"
+
+msgid "Project info saved."
+msgstr "プロジェクト情報が保存されました。"
+
+msgid "SQL on the project's tables; changes are made on a copy and kept only with Apply"
+msgstr "プロジェクトのテーブルのSQL;変更はコピー上に行われ、Applyでのみ保存されます。"
+
+msgid "SQL workpad"
+msgstr "SQL のワークパッド"
+
+msgid "SQLite version:"
+msgstr "SQLiteのバージョン:"
+
+msgid "Size on disk:"
+msgstr "ディスク上のサイズ："
+
+msgid "Span"
+msgstr "スパン"
+
+msgid "{count:,} x {size} B"
+msgstr "{count:,} x {size} B"
+
+msgid "{count:,} x {size} B, {amount} reclaimable by Optimize DB"
+msgstr "{count:,} x {size} B、 {amount} 最適化DBで回収可能"
 
 msgid "\"{code}\" already has a catalogue."
 msgstr "\"{code}\"にはすでにカタログがあります。"
@@ -7650,9 +7905,6 @@ msgstr "[シリーズオペレーション]パネルに示されている1行で
 
 msgid "Operations"
 msgstr "オペレーション"
-
-msgid "Peaks"
-msgstr "ピークスピークス："
 
 msgid "Pick a table and a field."
 msgstr "テーブルとフィールドを選択します。"

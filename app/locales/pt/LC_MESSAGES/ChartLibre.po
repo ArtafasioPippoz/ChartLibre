@@ -511,6 +511,9 @@ msgstr "Alternativa"
 msgid "Alternative hypothesis for supported tests."
 msgstr "Hipótese alternativa para testes suportados."
 
+msgid "Alternative:"
+msgstr "Alternativa:"
+
 msgid "Amplitude envelope"
 msgstr "Envelope de amplitude"
 
@@ -546,6 +549,9 @@ msgstr "Análise de variância"
 
 msgid "Anderson method"
 msgstr "Método de Anderson"
+
+msgid "Anderson method:"
+msgstr "Método de Anderson:"
 
 msgid "Anderson p-value: Monte Carlo"
 msgstr "Anderson p-valor: Monte Carlo"
@@ -621,6 +627,9 @@ msgstr "▁Aplicado. Desfazer▁leva▁tudo de▁volta."
 
 msgid "Apply"
 msgstr "Aplicar"
+
+msgid "Apply a model kept in the project to this table: its predictions in a new table"
+msgstr "Aplicar um modelo mantido no projeto a esta tabela: as suas previsões numa nova tabela"
 
 msgid "Apply a preset…"
 msgstr "Aplicar uma predefinição..."
@@ -904,6 +913,9 @@ msgstr "Centro"
 msgid "Centre line"
 msgstr "Linha central"
 
+msgid "Centre line:"
+msgstr "Linha central:"
+
 msgid "Centre on the data"
 msgstr "Centrar-se nos dados"
 
@@ -942,6 +954,9 @@ msgstr "Propriedades do gráfico"
 
 msgid "Chart type:"
 msgstr "Tipo de gráfico:"
+
+msgid "Chart:"
+msgstr "Gráfico:"
 
 msgid "ChartLibre"
 msgstr "ChartLibre"
@@ -1108,6 +1123,9 @@ msgstr "Clusters"
 msgid "Clusters on two principal components"
 msgstr "Clusters em dois componentes principais"
 
+msgid "Clusters:"
+msgstr "Clusters:"
+
 msgid "Cochran-Mantel-Haenszel test (odds ratio = 1)"
 msgstr "Teste de Cochran-Mantel-Haenszel (odds ratio = 1)"
 
@@ -1125,6 +1143,9 @@ msgstr "Cor"
 
 msgid "Colour them"
 msgstr "Colori-los"
+
+msgid "Colour:"
+msgstr "Cor:"
 
 msgid "Cols"
 msgstr "Cols"
@@ -1197,6 +1218,9 @@ msgstr "Componente 2"
 
 msgid "Components"
 msgstr "Componentes"
+
+msgid "Components:"
+msgstr "Componentes:"
 
 msgid "Compute metrics"
 msgstr "Calcular métricas"
@@ -1483,6 +1507,9 @@ msgstr "Defina def {name}(...) com o nome da função armazenada."
 msgid "Degree"
 msgstr "Titulação"
 
+msgid "Degree:"
+msgstr "Grau:"
+
 msgid "Delete"
 msgstr "Eliminar"
 
@@ -1630,6 +1657,9 @@ msgstr "Diferenciar ou integrar"
 msgid "Direction"
 msgstr "Sentido"
 
+msgid "Direction:"
+msgstr "Direção:"
+
 msgid "Discard the changes?"
 msgstr "Descartar as alterações?"
 
@@ -1653,6 +1683,9 @@ msgstr "Distribuição"
 
 msgid "Distribution fit"
 msgstr "Ajuste de distribuição"
+
+msgid "Distribution:"
+msgstr "Distribuição:"
 
 msgid "Divergence"
 msgstr "Divergência"
@@ -2050,6 +2083,9 @@ msgstr "Fatorial ao grau"
 msgid "Factors"
 msgstr "Factores"
 
+msgid "Factors:"
+msgstr "Fatores:"
+
 msgid "Failed to load renderer kwargs schema."
 msgstr "Falha ao carregar o esquema kwargs do renderizador."
 
@@ -2058,6 +2094,9 @@ msgstr "Taxa de falso positivo"
 
 msgid "Family"
 msgstr "Família"
+
+msgid "Family:"
+msgstr "Família:"
 
 msgid "Feather / Arrow"
 msgstr "Pena / Flecha"
@@ -2137,6 +2176,9 @@ msgstr "Filtrar comandos inseguros"
 msgid "Filter, detrend or demodulate a series (scipy.signal)"
 msgstr "Filtrar, detrender ou demodular uma série (scipy.signal)"
 
+msgid "Find"
+msgstr "Localizar"
+
 msgid "Find a column"
 msgstr "Encontrar uma coluna"
 
@@ -2152,8 +2194,8 @@ msgstr "Encontre a função para o que deseja descobrir"
 msgid "Find where a series crosses a level"
 msgstr "Descubra onde uma série cruza um nível"
 
-msgid "Find"
-msgstr "Localizar"
+msgid "Find:"
+msgstr "Procurar:"
 
 msgid "Finish the measurement at this point."
 msgstr "Conclua a medição neste ponto."
@@ -2235,6 +2277,9 @@ msgstr "Previsão"
 
 msgid "Forecast periods:"
 msgstr "Períodos de previsão:"
+
+msgid "Forecast:"
+msgstr "Previsão:"
 
 msgid "Forget a saved template"
 msgstr "Esquecer um modelo guardado"
@@ -2557,6 +2602,9 @@ msgstr "Como os nós são distribuídos ao longo de X."
 msgid "How likely each group is before the measures are seen: its share of the rows, or the same for every group."
 msgstr "Qual é a probabilidade de cada grupo antes que as medidas sejam vistas: sua participação nas linhas ou a mesma para cada grupo."
 
+msgid "How many"
+msgstr "Quantos"
+
 msgid "How many components to extract. Clamped to the number of selected series."
 msgstr "Quantos componentes extrair. Apertado ao número de séries selecionadas."
 
@@ -2604,9 +2652,6 @@ msgstr "Quantas vezes as linhas são divididas: uma a menos que as folhas. Para 
 
 msgid "How many trees a Bootstrap Forest or a Boosted Tree grows."
 msgstr "Quantas árvores uma Floresta Bootstrap ou uma Árvore Impulsionada cresce."
-
-msgid "How many"
-msgstr "Quantos"
 
 msgid "How much each boosting stage corrects the previous one."
 msgstr "Quanto cada estágio de reforço corrige o anterior."
@@ -2806,6 +2851,9 @@ msgstr "{measure} é normal?"
 msgid "Iterations"
 msgstr "Iterações"
 
+msgid "Iterations:"
+msgstr "Iterações:"
+
 msgid "Its arguments are the parameters only: x and y are given, not passed."
 msgstr "Seus argumentos são apenas os parâmetros: x e y são dados, não passados."
 
@@ -2826,6 +2874,9 @@ msgstr "Espectro JCAMP-DX"
 
 msgid "JMP documentation"
 msgstr "Documentação JMP"
+
+msgid "JMP documentation:"
+msgstr "Documentação JMP:"
 
 msgid "JSON starting parameters for nonlinear series_fit models."
 msgstr "Parâmetros de partida JSON para modelos series_fit não lineares."
@@ -2848,6 +2899,9 @@ msgstr "Limiar K-means:"
 msgid "KS statistic (closest curve)"
 msgstr "Estatística KS (curva mais próxima)"
 
+msgid "Keep"
+msgstr "Manter"
+
 msgid "Keep every change made here"
 msgstr "Mantenha todas as alterações feitas aqui"
 
@@ -2866,9 +2920,6 @@ msgstr "Mantenha o estilo, os eixos e a aparência da série desta figura sob um
 msgid "Keep this fitted model in the project, to predict new rows with it"
 msgstr "Mantenha este modelo ajustado no projeto, para prever novas linhas com ele"
 
-msgid "Keep"
-msgstr "Manter"
-
 msgid "Keeps the first crossings in x order when a noisy series crosses the level hundreds of times."
 msgstr "Mantém os primeiros cruzamentos na ordem x quando uma série barulhenta cruza o nível centenas de vezes."
 
@@ -2880,6 +2931,9 @@ msgstr "Mantido pelo chaveiro do sistema neste computador - nunca num ficheiro o
 
 msgid "Kept with the figure in the project, and printed under it in reports."
 msgstr "Mantido com a figura no projeto e impresso abaixo dela em relatórios."
+
+msgid "Kernel:"
+msgstr "Kernel:"
 
 msgid "Kind"
 msgstr "Espécie"
@@ -3217,6 +3271,9 @@ msgstr "Padrão da Matplotlib"
 msgid "Matrix"
 msgstr "Matriz"
 
+msgid "Matrix:"
+msgstr "Matriz:"
+
 msgid "Max"
 msgstr "Máx"
 
@@ -3334,6 +3391,9 @@ msgstr "Método"
 msgid "Method Comparison"
 msgstr "Comparação de Métodos"
 
+msgid "Method:"
+msgstr "Método:"
+
 msgid "Midpoints"
 msgstr "Pontos médios"
 
@@ -3363,6 +3423,9 @@ msgstr "Atenuação mínima da banda de parada, em dB (Chebyshev II / Elíptico)
 
 msgid "Minimum width:"
 msgstr "Largura mínima:"
+
+msgid "Minimum:"
+msgstr "Mínimo:"
 
 msgid "Minor"
 msgstr "Menor"
@@ -3538,14 +3601,14 @@ msgstr "Nova figura"
 msgid "New function"
 msgstr "Nova função"
 
+msgid "New name"
+msgstr "Novo▁nome"
+
 msgid "New name for '{column}':"
 msgstr "Novo nome para '{column}':"
 
 msgid "New name for '{name}':"
 msgstr "Novo nome para '{name}':"
-
-msgid "New name"
-msgstr "Novo▁nome"
 
 msgid "New query, not saved yet."
 msgstr "Nova consulta, ainda não salva."
@@ -3871,6 +3934,9 @@ msgstr "Operação"
 msgid "Operation history"
 msgstr "Histórico de operações"
 
+msgid "Operation:"
+msgstr "Operação:"
+
 msgid "Operator"
 msgstr "Operador"
 
@@ -3933,6 +3999,12 @@ msgstr "Outro"
 
 msgid "Outliers"
 msgstr "Outliers"
+
+msgid "Outliers:"
+msgstr "Valores atípicos:"
+
+msgid "Output:"
+msgstr "Resultado:"
 
 msgid "Overlay properties"
 msgstr "Propriedades de sobreposição"
@@ -4036,6 +4108,9 @@ msgstr "Pausa"
 msgid "Peak ({x} &rarr; {y})"
 msgstr "Pico ({x} &rarr; {y})"
 
+msgid "Peaks"
+msgstr "Picos"
+
 msgid "Pearson chi-squared"
 msgstr "Qui-quadrado de Pearson"
 
@@ -4126,6 +4201,9 @@ msgstr "Pontos plotados"
 msgid "Points. Of any two peaks closer than this, the more prominent is kept - which is how a single noisy peak stops being reported as several."
 msgstr "Pontos. De quaisquer dois picos mais próximos do que isso, o mais proeminente é mantido - que é como um único pico barulhento deixa de ser relatado como vários."
 
+msgid "Points:"
+msgstr "Pontos:"
+
 msgid "Poisson yield {value}%: the share of dies expected free of defects at this defect density and die area. Defects in clusters spoil fewer dies than this predicts."
 msgstr "▁Poisson▁rendimento {value}%: a▁parte de▁morre▁esperado▁livre de▁defeitos▁nesta▁densidade de▁defeito e▁área de▁morrer. Defeitos em clusters▁estragam▁menos▁morre do que▁isso▁prediz."
 
@@ -4146,6 +4224,9 @@ msgstr "Cargo"
 
 msgid "Predict with a saved model"
 msgstr "Prever com um modelo guardado"
+
+msgid "Predict with a saved model…"
+msgstr "Prever com um modelo guardado…"
 
 msgid "Predicted"
 msgstr "Previsto"
@@ -4273,6 +4354,9 @@ msgstr "Qualidade e Processo"
 msgid "Quantiles"
 msgstr "Quantis"
 
+msgid "Quantiles:"
+msgstr "Quantis:"
+
 msgid "Quantity"
 msgstr "Quantidade"
 
@@ -4374,6 +4458,9 @@ msgstr "Valor de referência"
 
 msgid "Reference value for one-sample location tests."
 msgstr "Valor de referência para testes de localização de uma amostra."
+
+msgid "Reference value:"
+msgstr "Valor de referência:"
 
 msgid "References"
 msgstr "Referências"
@@ -4534,6 +4621,9 @@ msgstr "Resposta {name}"
 msgid "Response {number} has no name."
 msgstr "A resposta {number} não tem nome."
 
+msgid "Response:"
+msgstr "Resposta:"
+
 msgid "Responses"
 msgstr "Respostas"
 
@@ -4605,6 +4695,9 @@ msgstr "Rotação y (°):"
 
 msgid "Rotation z (°):"
 msgstr "Rotação z (°):"
+
+msgid "Rotation:"
+msgstr "Rotação:"
 
 msgid "Roughly, how many neighbours each point is assumed to have. Lowered automatically if it does not fit the sample count."
 msgstr "Aproximadamente, quantos vizinhos cada ponto deve ter. Reduzido automaticamente se não se encaixar na contagem da amostra."
@@ -5152,6 +5245,9 @@ msgstr "Suavidade. Maior torna a linha de base mais rígida, por isso dobra meno
 msgid "Solver"
 msgstr "Solucionador"
 
+msgid "Solver:"
+msgstr "Resolvedor:"
+
 msgid "Some lie outside the data's range: there they are a guess, and the further out, the less to trust them."
 msgstr "▁Alguns▁estão▁fora do▁alcance▁dos▁dados:▁lá▁estão▁eles um▁palpite, e▁quanto▁mais▁longe,▁menos▁confiar▁neles."
 
@@ -5166,6 +5262,9 @@ msgstr "Tabela de origem"
 
 msgid "Spacing"
 msgstr "Espaçamento"
+
+msgid "Spacing:"
+msgstr "Espaçamento:"
 
 msgid "Spectroscopy and XRD"
 msgstr "Espectroscopia e drx"
@@ -5290,11 +5389,11 @@ msgstr "Parar"
 msgid "Stopped. Nothing was changed."
 msgstr "Parado. Nada foi alterado."
 
-msgid "Stored function: its values on its range"
-msgstr "Função armazenada: os seus valores na sua gama"
-
 msgid "Stored"
 msgstr "Armazenados"
+
+msgid "Stored function: its values on its range"
+msgstr "Função armazenada: os seus valores na sua gama"
 
 msgid "Straight line"
 msgstr "Linha recta"
@@ -5313,6 +5412,9 @@ msgstr "Estilo"
 
 msgid "Subgroup size"
 msgstr "Tamanho do subgrupo"
+
+msgid "Subgroup size:"
+msgstr "Tamanho do subgrupo:"
 
 msgid "Subtract a spectrum's background (AsLS or rubber band)"
 msgstr "Subtraia o fundo de um espectro (AsLS ou elástico)"
@@ -5383,14 +5485,17 @@ msgstr "Meta"
 msgid "Target shape:"
 msgstr "Forma do alvo:"
 
+msgid "Target:"
+msgstr "Objetivo:"
+
 msgid "Template"
 msgstr "Modelo"
 
-msgid "Template name (an existing name is replaced):"
-msgstr "Nome do modelo (um nome existente é substituído):"
-
 msgid "Template name"
 msgstr "Nome do modelo"
+
+msgid "Template name (an existing name is replaced):"
+msgstr "Nome do modelo (um nome existente é substituído):"
 
 msgid "Template saved: {path}"
 msgstr "Modelo guardado: {path}"
@@ -5914,6 +6019,9 @@ msgstr "Árvores:"
 msgid "Trend"
 msgstr "Tendência"
 
+msgid "Trend:"
+msgstr "Tendência:"
+
 msgid "Tries the assistant without a key or a connection: a fixed script that uses the real tools. Nothing leaves the computer."
 msgstr "Tenta o assistente sem uma chave ou uma conexão: um script fixo que usa as ferramentas reais. Nada sai do computador."
 
@@ -6223,14 +6331,14 @@ msgstr "Quando o teste de Breslow-Day é rejeitado, uma razão de chances combin
 msgid "When the project was created. A project older than this record shows the date its file was created."
 msgstr "Quando o projeto foi criado. Um projeto mais antigo do que este registo mostra a data em que o seu ficheiro foi criado."
 
+msgid "Where"
+msgstr "Onde"
+
 msgid "Where the notch or flat is drawn: the data is in the wafer's own frame, the mark where the map shows it."
 msgstr "Onde o entalhe ou plano é desenhado: os dados estão no próprio quadro do wafer, a marca onde o mapa o mostra."
 
 msgid "Where the result is drawn: on the axis of its data (the first chart only), in the current figure as new axes, or in a figure of its own."
 msgstr "Onde o resultado é desenhado: no eixo dos seus dados (apenas o primeiro gráfico), na figura atual como novos eixos, ou numa figura própria."
-
-msgid "Where"
-msgstr "Onde"
 
 msgid "Whether the fitted curve must rise, fall, or whichever the data itself suggests."
 msgstr "Se a curva ajustada deve subir, cair ou o que os próprios dados sugerem."
@@ -6285,6 +6393,9 @@ msgstr "Janela"
 
 msgid "Window size:"
 msgstr "Tamanho da janela:"
+
+msgid "Window:"
+msgstr "Janela:"
 
 msgid "With a specification limit the report gives the process capability: Cp, Cpk, Pp, Ppk and the share out of specification. Empty when there is none."
 msgstr "Com um limite de especificação, o relatório fornece a capacidade do processo: Cp, Cpk, Pp, Ppk e o compartilhamento fora da especificação. Vazio quando não há nenhum."
@@ -7803,9 +7914,6 @@ msgstr "Uma linha, mostrada no painel Operações em Série."
 
 msgid "Operations"
 msgstr "Operações"
-
-msgid "Peaks"
-msgstr "Picos"
 
 msgid "Pick a table and a field."
 msgstr "Escolha uma mesa e um campo."

@@ -1621,6 +1621,8 @@ QFrame#segmentedControl > QToolButton#segment {
   border: 1px solid transparent;
   border-radius: 5px;
   padding: 3px 4px;
+  /* Not the generic tool button's 36 px: a segment is a row of a control, 28 px as the fields beside it. */
+  min-height: 20px;
   color: palette(window-text);
   background: transparent;
 }
@@ -1713,4 +1715,27 @@ QToolButton#inspectorSectionTitle:hover {
 QFrame#inspectorHairline {
   background: rgba(@SHADOW_RGB@, 0.10);
   border: none;
+}
+
+/* Sliders (the animation's frames): a visible track, the part played in the accent, a round white handle -
+   the platform's own groove was lost on the cards' ground. */
+QSlider::groove:horizontal {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(@SHADOW_RGB@, 0.16);
+}
+QSlider::sub-page:horizontal {
+  border-radius: 2px;
+  background: rgb(@ACCENT_RGB@);
+}
+QSlider::sub-page:horizontal:disabled {
+  background: rgba(@SHADOW_RGB@, 0.25);
+}
+QSlider::handle:horizontal {
+  width: 14px;
+  height: 14px;
+  margin: -6px 0;
+  border-radius: 8px;
+  background: palette(base);
+  border: 1px solid rgba(@SHADOW_RGB@, 0.30);
 }

@@ -22,7 +22,7 @@ from collections.abc import Callable, Iterable, Mapping
 from typing import Any
 
 from app.ai import settings
-from app.analysis_api import AnalysisError, closest as _closest, describe_analysis, make_chart, plain_text as _plain, run_analysis
+from app.analysis_api import closest as _closest, describe_analysis, make_chart, run_analysis
 from app.data.repo._common import is_read_only_select
 from app.plugin_api.ai.provider import ToolSpec
 from app.plugin_api.data_operations.column_roles import declared_kind, guess_kind

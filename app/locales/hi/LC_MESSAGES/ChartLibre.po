@@ -34,9 +34,6 @@ msgstr "'{name}': सूत्र परियोजना है; मान औ
 msgid "'{part}' is not a parameter's name."
 msgstr "'{part}' एक पैरामीटर का नाम नहीं है।"
 
-msgid "(Default)"
-msgstr "(डिफ़ॉल्ट)"
-
 msgid "(Embedded style)"
 msgstr "(एम्बेडेड स्टाइल)"
 
@@ -196,6 +193,9 @@ msgstr "एक फ्रेम वापस"
 msgid "A frame forward"
 msgstr "एक फ्रेम आगे"
 
+msgid "A function called {name} exists. Replace it?"
+msgstr "{name} नाम का फ़ंक्शन मौजूद है। क्या उसे बदला जाए?"
+
 msgid "A function's parameter"
 msgstr "एक समारोह का पैरामीटर"
 
@@ -219,6 +219,9 @@ msgstr "इसके ऊपर एक मापा मरना उच्चत�
 
 msgid "A measured die below it is binned Low; empty: no lower limit."
 msgstr "इसके नीचे एक मापा मरना कम है; खाली: कोई कम सीमा नहीं।"
+
+msgid "A model called {name} exists. Replace it?"
+msgstr "{name} नाम का एक मॉडल मौजूद है। क्या उसे बदला जाए?"
 
 msgid "A model of {response} on its strongest factors: {factors}"
 msgstr "अपने सबसे मजबूत कारकों पर {response} का एक मॉडल: {factors}"
@@ -469,6 +472,9 @@ msgstr "सभी चेक की गई सीरीज़"
 msgid "All groups"
 msgstr "सभी समूह"
 
+msgid "All operations"
+msgstr "सभी ऑपरेशन"
+
 msgid "All rows"
 msgstr "सभी पंक्तियाँ"
 
@@ -505,6 +511,9 @@ msgstr "वैकल्पिक"
 msgid "Alternative hypothesis for supported tests."
 msgstr "समर्थित परीक्षणों के लिए वैकल्पिक परिकल्पना।"
 
+msgid "Alternative:"
+msgstr "वैकल्पिक:"
+
 msgid "Amplitude envelope"
 msgstr "आयाम लिफाफा"
 
@@ -540,6 +549,9 @@ msgstr "विचरण का विश्लेषण"
 
 msgid "Anderson method"
 msgstr "एंडरसन विधि"
+
+msgid "Anderson method:"
+msgstr "एंडरसन विधि:"
 
 msgid "Anderson p-value: Monte Carlo"
 msgstr "एंडरसन पी - वैल्यू: मोंटे कार्लो"
@@ -616,6 +628,9 @@ msgstr "लागू किया गया। Undo इसे वापस ल�
 msgid "Apply"
 msgstr "लागू करना"
 
+msgid "Apply a model kept in the project to this table: its predictions in a new table"
+msgstr "प्रोजेक्ट में रखी गई किसी मॉडल को इस टेबल पर लागू करें: इसकी भविष्यवाणियाँ एक नई टेबल में"
+
 msgid "Apply a preset…"
 msgstr "प्रीसेट लागू करें..."
 
@@ -634,8 +649,8 @@ msgstr "टेम्पलेट लागू करें"
 msgid "Apply the settings to play"
 msgstr "खेलने के लिए सेटिंग्स लागू करें"
 
-msgid "Apply to all figures"
-msgstr "सभी आंकड़ों पर लागू करें"
+msgid "Apply to all"
+msgstr "सभी पर लागू करें"
 
 msgid "Are there differences in {response} across {factor}?"
 msgstr "क्या {factor} में {response} में अंतर हैं?"
@@ -666,6 +681,9 @@ msgstr "सहायक"
 
 msgid "Asymmetry. Smaller pushes the baseline further below the peaks; it should stay well under 0.5."
 msgstr "विषमता। छोटा आधार रेखा को चोटियों के नीचे और नीचे धकेलता है; यह 0.5 से नीचे अच्छी तरह से रहना चाहिए।"
+
+msgid "At start"
+msgstr "शुरू में"
 
 msgid "Attenuation (dB):"
 msgstr "क्षीणन (dB):"
@@ -826,6 +844,9 @@ msgstr "चयनित छिपा पंक्तियों को चा�
 msgid "Browse…"
 msgstr "ब्राउज़ करें..."
 
+msgid "Browse… Pick a .mplstyle file from the mplstyles folder"
+msgstr "ब्राउज़ करें… mplstyles फ़ोल्डर से एक .mplstyle फ़ाइल चुनें"
+
 msgid "Build"
 msgstr "बिल्ड"
 
@@ -892,6 +913,9 @@ msgstr "केंद्र"
 msgid "Centre line"
 msgstr "सेंटर लाइन"
 
+msgid "Centre line:"
+msgstr "केंद्र रेखा:"
+
 msgid "Centre on the data"
 msgstr "डेटा पर केंद्र"
 
@@ -931,6 +955,9 @@ msgstr "चार्ट प्रॉपर्टी"
 msgid "Chart type:"
 msgstr "चार्ट प्रकार:"
 
+msgid "Chart:"
+msgstr "चार्ट:"
+
 msgid "ChartLibre"
 msgstr "ChartLibre"
 
@@ -951,6 +978,9 @@ msgstr "चेबीशेव द्वितीय"
 
 msgid "Check one or more series. One-sample tests are calculated for each checked series. Paired and independent tests are calculated for every pair, and the group comparison for all of them, when two or more series are checked."
 msgstr "एक या एक से ज़्यादा सीरीज़ देखें। प्रत्येक चेक की गई श्रृंखला के लिए एक - नमूने के परीक्षणों की गणना की जाती है। प्रत्येक जोड़ी के लिए युग्मित और स्वतंत्र परीक्षणों की गणना की जाती है, और जब दो या दो से अधिक श्रृंखलाओं की जाँच की जाती है, तो उन सभी के लिए समूह की तुलना की जाती है।"
+
+msgid "Check the open project's database, offer to fix what is wrong, then compact the file."
+msgstr "खुली हुई प्रोजेक्ट के डेटाबेस की जाँच करें, गलतियों को ठीक करने का प्रस्ताव दें, फिर फ़ाइल को कॉम्पैक्ट करें।"
 
 msgid "Checked when a query is saved or typed, and when a project is opened: UPDATE, DELETE, DROP and the like are refused. Charts are never slowed down by it."
 msgstr "चेक किया जाता है जब कोई क्वेरी सेव या टाइप की जाती है, और जब कोई प्रोजेक्ट खोला जाता है: अपडेट, डिलीट, ड्रॉप और इसी तरह से मना कर दिया जाता है। चार्ट कभी भी इससे धीमा नहीं होता है।"
@@ -1093,6 +1123,9 @@ msgstr "क्लस्टर"
 msgid "Clusters on two principal components"
 msgstr "दो प्रमुख घटकों पर क्लस्टर"
 
+msgid "Clusters:"
+msgstr "क्लस्टर:"
+
 msgid "Cochran-Mantel-Haenszel test (odds ratio = 1)"
 msgstr "कोचरन - मेंटल - हेन्सज़ेल परीक्षण (विषम अनुपात = 1)"
 
@@ -1110,6 +1143,9 @@ msgstr "रंग"
 
 msgid "Colour them"
 msgstr "उन्हें रंग दें"
+
+msgid "Colour:"
+msgstr "रंग:"
 
 msgid "Cols"
 msgstr "स्तंभ"
@@ -1137,6 +1173,9 @@ msgstr "कॉलम के नाम अनोखे होने चाहि�
 
 msgid "Column names, separated by commas:"
 msgstr "कॉलम के नाम, अल्पविराम द्वारा अलग किए गए:"
+
+msgid "Column span"
+msgstr "कॉलम स्पैन"
 
 msgid "Column {number} of {count}"
 msgstr "{count} का कॉलम {number}"
@@ -1179,6 +1218,9 @@ msgstr "घटक 2"
 
 msgid "Components"
 msgstr "अवयव"
+
+msgid "Components:"
+msgstr "कॉम्पोनेंट:"
 
 msgid "Compute metrics"
 msgstr "मेट्रिक्स की गणना करें"
@@ -1242,6 +1284,9 @@ msgstr "डेसिबल में बदलें"
 
 msgid "Copy"
 msgstr "कॉपी करें"
+
+msgid "Copy as Python"
+msgstr "Python के रूप में कॉपी करें"
 
 msgid "Copy figure"
 msgstr "आकृति कॉपी करें"
@@ -1423,9 +1468,6 @@ msgstr "डेटा का प्रकार"
 msgid "Database"
 msgstr "डेटाबेस"
 
-msgid "Database Info"
-msgstr "डेटाबेस जानकारी"
-
 msgid "Database saved."
 msgstr "डेटाबेस सहेजा गया।"
 
@@ -1464,6 +1506,9 @@ msgstr "संग्रहीत समारोह के नाम के स�
 
 msgid "Degree"
 msgstr "डिग्री"
+
+msgid "Degree:"
+msgstr "डिग्री:"
 
 msgid "Delete"
 msgstr "हटाएँ"
@@ -1612,6 +1657,9 @@ msgstr "विभेदित करें या एकीकृत करे�
 msgid "Direction"
 msgstr "दिशा"
 
+msgid "Direction:"
+msgstr "दिशा:"
+
 msgid "Discard the changes?"
 msgstr "बदलावों को छोड़ दें?"
 
@@ -1635,6 +1683,9 @@ msgstr "वितरण"
 
 msgid "Distribution fit"
 msgstr "डिस्ट्रीब्यूशन फ़िट"
+
+msgid "Distribution:"
+msgstr "वितरण:"
 
 msgid "Divergence"
 msgstr "विचलन"
@@ -1966,8 +2017,14 @@ msgstr "रिपोर्ट एक्सपोर्ट करें..."
 msgid "Export rows"
 msgstr "पंक्तियाँ एक्सपोर्ट करें"
 
-msgid "Export selected rows..."
-msgstr "चयनित पंक्तियों को निर्यात करें..."
+msgid "Export script"
+msgstr "स्क्रिप्ट एक्सपोर्ट करें"
+
+msgid "Export script..."
+msgstr "स्क्रिप्ट एक्सपोर्ट करें..."
+
+msgid "Export the selected cells, or every visible row, as CSV or Excel"
+msgstr "चुने गए सेल या हर दिखाई देने वाली पंक्ति को CSV या Excel के रूप में एक्सपोर्ट करें"
 
 msgid "Export view as CSV"
 msgstr "सीएसवी के रूप में व्यू एक्सपोर्ट करें"
@@ -2026,6 +2083,9 @@ msgstr "फ़ैक्टोरियल टू डिग्री"
 msgid "Factors"
 msgstr "कारक"
 
+msgid "Factors:"
+msgstr "कारक:"
+
 msgid "Failed to load renderer kwargs schema."
 msgstr "रेंडरर kwargs स्कीमा लोड करने में विफल।"
 
@@ -2034,6 +2094,9 @@ msgstr "गलत पॉज़िटिव दर"
 
 msgid "Family"
 msgstr "परिवार"
+
+msgid "Family:"
+msgstr "फ़ैमिली:"
 
 msgid "Feather / Arrow"
 msgstr "पंख / तीर"
@@ -2056,9 +2119,6 @@ msgstr "आकृति लेआउट"
 msgid "Figure name"
 msgstr "चित्र का नाम"
 
-msgid "Figure options"
-msgstr "चित्र के विकल्प"
-
 msgid "Figure properties"
 msgstr "आकृति गुण"
 
@@ -2076,9 +2136,6 @@ msgstr "आंकड़े"
 
 msgid "File"
 msgstr "फ़ाइल"
-
-msgid "File created:"
-msgstr "फ़ाइल बनाई गई:"
 
 msgid "Files of programs whose format has no free reader: export them as CSV or Excel."
 msgstr "उन प्रोग्राम की फ़ाइलें जिनके फ़ॉर्मेट में कोई फ़्री रीडर नहीं है: उन्हें CSV या Excel के रूप में एक्सपोर्ट करें।"
@@ -2119,6 +2176,9 @@ msgstr "असुरक्षित कमांड फ़िल्टर कर
 msgid "Filter, detrend or demodulate a series (scipy.signal)"
 msgstr "किसी सीरीज़ को फ़िल्टर, डिट्रेंड या डिमोड्यूलेट करें (scipy.signal)"
 
+msgid "Find"
+msgstr "ढूँढें"
+
 msgid "Find a column"
 msgstr "कॉलम ढूँढें"
 
@@ -2134,8 +2194,8 @@ msgstr "आप जो खोजना चाहते हैं उसके ल
 msgid "Find where a series crosses a level"
 msgstr "ढूँढें कि एक सीरीज़ एक लेवल को कहाँ पार करती है"
 
-msgid "Find"
-msgstr "ढूँढें"
+msgid "Find:"
+msgstr "खोजें:"
 
 msgid "Finish the measurement at this point."
 msgstr "इस बिंदु पर माप समाप्त करें।"
@@ -2218,11 +2278,17 @@ msgstr "पूर्वानुमान"
 msgid "Forecast periods:"
 msgstr "पूर्वानुमान अवधि:"
 
+msgid "Forecast:"
+msgstr "पूर्वानुमान:"
+
 msgid "Forget a saved template"
 msgstr "सेव किए गए टेम्पलेट को भूल जाएँ"
 
 msgid "Forget the list of recently opened projects"
 msgstr "हाल ही में खोली गई परियोजनाओं की सूची को भूल जाएँ"
+
+msgid "Forget the operations listed here"
+msgstr "यहाँ सूचीबद्ध ऑपरेशंस को भूल जाएँ"
 
 msgid "Forget the pending point without finishing the measurement."
 msgstr "माप को पूरा किए बिना लंबित बिंदु को भूल जाएँ।"
@@ -2283,6 +2349,9 @@ msgstr "अध्ययन भिन्नता का Gage R&R {percent}%: ज
 
 msgid "Gamma"
 msgstr "गामा"
+
+msgid "Gap H"
+msgstr "गैप H"
 
 msgid "Gap V"
 msgstr "गैप V"
@@ -2385,9 +2454,6 @@ msgstr "गैर - रैखिक मॉडल के लिए प्रा�
 
 msgid "Guided analysis"
 msgstr "निर्देशित विश्लेषण"
-
-msgid "H"
-msgstr "H"
 
 msgid "HTML - one file, opens in any browser"
 msgstr "HTML - एक फ़ाइल, किसी भी ब्राउज़र में खुलती है"
@@ -2536,6 +2602,9 @@ msgstr "X के साथ गाँठें कैसे वितरित �
 msgid "How likely each group is before the measures are seen: its share of the rows, or the same for every group."
 msgstr "उपायों को देखने से पहले प्रत्येक समूह की कितनी संभावना है: पंक्तियों में उसका हिस्सा, या प्रत्येक समूह के लिए समान।"
 
+msgid "How many"
+msgstr "कितने"
+
 msgid "How many components to extract. Clamped to the number of selected series."
 msgstr "कितने घटकों को निकालना है। चयनित श्रृंखला की संख्या पर क्लैंप किया गया।"
 
@@ -2583,9 +2652,6 @@ msgstr "पंक्तियों को कितनी बार विभ�
 
 msgid "How many trees a Bootstrap Forest or a Boosted Tree grows."
 msgstr "बूटस्ट्रैप वन या बूस्टेड ट्री कितने पेड़ उगाते हैं।"
-
-msgid "How many"
-msgstr "कितने"
 
 msgid "How much each boosting stage corrects the previous one."
 msgstr "प्रत्येक बूस्टिंग चरण पिछले चरण को कितना सही करता है।"
@@ -2785,6 +2851,9 @@ msgstr "क्या {measure} सामान्य है?"
 msgid "Iterations"
 msgstr "पुनरावृत्ति"
 
+msgid "Iterations:"
+msgstr "पुनरावृत्तियाँ:"
+
 msgid "Its arguments are the parameters only: x and y are given, not passed."
 msgstr "इसके तर्क केवल पैरामीटर हैं: x और y को दिया जाता है, पारित नहीं किया जाता है।"
 
@@ -2806,14 +2875,14 @@ msgstr "JCAMP - DX स्पेक्ट्रम"
 msgid "JMP documentation"
 msgstr "जेएमपी प्रलेखन"
 
+msgid "JMP documentation:"
+msgstr "JMP डॉक्यूमेंटेशन:"
+
 msgid "JSON starting parameters for nonlinear series_fit models."
 msgstr "गैर - रैखिक SERIES_FIT मॉडल के लिए JSON प्रारंभिक पैरामीटर।"
 
 msgid "Jarque-Bera normality"
 msgstr "जर्क - बेरा सामान्यता"
-
-msgid "Journal"
-msgstr "जर्नल"
 
 msgid "Journal column…"
 msgstr "जर्नल कॉलम..."
@@ -2830,6 +2899,9 @@ msgstr "K - मीन्स थ्रेशोल्ड:"
 msgid "KS statistic (closest curve)"
 msgstr "केएस आंकड़े (निकटतम वक्र)"
 
+msgid "Keep"
+msgstr "रखें"
+
 msgid "Keep every change made here"
 msgstr "किए गए हर बदलाव को यहाँ रखें"
 
@@ -2839,11 +2911,14 @@ msgstr "पूरे डेटा की सीमा को बनाए रख
 msgid "Keep this SELECT as a saved query of the project"
 msgstr "इस SELECT को परियोजना के सहेजे गए क्वेरी के रूप में रखें"
 
+msgid "Keep this analysis as a Python function of the project, to call from the workpad"
+msgstr "इस विश्लेषण को प्रोजेक्ट के एक Python फ़ंक्शन के रूप में रखें, ताकि इसे वर्कपैड से कॉल किया जा सके"
+
 msgid "Keep this figure's style, axes and series look under a name"
 msgstr "इस आकृति की शैली, अक्ष और श्रृंखला को एक नाम के नीचे रखें"
 
-msgid "Keep"
-msgstr "रखें"
+msgid "Keep this fitted model in the project, to predict new rows with it"
+msgstr "इस फ़िट किए गए मॉडल को प्रोजेक्ट में रखें, ताकि इसके साथ नई पंक्तियों का पूर्वानुमान लगाया जा सके"
 
 msgid "Keeps the first crossings in x order when a noisy series crosses the level hundreds of times."
 msgstr "जब शोर वाली श्रृंखला सैकड़ों बार स्तर को पार करती है, तो पहले क्रॉसिंग को x क्रम में रखती है।"
@@ -2880,9 +2955,6 @@ msgstr "कुर्तोसिस"
 
 msgid "Kurtosis test"
 msgstr "कर्टोसिस परीक्षण"
-
-msgid "Kwargs"
-msgstr "Kwargs"
 
 msgid "L2 regularization strength."
 msgstr "L2 रेगुलराइजेशन स्ट्रेंथ।"
@@ -2931,9 +3003,6 @@ msgstr "सबसे बड़ा अंतराल रखने के लि�
 
 msgid "Lasso drops the terms that do not help, Ridge shrinks them all, Elastic Net mixes the two; the strength is chosen by cross-validation."
 msgstr "लासो उन शब्दों को छोड़ देता है जो मदद नहीं करते हैं, रिज उन सभी को सिकोड़ता है, लोचदार नेट दोनों को मिलाता है; ताकत को क्रॉस - वैलिडेशन द्वारा चुना जाता है।"
-
-msgid "Last modified:"
-msgstr "अंतिम बार संशोधित:"
 
 msgid "Latin hypercube"
 msgstr "लैटिन हाइपरक्यूब"
@@ -3067,9 +3136,6 @@ msgstr "लिंक: एक तालिका के लिए एक श्�
 msgid "Linkage method:"
 msgstr "लिंकेज विधि:"
 
-msgid "Linked"
-msgstr "लिंक किया गया"
-
 msgid "Linked to its source"
 msgstr "इसके स्रोत से लिंक किया गया"
 
@@ -3190,6 +3256,9 @@ msgstr "अंक में मार्कर का आकार। डिफ�
 msgid "Match"
 msgstr "मैच"
 
+msgid "Matplotlib"
+msgstr "Matplotlib"
+
 msgid "Matplotlib Style (*.mplstyle);;All Files (*)"
 msgstr "Matplotlib Style (*.mplstyle);;सभी फ़ाइलें (*)"
 
@@ -3201,6 +3270,9 @@ msgstr "Matplotlib डिफ़ॉल्ट"
 
 msgid "Matrix"
 msgstr "मैट्रिक्स"
+
+msgid "Matrix:"
+msgstr "मैट्रिक्स:"
 
 msgid "Max"
 msgstr "अधिकतम"
@@ -3319,6 +3391,9 @@ msgstr "विधि"
 msgid "Method Comparison"
 msgstr "विधि तुलना"
 
+msgid "Method:"
+msgstr "विधि:"
+
 msgid "Midpoints"
 msgstr "मिडपॉइंट"
 
@@ -3349,6 +3424,9 @@ msgstr "डीबी (चेबीशेव II / एलिप्टिक) म�
 msgid "Minimum width:"
 msgstr "न्यूनतम चौड़ाई:"
 
+msgid "Minimum:"
+msgstr "न्यूनतम:"
+
 msgid "Minor"
 msgstr "नाबालिग"
 
@@ -3359,13 +3437,22 @@ msgid "Mirror line"
 msgstr "मिरर लाइन"
 
 msgid "Misclassification {percent}%: the model puts {count} of {rows} rows in another group than their own. These are the rows it was fitted to: on new rows it usually does a little worse."
-msgstr ""
+msgstr "गलत क्लासिफ़िकेशन {percent}%: मॉडल {rows} में से {count} पंक्तियों को उनके अपने समूह के बजाय किसी दूसरे समूह में डाल देता है। ये वे पंक्तियाँ हैं, जिनके लिए इसे फ़िट किया गया था: नई पंक्तियों पर यह आमतौर पर थोड़ा खराब प्रदर्शन करता है।"
+
+msgid "Missing in the table: {columns}."
+msgstr "टेबल में मौजूद नहीं: {columns}।"
 
 msgid "Missing values"
 msgstr "अनुपलब्ध मान"
 
 msgid "Model"
 msgstr "मॉडल"
+
+msgid "Model and table"
+msgstr "मॉडल और टेबल"
+
+msgid "Model name"
+msgstr "मॉडल का नाम"
 
 msgid "Modelling type"
 msgstr "मॉडलिंग का प्रकार"
@@ -3393,6 +3480,9 @@ msgstr "अधिक"
 
 msgid "More accurate on smooth data than the trapezoidal rule. Assumes the curve is well approximated by parabolas."
 msgstr "ट्रैपेज़ॉइडल नियम की तुलना में चिकनी डेटा पर अधिक सटीक। मान लें कि वक्र को परबोलस द्वारा अच्छी तरह से अनुमानित किया गया है।"
+
+msgid "More..."
+msgstr "और..."
 
 msgid "Morlet central frequency w0. Higher values resolve frequency more finely at the cost of time resolution; 6 is the usual compromise and the value at which the wavelet is near-admissible."
 msgstr "मोर्लेट केंद्रीय आवृत्ति w0. उच्च मान समय के रिज़ॉल्यूशन की लागत पर आवृत्ति को अधिक बारीक ढंग से हल करते हैं; 6 सामान्य समझौता है और जिस मूल्य पर तरंग लगभग स्वीकार्य है।"
@@ -3511,14 +3601,14 @@ msgstr "नई आकृति"
 msgid "New function"
 msgstr "नया कार्य"
 
+msgid "New name"
+msgstr "नया नाम"
+
 msgid "New name for '{column}':"
 msgstr "'{column}' के लिए नया नाम:"
 
 msgid "New name for '{name}':"
 msgstr "'{name}' के लिए नया नाम:"
-
-msgid "New name"
-msgstr "नया नाम"
 
 msgid "New query, not saved yet."
 msgstr "नई क्वेरी, अभी तक सेव नहीं की गई है।"
@@ -3546,6 +3636,9 @@ msgstr "नया, खुला, इम्पोर्ट और सेव क�
 
 msgid "Next"
 msgstr "अगला"
+
+msgid "Next axis"
+msgstr "अगली एक्सिस"
 
 msgid "No"
 msgstr "नहीं"
@@ -3600,9 +3693,6 @@ msgstr "कोई पॉइंट सिग्नल नहीं। प्र�
 
 msgid "No preview"
 msgstr "कोई पूर्वावलोकन नहीं"
-
-msgid "No preview yet: it is drawn when the project is saved."
-msgstr "अभी तक कोई पूर्वावलोकन नहीं: यह तब तैयार किया जाता है जब परियोजना सहेजी जाती है।"
 
 msgid "No recent projects"
 msgstr "कोई हालिया प्रोजेक्ट नहीं"
@@ -3775,9 +3865,6 @@ msgstr "हर अलग कॉम्बिनेशन के लिए एक 
 msgid "One series at a time: the histogram, quantiles, moments and normality tests."
 msgstr "एक समय में एक श्रृंखला: हिस्टोग्राम, मात्रात्मक, क्षण और सामान्यता परीक्षण।"
 
-msgid "One statement per Run · Ctrl+Return"
-msgstr "प्रति रन एक बयान · Ctrl + रिटर्न"
-
 msgid "One tree you can read; a Bootstrap Forest (many trees on resampled rows, averaged); or a Boosted Tree (many small trees, each correcting the ones before)."
 msgstr "एक पेड़ जिसे आप पढ़ सकते हैं; एक बूटस्ट्रैप वन (पुनर्मूल्यांकन पंक्तियों पर कई पेड़, औसत); या एक बूस्टेड पेड़ (कई छोटे पेड़, प्रत्येक पहले वाले को ठीक करता है)।"
 
@@ -3826,6 +3913,12 @@ msgstr "चयनित विधि के लिए दस्तावेज�
 msgid "Open recent"
 msgstr "हाल ही में खोलें"
 
+msgid "Open settings"
+msgstr "सेटिंग खोलें"
+
+msgid "Open settings..."
+msgstr "सेटिंग्स खोलें..."
+
 msgid "Open the Query Builder on the selected columns and rows of this table"
 msgstr "इस तालिका के चयनित कॉलम और पंक्तियों पर क्वेरी बिल्डर खोलें"
 
@@ -3841,11 +3934,17 @@ msgstr "ऑपरेशन"
 msgid "Operation history"
 msgstr "ऑपरेशन का इतिहास"
 
+msgid "Operation:"
+msgstr "ऑपरेशन:"
+
 msgid "Operator"
 msgstr "ऑपरेटर"
 
 msgid "Operators"
 msgstr "ऑपरेटर"
+
+msgid "Optimize the project's database..."
+msgstr "प्रोजेक्ट के डेटाबेस को ऑप्टिमाइज़ करें..."
 
 msgid "Optional description"
 msgstr "वैकल्पिक विवरण"
@@ -3877,6 +3976,9 @@ msgstr "वैकल्पिक: नोड्स 'z, अंतरिक्ष �
 msgid "Optional: who measured. Without it, repeatability alone."
 msgstr "वैकल्पिक: किसने मापा। इसके बिना, दोहराव अकेले।"
 
+msgid "Options"
+msgstr "विकल्प"
+
 msgid "Order by"
 msgstr "इस आधार पर ऑर्डर करें"
 
@@ -3898,6 +4000,12 @@ msgstr "अन्य"
 msgid "Outliers"
 msgstr "आउटलाइर्स"
 
+msgid "Outliers:"
+msgstr "आउटलायर्स:"
+
+msgid "Output:"
+msgstr "आउटपुट:"
+
 msgid "Overlay properties"
 msgstr "ओवरले प्रॉपर्टी"
 
@@ -3918,9 +4026,6 @@ msgstr "PNG"
 
 msgid "Page trend test"
 msgstr "पृष्ठ प्रवृत्ति परीक्षण"
-
-msgid "Pages:"
-msgstr "पेज:"
 
 msgid "Paired difference summary"
 msgstr "युग्मित अंतर सारांश"
@@ -3994,9 +4099,6 @@ msgstr "पेस्ट"
 msgid "Paste picture"
 msgstr "पेस्ट चित्र"
 
-msgid "Path:"
-msgstr "पथ:"
-
 msgid "Pattern"
 msgstr "पैटर्न"
 
@@ -4032,9 +4134,6 @@ msgstr "व्यक्तित्व"
 
 msgid "Pick Role Variables"
 msgstr "भूमिका चर चुनें"
-
-msgid "Pick a .mplstyle file from the mplstyles folder"
-msgstr "Mplstyles फ़ोल्डर से एक .mplstyle फ़ाइल चुनें"
 
 msgid "Pick a saved query."
 msgstr "सेव की गई क्वेरी चुनें।"
@@ -4102,6 +4201,9 @@ msgstr "प्लॉट किए गए पॉइंट"
 msgid "Points. Of any two peaks closer than this, the more prominent is kept - which is how a single noisy peak stops being reported as several."
 msgstr "पॉइंट्स। इससे करीब आने वाली किसी भी दो चोटियों में से, अधिक प्रमुख को रखा जाता है - इस तरह एक शोर वाली चोटी को कई के रूप में रिपोर्ट किया जाना बंद हो जाता है।"
 
+msgid "Points:"
+msgstr "पॉइंट्स:"
+
 msgid "Poisson yield {value}%: the share of dies expected free of defects at this defect density and die area. Defects in clusters spoil fewer dies than this predicts."
 msgstr "Poisson उपज {value}%: मरने का हिस्सा इस दोष घनत्व और मरने वाले क्षेत्र में दोषों से मुक्त होने की उम्मीद है। क्लस्टर में दोष इस भविष्यवाणी की तुलना में कम मर जाते हैं।"
 
@@ -4119,6 +4221,12 @@ msgstr "बंदरगाह"
 
 msgid "Position"
 msgstr "पोजिशन"
+
+msgid "Predict with a saved model"
+msgstr "सेव किए गए मॉडल के साथ पूर्वानुमान लगाएँ"
+
+msgid "Predict with a saved model…"
+msgstr "सेव किए गए मॉडल के साथ पूर्वानुमान लगाएँ…"
 
 msgid "Predicted"
 msgstr "भविष्यवाणी"
@@ -4168,6 +4276,9 @@ msgstr "पूर्वावलोकन: {count} श्रृंखला क�
 msgid "Preview: the outliers of {count} series are hidden."
 msgstr "पूर्वावलोकन: {count} श्रृंखला के आउटलाइर्स छिपे हुए हैं।"
 
+msgid "Previous axis"
+msgstr "पिछली एक्सिस"
+
 msgid "Prewhitened CCF"
 msgstr "पहले से सफ़ेद सीसीएफ़ (CCF)"
 
@@ -4186,26 +4297,20 @@ msgstr "प्रायिकता"
 msgid "Process capability"
 msgstr "प्रक्रिया क्षमता"
 
-msgid "Proj."
-msgstr "Proj."
-
 msgid "Project"
 msgstr "प्रोजेक्ट"
 
 msgid "Project history"
 msgstr "प्रोजेक्ट का इतिहास"
 
-msgid "Project info"
-msgstr "प्रोजेक्ट की जानकारी"
-
-msgid "Project info saved."
-msgstr "प्रोजेक्ट की जानकारी सेव की गई।"
-
 msgid "Project information"
 msgstr "प्रोजेक्ट की जानकारी"
 
 msgid "Project report"
 msgstr "प्रोजेक्ट रिपोर्ट"
+
+msgid "Projection"
+msgstr "प्रोजेक्शन"
 
 msgid "Projects"
 msgstr "परियोजनाएं"
@@ -4248,6 +4353,9 @@ msgstr "गुणवत्ता और प्रक्रिया"
 
 msgid "Quantiles"
 msgstr "क्वांटाइल्स"
+
+msgid "Quantiles:"
+msgstr "क्वांटाइल:"
 
 msgid "Quantity"
 msgstr "मात्रा"
@@ -4321,6 +4429,12 @@ msgstr "इस रूप में पढ़ें: {name}"
 msgid "Read options"
 msgstr "पढ़ने के विकल्प"
 
+msgid "Read the application log, copy it or empty it."
+msgstr "ऐप्लिकेशन लॉग पढ़ें, उसे कॉपी करें या उसे खाली करें।"
+
+msgid "Reads: {columns}."
+msgstr "रीडिंग: {columns}।"
+
 msgid "Ready"
 msgstr "तैयार"
 
@@ -4344,6 +4458,9 @@ msgstr "संदर्भ मान"
 
 msgid "Reference value for one-sample location tests."
 msgstr "एक - नमूना स्थान परीक्षणों के लिए संदर्भ मान।"
+
+msgid "Reference value:"
+msgstr "रेफ़रेंस वैल्यू:"
 
 msgid "References"
 msgstr "संदर्भ"
@@ -4416,6 +4533,9 @@ msgstr "इस रूप में रेंडर करें"
 
 msgid "Renderer not found."
 msgstr "रेंडरर नहीं मिला।"
+
+msgid "Renderer options"
+msgstr "रेंडरर विकल्प"
 
 msgid "Renderers"
 msgstr "रेंडरर्स"
@@ -4501,6 +4621,9 @@ msgstr "जवाब {name}"
 msgid "Response {number} has no name."
 msgstr "जवाब {number} का कोई नाम नहीं है।"
 
+msgid "Response:"
+msgstr "जवाब:"
+
 msgid "Responses"
 msgstr "प्रतिक्रियाएँ"
 
@@ -4573,11 +4696,17 @@ msgstr "घूर्णन y (°):"
 msgid "Rotation z (°):"
 msgstr "घूर्णन z (°):"
 
+msgid "Rotation:"
+msgstr "रोटेशन:"
+
 msgid "Roughly, how many neighbours each point is assumed to have. Lowered automatically if it does not fit the sample count."
 msgstr "मोटे तौर पर, प्रत्येक बिंदु पर कितने पड़ोसियों का होना माना जाता है। अगर यह सैंपल काउंट में फिट नहीं बैठता है, तो इसे अपने आप कम कर दिया जाएगा।"
 
 msgid "Row"
 msgstr "पंक्ति"
+
+msgid "Row span"
+msgstr "पंक्ति स्पैन"
 
 msgid "Rows"
 msgstr "पंक्तियाँ"
@@ -4609,11 +4738,17 @@ msgstr "नियम"
 msgid "Run"
 msgstr "रन"
 
+msgid "Run again"
+msgstr "फिर से चलाएँ"
+
 msgid "Run the project's functions on this computer: their code is shown first."
 msgstr "इस कंप्यूटर पर परियोजना के कार्यों को चलाएं: उनका कोड पहले दिखाया गया है।"
 
 msgid "Run the project's functions?"
 msgstr "परियोजना के कार्यों को चलाने के लिए?"
+
+msgid "Run {count} operation(s) again? Each writes its tables and figure anew."
+msgstr "{count} ऑपरेशन फिर से चलाएँ? प्रत्येक अपनी तालिकाओं और आकृतियों को नए सिरे से लिखता है।"
 
 msgid "Runs"
 msgstr "रन"
@@ -4648,23 +4783,14 @@ msgstr "SQL ब्लॉक किया गया"
 msgid "SQL guard"
 msgstr "SQL गार्ड"
 
-msgid "SQL on the project's tables; changes are made on a copy and kept only with Apply"
-msgstr "परियोजना की तालिका पर SQL; परिवर्तन एक प्रतिलिपि पर किए जाते हैं और केवल लागू होने के साथ रखा जाता है।"
-
 msgid "SQL query (SELECT / WITH ...)"
 msgstr "SQL क्वेरी (चुनें / के साथ ...)"
-
-msgid "SQL workpad"
-msgstr "एसक्यूएल वर्कपैड"
 
 msgid "SQLite file"
 msgstr "SQLite फ़ाइल"
 
 msgid "SQLite type"
 msgstr "SQLite प्रकार"
-
-msgid "SQLite version:"
-msgstr "SQLite संस्करण:"
 
 msgid "SS residual"
 msgstr "SS अवशिष्ट"
@@ -4714,6 +4840,18 @@ msgstr "CSV के रूप में सेव करें"
 msgid "Save as GIF…"
 msgstr "GIF के रूप में सहेजें"
 
+msgid "Save as function"
+msgstr "फ़ंक्शन के रूप में सेव करें"
+
+msgid "Save as function..."
+msgstr "फ़ंक्शन के रूप में सेव करें..."
+
+msgid "Save as model"
+msgstr "मॉडल के रूप में सेव करें"
+
+msgid "Save as model..."
+msgstr "मॉडल के रूप में सेव करें..."
+
 msgid "Save as picture"
 msgstr "तस्वीर के रूप में सहेजें"
 
@@ -4743,6 +4881,12 @@ msgstr "पैरामीटर को CSV के रूप में सेव
 
 msgid "Save query"
 msgstr "क्वेरी सेव करें"
+
+msgid "Save settings"
+msgstr "सेटिंग सेव करें"
+
+msgid "Save settings..."
+msgstr "सेटिंग सेव करें..."
 
 msgid "Save the rows currently on screen as a CSV file"
 msgstr "फ़िलहाल स्क्रीन पर मौजूद पंक्तियों को CSV फ़ाइल के रूप में सेव करें"
@@ -5074,8 +5218,8 @@ msgstr "सिम्पसन का नियम:"
 msgid "Size"
 msgstr "आकार"
 
-msgid "Size on disk:"
-msgstr "डिस्क पर आकार:"
+msgid "Size on disk"
+msgstr "डिस्क पर आकार"
 
 msgid "Skewness"
 msgstr "तिरछापन"
@@ -5101,6 +5245,9 @@ msgstr "चिकनाई। बड़ा बेसलाइन को सख�
 msgid "Solver"
 msgstr "सॉल्वर"
 
+msgid "Solver:"
+msgstr "सॉल्वर:"
+
 msgid "Some lie outside the data's range: there they are a guess, and the further out, the less to trust them."
 msgstr "कुछ डेटा की सीमा के बाहर झूठ बोलते हैं: वे एक अनुमान हैं, और आगे, उन्हें विश्वास करने के लिए कम।"
 
@@ -5116,8 +5263,8 @@ msgstr "स्रोत तालिका"
 msgid "Spacing"
 msgstr "स्पेसिंग"
 
-msgid "Span"
-msgstr "स्पैन"
+msgid "Spacing:"
+msgstr "स्पेसिंग:"
 
 msgid "Spectroscopy and XRD"
 msgstr "स्पेक्ट्रोस्कोपी और एक्सआरडी"
@@ -5242,11 +5389,11 @@ msgstr "रोकें"
 msgid "Stopped. Nothing was changed."
 msgstr "रुक गया। कुछ नहीं बदला।"
 
-msgid "Stored function: its values on its range"
-msgstr "संग्रहीत समारोह: इसकी सीमा पर इसकी मान"
-
 msgid "Stored"
 msgstr "संग्रहीत"
+
+msgid "Stored function: its values on its range"
+msgstr "संग्रहीत समारोह: इसकी सीमा पर इसकी मान"
 
 msgid "Straight line"
 msgstr "सीधी रेखा"
@@ -5265,6 +5412,9 @@ msgstr "शैली"
 
 msgid "Subgroup size"
 msgstr "उपसमूह का आकार"
+
+msgid "Subgroup size:"
+msgstr "सबग्रुप का आकार:"
 
 msgid "Subtract a spectrum's background (AsLS or rubber band)"
 msgstr "स्पेक्ट्रम की पृष्ठभूमि घटाएँ (एएसएलएस या रबर बैंड)"
@@ -5335,14 +5485,17 @@ msgstr "टार्गेट"
 msgid "Target shape:"
 msgstr "लक्ष्य आकार:"
 
+msgid "Target:"
+msgstr "लक्ष्य:"
+
 msgid "Template"
 msgstr "टेम्पलेट"
 
-msgid "Template name (an existing name is replaced):"
-msgstr "टेम्पलेट का नाम (एक मौजूदा नाम बदल दिया गया है):"
-
 msgid "Template name"
 msgstr "टेम्पलेट का नाम"
+
+msgid "Template name (an existing name is replaced):"
+msgstr "टेम्पलेट का नाम (एक मौजूदा नाम बदल दिया गया है):"
 
 msgid "Template saved: {path}"
 msgstr "टेम्पलेट सहेजा गया: {path}"
@@ -5397,6 +5550,9 @@ msgstr "लॉग स्केल का आधार।"
 
 msgid "The baseline taken away has an area of {area} under it."
 msgstr "बेसलाइन के पास इसके तहत {area} का क्षेत्रफल है।"
+
+msgid "The call that makes this analysis again; for all of them, a script"
+msgstr "वह कॉल जो इस विश्लेषण को फिर से करता है; उन सभी के लिए, एक स्क्रिप्ट"
 
 msgid "The change was declined: nothing was changed."
 msgstr "बदलाव को नामंज़ूर कर दिया गया था: कुछ भी नहीं बदला गया था।"
@@ -5758,6 +5914,9 @@ msgstr "यह {count} अंक आकर्षित करता है। �
 msgid "This figure could not be drawn: {reason}"
 msgstr "यह आंकड़ा आरेखित नहीं किया जा सका: {reason}"
 
+msgid "This figure has no style of its own: it uses the default chart style (Settings > Charts)."
+msgstr "इस फ़िगर की अपनी कोई स्टाइल नहीं है: यह डिफ़ॉल्ट चार्ट स्टाइल का इस्तेमाल करता है (सेटिंग्स > चार्ट)।"
+
 msgid "This file is no longer there: {path}"
 msgstr "यह फ़ाइल अब वहाँ नहीं है: {path}"
 
@@ -5766,6 +5925,9 @@ msgstr "यह फ़ंक्शन कोई पैरामीटर नह�
 
 msgid "This project contains SQL that would change the database. It has been blocked and will not run until it is edited:\n\n{items}"
 msgstr "इस प्रोजेक्ट में SQL है जो डेटाबेस को बदल देगा। इसे ब्लॉक कर दिया गया है और इसे संपादित किए जाने तक नहीं चलेगा:\n\n{items}"
+
+msgid "This project has no saved model: keep one from an analysis that fits a model."
+msgstr "इस प्रोजेक्ट में कोई सेव किया हुआ मॉडल नहीं है: किसी ऐसे एनालिसिस से एक मॉडल रखें, जो किसी मॉडल से मेल खाता हो।"
 
 msgid "This project keeps functions that run code on this computer whenever they are drawn or fitted. Run them only if you trust where the project comes from."
 msgstr "यह परियोजना उन कार्यों को रखती है जो इस कंप्यूटर पर कोड चलाते हैं जब भी वे खींचे जाते हैं या फिट होते हैं। उन्हें तभी चलाएं जब आप भरोसा करते हैं कि परियोजना कहाँ से आती है।"
@@ -5856,6 +6018,9 @@ msgstr "पेड़:"
 
 msgid "Trend"
 msgstr "रुझान"
+
+msgid "Trend:"
+msgstr "ट्रेंड:"
 
 msgid "Tries the assistant without a key or a connection: a fixed script that uses the real tools. Nothing leaves the computer."
 msgstr "बिना किसी कुंजी या कनेक्शन के सहायक की कोशिश करता है: एक निश्चित स्क्रिप्ट जो वास्तविक उपकरणों का उपयोग करती है। कंप्यूटर से कुछ भी नहीं निकलता है।"
@@ -6067,6 +6232,9 @@ msgstr "संस्करण"
 msgid "View"
 msgstr "देखें"
 
+msgid "View the log…"
+msgstr "लॉग देखें…"
+
 msgid "Violin Plot"
 msgstr "वायलिन प्लॉट"
 
@@ -6163,14 +6331,14 @@ msgstr "जब ब्रेस्लो - डे टेस्ट रिजेक
 msgid "When the project was created. A project older than this record shows the date its file was created."
 msgstr "जब प्रोजेक्ट बनाया गया था। इस रिकॉर्ड से पुराना प्रोजेक्ट उस तारीख को दिखाता है जब इसकी फ़ाइल बनाई गई थी।"
 
+msgid "Where"
+msgstr "कहाँ"
+
 msgid "Where the notch or flat is drawn: the data is in the wafer's own frame, the mark where the map shows it."
 msgstr "जहां पायदान या फ्लैट खींचा जाता है: डेटा वेफर के अपने फ्रेम में है, जहां मानचित्र इसे दिखाता है।"
 
 msgid "Where the result is drawn: on the axis of its data (the first chart only), in the current figure as new axes, or in a figure of its own."
 msgstr "जहां परिणाम खींचा जाता है: अपने डेटा (केवल पहला चार्ट) की धुरी पर, वर्तमान आंकड़े में नए अक्ष के रूप में, या अपने आप के एक आंकड़े में।"
-
-msgid "Where"
-msgstr "कहाँ"
 
 msgid "Whether the fitted curve must rise, fall, or whichever the data itself suggests."
 msgstr "क्या फिट वक्र को उठना, गिरना चाहिए, या जो भी डेटा स्वयं सुझाता है।"
@@ -6225,6 +6393,9 @@ msgstr "खिड़की"
 
 msgid "Window size:"
 msgstr "विंडो का आकार:"
+
+msgid "Window:"
+msgstr "विंडो:"
 
 msgid "With a specification limit the report gives the process capability: Cp, Cpk, Pp, Ppk and the share out of specification. Empty when there is none."
 msgstr "विनिर्देशन सीमा के साथ रिपोर्ट प्रक्रिया क्षमता प्रदान करती है: Cp, Cpk, Pp, Ppk और विनिर्देशन से बाहर का हिस्सा। खाली जब कोई नहीं है।"
@@ -6658,6 +6829,9 @@ msgstr "y रेंज"
 msgid "z range"
 msgstr "z रेंज"
 
+msgid "{amount} could be reclaimed (Preferences > Advanced)"
+msgstr "{amount} को फिर से हासिल किया जा सकता है (प्राथमिकताएँ > उन्नत)"
+
 msgid "{charts} cannot be played: it draws the whole table as one structure, with no frames to go through."
 msgstr "{charts} नहीं खेला जा सकता है: यह पूरी तालिका को एक संरचना के रूप में खींचता है, जिसमें कोई फ्रेम नहीं होता है।"
 
@@ -6667,12 +6841,6 @@ msgstr "{chart} प्रति अक्ष एक श्रृंखला ख
 msgid "{chart} draws up to {limit} series per axis: the {count} below will be split across {axes} axes."
 msgstr "{chart} प्रति अक्ष {limit} श्रृंखला तक खींचता है: नीचे दिए गए {count} को {axes} अक्षों में विभाजित किया जाएगा।"
 
-msgid "{count:,} x {size} B"
-msgstr "{count:,} x {size} B"
-
-msgid "{count:,} x {size} B, {amount} reclaimable by Optimize DB"
-msgstr "{count:,} x {size} B, {amount} ऑप्टिमाइज़ DB द्वारा पुनः प्राप्त करने योग्य"
-
 msgid "{count} cell(s) changed."
 msgstr "{count} सेल बदल गए।"
 
@@ -6680,7 +6848,7 @@ msgid "{count} could not be drawn"
 msgstr "{count} आरेखित नहीं किया जा सका"
 
 msgid "{count} crossings of {level}; the first at x = {x}, going {way}. Each is where the curve, as interpolated between the points, passes the level - finer data move it less."
-msgstr ""
+msgstr "{level} के {count} क्रॉसिंग; पहला x = {x} पर, {way} की ओर जाते हुए। हर एक वह जगह है जहाँ वक्र, बिंदुओं के बीच इंटरपोलेट किए जाने पर, स्तर से होकर गुजरता है - ज़्यादा सटीक डेटा इसे कम हिलाते हैं।"
 
 msgid "{count} factor(s) were enough to explain the correlations"
 msgstr "{count} कारक(s) कोरिलेशन की व्याख्या करने के लिए पर्याप्त थे"
@@ -6919,6 +7087,9 @@ msgstr "{role} केवल {kinds} कॉलम लेता है: {columns} 
 msgid "{role}: choose at least {count} column(s)."
 msgstr "{role}: कम से कम {count} कॉलम चुनें।"
 
+msgid "{rows} row(s) written to {table}."
+msgstr "{rows} पंक्ति(याँ) {table} में लिखी गई।"
+
 msgid "{rows} rows"
 msgstr "{rows} पंक्तियाँ"
 
@@ -6984,6 +7155,84 @@ msgstr "{y} ने {x} पर निर्भर नहीं किया"
 
 msgid "▲ number · ● category · ◐ ordered category · ◷ date"
 msgstr "▲ संख्या · ● श्रेणी · ◐ ऑर्डर की गई श्रेणी · ◷ तारीख"
+
+msgid "(Default)"
+msgstr "(डिफ़ॉल्ट)"
+
+msgid "Apply to all figures"
+msgstr "सभी आंकड़ों पर लागू करें"
+
+msgid "Database Info"
+msgstr "डेटाबेस जानकारी"
+
+msgid "Export selected rows..."
+msgstr "चयनित पंक्तियों को निर्यात करें..."
+
+msgid "Figure options"
+msgstr "चित्र के विकल्प"
+
+msgid "File created:"
+msgstr "फ़ाइल बनाई गई:"
+
+msgid "H"
+msgstr "H"
+
+msgid "Journal"
+msgstr "जर्नल"
+
+msgid "Kwargs"
+msgstr "Kwargs"
+
+msgid "Last modified:"
+msgstr "अंतिम बार संशोधित:"
+
+msgid "Linked"
+msgstr "लिंक किया गया"
+
+msgid "No preview yet: it is drawn when the project is saved."
+msgstr "अभी तक कोई पूर्वावलोकन नहीं: यह तब तैयार किया जाता है जब परियोजना सहेजी जाती है।"
+
+msgid "One statement per Run · Ctrl+Return"
+msgstr "प्रति रन एक बयान · Ctrl + रिटर्न"
+
+msgid "Pages:"
+msgstr "पेज:"
+
+msgid "Path:"
+msgstr "पथ:"
+
+msgid "Pick a .mplstyle file from the mplstyles folder"
+msgstr "Mplstyles फ़ोल्डर से एक .mplstyle फ़ाइल चुनें"
+
+msgid "Proj."
+msgstr "Proj."
+
+msgid "Project info"
+msgstr "प्रोजेक्ट की जानकारी"
+
+msgid "Project info saved."
+msgstr "प्रोजेक्ट की जानकारी सेव की गई।"
+
+msgid "SQL on the project's tables; changes are made on a copy and kept only with Apply"
+msgstr "परियोजना की तालिका पर SQL; परिवर्तन एक प्रतिलिपि पर किए जाते हैं और केवल लागू होने के साथ रखा जाता है।"
+
+msgid "SQL workpad"
+msgstr "एसक्यूएल वर्कपैड"
+
+msgid "SQLite version:"
+msgstr "SQLite संस्करण:"
+
+msgid "Size on disk:"
+msgstr "डिस्क पर आकार:"
+
+msgid "Span"
+msgstr "स्पैन"
+
+msgid "{count:,} x {size} B"
+msgstr "{count:,} x {size} B"
+
+msgid "{count:,} x {size} B, {amount} reclaimable by Optimize DB"
+msgstr "{count:,} x {size} B, {amount} ऑप्टिमाइज़ DB द्वारा पुनः प्राप्त करने योग्य"
 
 msgid "\"{code}\" already has a catalogue."
 msgstr "\"{code}\" में पहले से ही एक कैटलॉग है।"

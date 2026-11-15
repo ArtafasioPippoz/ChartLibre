@@ -295,7 +295,7 @@ class SettingsDialog(PanelDialog):
         # What most people never change, closed - unless the SQL guard is off, the one thing in it that is
         # not as it came and matters (todo H-10). Developer mode alone does not open it: the Developer menu
         # says it, and opened it made the window taller than a laptop's screen.
-        form = self._section(tr("Advanced"), forms, collapsible=True, collapsed=sql_guard_enabled())
+        form = self._section(tr("Advanced"), forms)
         # Red: switching it off lets typed SQL change the database.
         self._sql_guard_check = QCheckBox(
             tr("Refuse SQL that would change the database"), card
@@ -385,10 +385,8 @@ class SettingsDialog(PanelDialog):
             self.body_layout.addLayout(row, 1)
         return self._sidebar, self._stack
 
-    def _section(self, title: str, forms: list[QFormLayout], *, collapsible: bool = False,
-                 collapsed: bool = False) -> QFormLayout:
+    def _section(self, title: str, forms: list[QFormLayout]) -> QFormLayout:
         """A section: a row of the sidebar, and its page - a heading with its icon and sentence, then the form."""
-        del collapsible, collapsed  # a page of its own now: nothing to fold
         sidebar, stack = self._pages()
         # The section by its English name: the callers pass the title translated (so the catalogue sweep
         # finds it), and looked up as given every section of a translated interface fell back to the gear
@@ -485,7 +483,7 @@ class SettingsDialog(PanelDialog):
         from app.scanners.ai_provider_scanner import ai_providers, provider_class
 
         # Folded like Advanced: most people never open it.
-        form = self._section(tr("Assistant"), forms, collapsible=True, collapsed=True)
+        form = self._section(tr("Assistant"), forms)
         self._assistant_in_navigation = QCheckBox(tr("Show the Assistant in the navigation bar"), card)
         self._assistant_in_navigation.setChecked(assistant.in_navigation())
         form.addRow(tr("Navigation"), self._assistant_in_navigation)

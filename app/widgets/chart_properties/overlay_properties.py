@@ -20,7 +20,7 @@ import json
 from dataclasses import dataclass
 from typing import Any, Final, TypeVar, cast
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QEvent, QObject, Qt, Signal
 from PySide6.QtGui import QFontDatabase
 from PySide6.QtWidgets import (
     QComboBox,
@@ -131,6 +131,57 @@ _MEASUREMENT_COLS: Final[tuple[_Col, ...]] = (
     _Col("Kwargs JSON", _KWARGS),
 )
 _WIDGET_KINDS: Final[frozenset[str]] = frozenset({_COLOR, _LINESTYLE, _FONT, _SIZE})
+
+
+#: Room a column asks for when the table is measured against the panel (px).
+_COLUMN_ROOM: Final[dict[str, int]] = {_FLOAT: 56, _TEXT: 90, _ENUM: 90, _KWARGS: 90}
+
+
+class _ColumnGroups(QObject):
+    """A table too wide for the panel shows its columns a group at a time: Values, Style, Advanced.
+
+    With room for every column (a wide panel) the table is whole and the chooser hidden. Without, the
+    chooser appears over the table and the rows take their numbers, so a row is still told from the next
+    when its values are out of sight. Never a horizontal scroll bar.
+    """
+
+    def __init__(self, table: QTableWidget, cols: tuple[_Col, ...], chooser: SegmentedControl) -> None:
+        super().__init__(table)
+        self._table, self._chooser = table, chooser
+        style = [i for i, col in enumerate(cols) if col.kind in _WIDGET_KINDS]
+        advanced = [i for i, col in enumerate(cols) if col.kind == _KWARGS]
+        values = [i for i in range(len(cols)) if i not in style and i not in advanced]
+        self._groups = [values, style, advanced]
+        self._needed = sum(WIDGET_COLUMN_WIDTH if col.kind in _WIDGET_KINDS else _COLUMN_ROOM[col.kind]
+                           for col in cols)
+        for title in (_("Values"), _("Style"), _("Advanced")):
+            chooser.add_segment(title)
+        chooser.current_changed.connect(lambda _index: self.fit())
+        table.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        table.installEventFilter(self)  # this table only: its width decides
+
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:  # noqa: N802 - Qt override
+        if watched is self._table and event.type() == QEvent.Type.Resize:
+            self.fit()
+        return False
+
+    def grouped(self) -> bool:
+        return self._table.width() < self._needed
+
+    def fit(self) -> None:
+        grouped = self.grouped()
+        shown = set(self._groups[max(self._chooser.current_index(), 0)]) if grouped else None
+        header = self._table.horizontalHeader()
+        for index in range(self._table.columnCount()):
+            self._table.setColumnHidden(index, shown is not None and index not in shown)
+            if index in self._groups[1]:
+                # The combos and spin boxes share the width in a group; whole, they keep their own.
+                header.setSectionResizeMode(index, QHeaderView.ResizeMode.Stretch if grouped
+                                            else QHeaderView.ResizeMode.Interactive)
+                if not grouped:
+                    self._table.setColumnWidth(index, WIDGET_COLUMN_WIDTH)
+        self._chooser.setVisible(grouped)
+        self._table.verticalHeader().setVisible(grouped)
 
 
 class OverlayPropertiesWidget(BaseProperties):
@@ -267,7 +318,10 @@ class OverlayPropertiesWidget(BaseProperties):
             if col.kind in _WIDGET_KINDS:
                 table.setColumnWidth(index, WIDGET_COLUMN_WIDTH)
         header.setStretchLastSection(True)
+        chooser = SegmentedControl(card)
+        layout.addWidget(chooser, 0)
         layout.addWidget(table, 1)
+        table.column_groups = _ColumnGroups(table, cols, chooser)  # type: ignore[attr-defined]
 
         row = QWidget(card)
         row_layout = QHBoxLayout(row)

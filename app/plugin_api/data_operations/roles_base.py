@@ -28,6 +28,7 @@ to read.
 """
 from __future__ import annotations
 
+from app.styles.style import field_label
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import replace
 from typing import Any, ClassVar, cast
@@ -229,8 +230,11 @@ class RolesOperationDialogBase(DataOperationDialogBase):
 
     def _remember_fitted(self, result: Any) -> None:
         """The models of what is on screen (a result, or a list of them: one a response): Save as model keeps them."""
+        from app.analysis.models import SavedModel
+
         items = list(result) if isinstance(result, (list, tuple)) else [result]
-        kept = [item.model for item in items if getattr(item, "model", None) is not None]
+        # A SavedModel only: a result's "model" can be something else (Time Series' is the model's name).
+        kept = [item.model for item in items if isinstance(getattr(item, "model", None), SavedModel)]
         for model in kept:
             model.source_table = self.table
         self.fitted_models = kept
@@ -246,7 +250,7 @@ class RolesOperationDialogBase(DataOperationDialogBase):
         from app.analysis import models
 
         for model in getattr(self, "fitted_models", []) or ([self.fitted_model] if self.fitted_model else []):
-            name, accepted = QInputDialog.getText(self, _("Save as model"), _("Model name:"),
+            name, accepted = QInputDialog.getText(self, _("Save as model"), field_label(_("Model name")),
                                                   text=f"{model.response}_{model.KIND}")
             name = name.strip()
             if not accepted or not name:
@@ -352,13 +356,13 @@ class RolesOperationDialogBase(DataOperationDialogBase):
         # Short: the column is narrow, and the label must keep its room.
         self._table_combo.setMinimumContentsLength(3)
         self._table_combo.currentIndexChanged.connect(self._on_table_changed)
-        table_label = self._table_label = QLabel(_("Table:"), self._inputs_panel)
+        table_label = self._table_label = QLabel(field_label(_("Table")), self._inputs_panel)
         table_label.setMinimumWidth(table_label.sizeHint().width())
         table_row.addRow(table_label, self._table_combo)
         if self.MODELS:
             for key in self.MODELS:
                 self.model_combo.addItem(_(key), key)
-            table_row.addRow(QLabel(_("Model:"), self._inputs_panel), self.model_combo)
+            table_row.addRow(QLabel(field_label(_("Model")), self._inputs_panel), self.model_combo)
         self.roles_widget.columns_card_layout.insertLayout(0, table_row)
         # Above it, where the columns come from: a table, or a chart's axis read as one (chart_source).
         self.roles_widget.columns_card_layout.insertLayout(
@@ -411,11 +415,11 @@ class RolesOperationDialogBase(DataOperationDialogBase):
         combo.blockSignals(True)
         combo.clear()
         if self.reads_chart():
-            self._table_label.setText(_("Chart:"))
+            self._table_label.setText(field_label(_("Chart")))
             for label, data in chart_source.chart_axes(self._repo, self.current_figure_id):
                 combo.addItem(label, data)
         else:
-            self._table_label.setText(_("Table:"))
+            self._table_label.setText(field_label(_("Table")))
             names = [str(name) for name in self._repo.list_user_tables()["Table"]]
             combo.addItems(names)
             if preferred and preferred in names:

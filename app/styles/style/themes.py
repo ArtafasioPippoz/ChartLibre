@@ -161,6 +161,10 @@ def apply_platform_style(
         qss_name, palette_key = APP_STYLE_QSS[style_key]
 
     qss, path = _load_qss(qss_name) if qss_name else ("", None)
+    # Labels follow the sheet, not the machine: the Windows 11 look on a Mac writes "Title", not "Title:".
+    from app.styles.style.widgets import set_label_colon
+
+    set_label_colon(str(qss_name).startswith("macos") if qss_name else None)
 
     # No app.setStyle() override here, deliberately: macos_native.qss's own
     # header explains why most standard controls (QMenu, QScrollBar,

@@ -6,6 +6,7 @@ callback, which is debounced by the main window.
 """
 from __future__ import annotations
 
+from app.styles.style import field_label
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -18,7 +19,6 @@ from PySide6.QtWidgets import (
     QDoubleSpinBox,
     QFileDialog,
     QGridLayout,
-    QHBoxLayout,
     QInputDialog,
     QLabel,
     QLineEdit,
@@ -62,7 +62,7 @@ from app.utils.hidpi import apply_configured_dpi
 from app.utils.i18n import _
 from app.widgets.chart_panel import RESIZE_MODE_CHOICES
 from app.widgets.chart_properties.base_properties import BaseProperties
-from PySide6.QtGui import QIcon, QPalette
+from PySide6.QtGui import QPalette
 from app.widgets.inspector import InspectorCard, InspectorForm, drawn_icon
 from app.widgets.font_scale_control import FontScaleControl
 from app.widgets.pair_grid import PairGrid
@@ -461,7 +461,7 @@ class FigurePropertiesWidget(BaseProperties):
 
     def _build_grid_section(self) -> QWidget:
         """The Grid card."""
-        grid_section = InspectorCard(self, _("Grid"), "figureGridCard", collapsible=True)
+        grid_section = InspectorCard(self, _("Grid"), "figureGridCard")
         grid_section_lay = grid_section.card.layout()
 
         self._nrows_combo = QComboBox(grid_section)
@@ -548,7 +548,7 @@ class FigurePropertiesWidget(BaseProperties):
 
     def _build_panel_letters_section(self) -> QWidget:
         """Letters for the panels, for a paper's text to refer to: a card of its own, closed like Grid."""
-        section = InspectorCard(self, _("Panel letters"), "figurePanelLettersCard", collapsible=True, collapsed=True)
+        section = InspectorCard(self, _("Panel letters"), "figurePanelLettersCard", collapsed=True)
         self._panel_labels_combo = QComboBox(section)
         self._configure_combo_width(self._panel_labels_combo, minimum_contents_length=10)
         for value, text in panel_labels.STYLES:
@@ -687,7 +687,7 @@ class FigurePropertiesWidget(BaseProperties):
         controls are disabled rather than silently ignored.
         """
         # Closed: it applies only under the Manual layout, which few figures use.
-        section = InspectorCard(self, _("Manual spacing"), "figureMarginsCard", collapsible=True, collapsed=True)
+        section = InspectorCard(self, _("Manual spacing"), "figureMarginsCard", collapsed=True)
         section_lay = section.card.layout()
 
         # Two fields per row - the natural pairs an edge or a gap already
@@ -1117,7 +1117,7 @@ class FigurePropertiesWidget(BaseProperties):
             return
         if preset == self.SAVE_TEMPLATE:
             self._reset_layout_preset_combo()
-            name, accepted = QInputDialog.getText(self, _("Save as template"), _("Template name:"))
+            name, accepted = QInputDialog.getText(self, _("Save as template"), field_label(_("Template name")))
             if accepted and name.strip():
                 self.template_save_requested.emit(name.strip())
                 self._fill_layout_preset_combo()

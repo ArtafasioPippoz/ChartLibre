@@ -20,7 +20,7 @@ of tabs of framed cards:
 from __future__ import annotations
 
 from PySide6.QtCore import QEvent, QPointF, QRectF, QSize, Qt, Signal
-from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPalette, QPen, QPixmap
+from PySide6.QtGui import QColor, QIcon, QPainter, QPalette, QPen, QPixmap
 from PySide6.QtWidgets import (
     QAbstractButton,
     QButtonGroup,
@@ -331,11 +331,11 @@ class InspectorSection(QWidget):
         self._header.setChecked(is_open)
 
     def _apply(self, is_open: bool) -> None:
-        from app.styles.style.widgets import _chevron_icon
+        from app.styles.style.widgets import chevron_icon
 
         # A thin chevron before the title: right when closed, down when open (as Claude's own sections).
         if getattr(self, "_foldable", True):
-            self._header.setIcon(_chevron_icon(down=is_open, color=self._header.palette().color(
+            self._header.setIcon(chevron_icon(down=is_open, color=self._header.palette().color(
                 QPalette.ColorRole.WindowText)))
         self.body.setVisible(is_open or self._forced_open)
 
@@ -423,30 +423,8 @@ class InspectorCard(InspectorSection):
     open or closed is remembered under "<prefix>.<object name>".
     """
 
-    def __init__(self, parent: QWidget | None, title: str, object_name: str = "", *, collapsible: bool = False,
-                 collapsed: bool = False, prefix: str = "") -> None:
-        prefix = prefix or ("figure" if object_name.startswith("figure") else "section")
-        super().__init__(title, parent, key=f"{prefix}.{object_name or title}", collapsed=collapsed)
-        if object_name:
-            self.setObjectName(object_name)
-        layout = QVBoxLayout(self.body)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(6)
-
-    @property
-    def card(self) -> QWidget:
-        return self.body
-
-
-class InspectorCard(InspectorSection):
-    """What the page's cards were, as an inspector section: a title row over a body, no frame.
-
-    ``card`` is the body, so the builders keep using ``section.card.layout()`` as they did on a TitledCard;
-    open or closed is remembered under "<prefix>.<object name>".
-    """
-
-    def __init__(self, parent: QWidget | None, title: str, object_name: str = "", *, collapsible: bool = False,
-                 collapsed: bool = False, prefix: str = "") -> None:
+    def __init__(self, parent: QWidget | None, title: str, object_name: str = "", *, collapsed: bool = False,
+                 prefix: str = "") -> None:
         prefix = prefix or ("figure" if object_name.startswith("figure") else "section")
         super().__init__(title, parent, key=f"{prefix}.{object_name or title}", collapsed=collapsed)
         if object_name:
