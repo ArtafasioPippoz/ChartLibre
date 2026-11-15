@@ -389,6 +389,11 @@ class ScatterAxisRenderer(BaseAxisRenderer):
         if 'color' not in sd.df.columns:
             return None, False
         color_source = sd.df['color']
+        # A colour column with nothing in it (Outlier "Colour" on a series with no outliers writes none): the
+        # series' own colour. Read as numbers it was all NaN and the points were not drawn at all.
+        kept = color_source[mask].astype(object)
+        if all(pd.isna(value) or not str(value).strip() for value in kept):
+            return None, False
         # A non-numeric colour column (colour names, hex codes - the
         # Pairwise sample demo's own "orange"/"green"/"blue"/"red")
         # holds literal colour specs, not a continuous field: coercing
