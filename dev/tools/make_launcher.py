@@ -30,7 +30,7 @@ sys.path.insert(0, str(PROJECT_DIR))
 from app import APP_ICON, APP_NAME, APP_VERSION
 
 
-def _render_icon_pngs(sizes: list[int]) -> dict[int, bytes]:
+def _render_icon_pngs(sizes: list[int], developer: bool = False) -> dict[int, bytes]:
     """The application icon as PNG bytes at each size, drawn by Qt.
 
     APP_ICON is bare stroke path data, so it is wrapped in the standard SVG
@@ -38,10 +38,13 @@ def _render_icon_pngs(sizes: list[int]) -> dict[int, bytes]:
     the renderer draws nothing. The mark goes in white on a blue rounded
     square laid out on Apple's app-icon grid (an 824 body on a 1024 canvas),
     so it reads in the Dock and the Finder the way other Mac apps do.
+
+    *developer*: ChartLibre Developer's icon - the same mark on a violet square, with a dark "</>" badge at the
+    bottom right, so the two sit apart in the Dock.
     """
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-    from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QRectF, Qt
-    from PySide6.QtGui import QColor, QGuiApplication, QImage, QLinearGradient, QPainter
+    from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QPointF, QRectF, Qt
+    from PySide6.QtGui import QColor, QGuiApplication, QImage, QLinearGradient, QPainter, QPen
     from PySide6.QtSvg import QSvgRenderer
 
     from app.styles.style import svg_icon_document
@@ -60,13 +63,29 @@ def _render_icon_pngs(sizes: list[int]) -> dict[int, bytes]:
         unit = size / 1024
         body = QRectF(100 * unit, 100 * unit, 824 * unit, 824 * unit)
         gradient = QLinearGradient(body.topLeft(), body.bottomLeft())
-        gradient.setColorAt(0.0, QColor("#4C8DF6"))
-        gradient.setColorAt(1.0, QColor("#1F4FD1"))
+        gradient.setColorAt(0.0, QColor("#9B6BF2" if developer else "#4C8DF6"))
+        gradient.setColorAt(1.0, QColor("#5A2DB8" if developer else "#1F4FD1"))
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(gradient)
         painter.drawRoundedRect(body, 185 * unit, 185 * unit)
         inset = 150 * unit
         renderer.render(painter, body.adjusted(inset, inset, -inset, -inset))
+        if developer:
+            badge = QRectF(560 * unit, 560 * unit, 380 * unit, 380 * unit)
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(QColor("#1b1b24"))
+            painter.drawEllipse(badge)
+            pen = QPen(QColor("#ffffff"), 34 * unit)
+            pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+            pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+            painter.setPen(pen)
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            cx, cy = badge.center().x(), badge.center().y()
+            for side in (-1, 1):  # the < and the >
+                tip = cx + side * 120 * unit
+                painter.drawPolyline([QPointF(cx + side * 60 * unit, cy - 70 * unit), QPointF(tip, cy),
+                                      QPointF(cx + side * 60 * unit, cy + 70 * unit)])
+            painter.drawLine(QPointF(cx + 22 * unit, cy - 85 * unit), QPointF(cx - 22 * unit, cy + 85 * unit))
         painter.end()
         buffer = QBuffer()
         buffer.open(QIODevice.OpenModeFlag.WriteOnly)
@@ -377,7 +396,7 @@ def make_developer_macos_app(target_dir: Path) -> Path:
     if shutil.which("iconutil"):
         iconset = target_dir / f"{DEVELOPER_NAME}.iconset"
         iconset.mkdir(exist_ok=True)
-        pngs = _render_icon_pngs([16, 32, 64, 128, 256, 512, 1024])
+        pngs = _render_icon_pngs([16, 32, 64, 128, 256, 512, 1024], developer=True)
         for size in (16, 32, 128, 256, 512):
             (iconset / f"icon_{size}x{size}.png").write_bytes(pngs[size])
             (iconset / f"icon_{size}x{size}@2x.png").write_bytes(pngs[size * 2])
@@ -536,7 +555,7 @@ def make_windows_exe(target_dir: Path, developer: bool = False) -> Path | None:
 
     with tempfile.TemporaryDirectory() as work:
         build = Path(work)
-        pngs = _render_icon_pngs([256])
+        pngs = _render_icon_pngs([256], developer=developer)
         Image.open(BytesIO(pngs[256])).save(
             build / f"{APP_NAME}.ico", sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)]
         )
