@@ -101,3 +101,15 @@ def test_columns_lists_only_the_selected_table(qapp, repo) -> None:
     menu.aboutToShow.emit()
     assert [a.text() for a in menu.actions()] == ["Birds", "Fish"]  # none selected: a sub-menu per table
     helper.deleteLater()
+
+
+def test_the_assistant_functions_menu_lists_the_analyses(qapp, repo) -> None:
+    from app.widgets.assistant_panel import AssistantPanel
+
+    panel = AssistantPanel(None, repo=lambda: repo, current_figure=lambda: None)
+    labels = _labels(panel._helper.functions_button.menu())
+    assert "Are there differences?" in labels and "Partition" in labels
+    action = next(a for a in panel._helper.functions_button.menu().actions() if a.text() == "Partition")
+    action.trigger()
+    assert panel._question.toPlainText() == "Run the analysis Partition on "
+    panel.deleteLater()

@@ -151,6 +151,14 @@ def execute(tools: AssistantTools, form: Mapping[str, Any], level: str) -> tuple
                       "x": x, "roles_text": roles_text}
     elif action == "run_analysis":
         analysis = str(form.get("analysis") or "")
+        if not analysis:
+            # A small model often leaves the analysis empty when it means "a measure by groups" (Fit Y by X):
+            # the columns it filled say which one it is.
+            measure = _one(form.get("measure")) or _one(form.get("y"))
+            groups = _one(form.get("groups")) or _one(form.get("group")) or _one(form.get("x"))
+            if measure and groups:
+                return execute(tools, {**form, "action": "compare_groups", "measure": measure, "groups": groups},
+                               level)
         arguments |= {"analysis": analysis, "roles": _roles(tools, analysis, form)}
     elif action in ("list_charts", "list_analyses"):
         arguments = {}

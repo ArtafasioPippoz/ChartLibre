@@ -148,9 +148,16 @@ def analysis_names() -> list[str]:
     return sorted(catalogue())
 
 
+#: Other names a measure-by-groups comparison goes by (JMP's Fit Y by X, a one-way ANOVA...), as words.
+_ANALYSIS_ALIASES = {"fit y by x": "Are there differences?", "oneway": "Are there differences?",
+                     "one way anova": "Are there differences?", "anova": "Are there differences?",
+                     "compare groups": "Are there differences?"}
+
+
 def find_analysis(name: str) -> tuple[str, Any]:
     """(the analysis' own name, its entry) for a name written loosely, or an AnalysisError that lists the real ones."""
     known = catalogue()
+    name = _ANALYSIS_ALIASES.get(" ".join(re.split(r"[^a-z0-9]+", str(name).lower())).strip(), name)
     found = closest(name, known)
     if found not in known:
         raise AnalysisError(f"No analysis named '{name}'. They are: {', '.join(sorted(known))}.")

@@ -32,6 +32,7 @@ from app.ai.tools import AssistantTools
 from app.styles.style import create_action_button, stdSizeAndlayout
 from app.utils.background import run_in_background
 from app.utils.i18n import _
+from app.logs.logger import applogger
 from app.widgets.insert_helper import InsertHelper
 from app.widgets.nav_bar import NavPanel
 
@@ -208,7 +209,20 @@ class AssistantPanel(NavPanel):
 
     def _available_requests(self) -> list[tuple[str, str, str]]:
         """What the assistant can do, as requests to start from: (shown, written, what it does)."""
-        return [(_(label), _(text), _(tip)) for label, text, tip in _REQUESTS]
+        requests = [(_(label), _(text), _(tip)) for label, text, tip in _REQUESTS]
+        # Then the analyses it may run, each writing the request that names it (a small model cannot guess them).
+        try:
+            from app.analysis_api import analysis_names
+
+            names = analysis_names()
+        except Exception:
+            applogger.exception("Could not list the analyses.")
+            names = []
+        if names:
+            requests.append(("", "", ""))
+            requests += [(_(name), _("Run the analysis {name} on ").format(name=name), _("Run this analysis"))
+                         for name in names]
+        return requests
 
     def _insert(self, text: str) -> None:
         self._question.insertPlainText(text)

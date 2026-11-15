@@ -375,3 +375,10 @@ def test_the_form_mends_a_chart_s_roles(repo) -> None:
     assert action == "create_chart" and not failed and made
     action, text, failed = form.execute(tools, {"action": "answer", "table": "birds"}, settings.READ_ONLY)
     assert not failed and text.startswith("birds:")
+
+
+def test_find_analysis_knows_fit_y_by_x_and_an_empty_analysis_with_groups_compares(qapp) -> None:
+    from app.analysis_api import find_analysis
+
+    assert find_analysis("Fit Y by X")[0] == "Are there differences?"
+    assert find_analysis("one-way ANOVA")[0] == "Are there differences?"
