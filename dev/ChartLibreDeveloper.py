@@ -146,7 +146,7 @@ class DeveloperWindow(QMainWindow):
         log_layout.addWidget(self._log)
         log_page.add_frame("Log", log_box, stretch=1)
 
-        split = QSplitter(Qt.Orientation.Vertical, self)
+        split = QSplitter(Qt.Orientation.Horizontal, self)
         split.addWidget(columns)
         split.addWidget(log_page)
         # The page the app's panels sit on (the toolboxPage rule of each style sheet).
@@ -157,7 +157,7 @@ class DeveloperWindow(QMainWindow):
         split.setStretchFactor(1, 1)
         self.setCentralWidget(split)
         self.resize(1180, 820)
-        split.setSizes([540, 280])  # the page whole, without a scroll bar
+        split.setSizes([680, 500])  # the page whole, without a scroll bar
 
     # ------------------------------------------------------------------
     # The sections
@@ -210,7 +210,7 @@ class DeveloperWindow(QMainWindow):
             NavButton("settings", self._qss_editor, text="Qt style editor",
                       tooltip="Edit one of app/styles/*.qss and try it live on the app's widgets, light or dark.",
                       described=True),
-        ])
+        ], separated=True)
         return page
 
     def _localization_column(self) -> NavPanel:
@@ -219,7 +219,7 @@ class DeveloperWindow(QMainWindow):
         page = NavPanel(self)
         page.add_buttons("Localization", [
             NavButton("edit_localization", lambda: EditLocalizationDialog(self).exec(), described=True),
-        ])
+        ], separated=True)
         # The one secret here: kept in user.json on this computer, sent to nobody but DeepL.
         key = QLineEdit(str(get_value(DEEPL_KEY_SETTING, "") or ""), self)
         key.setEchoMode(QLineEdit.EchoMode.PasswordEchoOnEdit)
@@ -266,7 +266,7 @@ class DeveloperWindow(QMainWindow):
                                                      result=ROOT / "app" / "charts" / "previews"),
                       text="Make chart previews",
                       tooltip="Draw again the example of every chart type that New plot shows.", described=True),
-        ])
+        ], separated=True)
         return page
 
     def _ship_column(self) -> NavPanel:
@@ -283,7 +283,7 @@ class DeveloperWindow(QMainWindow):
                       tooltip="docs/manual/user_manual.typ to PDF with Typst.", described=True),
             NavButton("operation_history", self._developer_manual, text="Developer manual",
                       tooltip="dev/DEVELOPMENT.md: how the code is laid out and how to extend it.", described=True),
-        ])
+        ], separated=True)
         return page
 
     # ------------------------------------------------------------------

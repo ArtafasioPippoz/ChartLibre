@@ -175,16 +175,23 @@ class NavPanel(QWidget):
         *,
         object_name: str | None = None,
         description: str = "",
+        separated: bool = False,
     ) -> CardFrame:
         """Add a frame of action buttons: on one row, or one per row when described.
 
-        *description* is a muted sentence under them all.
+        *description* is a muted sentence under them all; *separated* draws a hairline between the described
+        rows, as the rows of System Settings.
         """
         box = self.add_frame(title, object_name=object_name)
         layout = box.layout()
         assert isinstance(layout, QVBoxLayout)
         row: QHBoxLayout | None = None
-        for button in buttons:
+        for index, button in enumerate(buttons):
+            if separated and button.described and index:
+                line = QFrame(box)
+                line.setFixedHeight(1)
+                line.setStyleSheet("background: rgba(127, 127, 127, 0.28); border: none;")
+                layout.addWidget(line)
             if row is None or button.described:
                 if row is not None:
                     row.addStretch(1)  # the row before, left-aligned too
