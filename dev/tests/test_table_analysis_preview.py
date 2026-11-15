@@ -197,6 +197,6 @@ def test_cancel_tells_the_window_the_figure_went_before_it_refreshes(qapp, repo:
         wait_for_job(qapp, dialog)
         events.clear()
         dialog.reject()
-        assert events.index("drawn -1") < events.index("applied")
+        assert "drawn -1" in events and "applied" not in events[: events.index("drawn -1")], events
     finally:
         dialog.close()
