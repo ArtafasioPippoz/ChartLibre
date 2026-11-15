@@ -273,7 +273,11 @@ exit /b 1
 """)
 
 
-def make_macos_native(target: Path) -> bool:
+DEVELOPER_NAME = "ChartLibre Developer"
+DEVELOPER_SCRIPT = "dev/ChartLibreDeveloper.py"
+
+
+def make_macos_native(target: Path, script: str | None = None) -> bool:
     """Compile dev/tools/launcher/chartlibre_mac_launcher.c into *target*, for Apple Silicon and Intel.
 
     Built with this Mac's SDK, so ChartLibre gets the current look (Liquid Glass): AppKit decides it by the main
@@ -286,8 +290,8 @@ def make_macos_native(target: Path) -> bool:
         return False
     source = Path(__file__).resolve().parent / "launcher" / "chartlibre_mac_launcher.c"
     result = subprocess.run(
-        [clang, "-Os", "-arch", "arm64", "-arch", "x86_64", "-mmacosx-version-min=11.0", "-o", str(target),
-         str(source)],
+        [clang, "-Os", "-arch", "arm64", "-arch", "x86_64", "-mmacosx-version-min=11.0",
+         *([f'-DLAUNCH_SCRIPT="{script}"'] if script else []), "-o", str(target), str(source)],
         capture_output=True, text=True,
     )
     if result.returncode != 0:
@@ -348,6 +352,83 @@ def make_macos_app(target_dir: Path) -> Path:
         encoding="utf-8",
     )
     return app_dir
+
+
+def make_developer_macos_app(target_dir: Path) -> Path:
+    """ChartLibre Developer.app: the native launcher for dev/ChartLibreDeveloper.py, run with the project's .python.
+
+    No installer of its own: the runtime is the one ChartLibre.app set up.
+    """
+    app_dir = target_dir / f"{DEVELOPER_NAME}.app"
+    if app_dir.exists():
+        shutil.rmtree(app_dir)
+    macos = app_dir / "Contents" / "MacOS"
+    resources = app_dir / "Contents" / "Resources"
+    macos.mkdir(parents=True)
+    resources.mkdir(parents=True)
+    # The executable is the native launcher itself, with the Developer's script compiled in; it expects the app
+    # at <folder>/<name>.app, as ChartLibre.app does. Without clang a small script starts python3 the same way.
+    executable = macos / DEVELOPER_NAME
+    if not make_macos_native(executable, DEVELOPER_SCRIPT):
+        executable.write_text(
+            '#!/bin/bash\nHERE="$(cd "$(dirname "$0")/../../.." && pwd)"\n'
+            f'exec "$HERE/.python/bin/python3" "$HERE/{DEVELOPER_SCRIPT}" "$@"\n', encoding="utf-8")
+    executable.chmod(0o755)
+    if shutil.which("iconutil"):
+        iconset = target_dir / f"{DEVELOPER_NAME}.iconset"
+        iconset.mkdir(exist_ok=True)
+        pngs = _render_icon_pngs([16, 32, 64, 128, 256, 512, 1024])
+        for size in (16, 32, 128, 256, 512):
+            (iconset / f"icon_{size}x{size}.png").write_bytes(pngs[size])
+            (iconset / f"icon_{size}x{size}@2x.png").write_bytes(pngs[size * 2])
+        subprocess.run(["iconutil", "-c", "icns", str(iconset), "-o", str(resources / f"{DEVELOPER_NAME}.icns")],
+                       check=True)
+        shutil.rmtree(iconset)
+    (app_dir / "Contents" / "Info.plist").write_text(
+        f"""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleName</key><string>{DEVELOPER_NAME}</string>
+  <key>CFBundleDisplayName</key><string>{DEVELOPER_NAME}</string>
+  <key>CFBundleIdentifier</key><string>org.chartlibre.developer</string>
+  <key>CFBundleVersion</key><string>{APP_VERSION}</string>
+  <key>CFBundleShortVersionString</key><string>{APP_VERSION}</string>
+  <key>CFBundleExecutable</key><string>{DEVELOPER_NAME}</string>
+  <key>CFBundleIconFile</key><string>{DEVELOPER_NAME}</string>
+  <key>CFBundlePackageType</key><string>APPL</string>
+  <key>LSMinimumSystemVersion</key><string>12.0</string>
+  <key>NSHighResolutionCapable</key><true/>
+</dict>
+</plist>
+""",
+        encoding="utf-8",
+    )
+    return app_dir
+
+
+#: The Windows launcher of ChartLibre Developer: the project's Python, no installer.
+DEVELOPER_WINDOWS_SCRIPT = r"""@echo off
+rem ChartLibre Developer launcher (dev/tools/make_launcher.py).
+cd /d "%~dp0"
+if exist ".python\pythonw.exe" (
+  start "" ".python\pythonw.exe" "dev\ChartLibreDeveloper.py" %*
+  exit /b 0
+)
+if exist ".venv\Scripts\pythonw.exe" (
+  start "" ".venv\Scripts\pythonw.exe" "dev\ChartLibreDeveloper.py" %*
+  exit /b 0
+)
+echo ChartLibre Developer uses the Python that ChartLibre installs in its folder.
+echo Open ChartLibre once (ChartLibre.bat), then open ChartLibre Developer again.
+pause
+"""
+
+
+def make_developer_windows_launcher(target_dir: Path) -> Path:
+    launcher = target_dir / f"{DEVELOPER_NAME}.bat"
+    launcher.write_bytes(DEVELOPER_WINDOWS_SCRIPT.replace("\n", "\r\n").encode("utf-8"))
+    return launcher
 
 
 def make_windows_launcher(target_dir: Path) -> Path:
@@ -437,7 +518,7 @@ def make_linux_launcher(target_dir: Path) -> Path:
     return launcher
 
 
-def make_windows_exe(target_dir: Path) -> Path | None:
+def make_windows_exe(target_dir: Path, developer: bool = False) -> Path | None:
     """ChartLibre.exe: the .bat's job without a console window after setup.
 
     Built with Zig, which cross-compiles for Windows from any system:
@@ -461,10 +542,11 @@ def make_windows_exe(target_dir: Path) -> Path | None:
         )
         for name in ("chartlibre_launcher.c", "chartlibre_launcher.rc"):
             shutil.copy(LAUNCHER_SOURCE / name, build / name)
-        exe = target_dir / f"{APP_NAME}.exe"
+        exe = target_dir / f"{DEVELOPER_NAME if developer else APP_NAME}.exe"
         subprocess.run(
             [
                 zig, "cc", "-target", "x86_64-windows-gnu", "-Os", "-s", "-municode", "-Wl,--subsystem,windows",
+                *(["-DDEVELOPER_LAUNCHER"] if developer else []),
                 "chartlibre_launcher.c", "chartlibre_launcher.rc", "-o", str(exe),
             ],
             cwd=build,
@@ -486,6 +568,11 @@ def main() -> None:
     exe = make_windows_exe(target_dir)
     if exe is not None:
         print(exe)
+    print(make_developer_macos_app(target_dir))
+    print(make_developer_windows_launcher(target_dir))
+    developer_exe = make_windows_exe(target_dir, developer=True)
+    if developer_exe is not None:
+        print(developer_exe)
 
 
 if __name__ == "__main__":

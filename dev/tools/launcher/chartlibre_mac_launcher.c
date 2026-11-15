@@ -19,6 +19,12 @@
 #include <string.h>
 #include <unistd.h>
 
+/* The script it runs, relative to the ChartLibre folder: ChartLibre.py, or - built with
+ * -DLAUNCH_SCRIPT='"dev/ChartLibreDeveloper.py"' - ChartLibre Developer's. */
+#ifndef LAUNCH_SCRIPT
+#define LAUNCH_SCRIPT "ChartLibre.py"
+#endif
+
 typedef int (*py_main_t)(int, char **);
 
 /* *path* without its last *levels* components. */
@@ -34,10 +40,10 @@ int main(int argc, char **argv) {
     char exe[PATH_MAX], root[PATH_MAX], runtime[PATH_MAX], python[PATH_MAX], script[PATH_MAX], pattern[PATH_MAX];
     uint32_t size = sizeof exe;
     if (_NSGetExecutablePath(exe, &size) != 0 || realpath(exe, root) == NULL) return 1;
-    up(root, 4); /* ChartLibre/ChartLibre.app/Contents/MacOS/ChartLibreNative -> ChartLibre */
+    up(root, 4); /* ChartLibre/<name>.app/Contents/MacOS/ChartLibreNative -> ChartLibre */
     snprintf(runtime, sizeof runtime, "%s/.python", root);
     snprintf(python, sizeof python, "%s/bin/python3", runtime);
-    snprintf(script, sizeof script, "%s/ChartLibre.py", root);
+    snprintf(script, sizeof script, "%s/" LAUNCH_SCRIPT, root);
 
     char **args = calloc((size_t)argc + 2, sizeof *args);
     if (args == NULL) return 1;

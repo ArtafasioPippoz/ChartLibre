@@ -24,8 +24,18 @@
 
 #define BUF 4096
 
+/* Built as ChartLibre Developer's launcher (-DDEVELOPER_LAUNCHER): the same job for dev\ChartLibreDeveloper.py, with
+ * no installer of its own - it uses the Python ChartLibre installed in .python, and says so when there is none. */
+#ifdef DEVELOPER_LAUNCHER
+#define TITLE L"ChartLibre Developer"
+#define SCRIPT_PATH L"\\dev\\ChartLibreDeveloper.py"
+#else
+#define TITLE L"ChartLibre"
+#define SCRIPT_PATH L"\\ChartLibre.py"
+#endif
+
 static void fail(const wchar_t *what) {
-    MessageBoxW(NULL, what, L"ChartLibre", MB_OK | MB_ICONERROR);
+    MessageBoxW(NULL, what, TITLE, MB_OK | MB_ICONERROR);
 }
 
 static int exists(const wchar_t *path) {
@@ -81,7 +91,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous, PWSTR arguments, int
     if (!join(ready, BUF, folder, L"\\.python\\CHARTLIBRE_READY", NULL, NULL, NULL)
         || !join(runtime, BUF, folder, L"\\.python\\pythonw.exe", NULL, NULL, NULL)
         || !join(pythonw, BUF, folder, L"\\.venv\\Scripts\\pythonw.exe", NULL, NULL, NULL)
-        || !join(script, BUF, folder, L"\\ChartLibre.py", NULL, NULL, NULL)
+        || !join(script, BUF, folder, SCRIPT_PATH, NULL, NULL, NULL)
         || !join(batch, BUF, folder, L"\\ChartLibre.bat", NULL, NULL, NULL)) {
         fail(L"The ChartLibre folder's path is too long.");
         return 1;
@@ -107,6 +117,11 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous, PWSTR arguments, int
         return 0;
     }
 
+#ifdef DEVELOPER_LAUNCHER
+    fail(L"ChartLibre Developer uses the Python that ChartLibre installs in its folder (.python).\n\n"
+         L"Open ChartLibre once (ChartLibre.exe), then open ChartLibre Developer again.");
+    return 1;
+#endif
     if (!exists(batch)) {
         fail(L"ChartLibre.bat is missing from the ChartLibre folder.");
         return 1;
