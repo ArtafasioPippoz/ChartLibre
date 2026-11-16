@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from app.utils import packs
 from app.scanners.class_discovery import (
     discover_classes_merged,
     import_class_from_discovery_entry,
@@ -43,11 +44,20 @@ class PluginFamily:
     value_attr: str = "Name"
     #: A plugin without a Name is listed under its class name, unless this is set.
     require_name: bool = False
+    #: The folder of an extension pack (app.utils.packs) that holds this family's plugins; "" for none.
+    pack_folder: str = ""
 
     def discover(self) -> list[dict[str, Any]]:
-        """Every plugin found, built-in first; an error is logged when there is none."""
-        return discover_classes_merged(
-            roots=tuple(root for root in (self.builtin_root, self.user_root) if root is not None),
+        """Every plugin found: built-in, then the enabled packs', then the user's; an error is logged when there is none.
+
+        An entry from a pack names it under "pack".
+        """
+        pack_roots = packs.roots(self.pack_folder) if self.pack_folder else []
+        entries = discover_classes_merged(
+            roots=tuple(
+                root for root in (self.builtin_root, *(root for root, _ in pack_roots), self.user_root)
+                if root is not None
+            ),
             base_class_name=self.base_class,
             value_attr=self.value_attr,
             string_attrs=self.string_attrs,
@@ -57,6 +67,11 @@ class PluginFamily:
             require_value_attr=self.require_name,
             family=self.label,
         )
+        for entry in entries:
+            for root, pack_id in pack_roots:
+                if Path(entry["path"]).is_relative_to(root):
+                    entry["pack"] = pack_id
+        return entries
 
     def load(self, entry: dict[str, Any]):
         """The plugin class a discovery entry describes, imported from its file."""

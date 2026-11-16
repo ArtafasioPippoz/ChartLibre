@@ -19,6 +19,7 @@ FAMILY = PluginFamily(
     base_class="FileImporter",
     builtin_root=Path(__file__).resolve().parent.parent / "importers",
     user_root=USER_IMPORTERS_DIR,
+    pack_folder="importers",
     module_prefix="_dynamic_importer",
     string_attrs=("Description", "Category"),
     string_list_attrs=("Suffixes", "Packages"),

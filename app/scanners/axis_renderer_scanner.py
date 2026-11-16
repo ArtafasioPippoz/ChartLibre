@@ -33,6 +33,7 @@ FAMILY = PluginFamily(
     base_class="BaseAxisRenderer",
     builtin_root=Path(__file__).resolve().parent.parent / "charts",
     user_root=USER_CHARTS_DIR,
+    pack_folder="charts",
     module_prefix="_dynamic_axis_renderer",
     string_attrs=("Category", "Description", "Keywords", "Projection"),
     string_list_attrs=("RequiredRoles", "OptionalRoles", "Goals"),

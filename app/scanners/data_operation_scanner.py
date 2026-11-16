@@ -27,6 +27,7 @@ FAMILY = PluginFamily(
     base_class=("DataOperationDialogBase", *ROLES_BASES),
     builtin_root=Path(__file__).resolve().parent.parent / "data_operations",
     user_root=USER_DATA_OPERATIONS_DIR,
+    pack_folder="data_operations",
     module_prefix="_dynamic_data_operation",
     # Icon is the SVG source itself, read as a literal like any other string
     # attribute: nothing here has to know it is markup (the widget hands it to

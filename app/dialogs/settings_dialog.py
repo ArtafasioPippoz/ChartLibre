@@ -292,6 +292,13 @@ class SettingsDialog(PanelDialog):
 
         self._build_assistant_section(card, forms)
 
+        # Extension packs (app.utils.packs): more analyses, chart types and file readers, each on or off.
+        from app.widgets.packs_panel import PacksPanel
+
+        form = self._section(tr("Packages"), forms)
+        self._packs_panel = PacksPanel(card)
+        form.addRow(self._packs_panel)
+
         # What most people never change, closed - unless the SQL guard is off, the one thing in it that is
         # not as it came and matters (todo H-10). Developer mode alone does not open it: the Developer menu
         # says it, and opened it made the window taller than a laptop's screen.
@@ -356,6 +363,7 @@ class SettingsDialog(PanelDialog):
         "Charts": ("chart_from_columns", "#22a06b", "How new charts look and how they are exported."),
         "Reports": ("project_report", "#e8860c", "What every analysis report adds to its results."),
         "Assistant": ("nav_assistant", "#8b5cf6", "The AI assistant: its provider, its key and what it may do."),
+        "Packages": ("packs", "#c2410c", "Extension packs: more analyses, chart types and file readers."),
         "Advanced": ("settings", "#8a8f98", "The SQL guard, the SymPy workpad's filter and the database."),
         "Log": ("log_viewer", "#6b7280", "The application log: read it, copy it or empty it."),
     }
@@ -679,6 +687,7 @@ class SettingsDialog(PanelDialog):
         set_value(recent_analyses.COUNT_KEY, int(self._recent_count.value()))
         set_value(CLEAR_LOG_KEY, bool(self._clear_log_check.isChecked()))
         self._save_assistant()
+        self._packs_panel.save()
 
         applogger.info(
             "Settings saved: style=%s language=%s format=%s",

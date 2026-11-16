@@ -20,6 +20,7 @@ FAMILY = PluginFamily(
     base_class="AIProvider",
     builtin_root=Path(__file__).resolve().parent.parent / "ai_providers",
     user_root=USER_AI_PROVIDERS_DIR,
+    pack_folder="ai_providers",
     module_prefix="_dynamic_ai_provider",
     string_attrs=("Description",),
 )

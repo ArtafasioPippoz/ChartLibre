@@ -195,6 +195,7 @@ class FunctionScanner:
             base_class=self.BASE_CLASS_NAME,
             builtin_root=self.root,
             user_root=self.extra_roots[0] if self.extra_roots else None,
+            pack_folder="functions" if self.extra_roots == (USER_FUNCTIONS_DIR,) else "",
             module_prefix="_fit_function",
             string_attrs=("category", "description", "expression", "keywords"),
             string_list_attrs=("params", "goals"),

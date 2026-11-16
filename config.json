@@ -326,6 +326,13 @@
       "SegoeFluent": "EA80",
       "ThemeIcon": "dialog-information"
     },
+    "packs": {
+      "text": "Packages",
+      "description": "Extension packs: more analyses, chart types and file readers, switched on or off",
+      "SFSymbol": "shippingbox",
+      "SegoeFluent": "E7B8",
+      "ThemeIcon": "folder-open"
+    },
     "nav_assistant": {
       "text": "Assistant",
       "description": "Ask an AI about the project's data - and, as Settings allow, have it run analyses or change the data",
@@ -1386,6 +1393,21 @@
       "level": "question",
       "title": "Trust model",
       "text": "\u201c{name}\u201d is a pickled model ({kind}) that was not made on this computer. Running it runs the code inside it.\n\nTrust it only if you know where it comes from. Trust it?"
+    },
+    "pack.trust": {
+      "level": "question",
+      "title": "Trust pack",
+      "text": "\u201c{name}\u201d (from: {author}) did not come with ChartLibre. A pack is Python code that runs with your rights on this computer.\n\nSwitch it on only if you know where it comes from. Trust it?"
+    },
+    "pack.confirm_remove": {
+      "level": "question",
+      "title": "Remove pack",
+      "text": "Remove the pack \u201c{name}\u201d? Its file is deleted. Projects that use what it adds will ask for it."
+    },
+    "pack.not_added": {
+      "level": "warning",
+      "title": "Add a pack",
+      "text": "\u201c{name}\u201d was not added.\n\n{why}"
     },
     "project.save_untitled": {
       "level": "question",

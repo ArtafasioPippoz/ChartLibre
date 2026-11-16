@@ -1,0 +1,174 @@
+EXTENSION PACKS (.clpack) - PLAN
+Written 2026-11-16. Status: steps 1 and 2 done (app/utils/packs.py, PluginFamily.pack_folder, app/widgets/packs_panel.py in Settings > Packages; tests test_packs.py, test_packs_panel.py); Install the libraries and steps 3-6 to do. No ID in todo.txt yet (next free: ID50).
+
+======================================================================
+1. WHAT IT IS
+======================================================================
+A pack is one file that adds a set of plugins to ChartLibre: advanced analyses, readers for instruments'
+files, semiconductor analyses and so on. It is a .zip renamed .clpack. Packs that ship with the application are
+in app/packages/; in Preferences > Packages each is switched on or off.
+
+Most of the mechanism exists. Charts, data operations, importers, fit functions and assistant providers are
+each a PluginFamily (app/scanners/plugin_family.py): classes found by an AST scan of a built-in folder and a
+user folder, imported only when opened. discover_classes_merged already takes any number of roots. A pack is
+therefore "more roots, behind a switch" - no new kind of plugin.
+
+======================================================================
+2. THE FILE
+======================================================================
+    semiconductors.clpack            (a zip)
+        pack.json                    the manifest, read without unpacking anything else
+        data_operations/*.py         one folder per family, same names as under app/ :
+        importers/*.py               charts, data_operations, importers, functions, ai_providers
+        charts/*.py
+        functions/*.py
+        lib/<pack id>/*.py           the pack's own helper modules (imported as <pack id>.x)
+        locales/<lang>/pack.po       its strings (optional)
+        demo/                        sample files and projects (optional), listed with the demos
+        docs/pack.md                 its manual page (optional)
+
+    pack.json
+        "id": "semiconductors"       letters, digits, underscore; also the name of lib/<id>
+        "name": "Semiconductor analysis"
+        "version": "1.0.0"
+        "description": "..."          one or two lines, shown in Preferences
+        "author": "..."
+        "needs_app": "1.4"           the oldest ChartLibre it runs on
+        "packages": ["scikit-rf"]    pip names it needs beyond requirements.txt
+        "default": true              on at first sight (packs shipped in app/packages only)
+
+======================================================================
+3. HOW IT IS LOADED
+======================================================================
+ - app/utils/packs.py (new): find the .clpack files, read each manifest, say which are enabled, unpack them,
+   hand each family its extra roots.
+ - Unpacked, not read from inside the zip: the AST scan, the tracebacks, the builders and "open the folder"
+   all work on plain files. An enabled pack is unpacked once into user/packages/unpacked/<id>-<fingerprint>/;
+   the fingerprint (SHA-256 of the file) in the name makes a changed pack unpack again and an unchanged one
+   cost nothing at start. Old folders of the same id are removed.
+ - Each scanner's FAMILY gets the enabled packs' folders as roots after the built-in one and before the
+   user's: PluginFamily.user_root becomes extra roots (packs.roots("importers") + the user folder). Each
+   discovery entry records its pack ("pack": id), so the lists can say where a plugin comes from.
+ - lib/<id> goes on sys.path through its parent folder: a pack's plugins write "from semiconductors import x".
+ - The families are scanned once at start, so a switch in Preferences applies at the next start (the note
+   under the list says so, as for the style). A live reload can come later; it is not needed for the purpose.
+ - A pack that fails (bad zip, bad manifest, needs a newer app) is listed with its error and left off. It
+   never stops the application - the rule every family already follows for one plugin.
+
+======================================================================
+4. PREFERENCES > PACKAGES
+======================================================================
+One list, a row per pack: check box, name, version, description; under it in grey what it adds ("6 analyses,
+3 file readers") and what is wrong, if anything ("needs scikit-rf", "needs ChartLibre 1.5").
+Buttons: Add from a file... (copies a .clpack into user/packages/), Remove (user packs only), Install the
+libraries (the pack's pip names, through the installer the app already has), Open folder.
+State in user.json: "packs": {"semiconductors": true, ...}. The dialog fits 1280x720: the list scrolls.
+
+Where a plugin from a pack shows: in its family's own lists, by its Category, like a built-in one. No separate
+menu - a pack adds to the application, it is not an application beside it.
+
+======================================================================
+5. WHEN A PACK IS OFF AND A PROJECT NEEDS IT
+======================================================================
+A project keeps a chart type or an analysis by name. Opened without the pack, today it would say the type is
+unknown. packs.py keeps an index of every pack's plugin names (from the manifests' scan, enabled or not), so
+the message can be: "This chart needs the pack Semiconductor analysis. Switch it on in Preferences > Packages."
+The project is not changed and nothing is lost; it draws again when the pack is on.
+
+======================================================================
+6. SAFETY
+======================================================================
+ - A pack is Python run with the user's rights, like every plugin and like a pickled model. Packs in
+   app/packages came with the application and are trusted. A pack added from a file is asked about once
+   ("pack.trust": who it says it is from, what it adds), its fingerprint kept in user.json "trusted_packs" -
+   the same scheme as trusted_models and trusted_functions. A changed file asks again.
+ - Unpacking refuses a member that would land outside its folder (absolute path, "..", link) and a pack
+   over a size limit. Nothing is downloaded, nothing updates itself.
+
+======================================================================
+7. DECISIONS FOR THE OWNER (proposed answer in [ ])
+======================================================================
+ Q1  .7z as well as .zip? [Zip only. Python reads zip by itself; 7z needs one more library (py7zr) in every
+     installation, for files of a few hundred KB of text where the gain is nothing.]
+ Q2  Where do packs live? [Two places: app/packages/ for those that ship with ChartLibre, user/packages/ for
+     those the user adds - an update of the application replaces app/ and would delete the user's.]
+ Q3  A switch applies at the next start? [Yes, for now.]
+ Q4  Move built-in plugins into packs, so that the basic application is lighter? [Yes, in step 5, a few at a
+     time, all on by default: what the user sees does not change, the user who never touches a wafer can switch it off.]
+ Q5  May a pack replace a built-in plugin of the same name? [No: built-in wins, the clash is logged. The user's
+     own folder still wins over a pack for importers, as today.]
+ Q6  Pack-level licence or paid packs? [Out of scope.]
+
+======================================================================
+8. FIRST PACKS (Q4)
+======================================================================
+Decided 2026-11-16 (owner): the optional libraries are a pack's, not the application's. pyarrow, pyreadstat,
+scikit-rf, netCDF4 and npTDMS stay installed on this machine, but every reader that needs one lives in a pack
+that names it in pack.json "packages"; requirements.txt keeps only what the basic application needs.
+HDF5 (h5py) later: not installed, no reader now; MATLAB v7.3 goes on saying it needs h5py.
+
+ Library      Reader                               Today                                   Pack
+ pyarrow      Parquet, Feather / Arrow             app/importers/columnar.py (2 classes)   data_formats
+ pyreadstat   SPSS .sav/.zsav                      app/importers/statistics.py             statistics_files
+ scikit-rf    Touchstone .sNp                      app/importers/electronics.py (own       instruments
+                                                   parser; scikit-rf named in base.py)
+ netCDF4      NetCDF .nc                           TO WRITE                                data_formats
+ npTDMS       LabVIEW / NI .tdms                   TO WRITE                                instruments
+
+ Pack               Analyses and readers                                Chart types
+ data_formats       Parquet, Feather/Arrow, NetCDF (new); HDF5 here      -
+                    when h5py comes
+ instruments        Touchstone, SPICE raw, VCD, TDMS (new), LabVIEW      -
+                    .lvm, JCAMP-DX
+ statistics_files   SPSS, R (pyreadr), Stata, SAS, closed formats        -
+                    (JMP, Minitab, Origin)
+ semiconductors     Wafer Map; later: B1500/4200A readers, Vth/gm        wafer_map
+                    extraction, C-V, Weibull/TDDB, yield, bin maps
+ signal             Peaks, Baseline, Spectral, Decomposition, Roots      spectrogram
+ multivariate       Principal Components, Factor Analysis, Cluster,      dendrogram, parallel_plot, pair_plot
+                    Discriminant, Partial Least Squares, Multivariate
+ modelling          Gaussian process regression, Partition, Time Series  survival, forest
+ quality            Control Chart, Gage R&R, Method Comparison           pareto, fishbone, multi_vari, bullet
+ charts_3d          Vector Field                                         bar3d, surface, quiver3d, triangulation
+ charts_more        -                                                    sankey, treemap, ternary, wind_rose,
+                                                                         radar, ridgeline, mosaic, calendar_heatmap,
+                                                                         cell_plot, dumbbell, slope, waterfall,
+                                                                         timeline, broken_bar, joint, hexbin
+
+Staying built in. Analyses: Distribution, Fit Y by X, Fit Model, Fit curve, Regression, Statistics, Smoothing,
+Filter, Transform, Interpolate, Calculus, Outlier, Function, Geometry, and the five Quick answers. Charts:
+scatter, bar, area, histogram, box, violin, strip, pie, heatmap, contour, hist2d, ecdf, probability,
+time_series, eventplot, lollipop, interaction, vector_field, text, table, image_plot. Readers: CSV, Excel
+(.xlsx, .xls, .xlsb), .ods, MATLAB, WAV, GPX, Prism.
+
+Rule for each move (checked by grep before the commit, kept by a test after it): nothing built in may need a
+pack. A chart type that a built-in analysis draws stays built in or the analysis moves with it (Pareto is
+drawn by "What has the most impact?"; "Is it in control?" may use Control Chart's code: either the quick
+answer keeps what it needs, or the chart stays). A pack may need only the application, never another pack.
+The demo projects and the tests run with every default pack on.
+
+Consequences:
+ - requirements.txt loses pyreadstat and pyreadr (and the pyarrow note); each pack's manifest carries them.
+   install.py and the ready-made application install the libraries of the packs that are on by default, so
+   a fresh installation reads the same files as today.
+ - A pack whose library is missing is listed as "needs npTDMS" with Install the libraries; its readers still
+   show in the Import dialog and say the same when used (FileImporter.require, as today).
+ - A file whose suffix belongs to a pack that is off: the Import dialog says which pack reads it (the
+   index of section 5 holds the suffixes too).
+
+======================================================================
+9. STEPS (each a commit, each with its tests)
+======================================================================
+ 1. packs.py: manifest, find, enable state, safe unpack, roots; PluginFamily takes several extra roots;
+    entries carry "pack". Tests: a pack built in tmp is found, unpacked once, its importer and its operation
+    are discovered; off = not discovered; a bad zip, a path outside the folder and a too-new needs_app are refused
+    and listed with the error.
+ 2. Preferences > Packages: the list, on/off, the restart note, Add from a file, Remove, trust question.
+    Tests: the page fits 1280x720; a switch is written to (a private) user.json; an untrusted pack asks once.
+ 3. Missing pack message when a project needs one (5); missing libraries and Install the libraries.
+ 4. dev/tools/make_pack.py: a folder -> .clpack, checking the manifest and that every plugin scans; in
+    Developer mode "Build a pack". Pack strings (locales/), demo/ and docs/ joined to the application's.
+ 5. The first packs of section 8, one per commit, on by default; the size line in todo.txt follows.
+ 6. DEVELOPMENT.md "Writing a pack" and the manual's chapter (with ID49).
+
+Effort: steps 1-3 are the feature (small: the scan is there); 4 makes it usable by others; 5 is moving files.
