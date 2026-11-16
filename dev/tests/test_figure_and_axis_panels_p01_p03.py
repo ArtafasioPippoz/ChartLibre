@@ -12,14 +12,15 @@ from app.widgets.chart_properties.axis_properties import AxisPropertiesWidget
 from app.widgets.chart_properties.figure_properties import FigurePropertiesWidget
 
 
-def test_view_comes_before_style_and_the_grid_folds(qapp) -> None:
+def test_size_comes_before_style_and_layout_folds(qapp) -> None:
     panel = FigurePropertiesWidget(None)
     titles = [section.title().lower() for section in panel.findChildren(InspectorSection)]
-    assert titles.index("view") < titles.index("style")
+    assert titles.index("size") < titles.index("style") < titles.index("layout")
+    assert "view" not in titles and "panel letters" not in titles
     assert not hasattr(panel, "_btn_default")
-    grid = next(section for section in panel.findChildren(InspectorSection) if section.title().lower() == "grid")
+    grid = next(section for section in panel.findChildren(InspectorSection) if section.title().lower() == "layout")
     grid.set_open(False)
-    assert not grid.is_open()  # the Grid section folds
+    assert not grid.is_open()  # the Layout section folds
     grid.set_open(True)  # user.json is the real one: leave it as it was
 
 

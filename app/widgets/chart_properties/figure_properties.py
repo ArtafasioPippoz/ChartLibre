@@ -342,11 +342,9 @@ class FigurePropertiesWidget(BaseProperties):
         lay.setSpacing(0)
 
         lay.addWidget(self._build_name_section())
-        lay.addWidget(self._build_view_section())
+        lay.addWidget(self._build_options_section())  # "Size": how it is shown, and how big it is
         lay.addWidget(self._build_style_section())
-        lay.addWidget(self._build_options_section())
-        lay.addWidget(self._build_grid_section())
-        lay.addWidget(self._build_panel_letters_section())
+        lay.addWidget(self._build_grid_section())  # "Layout": the grid and the panel letters
 
         lay.addWidget(self._build_margins_section())
         lay.addStretch(1)
@@ -385,11 +383,8 @@ class FigurePropertiesWidget(BaseProperties):
         self._note_edit.textChanged.connect(self._note_timer.start)
         return name_section
 
-    def _build_view_section(self) -> QWidget:
-        """The View card."""
-        # How the panel shows this figure: the first thing to change when a
-        # chart does not fit, so on its own above the style.
-        view_section = InspectorCard(self, _("View"), "figureViewCard")
+    def _build_view_combo(self, view_section: QWidget) -> None:
+        """How the panel shows this figure: the first row of Size, the first thing to change when a chart does not fit."""
         self._resize_mode_combo = QComboBox(view_section)
         self._configure_combo_width(self._resize_mode_combo, minimum_contents_length=14)
         for value, label, tooltip in RESIZE_MODE_CHOICES:
@@ -402,8 +397,6 @@ class FigurePropertiesWidget(BaseProperties):
         self._resize_mode_combo.currentIndexChanged.connect(
             self._on_resize_mode_selected
         )
-        view_section.card.layout().addWidget(self._resize_mode_combo)
-        return view_section
 
     def _build_style_section(self) -> QWidget:
         """The Style card."""
@@ -461,7 +454,7 @@ class FigurePropertiesWidget(BaseProperties):
 
     def _build_grid_section(self) -> QWidget:
         """The Grid card."""
-        grid_section = InspectorCard(self, _("Grid"), "figureGridCard")
+        grid_section = InspectorCard(self, _("Layout"), "figureGridCard")
         grid_section_lay = grid_section.card.layout()
 
         self._nrows_combo = QComboBox(grid_section)
@@ -542,13 +535,14 @@ class FigurePropertiesWidget(BaseProperties):
         )
         self._mosaic_edit.returnPressed.connect(self._on_mosaic_entered)
         form.add_row(_("Mosaic"), self._mosaic_edit)
+        self._build_panel_letters_section(grid_section, form)
         grid_section_lay.addWidget(form)
 
         return grid_section
 
-    def _build_panel_letters_section(self) -> QWidget:
-        """Letters for the panels, for a paper's text to refer to: a card of its own, closed like Grid."""
-        section = InspectorCard(self, _("Panel letters"), "figurePanelLettersCard", collapsed=True)
+    def _build_panel_letters_section(self, grid_section: QWidget, form: InspectorForm) -> None:
+        """Letters for the panels, for a paper's text to refer to: two rows of the Layout card."""
+        section = grid_section
         self._panel_labels_combo = QComboBox(section)
         self._configure_combo_width(self._panel_labels_combo, minimum_contents_length=10)
         for value, text in panel_labels.STYLES:
@@ -558,20 +552,12 @@ class FigurePropertiesWidget(BaseProperties):
         self._configure_combo_width(self._panel_position_combo, minimum_contents_length=10)
         for value, text in panel_labels.POSITIONS:
             self._panel_position_combo.addItem(_(text), value)
-        section.card.layout().addWidget(
-            PairGrid(
-                [
-                    (QLabel(_("Letters"), section), self._panel_labels_combo),
-                    (QLabel(_("Position"), section), self._panel_position_combo),
-                ],
-                section,
-            )
-        )
-        return section
+        form.add_row(_("Letters"), self._panel_labels_combo, self._panel_labels_combo.toolTip())
+        form.add_row(_("Position"), self._panel_position_combo)
 
     def _build_options_section(self) -> QWidget:
         """The Figure options card."""
-        opts_section = InspectorCard(self, _("Options"), "figureOptionsCard")
+        opts_section = InspectorCard(self, _("Size"), "figureOptionsCard")
         opts_section_lay = opts_section.card.layout()
 
         self._fig_dpi = QSpinBox(opts_section)
@@ -659,8 +645,10 @@ class FigurePropertiesWidget(BaseProperties):
 
         # One setting a row, its label on the left: a pair of fields a row cut the labels and put the
         # Border box under its word; every row now reads as label and control on one line.
+        self._build_view_combo(opts_section)
         form = InspectorForm(opts_section)
         for text, field in (
+            (_("View"), self._resize_mode_combo),
             (_("DPI"), self._fig_dpi),
             (_("Font size"), self._font_scale),
             (_("Width"), self._fig_width_cm),
