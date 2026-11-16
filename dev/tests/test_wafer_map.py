@@ -134,3 +134,32 @@ def test_a_thinned_series_is_said_in_the_log(repo: SqliteRepo, monkeypatch) -> N
     frame = rf._load_series_df(repo=repo, series_desc=series, downsample_threshold=1000)
     assert len(frame) == 1000 and said == ["Series 'long': 5000 rows, about 1000 drawn (one in 5). Raise the "
                                            "figure's downsample threshold (0: none) to draw them all."]
+
+
+def test_two_wafers_share_one_figure(qapp, repo: SqliteRepo) -> None:
+    from app.data_operations.wafer_map_dialog import WaferMapDialog
+
+    rng = np.random.default_rng(2)
+    r, t = np.sqrt(rng.uniform(0, 1, 49)) * 140, rng.uniform(0, 2 * np.pi, 49)
+    x, y = r * np.cos(t), r * np.sin(t)
+    repo.import_dataframe(pd.DataFrame({"x": x, "y": y, "a": 100 + 0.0004 * (x ** 2 + y ** 2), "b": 99 + 0.0003 * y ** 2}),
+                          table_name="sites", normalize_columns=False)
+    figure_id = int(repo.create_figure_descriptor(name="Sites"))
+    axis_id = int(repo.create_axis_descriptor(figure_id=figure_id, axis_index=0, chart_type="Scatter Plot",
+                                              title="Sites", x_label="x", y_label="y", options={}))
+    for index, column in enumerate("ab"):
+        repo.create_series_descriptor(axis_id=axis_id, series_index=index, name=f"Wafer {column}", style={},
+                                      sql_query=f'SELECT x, y, "{column}" AS z FROM "sites"',
+                                      roles={"x": "x", "y": "y", "z": "z"})
+    dialog = WaferMapDialog(repo=repo, figure_id=figure_id, parent=None)
+    try:
+        dialog.source_chart_radio.setChecked(True)
+        dialog.series_selector.select_all_series()
+        dialog._parameter_form_spec.set_values({"die_width": 20.0, "die_height": 20.0})
+        dialog.ok()
+        qapp.processEvents()
+        (made,) = dialog.created_figure_ids  # one figure, not one per wafer
+    finally:
+        dialog.close()
+    titles = [axis.title for axis in repo.load_figure_descriptor(made).axes]
+    assert any(title.startswith("Wafer a") for title in titles) and any(title.startswith("Wafer b") for title in titles)

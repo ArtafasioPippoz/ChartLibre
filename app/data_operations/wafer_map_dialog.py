@@ -66,12 +66,14 @@ class WaferResult(OperationResult):
         return self.dies
 
     def preview(self, dialog: WaferMapDialog, axis_id: int) -> None:
-        del axis_id
-        dialog.draw(self)
+        del dialog, axis_id
 
     def apply(self, dialog: WaferMapDialog, axis_id: int) -> None:
-        del axis_id
-        dialog.draw(self)
+        del dialog, axis_id
+
+    def report_panels(self, dialog: WaferMapDialog) -> list[tuple]:
+        """The tables written and the maps ticked in the Charts tab: one figure's panels for every wafer."""
+        return dialog.panels_of(self)
 
 
 class WaferMapDialog(DataOperationDialogBase):
@@ -202,8 +204,8 @@ class WaferMapDialog(DataOperationDialogBase):
                 "edge_exclusion": wafer.edge_exclusion, "die_width": width, "die_height": height,
                 "die_offset_x": offset_x, "die_offset_y": offset_y, **more}
 
-    def draw(self, result: WaferResult) -> None:
-        """The tables written, then the figure of the maps ticked in the Charts tab."""
+    def panels_of(self, result: WaferResult) -> list[tuple]:
+        """The tables written, then the panels of the maps ticked in the Charts tab."""
         tables = self._name_tables(result)
         frames = {"points": result.points, "dies": result.dies, "grid": result.grid}
         for key, name in tables.items():
@@ -234,9 +236,7 @@ class WaferMapDialog(DataOperationDialogBase):
             panels.append(("Wafer Map", _("{name}: die bins").format(name=label), "x (mm)", "y (mm)",
                            [(label, sql, {"x": "x", "y": "y", "value": "value"}, {})],
                            self._wafer_options(result, "dies", bins=True)))
-        if panels:
-            self.create_report_figure(f"{_(self.Name)} · {label}",
-                                      self.results_document(label, self.report_for(result)), panels)
+        return panels
 
     # ------------------------------------------------------------------
     # The report

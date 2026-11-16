@@ -862,11 +862,16 @@ class SeriesClusterDialog(DataOperationDialogBase):
         """Each series' report charts: new axes of the current figure, or a figure of their own; none on Same axis."""
         if self.draw_on() == self.DEST_SAME_AXIS:
             return
-        for result in self._unique_report_results(results):
-            panels = self.report_panels(result)
-            if panels:
-                self.create_report_figure(f"{_(self.Name)} · {result.source_name}",
-                                          self.results_document(result.source_name, self.report_for(result)), panels)
+        unique = self._unique_report_results(results)
+        panels: list[tuple] = []
+        for result in unique:
+            # One figure for all the series (one per series left only the last shown); with several, each
+            # panel's title says whose it is.
+            for panel in self.report_panels(result):
+                panels.append((panel[0], f"{result.source_name} · {panel[1]}", *panel[2:]) if len(unique) > 1 else panel)
+        if panels:
+            names = ", ".join(str(result.source_name) for result in unique)
+            self.create_report_figure(f"{_(self.Name)} · {names}", self.format_results(unique), panels)
 
     @staticmethod
     def _unique_report_results(results: Sequence[ClusterResult]) -> list[ClusterResult]:
