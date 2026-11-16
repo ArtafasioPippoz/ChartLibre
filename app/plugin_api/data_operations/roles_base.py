@@ -331,8 +331,21 @@ class RolesOperationDialogBase(DataOperationDialogBase):
         # Above it, where the columns come from: a table, or a chart's axis read as one (chart_source).
         self.roles_widget.columns_card_layout.insertLayout(
             0, self.build_source_choice(self._inputs_panel, from_chart=False,
-                                        on_change=lambda _chart: self._load_tables(None)))
+                                        on_change=self._on_source_choice))
         self._inputs_panel.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
+
+    def _on_source_choice(self, _chart: bool) -> None:
+        """Table or Chart picked: the Preview goes first, so its tables are not listed (and then lost) as the user's."""
+        self._discard_preview()
+        self._load_tables(None)
+
+    def revert_entries(self) -> None:
+        """Revert: the Preview's tables and figure go before the entries come back, as they are rolled back anyway.
+
+        Left in place they were listed in the Table box, picked, and gone at the next Preview ("no such table").
+        """
+        self._discard_preview()
+        super().revert_entries()
 
     def build_model_selector(self) -> QWidget:
         """No Model page: the model is chosen beside the table."""
