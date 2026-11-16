@@ -549,7 +549,28 @@ class DataOperationDialogBase(QDialog):
         from app.styles.style import polish_dialog
 
         polish_dialog(self)  # the labels as the platform writes them; Delete in red
+        if not self._centred:
+            self._centred = True
+            self._centre_on_its_window()
         super().showEvent(event)
+
+    _centred: bool = False
+
+    def _centre_on_its_window(self) -> None:
+        """Centred on the window it belongs to (on the screen without one), and kept inside the screen."""
+        from PySide6.QtCore import QPoint
+
+        owner = self.parentWidget().window() if self.parentWidget() is not None else None
+        screen = (owner.screen() if owner is not None else None) or self.screen()
+        available = screen.availableGeometry() if screen is not None else None
+        frame = self.frameGeometry()
+        target = (owner.frameGeometry() if owner is not None and owner.isVisible()
+                  else available if available is not None else frame)
+        top_left = QPoint(target.center().x() - frame.width() // 2, target.center().y() - frame.height() // 2)
+        if available is not None:
+            top_left.setX(max(available.left(), min(top_left.x(), available.right() - frame.width() + 1)))
+            top_left.setY(max(available.top(), min(top_left.y(), available.bottom() - frame.height() + 1)))
+        self.move(top_left)
 
     def __init__(
         self,
@@ -1108,6 +1129,8 @@ class DataOperationDialogBase(QDialog):
         """Put back the size, the entries and the parameters remembered; a stale value is logged, not raised."""
         restore_window_geometry(self, self.geometry_key())
         restore_dialog_state(self, self.state_key())
+        if self.left_tabs is not None:  # the entries come back, the tab does not: an analysis opens on its Data page
+            self.left_tabs.setCurrentIndex(getattr(self, "_first_tab_index", 0))
         stored = stored_dialog_state(self.state_key())
         parameters = stored.get(self.PARAMETERS_STATE)
         if isinstance(parameters, dict):
@@ -1740,6 +1763,7 @@ class DataOperationDialogBase(QDialog):
                 self._table_charts_index = left_tabs.count()
             left_tabs.addTab(page, title)
         left_tabs.setCurrentIndex(data_index)
+        self._first_tab_index = data_index
         self.left_tabs = left_tabs
         self._show_table_charts_tab()
 
