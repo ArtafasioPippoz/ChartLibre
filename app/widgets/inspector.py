@@ -122,6 +122,23 @@ class _Segment(QToolButton):
     def minimumSizeHint(self) -> QSize:  # noqa: N802 - Qt override
         return QSize(0, super().minimumSizeHint().height())
 
+    def keyPressEvent(self, event) -> None:  # noqa: N802 - Qt override
+        """Left / Right (Home / End) move to the neighbouring segment, as the arrows do in a native segmented control."""
+        control = self.parent()
+        step = {Qt.Key.Key_Left: -1, Qt.Key.Key_Right: 1}.get(event.key())
+        if isinstance(control, SegmentedControl) and (step or event.key() in (Qt.Key.Key_Home, Qt.Key.Key_End)):
+            count = control.count()
+            current = control.current_index()
+            target = (0 if event.key() == Qt.Key.Key_Home else count - 1 if event.key() == Qt.Key.Key_End
+                      else max(0, min(count - 1, current + step)))
+            control.set_current_index(target)
+            button = control.button(target)
+            if button is not None:
+                button.setFocus()
+            event.accept()
+            return
+        super().keyPressEvent(event)
+
     def paintEvent(self, _event) -> None:  # noqa: N802 - Qt override
         option = QStyleOptionToolButton()
         self.initStyleOption(option)
@@ -277,6 +294,7 @@ class InspectorSection(QWidget):
         self._header.setObjectName("inspectorSectionTitle")
         self._title = title
         self._header.setText(title)  # as every section title of the app: black, standard case
+        self._header.setAccessibleName(title)  # read by a screen reader as the section's button
         self._header.setCheckable(True)
         self._header.setChecked(is_open)
         self._header.setAutoRaise(True)
@@ -320,6 +338,7 @@ class InspectorSection(QWidget):
         """Rename the section (a title that names what it follows: Ticks and grid - X)."""
         self._title = title
         self._header.setText(title)
+        self._header.setAccessibleName(title)
         caption = self.findChild(QLabel, "inspectorSectionCaption")
         if caption is not None:
             caption.setText(title)
@@ -589,6 +608,11 @@ def filter_page(page: QWidget, text: str) -> int:
         section.setVisible(visible)
         section.force_open(visible)
     return matched
+
+
+def page_shows_anything(page: QWidget) -> bool:
+    """Whether any section of *page* is shown (after filter_page): False is the filter matching nothing."""
+    return any(section.isVisibleTo(page) for section in page.findChildren(InspectorSection))
 
 
 def drawn_icon(kind: str, colour: QColor, size: int = 16) -> QIcon:

@@ -105,9 +105,11 @@ from app.utils.config import (
     get_constant,
     get_recent_databases,
     get_section,
+    get_value,
     is_untitled_database,
     set_last_database,
     set_section,
+    set_value,
 )
 from app.utils.data_sources import (
     SERVER_DATABASE_QUERY_READERS,
@@ -133,7 +135,7 @@ from app.widgets.chart_properties.overlay_properties import OverlayPropertiesWid
 from app.widgets.chart_properties.series_properties import SeriesPropertiesWidget
 from app.widgets.project_info_panel import ProjectInfoPanel
 from app.widgets.guided_panel import GuidedAnalysisPanel
-from app.widgets.inspector import InspectorPages, filter_page
+from app.widgets.inspector import InspectorPages, filter_page, page_shows_anything
 from app.widgets.nav_bar import NavBarItem, NavButton, NavigationBar, NavPanel
 from app.widgets.recent_projects import ProjectsTabs
 from app.widgets.table_list import TableListPanel
@@ -2592,7 +2594,10 @@ class MainWindow(QMainWindow):
                 layout.setContentsMargins(*MARGIN_TOOLBOX_PAGE)
             index = control.addTab(self._scrollable(page), title, icon)
             control.setTabToolTip(index, tooltip)
-        control.setCurrentIndex(0)
+        # The page last used is the page shown next time (user.json "inspector_page": its index).
+        remembered = get_value("inspector_page", 0)
+        control.setCurrentIndex(remembered if isinstance(remembered, int) and 0 <= remembered < control.count() else 0)
+        control.currentChanged.connect(self._remember_properties_page)
         # Find a property: only the rows whose label or tooltip has the words, on every page.
         self._property_filter = QLineEdit(control)
         self._property_filter.setObjectName("catalogSearchField")  # the look of the navigation bar's search
@@ -2600,11 +2605,17 @@ class MainWindow(QMainWindow):
         self._property_filter.setClearButtonEnabled(True)
         self._property_filter.addAction(load_icon("search_functions"), QLineEdit.ActionPosition.LeadingPosition)
         self._property_filter.textChanged.connect(self._filter_properties)
+        control.currentChanged.connect(lambda _index: self._show_filter_result())
+        self._no_property_label = QLabel(_("No property found"), control)
+        self._no_property_label.setProperty("muted", True)
+        self._no_property_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._no_property_label.hide()
         holder = QWidget(control)
         holder_layout = QVBoxLayout(holder)
         holder_layout.setContentsMargins(8, 0, 8, 4)
         holder_layout.setSpacing(2)
         holder_layout.addWidget(self._property_filter)
+        holder_layout.addWidget(self._no_property_label)
         control.set_header(holder)
         self._connect_property_signals()
         self._clear_property_widgets()
@@ -2628,6 +2639,22 @@ class MainWindow(QMainWindow):
         for page in (self._figure_widget, self._axis_widget, self._series_widget, self._animation_widget,
                      self._overlay_widget):
             filter_page(page, text)
+        self._show_filter_result()
+
+    def _show_filter_result(self) -> None:
+        """"No property found" under the find box when the page in view has nothing left to show."""
+        page = self._properties_pages_current()
+        text = self._property_filter.text().strip()
+        self._no_property_label.setVisible(bool(text) and page is not None and not page_shows_anything(page))
+
+    def _properties_pages_current(self) -> QWidget | None:
+        pages = (self._figure_widget, self._axis_widget, self._series_widget, self._animation_widget,
+                 self._overlay_widget)
+        index = self._properties_control.currentIndex()
+        return pages[index] if 0 <= index < len(pages) else None
+
+    def _remember_properties_page(self, index: int) -> None:
+        set_value("inspector_page", int(index))
 
     def _connect_property_signals(self) -> None:
         """Connect property widgets to main-window persistence handlers."""

@@ -144,3 +144,11 @@ Missing items found when the plan was checked (still open unless marked)
 7. Performance: the selection line refreshes on every change of the two combos' models (cheap); not measured on
    a figure with many axes (open).
 8. The manual's screenshots of the panel are to be taken again (open, with the translations).
+
+Update 2026-11-16
+-----------------
+- Figure page: five sections (Name and notes, Size, Style, Layout, Manual spacing), 573 px tall at 300 px (item 1.1).
+- Done: the page chosen is remembered (user.json "inspector_page"); a filter with no match shows "No property found"
+  under the find box; a hidden section shows again when the filter is cleared; Left / Right / Home / End move between
+  the segments (the segments are reachable by Tab); each section title button has its name for screen readers.
+- Still open: Windows and Linux looks, every page at 1280x720, the Series editors at 300 px, the manual's screenshots.
