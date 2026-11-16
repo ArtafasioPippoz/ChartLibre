@@ -426,6 +426,41 @@ def create_toolbar_button(
 CONTEXT_MENU_ICONS: bool = not IS_MACOS
 
 
+class TidyMenu(QMenu):
+    """A menu as the platform writes it: on macOS no icon beside an item and its shortcut shown, in a context menu too.
+
+    Every action is set as it is added (actionEvent), so items put in later - a menu filled as it opens - are
+    right too; a submenu made by ``addMenu(text)`` is set item by item. Windows and Linux are left alone.
+    """
+
+    def addMenu(self, *args):  # noqa: N802 - Qt override
+        """``addMenu(title)`` / ``addMenu(icon, title)`` make a TidyMenu too, so a submenu follows the rule."""
+        if args and isinstance(args[-1], str):
+            child = TidyMenu(args[-1], self)
+            if len(args) == 2:
+                child.setIcon(args[0])
+            super().addMenu(child)
+            return child
+        return super().addMenu(*args)
+
+    def actionEvent(self, event: QtGui.QActionEvent) -> None:  # noqa: N802 - Qt override
+        super().actionEvent(event)
+        if IS_MACOS and event.type() == QtCore.QEvent.Type.ActionAdded:
+            tidy_action(event.action())
+
+
+def tidy_action(action: QAction) -> None:
+    """macOS: *action* without a menu icon, with its shortcut shown even in a context menu (a submenu, as deep)."""
+    if not IS_MACOS:
+        return
+    action.setIconVisibleInMenu(False)
+    action.setShortcutVisibleInContextMenu(True)
+    submenu = action.menu()
+    if submenu is not None and not isinstance(submenu, TidyMenu):
+        for child in submenu.actions():
+            tidy_action(child)
+
+
 def create_menu_item(
     parent: QWidget,
     menu: QMenu | None,
@@ -439,7 +474,7 @@ def create_menu_item(
     action_id: str | None = None,
     checked: bool = False,
     enabled: bool = True,
-    icons: bool = True,
+    icons: bool = CONTEXT_MENU_ICONS,
 ) -> QAction:
     """Create and optionally add a QAction to a menu.
 
@@ -492,7 +527,7 @@ def create_menu(
     parent: QWidget,
     items: list[MenuItem | None],
     *,
-    icons: bool = True,
+    icons: bool = CONTEXT_MENU_ICONS,
 ) -> QMenu:
     """Create a QMenu from typed menu item descriptors.
 
@@ -501,7 +536,7 @@ def create_menu(
     (on macOS) the real menu bar are built from it - which is the whole
     reason the descriptors exist.
     """
-    menu = QMenu(parent)
+    menu = TidyMenu(parent)
 
     for item in items:
         if item is None:

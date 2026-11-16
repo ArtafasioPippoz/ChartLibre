@@ -132,6 +132,7 @@ from app.styles.style.widgets import (
     configure_combo_width,
     create_action_button,
     create_doc_link,
+    TidyMenu,
     create_menu,
     create_menu_item,
     create_section_title,

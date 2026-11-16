@@ -7,6 +7,8 @@ imported/exported as text files.
 """
 from __future__ import annotations
 
+from app.styles.style import TidyMenu
+
 from app.styles.style import field_label
 import ast
 import html
@@ -277,7 +279,7 @@ class SeriesFunctionDialog(DataOperationDialogBase):
             btn = QPushButton(text, self._stored_bar); btn.clicked.connect(slot); buttons.addWidget(btn)
         # Import and Export, less often: in a menu, so the row fits a narrow panel.
         more = QPushButton(_("More"), self._stored_bar)
-        menu = QMenu(more)
+        menu = TidyMenu(more)
         menu.addAction(_("Import..."), self._import_text)
         menu.addAction(_("Export..."), self._export_text)
         more.setMenu(menu)

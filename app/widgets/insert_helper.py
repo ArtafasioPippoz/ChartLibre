@@ -6,6 +6,8 @@ are filled when they open, from the project as it is then.
 """
 from __future__ import annotations
 
+from app.styles.style import TidyMenu
+
 from collections.abc import Callable, Sequence
 from typing import Any
 
@@ -54,7 +56,7 @@ class InsertHelper(QWidget):
         button.setObjectName("insertHelperButton")
         button.setText(text)
         button.setToolTip(tooltip)
-        menu = QMenu(button)
+        menu = TidyMenu(button)
         menu.setToolTipsVisible(True)
         menu.aboutToShow.connect(lambda: self._refill(menu, fill))
         button.setMenu(menu)
@@ -81,10 +83,8 @@ class InsertHelper(QWidget):
     def _add(self, menu: QMenu, label: str, text: str, tooltip: str = "", icon: str = "") -> None:
         action = menu.addAction(label)
         if icon:
-            # An icon on every item, the Mac included (Qt hides them in its menus there unless told per item);
-            # no shortcut: these items are typed into a text box, not commands.
+            # An icon on every item where menus carry icons; on the Mac, as its own menus, none (TidyMenu).
             action.setIcon(load_icon(icon))
-            action.setIconVisibleInMenu(True)
         if tooltip:
             action.setToolTip(tooltip)
         action.triggered.connect(lambda _checked=False, text=text: self.insert.emit(text))

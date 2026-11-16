@@ -8,6 +8,8 @@ any other report.
 """
 from __future__ import annotations
 
+from app.styles.style import TidyMenu
+
 from app.styles.style import field_label
 import html
 import re
@@ -63,7 +65,7 @@ class OperationHistoryDialog(PanelDialog):
         self._record_combo.currentIndexChanged.connect(self._update_code_buttons)
         # The rest in a menu: settings as a file to keep and open, a script, the analysis run again.
         self._more_button = QPushButton(_("More..."), card)
-        menu = QMenu(self._more_button)
+        menu = TidyMenu(self._more_button)
         self._save_settings_action = menu.addAction(_("Save settings..."), self.save_settings)
         menu.addAction(_("Open settings..."), self.open_settings)
         menu.addAction(_("Export script..."), self.export_script)

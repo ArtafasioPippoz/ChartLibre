@@ -25,6 +25,8 @@ editing is.
 """
 from __future__ import annotations
 
+from app.styles.style import TidyMenu
+
 from app.styles.style import field_label
 from typing import Any
 
@@ -363,7 +365,7 @@ class TableEditorDialog(SettingsTableDialog):
         return scroll
 
     def _managed_columns_menu(self, parent: QWidget) -> QMenu:
-        menu = QMenu(parent)
+        menu = TidyMenu(parent)
         # Hide rows by the selected column: the same comparisons the data
         # preview offers, so the editor is not the one place they are
         # missing (todo N-06). Inside this session's undo entry.

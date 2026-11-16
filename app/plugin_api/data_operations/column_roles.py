@@ -13,6 +13,8 @@ number used as a category (a machine number, a 1/2/3 level) is nominal.
 """
 from __future__ import annotations
 
+from app.styles.style import TidyMenu
+
 from app.styles.style import field_label
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -261,7 +263,7 @@ class ColumnRolesWidget(QWidget):
         item = self._column_list.itemAt(position)
         if item is None:
             return
-        menu = QMenu(self)
+        menu = TidyMenu(self)
         menu.addAction(_("Column Info...")).triggered.connect(lambda _checked=False, it=item: self.request_column_info(it))
         menu.exec(self._column_list.viewport().mapToGlobal(position))
 

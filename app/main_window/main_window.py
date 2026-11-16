@@ -8,6 +8,8 @@ window's edges and dropped files).
 """
 from __future__ import annotations
 
+from app.styles.style import TidyMenu
+
 from app.styles.style import field_label
 import gc
 import json
@@ -808,7 +810,7 @@ class MainWindow(QMainWindow):
 
     def _new_table_menu(self) -> QMenu:
         """The ways to make a table, under the Tables title's + (it was a page of the rail)."""
-        menu = QMenu(self)
+        menu = TidyMenu(self)
         entries = [
             ("new", _("New Blank Table"), _("Create an empty table with named columns."), self._on_new_blank_table),
             ("query", _("Create Query Table"), _("Create a table from a database query."),
@@ -2381,7 +2383,7 @@ class MainWindow(QMainWindow):
 
             hidden = title in hidden_titles
             if hidden:
-                menu = QMenu(self)
+                menu = TidyMenu(self)
                 menu.setTitle(title)
             else:
                 menu = menu_bar.addMenu(title)

@@ -18,6 +18,8 @@ notes. See app/analysis/linear_model.py for the arithmetic.
 """
 from __future__ import annotations
 
+from app.styles.style import TidyMenu
+
 from app.styles.style import field_label
 import html
 import math
@@ -270,7 +272,7 @@ class FitModelDialog(RolesOperationDialogBase):
         # The macros as a menu, as in JMP: their names do not fit side by side.
         macros = QPushButton(_("Macro"))
         macros.setToolTip(_("Replace the effects with a standard model of the selected columns."))
-        menu = QMenu(macros)
+        menu = TidyMenu(macros)
         menu.addAction(_("Main effects"), lambda: self._apply_macro("main", edited=True))
         menu.addAction(_("Factorial to degree"), lambda: self._apply_macro("factorial", edited=True))
         menu.addAction(_("Response surface"), lambda: self._apply_macro("surface", edited=True))

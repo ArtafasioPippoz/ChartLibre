@@ -8,6 +8,8 @@ of the strip moves the window, as a native toolbar does.
 """
 from __future__ import annotations
 
+from app.styles.style import TidyMenu
+
 from collections.abc import Sequence
 
 from PySide6.QtCore import QSize, Qt, Signal
@@ -111,7 +113,7 @@ class ChartJumpBar(QFrame):
         self._title.setAutoRaise(True)
         self._title.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
         self._title.setToolTip(action_presentation("chart_jump")[2])
-        self._menu = QMenu(self._title)
+        self._menu = TidyMenu(self._title)
         self._title.setMenu(self._menu)
         layout.addWidget(self._title, 0)
         layout.addStretch(1)

@@ -19,6 +19,8 @@ of tabs of framed cards:
 
 from __future__ import annotations
 
+from app.styles.style import TidyMenu
+
 from PySide6.QtCore import QEvent, QPointF, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QIcon, QPainter, QPalette, QPen, QPixmap
 from PySide6.QtWidgets import (
@@ -505,7 +507,7 @@ class SelectionLine(QFrame):
         button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
         button.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
-        button.setMenu(QMenu(button))
+        button.setMenu(TidyMenu(button))
         return button
 
     def _wire(self, button: QToolButton, combo, actions: dict[str, QPushButton | QToolButton]) -> None:

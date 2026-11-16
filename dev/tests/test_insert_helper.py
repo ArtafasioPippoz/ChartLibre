@@ -1,6 +1,8 @@
 """Tables, Columns, Functions over the workpad's command and the assistant's question; Send with a local server."""
 from __future__ import annotations
 
+from app.styles.style import CONTEXT_MENU_ICONS
+
 import time
 
 import pandas as pd
@@ -123,7 +125,7 @@ def test_menu_items_carry_an_icon_and_no_shortcut(qapp, repo) -> None:
         menu = button.menu()
         menu.aboutToShow.emit()
         items = [a for a in menu.actions() if not a.isSeparator()]
-        assert items and all(not a.icon().isNull() and a.isIconVisibleInMenu() for a in items)
+        assert items and all(not a.icon().isNull() and a.isIconVisibleInMenu() == CONTEXT_MENU_ICONS for a in items)
         assert all(a.shortcut().isEmpty() for a in items)
     panel.deleteLater()
 

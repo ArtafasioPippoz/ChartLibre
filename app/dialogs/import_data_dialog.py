@@ -7,6 +7,8 @@ link can later be refreshed through exactly the same code path.
 """
 from __future__ import annotations
 
+from app.styles.style import TidyMenu
+
 from app.styles.style import field_label
 import re
 from collections.abc import Callable
@@ -399,7 +401,7 @@ class ImportDataDialog(SettingsTableDialog):
             parent=web.card, action_id="web_sources", action=None, layout=pick_row
         )
         self._web_source_button.setEnabled(True)
-        self._web_source_menu = QMenu(self._web_source_button)
+        self._web_source_menu = TidyMenu(self._web_source_button)
         self._web_source_button.setMenu(self._web_source_menu)
         self._rebuild_web_source_menu()
         pick_row.addStretch(1)

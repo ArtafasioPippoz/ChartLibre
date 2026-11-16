@@ -12,6 +12,8 @@ series and the parameter table, and lays the result out.
 """
 from __future__ import annotations
 
+from app.styles.style import TidyMenu
+
 from app.styles.style import field_label
 import math
 from collections.abc import Callable, Sequence
@@ -758,7 +760,7 @@ class SeriesFitDialog(DataOperationDialogBase):
         applogger.info("Parameter table saved to %s", path)
 
     def _show_params_context_menu(self, pos: QPoint) -> None:
-        menu = QMenu(self._params_table)
+        menu = TidyMenu(self._params_table)
         copy_action = QAction(_("Copy parameters"), menu)
         copy_action.triggered.connect(self._copy_params_to_clipboard)
         menu.addAction(copy_action)
@@ -1187,7 +1189,7 @@ class SeriesFitDialog(DataOperationDialogBase):
         row_layout.addWidget(QLabel(field_label(_("Shared")), self._shared_row))
         self._shared_button = QPushButton(self._shared_row)
         self._shared_button.setToolTip(_("One value for every series, fitted to all of them together."))
-        self._shared_menu = QMenu(self._shared_button)
+        self._shared_menu = TidyMenu(self._shared_button)
         self._shared_button.setMenu(self._shared_menu)
         row_layout.addWidget(self._shared_button, 1)
         self._shared_row.hide()
