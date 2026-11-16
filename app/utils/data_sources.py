@@ -311,6 +311,12 @@ def read_any_file(
     if ext in (".xml",):
         return read_xml_file(path, skiprows=skiprows, skipfooter=skipfooter)
 
+    # A format whose reader is in an extension pack that is switched off: said, not read as text.
+    from app.utils import packs
+
+    note = packs.needed_note("suffix", ext) if ext else ""
+    if note:
+        raise ValueError(note)
     # fallback: try delimited text
     return read_text_file(
         path,

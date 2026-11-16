@@ -273,3 +273,65 @@ def remove(pack: Pack) -> None:
     state = _state()
     if pack.id in state:
         set_value(STATE_KEY, {key: value for key, value in state.items() if key != pack.id})
+
+
+# ----------------------------------------------------------------------
+# What a pack that is off would have given
+# ----------------------------------------------------------------------
+def _declared(source: str) -> tuple[list[str], list[str]]:
+    """(names, suffixes) the classes of a plugin file declare as literals - read, like the scan, without importing."""
+    import ast
+
+    names: list[str] = []
+    suffixes: list[str] = []
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return names, suffixes
+    for node in (item for item in tree.body if isinstance(item, ast.ClassDef)):
+        for statement in node.body:
+            if not (isinstance(statement, ast.Assign) and len(statement.targets) == 1
+                    and isinstance(statement.targets[0], ast.Name)):
+                continue
+            try:
+                value = ast.literal_eval(statement.value)
+            except (ValueError, SyntaxError):
+                continue
+            target = statement.targets[0].id
+            if target in ("Name", "name") and isinstance(value, str):
+                names.append(value)
+            elif target == "Suffixes" and isinstance(value, (list, tuple)):
+                suffixes.extend(str(item).lower() for item in value)
+    return names, suffixes
+
+
+def pack_that_has(family: str, name: str) -> Pack | None:
+    """The usable pack, not enabled now, that holds the plugin *name* of *family* - or, for the family
+    "suffix", a reader of files ending in *name*."""
+    wanted = name.lower() if family == "suffix" else name
+    folder = "importers" if family == "suffix" else family
+    for pack in find():
+        if pack.error or is_enabled(pack):
+            continue
+        try:
+            with zipfile.ZipFile(pack.path) as archive:
+                sources = [archive.read(member).decode("utf-8", "replace") for member in archive.namelist()
+                           if member.startswith(f"{folder}/") and member.endswith(".py")]
+        except (OSError, zipfile.BadZipFile):
+            continue
+        for source in sources:
+            names, suffixes = _declared(source)
+            if wanted in (suffixes if family == "suffix" else names):
+                return pack
+    return None
+
+
+def needed_note(family: str, name: str) -> str:
+    """One sentence for the user when what they ask for is in a pack that is off; "" when no pack has it."""
+    from app.utils.i18n import tr
+
+    pack = pack_that_has(family, name)
+    if pack is None:
+        return ""
+    return tr("This needs the pack “{pack}”. Switch it on in Settings > Packages, then start ChartLibre "
+              "again.").format(pack=pack.name)

@@ -1,9 +1,10 @@
 """Preferences > Packages: the extension packs, each switched on or off (app.utils.packs)."""
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QUrl
+from PySide6.QtCore import QProcess, Qt, QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
     QFileDialog,
@@ -83,13 +84,25 @@ class PacksPanel(QWidget):
         self.remove_button.setToolTip(tr("Delete a pack you added. A pack that came with ChartLibre can only "
                                          "be switched off."))
         self.remove_button.clicked.connect(self._remove)
+        self.install_button = QPushButton(tr("Install the libraries"), self)
+        self.install_button.setToolTip(tr("Download and install, into ChartLibre's own Python, the libraries the "
+                                          "chosen pack needs. It needs the Internet."))
+        self.install_button.clicked.connect(self._install)
         self.folder_button = QPushButton(tr("Open folder"), self)
         self.folder_button.clicked.connect(self._open_folder)
         buttons.addWidget(self.add_button)
         buttons.addWidget(self.remove_button)
+        buttons.addWidget(self.install_button)
         buttons.addStretch(1)
         buttons.addWidget(self.folder_button)
         layout.addLayout(buttons)
+
+        #: What the installation of libraries says, while it runs and when it ends.
+        self.install_note = QLabel("", self)
+        self.install_note.setWordWrap(True)
+        self.install_note.setVisible(False)
+        layout.addWidget(self.install_note)
+        self._pip: QProcess | None = None
 
         note = QLabel(tr("A pack switched on or off is applied the next time the app starts."), self)
         note.setProperty("muted", True)
@@ -128,6 +141,8 @@ class PacksPanel(QWidget):
     def _update_buttons(self) -> None:
         pack = self._current()
         self.remove_button.setEnabled(pack is not None and not pack.builtin)
+        self.install_button.setEnabled(self._pip is None and pack is not None and not pack.error
+                                       and bool(packs.missing_packages(pack)))
 
     def _switched(self, item: QListWidgetItem) -> None:
         pack: packs.Pack = item.data(Qt.ItemDataRole.UserRole)
@@ -163,6 +178,44 @@ class PacksPanel(QWidget):
         packs.remove(pack)
         self._changed.pop(pack.id, None)
         self._accepted.pop(pack.id, None)
+        self.refresh()
+
+    @staticmethod
+    def pip_command(names: list[str]) -> tuple[str, list[str]]:
+        """The program and arguments that install *names* into this very Python (the application's own)."""
+        return sys.executable, ["-m", "pip", "install", "--disable-pip-version-check", *names]
+
+    def _install(self) -> None:
+        pack = self._current()
+        names = packs.missing_packages(pack) if pack is not None and not pack.error else []
+        if not names or self._pip is not None:
+            return
+        # A process of its own, not a thread: the window stays alive and pip's own output is kept for the note.
+        self._pip = QProcess(self)
+        self._pip.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
+        self._pip.finished.connect(lambda code, _status, names=names: self._installed(code, names))
+        self._pip.errorOccurred.connect(lambda _error, names=names: self._installed(-1, names))
+        self.install_note.setText(tr("Installing {names}…").format(names=", ".join(names)))
+        self.install_note.setVisible(True)
+        self._update_buttons()
+        program, arguments = self.pip_command(names)
+        self._pip.start(program, arguments)
+
+    def _installed(self, code: int, names: list[str]) -> None:
+        process, self._pip = self._pip, None
+        if process is None:  # finished and errorOccurred both fire for a process that could not start
+            return
+        output = bytes(process.readAll().data()).decode("utf-8", "replace").strip()
+        process.deleteLater()
+        import importlib
+
+        importlib.invalidate_caches()  # the libraries just written are seen without a restart
+        if code == 0:
+            self.install_note.setText(tr("Installed: {names}.").format(names=", ".join(names)))
+        else:
+            last = output.splitlines()[-1] if output else ""
+            self.install_note.setText(tr("{names} could not be installed. {why}").format(
+                names=", ".join(names), why=last))
         self.refresh()
 
     def _open_folder(self) -> None:

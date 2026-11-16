@@ -1,5 +1,5 @@
 EXTENSION PACKS (.clpack) - PLAN
-Written 2026-11-16. Status: steps 1 and 2 done (app/utils/packs.py, PluginFamily.pack_folder, app/widgets/packs_panel.py in Settings > Packages; tests test_packs.py, test_packs_panel.py); Install the libraries and steps 3-6 to do. No ID in todo.txt yet (next free: ID50).
+Written 2026-11-16. Status: steps 1-3 done (app/utils/packs.py, PluginFamily.pack_folder, app/widgets/packs_panel.py in Settings > Packages with Install the libraries; a chart or a file of a pack that is off names the pack; tests test_packs*.py); steps 4-6 to do. No ID in todo.txt yet (next free: ID50).
 
 ======================================================================
 1. WHAT IT IS

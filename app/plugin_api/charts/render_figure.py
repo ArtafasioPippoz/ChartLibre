@@ -236,8 +236,18 @@ def _render_figure_from_descriptor(
             )
             renderer = get_renderer(chart_type)
             if renderer is None:
+                # Said on the chart itself: an empty axis told the user nothing. A chart type of a pack that
+                # is switched off names the pack (app.utils.packs); the other axes are still drawn.
+                from app.utils import packs
+                from app.utils.i18n import tr
+
                 applogger.error("Renderer not found for chart_type=%r.", chart_type)
-                return
+                note = packs.needed_note("charts", chart_type) or tr(
+                    "The chart type “{name}” is not installed.").format(name=chart_type)
+                ax.set_axis_off()
+                ax.text(0.5, 0.5, f"{chart_type}\n\n{note}", ha="center", va="center", wrap=True,
+                        transform=ax.transAxes)
+                continue
 
             # A band (a fit's confidence or prediction band) is a filled
             # region between two columns, whatever the axis draws: the chart
