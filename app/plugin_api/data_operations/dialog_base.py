@@ -3115,6 +3115,10 @@ class DataOperationDialogBase(QDialog):
             # A report figure (create_report_figure: Distribution, Is it normal?...) is in created_figure_ids.
             made = [int(f) for f in self.created_figure_ids if int(f) != int(self._figure_id)]
             figure_id = made[-1] if made else None
+        if figure_id is None:
+            # Reading a table: its figure is the one the result lands on (Same figure, Same axis), and the
+            # chart on screen is another - without this the Preview drew somewhere nobody could see.
+            figure_id = self._table_figure_id
         if figure_id is not None and self._repo.get_figure_descriptor(int(figure_id)) is None:
             figure_id = None
         shown = self._preview_figure_shown
