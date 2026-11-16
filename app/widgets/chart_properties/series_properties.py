@@ -591,7 +591,8 @@ class SeriesPropertiesWidget(BaseProperties):
             self._series_combo.clear()
 
             if descriptor is None:
-                applogger.warning(
+                # Normal after a Cancel or a new Preview took the figure away: not a warning.
+                applogger.debug(
                     "No figure descriptor found for figure_id=%s. "
                     "Series editing disabled for this figure.",
                     self._figure_id,
