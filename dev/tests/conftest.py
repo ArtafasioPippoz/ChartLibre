@@ -7,6 +7,7 @@ Artifacts (databases, saved figures) go to the directory chosen by
 from __future__ import annotations
 
 import os
+import re
 import sys
 import tempfile
 from collections.abc import Iterator
@@ -290,3 +291,28 @@ def _qt_messages_to_stderr_at_exit():
     from PySide6.QtCore import qInstallMessageHandler
 
     qInstallMessageHandler(None)
+
+
+@pytest.fixture
+def report_image(request: pytest.FixtureRequest):
+    """``report_image(figure, caption="")``: keep a matplotlib figure for the HTML test report.
+
+    Does nothing unless the test run was started by ``dev/tools/test_report.py`` (it sets
+    ``CHARTLIBRE_REPORT_IMAGES``), so a plain pytest run is not slowed down or littered.
+    """
+    folder = os.environ.get("CHARTLIBRE_REPORT_IMAGES", "").strip()
+    counter = {"n": 0}
+
+    def save(figure, caption: str = "") -> None:
+        if not folder:
+            return
+        base = re.sub(r"[^\w.-]+", "_", request.node.nodeid)
+        counter["n"] += 1
+        target = Path(folder)
+        target.mkdir(parents=True, exist_ok=True)
+        stem = f"{base}__{counter['n']}"
+        figure.savefig(target / f"{stem}.png", dpi=80)
+        if caption:
+            (target / f"{stem}.txt").write_text(caption, encoding="utf-8")
+
+    return save
