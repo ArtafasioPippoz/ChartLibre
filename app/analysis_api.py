@@ -138,10 +138,10 @@ def plain_text(html: str) -> str:
 
 
 def catalogue() -> dict[str, Any]:
-    """The table analyses by name: their discovery entries."""
-    from app.scanners.data_operation_scanner import data_operations, reads_roles
+    """The analyses by name: their discovery entries (the table ones, and those on a chart's series)."""
+    from app.scanners.data_operation_scanner import data_operations
 
-    return {str(entry["value"]): entry for entry in data_operations if reads_roles(entry)}
+    return {str(entry["value"]): entry for entry in data_operations}
 
 
 def analysis_names() -> list[str]:
@@ -194,7 +194,7 @@ def _filled_dialog(repo: Any, analysis: str, table: str, roles: Mapping[str, Any
                    parameters: Mapping[str, Any] | None, model: str, draw_on: str,
                    current_figure: Callable[[], int | None]) -> tuple[Any, str, dict[str, list[str]]]:
     """The analysis' dialog built on *table* and filled: (dialog, its name, the roles as set). Not run, not shown."""
-    from app.scanners.data_operation_scanner import import_class_from_file
+    from app.scanners.data_operation_scanner import import_class_from_file, reads_roles
 
     name, entry = find_analysis(analysis)
     table = find_table(repo, table)
@@ -203,15 +203,32 @@ def _filled_dialog(repo: Any, analysis: str, table: str, roles: Mapping[str, Any
     cls = import_class_from_file(entry)
     if cls is None:  # its file went, or did not load: the log says why
         raise AnalysisError(f"The analysis '{name}' could not be loaded; the log says why.")
-    dialog = cls(repo=repo, table=table)
+    on_series = not reads_roles(entry)
+    scratch: int | None = None
+    if on_series:
+        # An analysis of a chart's series: its table's columns drawn as the chart it reads (what its Table source does).
+        scratch = int(repo.create_figure_descriptor(name=f"{name} (script)"))
+        dialog = cls(repo=repo, figure_id=scratch)
+    else:
+        dialog = cls(repo=repo, table=table)
+    dialog._analysis_scratch = scratch
     try:
-        if dialog.reads_chart():  # the dialog remembers it was last used on a chart: here, a table is named
+        if on_series:
             dialog.source_table_radio.setChecked(True)
-            dialog._load_tables(table)
-        if dialog.table != table:
-            raise AnalysisError(f"No table named '{table}'.")
-        dialog.current_figure_id = current_figure()
-        dialog.roles_widget.set_casting(casting)
+            x = casting.get("x") or [""]
+            if not casting.get("y"):
+                raise AnalysisError(f"{name} needs the role y: the column(s) to analyse; x is the other one.")
+            dialog.table_source.set_spec(table, x[0], casting["y"])
+            if dialog._table_figure_id is None:
+                raise AnalysisError(f"{name} could not be drawn from {table}.")
+        else:
+            if dialog.reads_chart():  # the dialog remembers it was last used on a chart: here, a table is named
+                dialog.source_table_radio.setChecked(True)
+                dialog._load_tables(table)
+            if dialog.table != table:
+                raise AnalysisError(f"No table named '{table}'.")
+            dialog.current_figure_id = current_figure()
+            dialog.roles_widget.set_casting(casting)
         for form in dialog.parameter_forms():
             form.set_values(dict(parameters or {}))
         if model and getattr(dialog, "model_combo", None) is not None:
@@ -224,8 +241,20 @@ def _filled_dialog(repo: Any, analysis: str, table: str, roles: Mapping[str, Any
             combo.setCurrentIndex(combo.findData(draw_on))
     except BaseException:
         dialog.close()
+        _drop_scratch(repo, dialog)
         raise
     return dialog, name, casting
+
+
+def _drop_scratch(repo: Any, dialog: Any) -> None:
+    """The empty figure a series analysis was opened on, once the dialog is done with it."""
+    scratch = getattr(dialog, "_analysis_scratch", None)
+    dialog._analysis_scratch = None
+    if scratch is not None:
+        try:
+            repo.delete_figure(int(scratch))
+        except Exception:
+            pass
 
 
 def run_analysis(repo: Any, analysis: str, table: str, roles: Mapping[str, Any] | None = None,
@@ -246,9 +275,9 @@ def run_analysis(repo: Any, analysis: str, table: str, roles: Mapping[str, Any] 
     operations_before = {record.id for record in repo.operations()}
     started = time.monotonic()
     dialog, name, casting = _filled_dialog(repo, analysis, table, roles, parameters, model, draw_on, current_figure)
-    table = dialog.table
+    table = getattr(dialog, "table", table)
     try:
-        problems = dialog.problems()
+        problems = dialog.problems() if hasattr(dialog, "problems") else []
         if problems:
             raise AnalysisError("; ".join(problems))
         dialog.ok()
@@ -264,6 +293,7 @@ def run_analysis(repo: Any, analysis: str, table: str, roles: Mapping[str, Any] 
         fitted = getattr(dialog, "fitted_model", None)
     finally:
         dialog.close()
+        _drop_scratch(repo, dialog)
     written = sorted(set(repo.list_user_tables()["Table"].astype(str)) - tables_before)
     new_operations = [record.id for record in repo.operations() if record.id not in operations_before]
     return AnalysisResult(
@@ -289,10 +319,10 @@ def settings_of(source: Any) -> dict[str, Any]:
         name, table, roles, parameters, model = (source.name, source.source, source.roles, source.parameters,
                                                  source.model)
     else:
-        sources = list(source.sources)
-        if len(sources) != 1 or not sources[0].get("table") or not sources[0].get("roles"):
-            raise AnalysisError(f"{source.operation} was run on a chart's series: it has no table to name.")
-        name, table, roles = str(source.operation), str(sources[0]["table"]), sources[0]["roles"]
+        found = record_source(source)
+        if found is None:
+            raise AnalysisError(f"{source.operation} was run on series that are not one table's columns.")
+        name, (table, roles) = str(source.operation), found
         parameters = {key: value for key, value in dict(source.parameters).items() if key != "model"}
         model = str(dict(source.parameters).get("model") or dict(source.entries).get("model_combo") or "")
     return {"format": SETTINGS_FORMAT, "version": SETTINGS_VERSION, "analysis": name, "table": table,
@@ -342,6 +372,7 @@ def open_settings_dialog(repo: Any, settings: Mapping[str, Any], parent: Any = N
                                              str(settings.get("model") or ""), "new_figure", lambda: None)
     if parent is not None:
         dialog.setParent(parent, dialog.windowFlags())
+    dialog.finished.connect(lambda _code=0: _drop_scratch(repo, dialog))
     return dialog
 
 
@@ -361,7 +392,7 @@ def history_script(records: Iterable[Any], project: str = "") -> str:
     calls = []
     for record in records:
         call = record_call(record)
-        calls.append(f"    {call}" if call else f"    # {record.operation}: run on a chart's series, not on a table")
+        calls.append(f"    {call}" if call else f"    # {record.operation}: its series are not one table's columns")
     body = "\n".join(calls) or "    pass"
     return (f'"""The analyses of {project or "a ChartLibre project"}, as calls.\n\n'
             f'    python this_script.py path/to/project.dhub\n"""\n'
@@ -385,6 +416,9 @@ def describe_analysis(analysis: str) -> str:
     name, entry = find_analysis(analysis)
     cls = import_class_from_file(entry)
     lines = [f"## {name} - {entry.get('description', '')}"]
+    if not getattr(cls, "ROLES", ()):  # an analysis of a chart's series: one table's columns, x and y
+        lines.append("  role x (X): the column along the x axis (leave it out for the row number); at most 1")
+        lines.append("  role y (Y): the column(s) analysed, one series each; at least 1")
     for role in getattr(cls, "ROLES", ()):
         most = f"at most {role.maximum}" if role.maximum else "any number"
         lines.append(f"  role {role.key} ({role.label}): {', '.join(role.kinds)}; at least {role.minimum}, "
@@ -595,16 +629,49 @@ def Model(name: str) -> ModelHandle:  # noqa: N802
 # ----------------------------------------------------------------------
 # From the project's history to code, and to a saved function
 # ----------------------------------------------------------------------
+_SERIES_SQL = re.compile(
+    r'^\s*SELECT\s+(?P<x>.+?)\s+AS\s+"?x"?\s*,\s*(?P<y>.+?)\s+AS\s+"?y"?\s*(?:,.*?)?\s+FROM\s+'
+    r'(?P<table>"(?:[^"]|"")+"|\w+)', re.IGNORECASE | re.DOTALL)
+
+
+def _unquote(name: str) -> str:
+    name = name.strip()
+    return name[1:-1].replace('""', '"') if len(name) > 1 and name[0] == name[-1] == '"' else name
+
+
+def record_source(record: Any) -> tuple[str, dict[str, list[str]]] | None:
+    """(table, roles) a recorded operation read, or None when that cannot be told.
+
+    An operation on a table has them recorded. One on a chart's series is read back from the series' queries
+    ("SELECT a AS x, b AS y FROM t ..."): the table they share, the X column, the Y columns, as x and y roles.
+    """
+    sources = list(getattr(record, "sources", []) or [])
+    if len(sources) == 1 and sources[0].get("table") and sources[0].get("roles"):
+        return str(sources[0]["table"]), {key: list(value) for key, value in dict(sources[0]["roles"]).items()}
+    tables, xs, ys = set(), set(), []
+    for source in sources:
+        match = _SERIES_SQL.match(str(source.get("sql_query") or ""))
+        if match is None:
+            return None
+        tables.add(_unquote(match["table"]))
+        x = _unquote(match["x"])
+        xs.add("" if x.lower() == "rowid" else x)
+        ys.append(_unquote(match["y"]))
+    if len(tables) != 1 or len(xs) != 1 or not ys:
+        return None
+    x = xs.pop()
+    return tables.pop(), {"x": [x] if x else [], "y": ys}
+
+
 def record_call(record: Any) -> str | None:
     """The Analysis(...) call that makes a recorded operation again, or None when it was not run on a table
     (an analysis of a chart's series has no table to name)."""
-    sources = list(getattr(record, "sources", []) or [])
-    if len(sources) != 1 or not sources[0].get("table") or not sources[0].get("roles"):
+    found = record_source(record)
+    if found is None:
         return None
     parameters = {key: value for key, value in dict(record.parameters).items() if key != "model"}
     model = str(dict(record.parameters).get("model") or dict(record.entries).get("model_combo") or "")
-    return call_text("Analysis", str(record.operation), str(sources[0]["table"]), sources[0]["roles"], parameters,
-                     model=model)
+    return call_text("Analysis", str(record.operation), found[0], found[1], parameters, model=model)
 
 
 def history_code(records: Iterable[Any]) -> str:
@@ -612,7 +679,7 @@ def history_code(records: Iterable[Any]) -> str:
     lines = []
     for record in records:
         call = record_call(record)
-        lines.append(call if call else f"# {record.operation}: run on a chart's series, not on a table")
+        lines.append(call if call else f"# {record.operation}: its series are not one table's columns")
     return "\n".join(lines)
 
 
@@ -636,17 +703,17 @@ def function_code(name: str, record: Any, description: str = "") -> str:
         def compare(table="t", roles=None, **parameters):
             return Analysis('Are there differences?', table, roles or {...}, **{...}, **parameters)
     """
-    sources = list(record.sources)
-    if len(sources) != 1 or not sources[0].get("table") or not sources[0].get("roles"):
-        raise AnalysisError(f"{record.operation} was run on a chart's series: it has no table to name.")
+    found = record_source(record)
+    if found is None:
+        raise AnalysisError(f"{record.operation} was run on series that are not one table's columns.")
     problem = valid_function_name(name)
     if problem:
         raise AnalysisError(problem)
     model = str(dict(record.parameters).get("model") or dict(record.entries).get("model_combo") or "")
     defaults = {key: value for key, value in dict(record.parameters).items() if key != "model"}
-    roles = {key: list(value) for key, value in dict(sources[0]["roles"]).items()}
-    doc = description or f"{record.operation} on {sources[0]['table']}, as it was run."
-    return (f"def {name}(table={str(sources[0]['table'])!r}, roles=None, model={model!r}, **parameters):\n"
+    roles = found[1]
+    doc = description or f"{record.operation} on {found[0]}, as it was run."
+    return (f"def {name}(table={found[0]!r}, roles=None, model={model!r}, **parameters):\n"
             f"    {doc!r}\n"
             f"    return Analysis({str(record.operation)!r}, table, roles or {roles!r}, model=model,\n"
             f"                    **{{**{defaults!r}, **parameters}})\n")
