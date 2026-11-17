@@ -445,9 +445,10 @@ class InspectorCard(InspectorSection):
     """
 
     def __init__(self, parent: QWidget | None, title: str, object_name: str = "", *, collapsed: bool = False,
-                 prefix: str = "") -> None:
+                 prefix: str = "", foldable: bool = True) -> None:
         prefix = prefix or ("figure" if object_name.startswith("figure") else "section")
-        super().__init__(title, parent, key=f"{prefix}.{object_name or title}", collapsed=collapsed)
+        super().__init__(title, parent, key=f"{prefix}.{object_name or title}", collapsed=collapsed,
+                         foldable=foldable)
         if object_name:
             self.setObjectName(object_name)
         layout = QVBoxLayout(self.body)

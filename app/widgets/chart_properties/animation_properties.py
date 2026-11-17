@@ -66,7 +66,7 @@ class AnimationPropertiesWidget(BaseProperties):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(*MARGIN_TOOLBOX_PAGE)
 
-        what = InspectorCard(self, _("Play along"), "animationPlay", prefix="animation")
+        what = InspectorCard(self, _("Play along"), "animationPlay", prefix="animation", foldable=False)
         form = QFormLayout()
         stdSizeAndlayout(form)
         form.setVerticalSpacing(10)
@@ -117,10 +117,10 @@ class AnimationPropertiesWidget(BaseProperties):
         what.card.layout().addWidget(self._note)
         layout.addWidget(what)
 
-        how = InspectorCard(self, _("Playing"), "animationPlaying", prefix="animation")
+        how = InspectorCard(self, _("Playing"), "animationPlaying", prefix="animation", foldable=False)
         how_form = QFormLayout()
         stdSizeAndlayout(how_form)
-        how_form.setVerticalSpacing(10)  # the platform's spacing between check boxes, not a tight stack
+        how_form.setVerticalSpacing(16)  # room between the check boxes, not a tight stack
         self._fps = QDoubleSpinBox(how.card)
         self._fps.setRange(0.5, 30.0)
         self._fps.setSingleStep(0.5)
@@ -137,6 +137,7 @@ class AnimationPropertiesWidget(BaseProperties):
         how.card.layout().addLayout(how_form)
 
         # The player: big round buttons - back, play (the accent one), forward - then what the chart shows now.
+        how.card.layout().addSpacing(14)  # air between the check boxes and the player
         row = QHBoxLayout()
         row.setSpacing(14)
         self._back = self._tool("step_back", _("A frame back"), lambda: self._player and self._player.step(-1), 40)
@@ -158,7 +159,8 @@ class AnimationPropertiesWidget(BaseProperties):
         self._save = QPushButton(_("Save as GIF…"), how.card)
         self._save.setToolTip(_("Every frame, at the figure's size, into an animated GIF"))
         self._save.clicked.connect(lambda _checked=False: self._player and self._player.save_gif(self))
-        how.card.layout().addWidget(self._save)
+        how.card.layout().addSpacing(4)
+        how.card.layout().addWidget(self._save, 0, Qt.AlignmentFlag.AlignHCenter)  # the standard button, not stretched
         layout.addWidget(how)
         layout.addStretch(1)
         self._sync_player()
