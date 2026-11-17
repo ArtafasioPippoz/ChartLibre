@@ -31,3 +31,14 @@ def test_a_series_analysis_is_run_recorded_and_written_as_a_call(project) -> Non
     again = analysis_api.run_records(project, records)
     assert isinstance(again[0], analysis_api.AnalysisResult), again
     assert len(project.operations()) == 2
+
+
+def test_the_copied_code_runs_in_the_workpad(project) -> None:
+    from app.workpad.engine import Workpad
+
+    analysis_api.run_analysis(project, "Smoothing", "sig", {"x": ["t"], "y": ["a"]})
+    code = analysis_api.history_code(project.operations())
+    pad = Workpad(lambda: project)
+    outcome = pad.run(code)
+    assert "error" not in repr(outcome).lower()[:200], outcome
+    assert len(project.operations()) == 2

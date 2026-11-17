@@ -213,6 +213,7 @@ def _filled_dialog(repo: Any, analysis: str, table: str, roles: Mapping[str, Any
         dialog = cls(repo=repo, table=table)
     dialog._analysis_scratch = scratch
     try:
+        dialog.revert_entries()  # from its defaults, not from how the window was last left (a 2D smoothing, say)
         if on_series:
             dialog.source_table_radio.setChecked(True)
             x = casting.get("x") or [""]
@@ -669,9 +670,23 @@ def record_call(record: Any) -> str | None:
     found = record_source(record)
     if found is None:
         return None
-    parameters = {key: value for key, value in dict(record.parameters).items() if key != "model"}
+    parameters = _changed_parameters(str(record.operation),
+                                     {key: value for key, value in dict(record.parameters).items() if key != "model"})
     model = str(dict(record.parameters).get("model") or dict(record.entries).get("model_combo") or "")
     return call_text("Analysis", str(record.operation), found[0], found[1], parameters, model=model)
+
+
+def _changed_parameters(analysis: str, parameters: Mapping[str, Any]) -> dict[str, Any]:
+    """The parameters that are not what the analysis starts with: the call to read and paste says only those."""
+    from app.scanners.data_operation_scanner import import_class_from_file
+
+    try:
+        cls = import_class_from_file(find_analysis(analysis)[1])
+        defaults = {param.name: param.default for param in getattr(cls, "PARAMS", ())}
+    except Exception:
+        defaults = {}
+    return {key: value for key, value in parameters.items()
+            if not (key == "destination" and value == "new_figure") and not (key in defaults and defaults[key] == value)}
 
 
 def history_code(records: Iterable[Any]) -> str:
