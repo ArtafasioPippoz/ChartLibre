@@ -51,6 +51,8 @@ class Palette:
     shadow_rgb: str
     glow_rgb: str
     neutral_rgb: str = "127, 127, 127"
+    #: Secondary words and thin edges (the sheets' palette(mid)); None leaves Qt's own, made for a light ground.
+    mid: str | None = None
 
     #: Extra token values, for anything a single theme needs and others do not.
     extra_tokens: dict[str, str] = field(default_factory=dict)
@@ -96,6 +98,8 @@ class Palette:
         )
         for role, value in pairs:
             palette.setColor(role, QColor(value))
+        if self.mid:
+            palette.setColor(QPalette.ColorRole.Mid, QColor(self.mid))
 
         disabled = QColor(self.disabled_text)
         for role in (
@@ -161,6 +165,9 @@ DARK = Palette(
     # one, or every border and shadow in the sheet disappears.
     shadow_rgb="255, 255, 255",
     glow_rgb="0, 0, 0",
+    # macOS' secondary label grey on dark: Qt's own Mid is a light theme's, near-black here - captions, muted
+    # words, a group's title and the tabs not chosen vanished.
+    mid="#98989d",
 )
 
 PALETTES: dict[str, Palette] = {palette.key: palette for palette in (LIGHT, DARK)}

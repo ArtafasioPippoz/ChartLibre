@@ -48,14 +48,12 @@ def _read_qss_path(path: Path) -> tuple[str | None, Path | None]:
 #: app/styles) plus a palette; "Automatic" picks the one for this desktop.
 APP_STYLE_AUTOMATIC: str = "automatic"
 
-#: theme key -> (stylesheet file, palette key)
+#: theme key -> (stylesheet file, palette key). Light or dark is a choice of its own, for every sheet
+#: (CONFIG_APP_APPEARANCE): the sheets carry no opaque surface colours worth speaking of, so a dark copy of each
+#: would differ from it only in tokens.
 APP_STYLE_QSS: dict[str, tuple[str, str]] = {
     "fluent_win11": ("fluent_win11.qss", "light"),
     "macos_native": ("macos_native.qss", "light"),
-    # The dark theme is the Fluent *structure* with the dark palette: the
-    # sheets carry no opaque surface colours worth speaking of, so a second
-    # 1,000-line file would differ from this one only in tokens.
-    "dark": ("fluent_win11.qss", "dark"),
 }
 
 # Any other sheet dropped into app/styles/ is a theme too, on the light
@@ -73,7 +71,6 @@ APP_STYLE_LABELS: dict[str, str] = {
     APP_STYLE_AUTOMATIC: "Automatic",
     "fluent_win11": "Fluent (Windows 11)",
     "macos_native": "macOS native",
-    "dark": "Dark",
 }
 for _key in APP_STYLE_QSS:
     APP_STYLE_LABELS.setdefault(_key, _key.replace("_", " ").title())
@@ -109,6 +106,33 @@ def resolve_app_style(preference: str | None = None) -> str:
 
     lowered = clean.lower()
     return lowered if lowered in APP_STYLE_QSS else APP_STYLE_AUTOMATIC
+
+
+#: Light, dark, or as the desktop is: for whichever style. "Dark" used to be a style of its own (the Fluent sheet,
+#: dark); a stored ``app_style: dark`` still reads as dark, on this desktop's own sheet.
+CONFIG_APP_APPEARANCE: str = "app_appearance"
+APP_APPEARANCES: tuple[tuple[str, str], ...] = (
+    ("light", "Light"),
+    ("dark", "Dark"),
+    ("system", "Same as the system"),
+)
+
+
+def resolve_app_appearance(preference: str | None = None) -> str:
+    """Return "light", "dark" or "system": *preference*, else what config.json says, else light."""
+    clean = str(preference or get_value(CONFIG_APP_APPEARANCE, "") or "").strip().lower()
+    if not clean and str(get_value(CONFIG_APP_STYLE, "") or "").strip().lower() == "dark":
+        clean = "dark"
+    return clean if clean in dict(APP_APPEARANCES) else "light"
+
+
+def _wants_dark(app: QApplication, appearance: str) -> bool:
+    """Whether *appearance* is dark here: "system" asks the desktop, with no scheme of the application's own."""
+    if appearance != "system":
+        return appearance == "dark"
+    hints = app.styleHints()
+    hints.unsetColorScheme()
+    return hints.colorScheme() == Qt.ColorScheme.Dark
 
 
 _POPUP_CONTAINER_SHEET = "background: palette(base); border: none;"
@@ -193,12 +217,12 @@ QPushButton#primaryDialogButton {
 
 
 def apply_platform_style(
-    app: QApplication, preference: str | None = None
+    app: QApplication, preference: str | None = None, appearance: str | None = None
 ) -> PlatformStyle:
     """Apply the configured theme or Qt style.
 
     ``preference`` overrides what config.json says, so the settings dialog can
-    show a choice before committing it.
+    show a choice before committing it; ``appearance`` does the same for light or dark.
 
     Every path here sets *both* the stylesheet and the palette, including to
     nothing.  A style change has to undo the previous one completely: leaving a
@@ -209,9 +233,10 @@ def apply_platform_style(
     style_key = resolve_app_style(preference)
 
     if style_key == APP_STYLE_AUTOMATIC:
-        qss_name, palette_key = _automatic_qss_name(), "light"
+        qss_name = _automatic_qss_name()
     else:
-        qss_name, palette_key = APP_STYLE_QSS[style_key]
+        qss_name, _palette = APP_STYLE_QSS[style_key]
+    palette_key = "dark" if _wants_dark(app, resolve_app_appearance(appearance)) else "light"
 
     qss, path = _load_qss(qss_name) if qss_name else ("", None)
     # Labels follow the sheet, not the machine: the Windows 11 look on a Mac writes "Title", not "Title:".
@@ -238,6 +263,7 @@ def apply_platform_style(
     themed = substitute_ui_font(themed)
     # Images a sheet needs (a combo's chevrons): url(@ICON:name@), drawn from
     # the system's own symbols rather than shipped as artwork.
+    _icons._ACTIVE_THEME_IS_DARK = palette.dark  # before the images: their ink is the theme's
     themed = _substitute_qss_symbols(themed)
     if system == "darwin":
         themed = _native_mac_controls(app, themed, palette.dark)

@@ -54,12 +54,15 @@ from app.dialogs.two_panels_dialog_base import PanelDialog
 from app.logs.logger import applogger
 from app.plugin_api.charts.render_figure import DEFAULT_MPL_STYLE_KEY
 from app.styles.style import (
+    APP_APPEARANCES,
+    CONFIG_APP_APPEARANCE,
     CONFIG_APP_STYLE,
     CardFrame,
     tile_icon,
     available_app_styles,
     configure_combo_width,
     load_icon,
+    resolve_app_appearance,
     resolve_app_style,
     stdSizeAndlayout,
 )
@@ -222,6 +225,7 @@ class SettingsDialog(PanelDialog):
 
         # Only to preselect the combo: nothing here changes the running app.
         self._entry_style = resolve_app_style()
+        self._entry_appearance = resolve_app_appearance()
         # The stored setting, not the resolved language: a user who chose Auto
         # must find Auto selected when they reopen this, not the code it
         # happened to resolve to on this machine.
@@ -241,6 +245,14 @@ class SettingsDialog(PanelDialog):
             self._entry_style,
         )
         form.addRow(tr("App style"), self._style_combo)
+
+        # Light or dark, for whichever style: "Same as the system" follows the desktop's own setting.
+        self._appearance_combo = self._combo(
+            card,
+            [(key, tr(label)) for key, label in APP_APPEARANCES],
+            self._entry_appearance,
+        )
+        form.addRow(tr("Theme"), self._appearance_combo)
 
         self._language_combo = self._combo(
             card,
@@ -672,11 +684,13 @@ class SettingsDialog(PanelDialog):
         """
         style_key = self._value(self._style_combo)
         restart_for = []
-        if style_key != self._entry_style:
+        appearance = self._value(self._appearance_combo)
+        if style_key != self._entry_style or appearance != self._entry_appearance:
             restart_for.append(tr("look"))
         if self._packs_panel.restart_needed():
             restart_for.append(tr("packs"))
         set_value(CONFIG_APP_STYLE, style_key)
+        set_value(CONFIG_APP_APPEARANCE, appearance)
         set_value("language", self._value(self._language_combo))
         set_value(CONFIG_SAVE_FORMAT, self._value(self._format_combo))
         set_value(DEFAULT_MPL_STYLE_KEY, self._value(self._mpl_style_combo))

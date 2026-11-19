@@ -107,9 +107,11 @@ from app.styles.style.metrics import (
     ShortcutLike,
 )
 from app.styles.style.themes import (
+    APP_APPEARANCES,
     APP_STYLE_AUTOMATIC,
     APP_STYLE_LABELS,
     APP_STYLE_QSS,
+    CONFIG_APP_APPEARANCE,
     CONFIG_APP_STYLE,
     _automatic_qss_name,
     _load_qss,
@@ -117,6 +119,7 @@ from app.styles.style.themes import (
     apply_fusion_for_item_view_styling,
     apply_platform_style,
     available_app_styles,
+    resolve_app_appearance,
     resolve_app_style,
 )
 from app.styles.style.widgets import (

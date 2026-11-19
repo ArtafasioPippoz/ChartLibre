@@ -39,3 +39,25 @@ def test_the_default_chart_style_is_grouped_by_folder() -> None:
     assert choices[choices.index(None, 3)] is None  # a separator between Apps and Journals
     on_disk = {p.relative_to(MPLSTYLES_DIR).with_suffix("").as_posix() for p in MPLSTYLES_DIR.rglob("*.mplstyle")}
     assert set(values) - {""} == on_disk  # nothing lost, nothing invented
+
+
+def test_light_or_dark_is_a_choice_of_its_own_and_the_old_dark_style_reads_as_dark(monkeypatch) -> None:
+    from app.styles.style import themes
+
+    assert "dark" not in APP_STYLE_QSS  # no longer a style: a theme, for every style
+    stored = {"app_style": "dark"}
+    monkeypatch.setattr(themes, "get_value", lambda key, default=None: stored.get(key, default))
+    assert themes.resolve_app_appearance() == "dark"
+    assert resolve_app_style() == APP_STYLE_AUTOMATIC  # on this desktop's own sheet
+    stored["app_appearance"] = "system"
+    assert themes.resolve_app_appearance() == "system"
+    assert themes.resolve_app_appearance("nonsense") == "light"
+
+
+def test_the_dark_palette_has_a_readable_mid() -> None:
+    from PySide6.QtGui import QColor, QPalette
+
+    from app.styles.palettes import DARK
+
+    mid = DARK.qpalette().color(QPalette.ColorRole.Mid)
+    assert mid.lightness() - QColor(DARK.window).lightness() > 100  # captions and tab names read on the dark
