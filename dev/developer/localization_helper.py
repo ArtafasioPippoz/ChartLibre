@@ -43,6 +43,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QPushButton,
+    QSizePolicy,
     QTableWidget,
     QTableWidgetItem,
     QWidget,
@@ -166,14 +167,14 @@ class EditLocalizationDialog(SettingsTableDialog):
         side.addWidget(self._language_combo)
         new_row = QHBoxLayout()
         stdSizeAndlayout(new_row)
-        create_action_button(
+        new_button = create_action_button(
             parent=self,
             action_id="new",
             action=self._on_new_language,
             layout=new_row,
             presentation=(load_icon("new"), _("New language…"), _("Create a new, empty catalogue")),
         )
-        create_action_button(
+        remove_button = create_action_button(
             parent=self,
             action_id="delete",
             action=self._on_remove_language,
@@ -181,7 +182,12 @@ class EditLocalizationDialog(SettingsTableDialog):
             presentation=(load_icon("delete"), _("Remove…"),
                           _("Remove this language: its catalogue goes to the Trash")),
         )
-        new_row.addStretch(1)
+        # The two share the row in equal halves, whatever their words, and neither is narrower than the wider's text.
+        widest = max(new_button.sizeHint().width(), remove_button.sizeHint().width())
+        for button in (new_button, remove_button):
+            button.setSizePolicy(QSizePolicy.Policy.Ignored, button.sizePolicy().verticalPolicy())
+            button.setMinimumWidth(widest)
+            new_row.setStretchFactor(button, 1)
         side.addLayout(new_row)
 
         panel = self.add_settings_card(_("Show"))
