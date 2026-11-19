@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from app.analysis.peaks import Peak
-from app.data_operations.peaks_dialog import PeakResult, SeriesPeaksDialog
+from dev.packs.signal.data_operations.peaks_dialog import PeakResult, SeriesPeaksDialog
 
 
 def _peak(x: float, prominence: float, width: float) -> Peak:
@@ -26,10 +26,10 @@ def test_the_signal_and_numeric_operations_explain_their_result() -> None:
 
     import numpy as np
 
-    from app.data_operations.baseline_dialog import SeriesBaselineDialog
+    from dev.packs.signal.data_operations.baseline_dialog import SeriesBaselineDialog
     from app.data_operations.calculus_dialog import SeriesCalculusDialog
     from app.data_operations.filter_dialog import SeriesFilterDialog
-    from app.data_operations.roots_dialog import SeriesRootsDialog
+    from dev.packs.signal.data_operations.roots_dialog import SeriesRootsDialog
     from app.data_operations.smoothing_dialog import SeriesSmoothingDialog
     from app.data_operations.transform_dialog import SeriesTransformDialog
 
@@ -54,9 +54,9 @@ def test_function_geometry_gp_and_wafer_explain_their_result() -> None:
     import numpy as np
 
     from app.data_operations.function_dialog import SeriesFunctionDialog
-    from app.data_operations.geometry_dialog import SeriesGeometryDialog
-    from app.data_operations.gp_regression_dialog import SeriesGPRegressionDialog
-    from app.data_operations.wafer_map_dialog import WaferMapDialog
+    from dev.packs.vector_fields.data_operations.geometry_dialog import SeriesGeometryDialog
+    from dev.packs.modelling.data_operations.gp_regression_dialog import SeriesGPRegressionDialog
+    from dev.packs.semiconductors.data_operations.wafer_map_dialog import WaferMapDialog
 
     ns = types.SimpleNamespace
     assert "(a = 2)" in SeriesFunctionDialog.how_to_read(None, [ns(function_name="Line", params={"a": 2.0})])[0]

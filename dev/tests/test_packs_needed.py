@@ -1,5 +1,5 @@
 """What is in a pack that is switched off is asked for by name: a chart says so, a file is not read as text,
-and the libraries a pack lacks are installed from Settings."""
+and the libraries a pack lacks are installed at start."""
 from __future__ import annotations
 
 import sys
@@ -9,10 +9,9 @@ import pytest
 from matplotlib.figure import Figure
 
 from app.utils import data_sources, packs
-from app.widgets.packs_panel import PacksPanel
 from test_packs import folders, make_pack  # noqa: F401 - the fixture
 
-CHART = 'class Wafer(BaseAxisRenderer):\n    Name = "Wafer Chart"\n'
+CHART = 'class Wafer(BaseAxisRenderer):\n    Name: str = "Wafer Chart"\n'
 READER = 'class Nc(FileImporter):\n    Name = "NetCDF"\n    Suffixes = [".ncx", ".NCY"]\n'
 
 
@@ -57,24 +56,30 @@ def test_a_file_whose_reader_is_in_a_pack_that_is_off_is_not_read_as_text(folder
     assert list(data_sources.read_any_file(str(other)).columns) == ["a", "b"]  # as before: tried as text
 
 
-@pytest.mark.parametrize(("code", "said"), [(0, "Installed: no-such-library-xyz."), (3, "could not be installed. it failed")])
-def test_install_the_libraries_runs_pip_for_what_is_missing_and_says_how_it_went(qapp, folders, monkeypatch, code, said):
+@pytest.mark.parametrize(("code", "why"), [(0, ""), (3, "it failed")])
+def test_the_libraries_the_enabled_packs_lack_are_installed_by_pip_and_a_failure_is_said(folders, monkeypatch, code, why):
     make_pack(packs.BUILTIN_DIR, manifest={"default": True, "packages": ["pytest", "no-such-library-xyz"]})
     asked: list[list[str]] = []
 
     def fake_pip(names):
         asked.append(list(names))
-        return sys.executable, ["-c", f"import sys; print('it failed'); sys.exit({code})"]
+        return [sys.executable, "-c", f"import sys; print('it failed'); sys.exit({code})"]
 
-    monkeypatch.setattr(PacksPanel, "pip_command", staticmethod(fake_pip))
-    panel = PacksPanel()
-    assert "Needs the libraries: no-such-library-xyz" in panel.list.item(0).text()
-    assert not panel.install_button.isEnabled()  # no pack chosen
-    panel.list.setCurrentRow(0)
-    assert panel.install_button.isEnabled()
-    panel.install_button.click()
-    assert not panel.install_button.isEnabled() and "Installing" in panel.install_note.text()
-    assert panel._pip.waitForFinished(20000)
-    qapp.processEvents()
+    monkeypatch.setattr(packs, "pip_command", fake_pip)
+    assert packs.install_missing() == (["no-such-library-xyz"], why)
     assert asked == [["no-such-library-xyz"]]
-    assert said in panel.install_note.text() and panel._pip is None
+
+
+def test_nothing_is_installed_for_a_pack_that_is_off(folders, monkeypatch):
+    make_pack(packs.BUILTIN_DIR, manifest={"default": False, "packages": ["no-such-library-xyz"]})
+    monkeypatch.setattr(packs, "pip_command", lambda names: pytest.fail("pip must not run"))
+    assert packs.install_missing() == ([], "")
+
+
+def test_the_developer_tools_load_every_readable_pack_whatever_the_switches(folders, monkeypatch):
+    make_pack(packs.BUILTIN_DIR, "off", manifest={"default": False})
+    make_pack(packs.BUILTIN_DIR, "broken", manifest={"needs_app": "99.0"})
+    by_id = {pack.id: pack for pack in packs.find()}
+    assert not packs.is_enabled(by_id["off"])
+    monkeypatch.setenv(packs.ALL_PACKS_ENV, "1")
+    assert packs.is_enabled(by_id["off"]) and not packs.is_enabled(by_id["broken"])

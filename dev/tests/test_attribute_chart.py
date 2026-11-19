@@ -18,7 +18,7 @@ import pytest
 
 from app.analysis.control_charts import attribute_limits
 from app.data.sqlite_repo import SqliteRepo
-from app.data_operations.control_chart_dialog import (
+from dev.packs.quality.data_operations.control_chart_dialog import (
     CHART_C,
     CHART_P,
     CHART_U,

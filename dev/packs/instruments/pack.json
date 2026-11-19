@@ -1,0 +1,12 @@
+{
+  "id": "instruments",
+  "name": "Instrument files",
+  "version": "1.0.0",
+  "description": "Files of instruments and simulators: Touchstone, SPICE raw, VCD, NI TDMS, LabVIEW .lvm and JCAMP-DX spectra.",
+  "author": "ChartLibre",
+  "needs_app": "0.2.0",
+  "packages": [
+    "npTDMS"
+  ],
+  "default": true
+}

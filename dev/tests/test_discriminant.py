@@ -12,7 +12,7 @@ from sklearn.discriminant_analysis import (
 
 from app.analysis.discriminant import QUADRATIC, discriminant
 from app.data.sqlite_repo import SqliteRepo
-from app.data_operations.discriminant_dialog import DiscriminantDialog
+from dev.packs.multivariate.data_operations.discriminant_dialog import DiscriminantDialog
 from dev.tests._helpers import wait_for_job
 
 

@@ -40,7 +40,7 @@ def test_one_limit_gives_the_one_sided_indices_only() -> None:
 
 
 def test_the_control_chart_gives_capability_with_its_own_sigma(qapp) -> None:
-    from app.data_operations.control_chart_dialog import (
+    from dev.packs.quality.data_operations.control_chart_dialog import (
         CHART_INDIVIDUALS,
         CHART_XBAR_R,
         SeriesControlChartDialog,

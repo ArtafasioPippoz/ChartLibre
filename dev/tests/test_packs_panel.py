@@ -18,12 +18,38 @@ def test_a_switch_is_written_at_save_not_before(qapp, folders):
     make_pack(packs.BUILTIN_DIR, manifest={"default": True, "version": "1.0", "description": "Readers."})
     panel = PacksPanel()
     item = panel.list.item(0)
-    assert item.text().splitlines() == ["Lab pack  1.0", "Readers.", "Adds: file readers (1)"]
-    assert item.checkState() == Qt.CheckState.Checked and not panel.remove_button.isEnabled()
+    assert item.text().splitlines() == ["Lab pack  1.0", "Adds: file readers (1)"]
+    assert item.checkState() == Qt.CheckState.Checked
+    assert not panel.restart_needed()
     check(panel, 0, False)
-    assert packs.is_switched_on(packs.find()[0])
+    assert packs.is_switched_on(packs.find()[0]) and panel.restart_needed()
     panel.save()
+    assert not panel.restart_needed()
     assert not packs.is_switched_on(packs.find()[0])
+
+
+def test_the_chosen_pack_shows_its_description_and_its_example_picture(qapp, folders):
+    import zipfile
+
+    from PySide6.QtCore import QBuffer, QIODevice
+    from PySide6.QtGui import QColor, QImage
+
+    image = QImage(40, 20, QImage.Format.Format_RGB32)
+    image.fill(QColor("red"))
+    buffer = QBuffer()
+    buffer.open(QIODevice.OpenModeFlag.WriteOnly)
+    image.save(buffer, "PNG")
+    make_pack(packs.BUILTIN_DIR, "plain", manifest={"description": "Readers."})
+    make_pack(packs.USER_DIR, "pic", manifest={"description": "With a picture."})
+    with zipfile.ZipFile(packs.USER_DIR / "pic.clpack", "a") as archive:
+        archive.writestr(packs.PREVIEW, bytes(buffer.data()))
+    panel = PacksPanel()
+    shown = {}
+    for row in range(panel.list.count()):
+        panel.list.setCurrentRow(row)
+        pack = panel.list.item(row).data(Qt.ItemDataRole.UserRole)
+        shown[pack.id] = (panel.description.text(), not panel.preview.isHidden(), not panel.detail.isHidden())
+    assert shown == {"plain": ("Readers.", False, True), "pic": ("With a picture.", True, True)}
 
 
 def test_a_pack_of_the_user_asks_for_trust_once_and_no_leaves_it_off(qapp, folders, monkeypatch):
@@ -45,7 +71,7 @@ def test_a_pack_of_the_user_asks_for_trust_once_and_no_leaves_it_off(qapp, folde
     assert packs.is_enabled(packs.find()[0])
 
 
-def test_a_file_is_added_listed_and_removed_and_a_bad_one_is_said(qapp, folders, monkeypatch, tmp_path):
+def test_a_file_is_added_and_listed_and_a_bad_one_is_said(qapp, folders, monkeypatch, tmp_path):
     said = []
     monkeypatch.setattr(packs_panel, "show_message", lambda _parent, key, **fields: said.append((key, fields)))
     monkeypatch.setattr(packs_panel, "ask", lambda *_args, **_fields: True)
@@ -57,10 +83,8 @@ def test_a_file_is_added_listed_and_removed_and_a_bad_one_is_said(qapp, folders,
     assert said[0][0] == "pack.not_added" and panel.list.count() == 0
     panel.add_file(make_pack(tmp_path / "downloads"))
     assert panel.list.count() == 1 and (packs.USER_DIR / "lab.clpack").is_file()
-    panel.list.setCurrentRow(0)
-    assert panel.remove_button.isEnabled()
-    panel.remove_button.click()
-    assert panel.list.count() == 0 and not (packs.USER_DIR / "lab.clpack").exists()
+    assert panel.restart_needed()
+    assert not hasattr(panel, "remove_button") and not hasattr(panel, "install_button")
 
 
 def test_a_pack_that_cannot_be_used_has_no_check_box_and_says_why(qapp, folders):

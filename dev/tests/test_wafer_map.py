@@ -71,7 +71,7 @@ def test_the_contour_grid_is_blank_off_the_wafer() -> None:
 def test_the_operation_draws_the_map_dies_and_bins(qapp, repo: SqliteRepo) -> None:
     from matplotlib.figure import Figure
 
-    from app.data_operations.wafer_map_dialog import WaferMapDialog
+    from dev.packs.semiconductors.data_operations.wafer_map_dialog import WaferMapDialog
     from app.plugin_api.charts.render_figure import render_figure_from_descriptor
 
     rng = np.random.default_rng(1)
@@ -137,7 +137,7 @@ def test_a_thinned_series_is_said_in_the_log(repo: SqliteRepo, monkeypatch) -> N
 
 
 def test_two_wafers_share_one_figure(qapp, repo: SqliteRepo) -> None:
-    from app.data_operations.wafer_map_dialog import WaferMapDialog
+    from dev.packs.semiconductors.data_operations.wafer_map_dialog import WaferMapDialog
 
     rng = np.random.default_rng(2)
     r, t = np.sqrt(rng.uniform(0, 1, 49)) * 140, rng.uniform(0, 2 * np.pi, 49)

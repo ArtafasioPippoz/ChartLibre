@@ -2,7 +2,7 @@
 # wheel; older interpreters take the same pins where those releases support them).
 PySide6==6.12.0
 matplotlib==3.11.2
-numpy==2.5.4
+numpy==2.5.5
 pandas==3.1.1
 # Required for every .xlsx/.xlsm import and export - app.dialogs.import_data_dialog
 # and app.widgets.table_list both hardcode engine="openpyxl", with no fallback.
@@ -79,5 +79,5 @@ certifi==2026.10.23
 # application is the same; without keyring the API key is read from the
 # environment (ANTHROPIC_API_KEY) instead of the macOS Keychain or the Windows
 # Credential Manager. Both are pure Python, on every platform.
-anthropic==2.8.0
+anthropic==2.9.0
 keyring==25.7.0

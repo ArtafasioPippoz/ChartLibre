@@ -1,4 +1,5 @@
-"""Extension packs (app.utils.packs): found, switched, unpacked safely, scanned by a plugin family."""
+"""Extension packs (app.utils.packs): found, switched, installed safely beside the application's plugins,
+scanned by a plugin family."""
 from __future__ import annotations
 
 import json
@@ -33,7 +34,9 @@ def make_pack(folder: Path, pack_id: str = "lab", *, manifest: dict | None = Non
 @pytest.fixture
 def folders(tmp_path, monkeypatch):
     """The application's and the user's pack folders, and a user.json, of this test alone."""
-    monkeypatch.setattr(packs, "BUILTIN_DIR", tmp_path / "app_packages")
+    monkeypatch.delenv(packs.ALL_PACKS_ENV, raising=False)  # these tests are about the switches
+    monkeypatch.setattr(packs, "APP_DIR", tmp_path / "app")
+    monkeypatch.setattr(packs, "BUILTIN_DIR", tmp_path / "app" / "packages")
     monkeypatch.setattr(packs, "USER_DIR", tmp_path / "user_packages")
     user_json = tmp_path / "user.json"
     user_json.write_text("{}", encoding="utf-8")
@@ -42,8 +45,8 @@ def folders(tmp_path, monkeypatch):
 
 
 def family(tmp_path: Path) -> PluginFamily:
-    builtin = tmp_path / "builtin"
-    builtin.mkdir(exist_ok=True)
+    builtin = packs.APP_DIR / "importers"
+    builtin.mkdir(parents=True, exist_ok=True)
     return PluginFamily(label="", base_class="FileImporter", builtin_root=builtin, user_root=None,
                         module_prefix="_test_pack_importer", string_list_attrs=("Suffixes",),
                         pack_folder="importers")
@@ -56,20 +59,41 @@ def test_a_default_pack_of_the_application_is_scanned_and_names_itself(folders):
     assert packs.is_enabled(pack)
     (entry,) = family(folders).discover()
     assert entry["value"] == "Pack reader" and entry["pack"] == "lab"
+    # Its files are beside the application's own readers, in a folder of its own that git leaves alone.
+    assert Path(entry["path"]) == packs.APP_DIR / "importers" / "lab" / "reader.py"
+    assert (packs.APP_DIR / "importers" / "lab" / ".gitignore").read_text() == "*\n"
+    assert packs.installed() == {"lab": pack.fingerprint}
     assert family(folders).load(entry).__name__ == "TdmsLike"
 
 
-def test_switched_off_it_adds_nothing_and_on_again_it_is_not_unpacked_twice(folders):
+def test_switched_off_it_is_taken_out_and_an_unchanged_pack_is_not_installed_twice(folders):
     make_pack(packs.BUILTIN_DIR, manifest={"default": True})
-    (pack,) = packs.find()
+    assert len(family(folders).discover()) == 1
+    folder = packs.family_folder("importers", "lab")
+    stamp = (folder / "reader.py").stat().st_mtime_ns
+    assert len(family(folders).discover()) == 1
+    assert (folder / "reader.py").stat().st_mtime_ns == stamp
     packs.set_switched_on("lab", False)
     assert family(folders).discover() == []
-    packs.set_switched_on("lab", True)
-    folder = packs.unpack(pack)
-    stamp = folder.stat().st_mtime_ns
-    assert len(family(folders).discover()) == 1
-    assert folder.stat().st_mtime_ns == stamp
-    assert [item.name for item in (packs.USER_DIR / "unpacked").iterdir()] == [folder.name]
+    assert not folder.exists() and packs.installed() == {}
+
+
+def test_a_plugin_of_the_application_beside_the_packs_is_never_touched(folders):
+    own = packs.APP_DIR / "importers" / "own.py"
+    own.parent.mkdir(parents=True)
+    own.write_text(IMPORTER.replace("Pack reader", "Own reader"))
+    # A pack named as a folder the application already has there is refused, and the folder left alone.
+    taken = packs.APP_DIR / "importers" / "taken"
+    taken.mkdir()
+    (taken / "mine.py").write_text("x = 1\n")
+    make_pack(packs.BUILTIN_DIR, "taken", manifest={"default": True})
+    make_pack(packs.BUILTIN_DIR, manifest={"default": True})
+    names = {entry["value"]: entry.get("pack", "") for entry in family(folders).discover()}
+    assert names == {"Own reader": "", "Pack reader": "lab"}
+    packs.set_switched_on("lab", False)
+    packs.uninstall("taken")
+    family(folders).discover()
+    assert own.is_file() and (taken / "mine.py").is_file() and packs.installed() == {}
 
 
 def test_a_pack_the_user_added_runs_only_once_trusted_and_a_changed_file_asks_again(folders):
@@ -84,12 +108,13 @@ def test_a_pack_the_user_added_runs_only_once_trusted_and_a_changed_file_asks_ag
     assert path.exists() and not packs.is_enabled(packs.find()[0])
 
 
-def test_a_changed_pack_replaces_its_old_folder(folders):
+def test_a_changed_pack_replaces_what_was_installed(folders):
     make_pack(packs.BUILTIN_DIR, manifest={"default": True})
-    old = packs.unpack(packs.find()[0])
-    make_pack(packs.BUILTIN_DIR, manifest={"default": True, "version": "2"})
-    new = packs.unpack(packs.find()[0])
-    assert new != old and new.is_dir() and not old.exists()
+    family(folders).discover()
+    make_pack(packs.BUILTIN_DIR, manifest={"default": True},
+              files={"importers/other.py": IMPORTER.replace("Pack reader", "Second reader")})
+    assert [entry["value"] for entry in family(folders).discover()] == ["Second reader"]
+    assert sorted(item.name for item in packs.family_folder("importers", "lab").glob("*.py")) == ["other.py"]
 
 
 @pytest.mark.parametrize(
@@ -112,19 +137,19 @@ def test_a_file_that_is_no_zip_and_a_second_pack_of_the_same_id_are_listed_not_u
     packs.BUILTIN_DIR.joinpath(f"broken{packs.SUFFIX}").write_text("not a zip")
     make_pack(packs.USER_DIR)
     by_place = {(pack.path.parent.name, pack.path.stem): pack.error for pack in packs.find()}
-    assert by_place[("app_packages", "lab")] == ""
-    assert "cannot be read" in by_place[("app_packages", "broken")]
+    assert by_place[("packages", "lab")] == ""
+    assert "cannot be read" in by_place[("packages", "broken")]
     assert "already called" in by_place[("user_packages", "lab")]
 
 
 @pytest.mark.parametrize("member", ["../outside.py", "/absolute.py", "importers/../../outside.py"])
-def test_a_member_that_would_land_outside_the_folder_stops_the_unpacking(folders, member):
+def test_a_member_that_would_land_outside_the_folder_stops_the_installation(folders, member):
     make_pack(packs.BUILTIN_DIR, manifest={"default": True}, files={member: "x = 1\n"})
     (pack,) = packs.find()
     with pytest.raises(packs.PackError, match="outside its folder"):
-        packs.unpack(pack)
+        packs.install(pack)
     assert family(folders).discover() == []  # logged and left out, the application goes on
-    assert not (folders / "outside.py").exists()
+    assert not list(folders.rglob("outside.py")) and packs.installed() == {}
 
 
 def test_a_packs_own_modules_are_importable_by_its_id(folders):

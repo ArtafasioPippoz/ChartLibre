@@ -92,4 +92,6 @@ def test_every_chart_says_when_to_use_it_and_has_an_example() -> None:
 
 
 def _module(path: str) -> str:
-    return "app.charts." + path.rsplit("/", 1)[-1].removesuffix(".py").rsplit("\\", 1)[-1]
+    # A chart type of an installed extension pack is in a folder of its own: app/charts/<pack>/<file>.py.
+    inside = path.replace("\\", "/").split("/app/charts/", 1)[-1].removesuffix(".py")
+    return "app.charts." + inside.replace("/", ".")

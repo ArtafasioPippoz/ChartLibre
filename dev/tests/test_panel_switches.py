@@ -6,7 +6,7 @@ import pandas as pd
 
 from app.data.sqlite_repo import SqliteRepo
 from app.data_operations.outlier_dialog import SeriesOutlierDialog
-from app.data_operations.time_series_dialog import TimeSeriesDialog
+from dev.packs.modelling.data_operations.time_series_dialog import TimeSeriesDialog
 from app.utils.i18n import _
 
 
@@ -172,7 +172,7 @@ def test_a_report_figure_is_shown_on_preview_and_dropped_on_cancel(qapp, repo: S
 
 def test_the_roles_data_page_is_on_the_tab_ground_not_a_darker_box(qapp, repo: SqliteRepo) -> None:
     """A scroll area fills the page it holds with the window's grey: the roles' Data page was a box in the page."""
-    from app.data_operations.vector_field_dialog import VectorFieldDialog
+    from dev.packs.vector_fields.data_operations.vector_field_dialog import VectorFieldDialog
 
     _chart_and_table(repo)
     dialog = VectorFieldDialog(repo=repo, table="measures", parent=None)

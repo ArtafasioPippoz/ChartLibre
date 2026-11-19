@@ -51,7 +51,7 @@ def test_the_settings_column_scrolls_instead_of_stretching_the_dialog(qapp, repo
 
 def test_the_other_dialogs_stay_within_a_laptop_too(qapp, repo: SqliteRepo) -> None:
     from app.data_operations.filter_dialog import SeriesFilterDialog
-    from app.data_operations.spectral_dialog import SeriesSpectralDialog
+    from dev.packs.signal.data_operations.spectral_dialog import SeriesSpectralDialog
     from app.dialogs.settings_dialog import SettingsDialog
 
     figure_id = repo.create_figure_descriptor(name="F")
@@ -76,10 +76,9 @@ def test_every_data_operation_fits_a_laptop(qapp, repo: SqliteRepo) -> None:
     from app.plugin_api.data_operations.dialog_base import DataOperationDialogBase
 
     figure_id = repo.create_figure_descriptor(name="F")
-    for info in pkgutil.iter_modules(operations.__path__):
-        if not info.name.endswith("_dialog"):
-            continue
-        module = importlib.import_module(f"app.data_operations.{info.name}")
+    from _operations import operation_modules
+
+    for module in operation_modules(packages=True):
         for value in vars(module).values():
             if (isinstance(value, type) and issubclass(value, DataOperationDialogBase)
                     and value.__module__ == module.__name__):

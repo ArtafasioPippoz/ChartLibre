@@ -15,7 +15,7 @@ import pandas as pd
 import pytest
 
 from app.data.sqlite_repo import SqliteRepo
-from app.data_operations.cluster_dialog import SeriesClusterDialog
+from dev.packs.multivariate.data_operations.cluster_dialog import SeriesClusterDialog
 from app.logs.logger import applogger
 
 

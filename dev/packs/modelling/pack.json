@@ -1,0 +1,10 @@
+{
+  "id": "modelling",
+  "name": "Predictive modelling",
+  "version": "1.0.0",
+  "description": "Gaussian process regression, partition trees and time series models.",
+  "author": "ChartLibre",
+  "needs_app": "0.2.0",
+  "packages": [],
+  "default": true
+}

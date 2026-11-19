@@ -16,8 +16,9 @@ from app.utils import dialog_state
 
 def _operations() -> list[type[DataOperationDialogBase]]:
     found = []
-    for path in sorted(Path(next(iter(package.__path__))).glob("*_dialog.py")):
-        module = importlib.import_module(f"app.data_operations.{path.stem}")
+    from _operations import operation_modules
+
+    for module in operation_modules():
         for _name, cls in inspect.getmembers(module, inspect.isclass):
             if issubclass(cls, DataOperationDialogBase) and cls.__module__ == module.__name__:
                 found.append(cls)

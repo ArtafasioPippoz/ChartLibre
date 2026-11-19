@@ -354,12 +354,33 @@ def _translation(language: str) -> gettext.NullTranslations:
     English source string.
     """
     compile_catalog(language)
-    return gettext.translation(
+    catalogue = gettext.translation(
         DOMAIN,
         localedir=str(LOCALES_DIR),
         languages=[language],
         fallback=True,
     )
+    # The extension packs' own strings (app.utils.packs), asked after the application's: a pack translates
+    # what it adds, it does not change what is there. Imported here: packs reads the configuration.
+    try:
+        from app.utils import packs
+
+        for path in packs.catalogues(language):
+            catalogue.add_fallback(_PackCatalogue(_parse_po(path)))
+    except Exception:  # noqa: BLE001 - a pack's catalogue must never cost the application its own
+        pass
+    return catalogue
+
+
+class _PackCatalogue(gettext.NullTranslations):
+    """A pack's .po file, read as it is: a few dozen strings need no compiled .mo."""
+
+    def __init__(self, entries: dict[str, str]) -> None:
+        super().__init__()
+        self._entries = {key: value for key, value in entries.items() if key and value}
+
+    def gettext(self, message: str) -> str:
+        return self._entries.get(message) or super().gettext(message)
 
 
 def available_languages() -> list[str]:

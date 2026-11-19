@@ -10,7 +10,7 @@ import pytest
 
 from app.analysis.spectral import METHOD_ACORR, METHOD_PSD, METHOD_XCORR
 from app.data.sqlite_repo import SqliteRepo
-from app.data_operations.spectral_dialog import SeriesSpectralDialog
+from dev.packs.signal.data_operations.spectral_dialog import SeriesSpectralDialog
 
 FS = 200.0
 TONE_HZ = 25.0

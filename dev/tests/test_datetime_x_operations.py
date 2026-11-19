@@ -135,9 +135,9 @@ def test_every_other_operation_produces_a_result_too(
     import importlib
 
     figure_id, _axis_id = dated_figure
-    cls = getattr(
-        importlib.import_module(f"app.data_operations.{module_name}"), class_name
-    )
+    from _operations import operation_module
+
+    cls = getattr(operation_module(module_name), class_name)
 
     results = _dialog(cls, repo, figure_id).compute_results()
 
@@ -150,7 +150,7 @@ def test_every_other_operation_produces_a_result_too(
 def test_a_result_computed_from_dates_is_written_back_as_dates(
     qapp, repo: SqliteRepo, dated_figure
 ) -> None:
-    from app.data_operations.roots_dialog import SeriesRootsDialog
+    from dev.packs.signal.data_operations.roots_dialog import SeriesRootsDialog
 
     figure_id, axis_id = dated_figure
     dialog = _dialog(SeriesRootsDialog, repo, figure_id)

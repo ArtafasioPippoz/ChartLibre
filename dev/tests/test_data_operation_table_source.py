@@ -72,7 +72,7 @@ def test_closing_without_apply_removes_the_drawn_figure(qapp, repo: SqliteRepo, 
 
 
 def test_the_window_remembers_its_parameters_and_columns_and_reverts(qapp, repo: SqliteRepo, chart_and_table: int) -> None:
-    from app.data_operations.peaks_dialog import SeriesPeaksDialog
+    from dev.packs.signal.data_operations.peaks_dialog import SeriesPeaksDialog
 
     clear_state("SeriesPeaksDialog")
     dialog = SeriesPeaksDialog(repo=repo, figure_id=chart_and_table)

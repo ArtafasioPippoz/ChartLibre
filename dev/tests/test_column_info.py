@@ -52,7 +52,7 @@ def test_the_dialog_renames_casts_and_describes_in_one_undo_step(qapp, repo: Sql
 
 
 def test_an_analysis_takes_the_forced_type_and_the_emptied_codes(qapp, repo: SqliteRepo) -> None:
-    from app.data_operations.time_series_dialog import TimeSeriesDialog
+    from dev.packs.modelling.data_operations.time_series_dialog import TimeSeriesDialog
 
     repo.import_dataframe(_survey(), table_name="survey", normalize_columns=False)
     repo.fill_missing("survey", "score", "null", codes=["-999"])  # the table editor's Fill missing values

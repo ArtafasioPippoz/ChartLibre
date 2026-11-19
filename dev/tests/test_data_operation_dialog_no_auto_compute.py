@@ -20,7 +20,7 @@ import pandas as pd
 import pytest
 
 from app.data.sqlite_repo import SqliteRepo
-from app.data_operations.baseline_dialog import SeriesBaselineDialog
+from dev.packs.signal.data_operations.baseline_dialog import SeriesBaselineDialog
 
 
 @pytest.fixture

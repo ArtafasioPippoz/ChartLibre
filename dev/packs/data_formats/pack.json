@@ -1,0 +1,13 @@
+{
+  "id": "data_formats",
+  "name": "Data formats",
+  "version": "1.1.0",
+  "description": "Columnar and scientific data files: Parquet, Feather/Arrow, NetCDF, MATLAB, WAV audio, GPS tracks (GPX) and GraphPad Prism.",
+  "author": "ChartLibre",
+  "needs_app": "0.2.0",
+  "packages": [
+    "pyarrow",
+    "netCDF4"
+  ],
+  "default": true
+}

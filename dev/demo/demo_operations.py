@@ -97,7 +97,7 @@ OPERATIONS: tuple[OperationDemo, ...] = (
         "02 · Spectral analysis - the tones inside a signal",
         "A noisy signal and its spectrum", "signal_time_domain",
         "SELECT t_s AS x, amplitude AS y FROM signal_time_domain ORDER BY t_s",
-        {"x": "x", "y": "y"}, "time (s)", "amplitude", "spectral_dialog:SeriesSpectralDialog",
+        {"x": "x", "y": "y"}, "time (s)", "amplitude", "signal.spectral_dialog:SeriesSpectralDialog",
         style={"linewidth": 0.8, "marker": ""},
     ),
     OperationDemo(
@@ -112,21 +112,21 @@ OPERATIONS: tuple[OperationDemo, ...] = (
         "04 · Baseline correction - a drifting background removed",
         "Spectrum with a wandering baseline", "baseline_spectrum",
         "SELECT x, intensity AS y FROM baseline_spectrum ORDER BY x",
-        {"x": "x", "y": "y"}, "x", "intensity", "baseline_dialog:SeriesBaselineDialog",
+        {"x": "x", "y": "y"}, "x", "intensity", "signal.baseline_dialog:SeriesBaselineDialog",
         style={"linewidth": 1.0, "marker": ""},
     ),
     OperationDemo(
         "05 · Peaks - the maxima of the same spectrum",
         "Peaks by prominence", "baseline_spectrum",
         "SELECT x, intensity AS y FROM baseline_spectrum ORDER BY x",
-        {"x": "x", "y": "y"}, "x", "intensity", "peaks_dialog:SeriesPeaksDialog",
+        {"x": "x", "y": "y"}, "x", "intensity", "signal.peaks_dialog:SeriesPeaksDialog",
         style={"linewidth": 1.0, "marker": ""},
     ),
     OperationDemo(
         "06 · Roots - where a force curve changes sign",
         "DLVO force: repulsive, then attractive", "dlvo_curve",
         "SELECT separation_nm AS x, F_total_nN AS y FROM dlvo_curve ORDER BY separation_nm",
-        {"x": "x", "y": "y"}, "separation (nm)", "force (nN)", "roots_dialog:SeriesRootsDialog",
+        {"x": "x", "y": "y"}, "separation (nm)", "force (nN)", "signal.roots_dialog:SeriesRootsDialog",
         style={"linewidth": 1.2, "marker": ""},
     ),
     OperationDemo(
@@ -169,14 +169,14 @@ OPERATIONS: tuple[OperationDemo, ...] = (
         "12 · Clustering - four thousand drivers in groups",
         "Distance against speeding", "driver_behaviour",
         "SELECT distance_feature AS x, speeding_feature AS y FROM driver_behaviour",
-        {"x": "x", "y": "y"}, "distance", "speeding (%)", "cluster_dialog:SeriesClusterDialog",
+        {"x": "x", "y": "y"}, "distance", "speeding (%)", "multivariate.cluster_dialog:SeriesClusterDialog",
         style={"marker": "o", "markersize": 2, "linestyle": ""},
     ),
     OperationDemo(
         "13 · Control chart - is the measuring process stable?",
         "Machine A, run by run", "machine_measurements",
         "SELECT run AS x, value AS y FROM machine_measurements WHERE machine = 'Machine A' ORDER BY run",
-        {"x": "x", "y": "y"}, "run", "reading (mm)", "control_chart_dialog:SeriesControlChartDialog",
+        {"x": "x", "y": "y"}, "run", "reading (mm)", "quality.control_chart_dialog:SeriesControlChartDialog",
         style={"marker": "o", "markersize": 4, "linewidth": 0.8},
     ),
     OperationDemo(
@@ -204,7 +204,16 @@ OPERATIONS_DEMO: DemoProject = next(
 
 def _dialog_class(path: str) -> type:
     module_name, class_name = path.split(":")
-    module = importlib.import_module(f"app.data_operations.{module_name}")
+    try:
+        module = importlib.import_module(f"app.data_operations.{module_name}")
+    except ModuleNotFoundError:
+        # An analysis of an extension pack, installed in app/data_operations/<pack>/ (app.utils.packs).
+        from app.utils import packs
+
+        pack = next((folder.parent.name for folder in packs.APP_DIR.glob(f"data_operations/*/{module_name}.py")), None)
+        if pack is None:
+            raise
+        module = importlib.import_module(f"app.data_operations.{pack}.{module_name}")
     return getattr(module, class_name)
 
 

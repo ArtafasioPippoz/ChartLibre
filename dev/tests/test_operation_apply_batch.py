@@ -96,7 +96,7 @@ def test_applying_an_operation_can_be_taken_back(qapp, repo, tmp_db_path) -> Non
     import numpy as np
     import pandas as pd
 
-    from app.data_operations.roots_dialog import SeriesRootsDialog
+    from dev.packs.signal.data_operations.roots_dialog import SeriesRootsDialog
 
     repo.import_dataframe(
         pd.DataFrame({"x": np.arange(60.0), "y": np.sin(np.arange(60) / 5.0)}),
@@ -136,7 +136,7 @@ def test_previewing_an_operation_records_nothing(qapp, repo, tmp_db_path) -> Non
     import numpy as np
     import pandas as pd
 
-    from app.data_operations.roots_dialog import SeriesRootsDialog
+    from dev.packs.signal.data_operations.roots_dialog import SeriesRootsDialog
 
     repo.import_dataframe(
         pd.DataFrame({"x": np.arange(60.0), "y": np.sin(np.arange(60) / 5.0)}),

@@ -1,0 +1,10 @@
+{
+  "id": "semiconductors",
+  "name": "Semiconductor analysis",
+  "version": "1.0.0",
+  "description": "Wafer maps: sites, dies and defects on a wafer, die bins against limits and yield.",
+  "author": "ChartLibre",
+  "needs_app": "0.2.0",
+  "packages": [],
+  "default": true
+}

@@ -671,6 +671,11 @@ class SettingsDialog(PanelDialog):
         blind write would drop whatever else changed while it was open.
         """
         style_key = self._value(self._style_combo)
+        restart_for = []
+        if style_key != self._entry_style:
+            restart_for.append(tr("look"))
+        if self._packs_panel.restart_needed():
+            restart_for.append(tr("packs"))
         set_value(CONFIG_APP_STYLE, style_key)
         set_value("language", self._value(self._language_combo))
         set_value(CONFIG_SAVE_FORMAT, self._value(self._format_combo))
@@ -696,6 +701,27 @@ class SettingsDialog(PanelDialog):
             self._value(self._format_combo),
         )
         self.accept()
+        if restart_for and self._ask_restart(", ".join(restart_for)):
+            from app.utils.restart import restart
+
+            restart()
+
+    def _ask_restart(self, what: str) -> bool:
+        """The changes apply at the next start: restart now, or later. Two buttons that say what they do."""
+        from PySide6.QtWidgets import QMessageBox
+
+        from app.utils.messages import message
+
+        title, text = message("settings.restart").translated(what=what)
+        box = QMessageBox(self.parent())
+        box.setIcon(QMessageBox.Icon.Question)
+        box.setWindowTitle(title)
+        box.setText(text)
+        now = box.addButton(tr("Restart now"), QMessageBox.ButtonRole.AcceptRole)
+        box.addButton(tr("Later"), QMessageBox.ButtonRole.RejectRole)
+        box.setDefaultButton(now)
+        box.exec()
+        return box.clickedButton() is now
 
 
 def _align_labels(forms: list[QFormLayout]) -> None:

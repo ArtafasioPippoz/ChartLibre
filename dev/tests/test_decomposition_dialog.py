@@ -11,7 +11,7 @@ import pandas as pd
 import pytest
 
 from app.data.sqlite_repo import SqliteRepo
-from app.data_operations.decomposition_dialog import (
+from dev.packs.signal.data_operations.decomposition_dialog import (
     DECOMP_PCA,
     SeriesDecompositionDialog,
 )

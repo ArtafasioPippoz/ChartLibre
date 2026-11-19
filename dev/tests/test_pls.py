@@ -8,7 +8,7 @@ import pandas as pd
 
 from app.analysis.pls import pls
 from app.data.sqlite_repo import SqliteRepo
-from app.data_operations.pls_dialog import PLSDialog
+from dev.packs.multivariate.data_operations.pls_dialog import PLSDialog
 
 WAVELENGTHS = np.linspace(900, 1700, 120)
 

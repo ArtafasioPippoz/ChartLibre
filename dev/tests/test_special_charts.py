@@ -71,7 +71,7 @@ def test_the_g_chart_has_the_geometric_limits_and_the_t_chart_the_back_transform
 
 
 def test_the_dialog_draws_a_cusum_with_both_sums(qapp, repo: SqliteRepo) -> None:
-    from app.data_operations.control_chart_dialog import SeriesControlChartDialog
+    from dev.packs.quality.data_operations.control_chart_dialog import SeriesControlChartDialog
 
     repo.import_dataframe(pd.DataFrame({"n": X, "v": MONTGOMERY}), table_name="shift", normalize_columns=False)
     figure_id = int(repo.create_figure_descriptor(name="Shift"))

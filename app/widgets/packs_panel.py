@@ -1,11 +1,10 @@
 """Preferences > Packages: the extension packs, each switched on or off (app.utils.packs)."""
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
-from PySide6.QtCore import QProcess, Qt, QUrl
-from PySide6.QtGui import QDesktopServices
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
     QFileDialog,
     QHBoxLayout,
@@ -17,7 +16,6 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from app.styles.style import mark_destructive_button
 from app.utils import packs
 from app.utils.i18n import tr
 from app.utils.messages import ask, show_message
@@ -33,10 +31,8 @@ FAMILY_WORDS = {
 
 
 def describe(pack: packs.Pack) -> str:
-    """The lines of a pack's row: its name and version, what it is, what it adds or what is wrong."""
+    """The lines of a pack's row: its name and version, what it adds or what is wrong (what it is: the detail below)."""
     lines = [f"{pack.name}  {pack.version}".rstrip()]
-    if pack.description:
-        lines.append(pack.description)
     if pack.error:
         lines.append(tr("Not usable: {why}").format(why=tr(pack.error)))
         return "\n".join(lines)
@@ -53,12 +49,16 @@ class PacksPanel(QWidget):
     """The list of packs with a check box each. Nothing is written until save(), like the rest of Preferences;
     adding and removing a file happen at once, because they are files."""
 
+    PREVIEW_WIDTH = 180
+
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         #: pack id -> the switch as the user left it, where it differs from what is stored.
         self._changed: dict[str, bool] = {}
         #: The user's packs accepted in this window, trusted for good at save().
         self._accepted: dict[str, packs.Pack] = {}
+        #: A pack was added here: what it brings is there at the next start only.
+        self._added = False
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -68,8 +68,21 @@ class PacksPanel(QWidget):
         self.list.setMinimumHeight(170)
         self.list.setSpacing(3)
         self.list.itemChanged.connect(self._switched)
-        self.list.currentItemChanged.connect(lambda *_: self._update_buttons())
+        self.list.currentItemChanged.connect(lambda *_: self._show_detail())
         layout.addWidget(self.list, 1)
+
+        # The chosen pack as the chart picker shows a chart: its example picture beside what it is.
+        self.detail = QWidget(self)
+        detail_row = QHBoxLayout(self.detail)
+        detail_row.setContentsMargins(0, 0, 0, 0)
+        self.preview = QLabel(self.detail)
+        self.preview.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.description = QLabel(self.detail)
+        self.description.setWordWrap(True)
+        self.description.setAlignment(Qt.AlignmentFlag.AlignTop)
+        detail_row.addWidget(self.preview)
+        detail_row.addWidget(self.description, 1)
+        self.detail.setVisible(False)
 
         self.empty_note = QLabel(tr("No packs yet. A pack is a .clpack file that adds analyses, chart types or "
                                     "file readers."), self)
@@ -80,34 +93,10 @@ class PacksPanel(QWidget):
         buttons = QHBoxLayout()
         self.add_button = QPushButton(tr("Add from a file…"), self)
         self.add_button.clicked.connect(self._add)
-        self.remove_button = mark_destructive_button(QPushButton(tr("Remove"), self))
-        self.remove_button.setToolTip(tr("Delete a pack you added. A pack that came with ChartLibre can only "
-                                         "be switched off."))
-        self.remove_button.clicked.connect(self._remove)
-        self.install_button = QPushButton(tr("Install the libraries"), self)
-        self.install_button.setToolTip(tr("Download and install, into ChartLibre's own Python, the libraries the "
-                                          "chosen pack needs. It needs the Internet."))
-        self.install_button.clicked.connect(self._install)
-        self.folder_button = QPushButton(tr("Open folder"), self)
-        self.folder_button.clicked.connect(self._open_folder)
         buttons.addWidget(self.add_button)
-        buttons.addWidget(self.remove_button)
-        buttons.addWidget(self.install_button)
         buttons.addStretch(1)
-        buttons.addWidget(self.folder_button)
-        layout.addLayout(buttons)
-
-        #: What the installation of libraries says, while it runs and when it ends.
-        self.install_note = QLabel("", self)
-        self.install_note.setWordWrap(True)
-        self.install_note.setVisible(False)
-        layout.addWidget(self.install_note)
-        self._pip: QProcess | None = None
-
-        note = QLabel(tr("A pack switched on or off is applied the next time the app starts."), self)
-        note.setProperty("muted", True)
-        note.setWordWrap(True)
-        layout.addWidget(note)
+        layout.addWidget(self.detail)
+        layout.addLayout(buttons)  # under the description of the chosen pack
         self.refresh()
 
     # ------------------------------------------------------------------
@@ -129,7 +118,24 @@ class PacksPanel(QWidget):
         self.list.blockSignals(False)
         self.empty_note.setVisible(self.list.count() == 0)
         self.list.setVisible(self.list.count() > 0)
-        self._update_buttons()
+        self._show_detail()
+
+    def _show_detail(self) -> None:
+        """The description and the example picture of the chosen pack; nothing when it has neither."""
+        pack = self._current()
+        text = tr(pack.description) if pack is not None and pack.description else ""
+        picture = QPixmap()
+        data = packs.preview_bytes(pack) if pack is not None else None
+        if data:
+            picture.loadFromData(data)
+        if not picture.isNull():
+            picture = picture.scaledToWidth(self.PREVIEW_WIDTH * 2, Qt.TransformationMode.SmoothTransformation)
+            picture.setDevicePixelRatio(2.0)  # sharp on a Retina screen, as the chart picker's
+        self.preview.setPixmap(picture)
+        self.preview.setVisible(not picture.isNull())
+        self.description.setText(text)
+        self.description.setVisible(bool(text))
+        self.detail.setVisible(bool(text) or not picture.isNull())
 
     def _may_run(self, pack: packs.Pack) -> bool:
         return packs.is_trusted(pack) or self._accepted.get(pack.id) is not None
@@ -137,12 +143,6 @@ class PacksPanel(QWidget):
     def _current(self) -> packs.Pack | None:
         item = self.list.currentItem()
         return item.data(Qt.ItemDataRole.UserRole) if item is not None else None
-
-    def _update_buttons(self) -> None:
-        pack = self._current()
-        self.remove_button.setEnabled(pack is not None and not pack.builtin)
-        self.install_button.setEnabled(self._pip is None and pack is not None and not pack.error
-                                       and bool(packs.missing_packages(pack)))
 
     def _switched(self, item: QListWidgetItem) -> None:
         pack: packs.Pack = item.data(Qt.ItemDataRole.UserRole)
@@ -169,60 +169,15 @@ class PacksPanel(QWidget):
         except (packs.PackError, OSError) as exc:
             show_message(self, "pack.not_added", name=path.name, why=tr(str(exc)))
             return
+        self._added = True
         self.refresh()
-
-    def _remove(self) -> None:
-        pack = self._current()
-        if pack is None or pack.builtin or not ask(self, "pack.confirm_remove", name=pack.name):
-            return
-        packs.remove(pack)
-        self._changed.pop(pack.id, None)
-        self._accepted.pop(pack.id, None)
-        self.refresh()
-
-    @staticmethod
-    def pip_command(names: list[str]) -> tuple[str, list[str]]:
-        """The program and arguments that install *names* into this very Python (the application's own)."""
-        return sys.executable, ["-m", "pip", "install", "--disable-pip-version-check", *names]
-
-    def _install(self) -> None:
-        pack = self._current()
-        names = packs.missing_packages(pack) if pack is not None and not pack.error else []
-        if not names or self._pip is not None:
-            return
-        # A process of its own, not a thread: the window stays alive and pip's own output is kept for the note.
-        self._pip = QProcess(self)
-        self._pip.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
-        self._pip.finished.connect(lambda code, _status, names=names: self._installed(code, names))
-        self._pip.errorOccurred.connect(lambda _error, names=names: self._installed(-1, names))
-        self.install_note.setText(tr("Installing {names}…").format(names=", ".join(names)))
-        self.install_note.setVisible(True)
-        self._update_buttons()
-        program, arguments = self.pip_command(names)
-        self._pip.start(program, arguments)
-
-    def _installed(self, code: int, names: list[str]) -> None:
-        process, self._pip = self._pip, None
-        if process is None:  # finished and errorOccurred both fire for a process that could not start
-            return
-        output = bytes(process.readAll().data()).decode("utf-8", "replace").strip()
-        process.deleteLater()
-        import importlib
-
-        importlib.invalidate_caches()  # the libraries just written are seen without a restart
-        if code == 0:
-            self.install_note.setText(tr("Installed: {names}.").format(names=", ".join(names)))
-        else:
-            last = output.splitlines()[-1] if output else ""
-            self.install_note.setText(tr("{names} could not be installed. {why}").format(
-                names=", ".join(names), why=last))
-        self.refresh()
-
-    def _open_folder(self) -> None:
-        packs.USER_DIR.mkdir(parents=True, exist_ok=True)
-        QDesktopServices.openUrl(QUrl.fromLocalFile(str(packs.USER_DIR)))
 
     # ------------------------------------------------------------------
+    def restart_needed(self) -> bool:
+        """A pack was added, or a switch differs from what is stored: the app has to start again to show it."""
+        stored = {pack.id: packs.is_switched_on(pack) for pack in packs.find()}
+        return self._added or any(on != stored.get(pack_id, False) for pack_id, on in self._changed.items())
+
     def save(self) -> None:
         """Write the switches that changed, and trust the packs accepted here."""
         for pack in self._accepted.values():
@@ -232,3 +187,4 @@ class PacksPanel(QWidget):
             packs.set_switched_on(pack_id, on)
         self._changed.clear()
         self._accepted.clear()
+        self._added = False

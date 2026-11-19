@@ -12,7 +12,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import pytest
 
-from app.ai_providers.github_models_provider import GitHubModelsProvider
+from dev.packs.assistant_providers.ai_providers.github_models_provider import GitHubModelsProvider
 from app.ai_providers.ollama_provider import OllamaProvider
 from app.plugin_api.ai.provider import ACCURATE, FAST, ToolResult, ToolSpec
 
@@ -232,7 +232,7 @@ for line in sys.stdin:
 def test_foundation_models_runs_tools_through_its_helper(tmp_path, monkeypatch) -> None:
     import sys
 
-    from app.ai_providers import foundation_models_provider as module
+    from dev.packs.assistant_providers.ai_providers import foundation_models_provider as module
 
     script = tmp_path / "helper.py"
     script.write_text(_FAKE_HELPER, encoding="utf-8")

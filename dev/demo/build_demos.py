@@ -823,7 +823,7 @@ def _surface_bump_peaks_result() -> pd.DataFrame:
     real algorithm.
     """
     from app.analysis.peaks import MAXIMA, PeakSettings, find_peaks_2d
-    from app.data_operations.peaks_dialog import PeakResult
+    from app.data_operations.signal.peaks_dialog import PeakResult
 
     xx, yy, zz = _bump_grid_arrays()
     peaks = find_peaks_2d(xx, yy, zz, MAXIMA, PeakSettings(distance=5))
@@ -843,7 +843,7 @@ def _surface_saddle_roots_result() -> pd.DataFrame:
     run directly on the exact grid.
     """
     from app.analysis.roots import find_level_curve
-    from app.data_operations.roots_dialog import RootResult
+    from app.data_operations.signal.roots_dialog import RootResult
 
     xx, yy, zz = _saddle_grid_arrays()
     search = find_level_curve(xx, yy, zz, level=0.0, limit=10**9)

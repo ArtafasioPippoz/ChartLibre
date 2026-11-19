@@ -245,8 +245,9 @@ def _render_figure_from_descriptor(
                 note = packs.needed_note("charts", chart_type) or tr(
                     "The chart type “{name}” is not installed.").format(name=chart_type)
                 ax.set_axis_off()
-                ax.text(0.5, 0.5, f"{chart_type}\n\n{note}", ha="center", va="center", wrap=True,
-                        transform=ax.transAxes)
+                put_text = ax.text2D if hasattr(ax, "text2D") else ax.text  # a 3D axis: text() wants a z too
+                put_text(0.5, 0.5, f"{chart_type}\n\n{note}", ha="center", va="center", wrap=True,
+                         transform=ax.transAxes)
                 continue
 
             # A band (a fit's confidence or prediction band) is a filled

@@ -20,7 +20,7 @@ import pytest
 from matplotlib.figure import Figure
 
 from app.data.sqlite_repo import SqliteRepo
-from app.data_operations.geometry_dialog import ROTATE, SeriesGeometryDialog
+from dev.packs.vector_fields.data_operations.geometry_dialog import ROTATE, SeriesGeometryDialog
 from app.plugin_api.charts.render_figure import render_figure_from_descriptor
 from app.utils.dialog_state import clear_state
 

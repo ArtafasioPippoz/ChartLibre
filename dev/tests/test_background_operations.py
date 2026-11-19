@@ -50,7 +50,9 @@ def _wait_for(condition: Callable[[], bool], timeout: float = 30.0) -> None:
 
 
 def _dialog_class(module: str, name: str) -> type[DataOperationDialogBase]:
-    return getattr(importlib.import_module(f"app.data_operations.{module}"), name)
+    from _operations import operation_module
+
+    return getattr(operation_module(module), name)
 
 
 @pytest.fixture
@@ -98,10 +100,10 @@ def _preview_tables(dialog: DataOperationDialogBase, repo: SqliteRepo) -> dict[s
 
 def test_every_background_operation_is_covered_here() -> None:
     found = []
-    for info in pkgutil.iter_modules(operations.__path__):
-        if not info.name.endswith("_dialog"):
-            continue
-        module = importlib.import_module(f"app.data_operations.{info.name}")
+    from _operations import operation_modules
+
+    for module in operation_modules(packages=True):
+        info = type("Info", (), {"name": module.__name__.rsplit(".", 1)[-1]})
         for value in vars(module).values():
             if (
                 isinstance(value, type)

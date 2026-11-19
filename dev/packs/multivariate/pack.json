@@ -1,0 +1,10 @@
+{
+  "id": "multivariate",
+  "name": "Multivariate methods",
+  "version": "1.0.0",
+  "description": "Principal components, factor analysis, clustering, discriminant, partial least squares and correlations, with dendrogram and parallel plot.",
+  "author": "ChartLibre",
+  "needs_app": "0.2.0",
+  "packages": [],
+  "default": true
+}

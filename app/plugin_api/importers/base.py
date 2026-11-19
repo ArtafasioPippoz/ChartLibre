@@ -28,7 +28,7 @@ ALL_DATASETS = "*"
 #: The column combine() adds.
 DATASET_COLUMN = "Dataset"
 #: A package's import name, where it differs from the name pip installs it by.
-_MODULES = {"odfpy": "odf", "scikit-rf": "skrf", "spc-spectra": "spc_spectra"}
+_MODULES = {"odfpy": "odf", "scikit-rf": "skrf", "spc-spectra": "spc_spectra", "npTDMS": "nptdms"}
 
 
 @dataclass(slots=True)

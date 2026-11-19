@@ -34,7 +34,7 @@ def test_the_control_chart_reports_a_lognormal_capability(qapp, repo) -> None:
 
     import pandas as pd
 
-    from app.data_operations.control_chart_dialog import SeriesControlChartDialog
+    from dev.packs.quality.data_operations.control_chart_dialog import SeriesControlChartDialog
 
     repo.import_dataframe(pd.DataFrame({"x": np.arange(200.0), "y": LOGNORMAL[:200]}), table_name="t",
                           normalize_columns=False)

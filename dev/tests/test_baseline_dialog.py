@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 from app.data.sqlite_repo import SqliteRepo
-from app.data_operations.baseline_dialog import BASELINE_ASLS, SeriesBaselineDialog
+from dev.packs.signal.data_operations.baseline_dialog import BASELINE_ASLS, SeriesBaselineDialog
 
 X = np.linspace(0.0, 100.0, 400)
 TRUE_BASELINE = 5.0 + 0.02 * X + 3.0 * np.sin(X / 30.0)

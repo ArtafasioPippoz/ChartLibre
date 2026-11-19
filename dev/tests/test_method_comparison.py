@@ -48,7 +48,7 @@ def test_passing_bablok_recovers_a_line_through_an_outlier() -> None:
 
 
 def test_the_operation_reports_and_draws_both_plots(qapp, repo: SqliteRepo) -> None:
-    from app.data_operations.method_comparison_dialog import MethodComparisonDialog
+    from dev.packs.quality.data_operations.method_comparison_dialog import MethodComparisonDialog
 
     x, y = _methods(45)
     repo.import_dataframe(pd.DataFrame({"reference": x, "new": y}), table_name="glucose", normalize_columns=False)

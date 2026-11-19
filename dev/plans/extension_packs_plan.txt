@@ -1,5 +1,5 @@
 EXTENSION PACKS (.clpack) - PLAN
-Written 2026-11-16. Status: steps 1-3 done (app/utils/packs.py, PluginFamily.pack_folder, app/widgets/packs_panel.py in Settings > Packages with Install the libraries; a chart or a file of a pack that is off names the pack; tests test_packs*.py); steps 4-6 to do. No ID in todo.txt yet (next free: ID50).
+Written 2026-11-16. Status 2026-11-17: steps 1-5 done - eleven packs in dev/packs, built into app/packages: semiconductors, instruments, data_formats, statistics_files, signal, multivariate, modelling, quality, charts_more, vector_fields (Vector Field, Geometry, Quiver, Quiver 3D), assistant_providers (GitHub Copilot, Apple Foundation Models); data_formats also has MATLAB, WAV, GPX and Prism, charts_more Event Plot and Lollipop (charts_3d merged into charts_more: Surface and Quiver 3D stay built in). What stays built in because a built-in analysis or the guided plan draws it: Pareto, Mosaic, Forest, Joint, Kaplan-Meier, Hexbin, Pair Plot, Fishbone (an Analysis panel tool), Surface, Interaction Plot (Fit Model, Statistics). packs.sync() holds a file lock: one process at a time installs. The tests' private user.json is set in pytest_configure, before the scanners are imported. Section 8 is the first proposal; this line is what was done. Tests reach the packs' analyses through dev/tests/_operations.py. Still to do: a pack's demo/ and docs/ shown by the application, requirements.txt left to the packs, step 6. No ID in todo.txt yet (next free: ID50).
 
 ======================================================================
 1. WHAT IT IS
@@ -38,22 +38,30 @@ therefore "more roots, behind a switch" - no new kind of plugin.
         "default": true              on at first sight (packs shipped in app/packages only)
 
 ======================================================================
-3. HOW IT IS LOADED
+3. HOW IT IS LOADED (as built; decided by the owner 2026-11-17)
 ======================================================================
- - app/utils/packs.py (new): find the .clpack files, read each manifest, say which are enabled, unpack them,
-   hand each family its extra roots.
- - Unpacked, not read from inside the zip: the AST scan, the tracebacks, the builders and "open the folder"
-   all work on plain files. An enabled pack is unpacked once into user/packages/unpacked/<id>-<fingerprint>/;
-   the fingerprint (SHA-256 of the file) in the name makes a changed pack unpack again and an unchanged one
-   cost nothing at start. Old folders of the same id are removed.
- - Each scanner's FAMILY gets the enabled packs' folders as roots after the built-in one and before the
-   user's: PluginFamily.user_root becomes extra roots (packs.roots("importers") + the user folder). Each
-   discovery entry records its pack ("pack": id), so the lists can say where a plugin comes from.
- - lib/<id> goes on sys.path through its parent folder: a pack's plugins write "from semiconductors import x".
- - The families are scanned once at start, so a switch in Preferences applies at the next start (the note
-   under the list says so, as for the style). A live reload can come later; it is not needed for the purpose.
- - A pack that fails (bad zip, bad manifest, needs a newer app) is listed with its error and left off. It
-   never stops the application - the rule every family already follows for one plugin.
+ - app/utils/packs.py: find the .clpack files, read each manifest, say which are enabled, install them.
+ - Installed, not read from inside the zip and not in a folder apart: an enabled pack's plugin files are
+   copied beside the application's own, each family's in its folder - app/charts/<pack id>/,
+   app/data_operations/<pack id>/, app/importers/<pack id>/ ... - where the families' scan (recursive) finds
+   them like any other plugin. What is not a plugin (lib/, locales/, pack.json) goes to
+   app/packages/installed/<pack id>/.
+ - packs.sync() makes what is installed what is enabled: it installs, replaces (the .clpack's fingerprint
+   changed) and takes out. PluginFamily.discover calls it before scanning, so a switch in Preferences
+   applies at the next start and an unchanged start costs the reading of the manifests.
+ - Every folder a pack is installed in holds installed_pack.json (id, fingerprint) and a .gitignore of "*".
+   A folder without the marker is never replaced or removed: a pack called like a folder of the application
+   (fit_dialog) is refused. Installed copies are not source and git does not see them.
+ - The source of the packs that ship with ChartLibre is in dev/packs/<id>/ (text, with diffs);
+   dev/tools/make_pack.py dev/packs/<id> app/packages writes the .clpack that is committed beside it.
+   dev/tests/test_shipped_packs.py fails when a .clpack is not its source as it is now. Tests import the
+   source (dev.packs.<id>.data_operations.x); the application runs the installed copy.
+ - Each discovery entry of an installed pack names it ("pack": id). lib/<id> is put on sys.path
+   (app/packages/installed/<id>/lib): a pack's plugins write "from semiconductors import x".
+ - A pack that fails (bad zip, bad manifest, needs a newer app, cannot be installed) is listed or logged
+   with its error and left out. It never stops the application.
+ - Consequence to keep in mind: app/ must be writable where packs are switched (a read-only installation
+   keeps the packs it was installed with).
 
 ======================================================================
 4. PREFERENCES > PACKAGES
@@ -112,8 +120,8 @@ HDF5 (h5py) later: not installed, no reader now; MATLAB v7.3 goes on saying it n
  pyreadstat   SPSS .sav/.zsav                      app/importers/statistics.py             statistics_files
  scikit-rf    Touchstone .sNp                      app/importers/electronics.py (own       instruments
                                                    parser; scikit-rf named in base.py)
- netCDF4      NetCDF .nc                           TO WRITE                                data_formats
- npTDMS       LabVIEW / NI .tdms                   TO WRITE                                instruments
+ netCDF4      NetCDF .nc                           written in the pack (netcdf.py)         data_formats
+ npTDMS       LabVIEW / NI .tdms                   written in the pack (tdms.py)           instruments
 
  Pack               Analyses and readers                                Chart types
  data_formats       Parquet, Feather/Arrow, NetCDF (new); HDF5 here      -

@@ -22,6 +22,7 @@ import pytest
 
 # The assistant's key lives in the system keychain: the tests never read or write the developer's.
 os.environ["PYTHON_KEYRING_BACKEND"] = "keyring.backends.null.Keyring"
+os.environ["CHARTLIBRE_ALL_PACKS"] = "1"  # every pack loaded, whatever this machine's Preferences say (app.utils.packs)
 
 from app.logs.logger import AppLogger
 
@@ -106,14 +107,12 @@ def _private_user_config(tmp_path_factory: pytest.TempPathFactory):
     """
     from app.utils import config
 
-    real = config.USER_CONFIG_PATH
-    copy = tmp_path_factory.mktemp("user_config") / "user.json"
+    copy = config.USER_CONFIG_PATH  # pytest_configure pointed it at an empty file, before any collection
     copy.write_text("{}", encoding="utf-8")
-    config.USER_CONFIG_PATH = copy
     try:
         yield copy
     finally:
-        config.USER_CONFIG_PATH = real
+        config.USER_CONFIG_PATH = _REAL_USER_CONFIG
 
 
 def _artifacts_root() -> Path:
@@ -179,11 +178,24 @@ def repo(tmp_db_path: Path) -> Iterator[SqliteRepo]:
     built.close()
 
 
+_REAL_USER_CONFIG: Path | None = None
+
+
 def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line(
         "markers", "background: Preview and Apply compute on a worker thread, as in the app"
     )
     sys.path.insert(0, str(Path(__file__).parent))  # slow_tests.py, beside this file
+    # The private user.json from the very start: collecting the tests imports the plugin scanners, which read
+    # the settings (the extension packs switched on or off) - read from the developer's own file, a pack they
+    # had switched off was missing from the whole run.
+    global _REAL_USER_CONFIG
+    from app.utils import config
+
+    _REAL_USER_CONFIG = config.USER_CONFIG_PATH
+    private = Path(tempfile.mkdtemp(prefix="chartlibre_user_config_")) / "user.json"
+    private.write_text("{}", encoding="utf-8")
+    config.USER_CONFIG_PATH = private
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:

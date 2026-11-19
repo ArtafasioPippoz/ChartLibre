@@ -204,6 +204,10 @@ class DeveloperWindow(QMainWindow):
             NavButton("database_info", self._tables_inventory, text="Project tables",
                       tooltip="Every table of a project file, the app's own included, with a preview of its rows.",
                       described=True),
+            NavButton("packs", self._build_pack, text="Build a pack",
+                      tooltip="Check a pack's folder (pack.json, charts/, data_operations/, importers/...) and "
+                              "write its .clpack file.",
+                      described=True),
             NavButton("nav_sql_workpad", self._sql_workpad, text="SQL workpad",
                       tooltip="SQL on a project file; changes are made on a copy and kept only with Apply.",
                       described=True),
@@ -239,6 +243,24 @@ class DeveloperWindow(QMainWindow):
         from dev.developer.tables_inventory import TablesInventoryDialog
 
         TablesInventoryDialog(self).exec()
+
+    def _build_pack(self) -> None:
+        """A pack's folder -> its .clpack beside it; what is wrong with the folder is listed instead."""
+        from PySide6.QtWidgets import QFileDialog
+
+        from app.utils import packs
+        from dev.tools import make_pack
+
+        folder = QFileDialog.getExistingDirectory(self, "The pack's folder (it holds pack.json)")
+        if not folder:
+            return
+        try:
+            written = make_pack.build(Path(folder))
+        except (packs.PackError, OSError) as exc:
+            QMessageBox.warning(self, "Build a pack", f"Not built.\n\n{exc}")
+            return
+        QMessageBox.information(self, "Build a pack", f"Written {written}\n\nAdd it in Settings > Packages, or "
+                                                      "copy it into app/packages/ to ship it with ChartLibre.")
 
     def _sql_workpad(self) -> None:
         from dev.developer.sql_workpad_dialog import SqlWorkpadDialog
@@ -307,6 +329,7 @@ class DeveloperWindow(QMainWindow):
         process.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
         environment = QProcessEnvironment.systemEnvironment()
         environment.insert("PYTHONUNBUFFERED", "1")
+        environment.insert("CHARTLIBRE_ALL_PACKS", "1")  # tests and tools see every pack, not one person's switches
         for name, value in (env or {}).items():
             environment.insert(name, value)
         process.setProcessEnvironment(environment)

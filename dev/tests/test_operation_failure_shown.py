@@ -10,7 +10,7 @@ from app.data.sqlite_repo import SqliteRepo
 
 
 def test_a_failed_preview_says_why_in_the_results(qapp, repo: SqliteRepo) -> None:
-    from app.data_operations.control_chart_dialog import SeriesControlChartDialog
+    from dev.packs.quality.data_operations.control_chart_dialog import SeriesControlChartDialog
 
     repo.import_dataframe(pd.DataFrame({"x": np.arange(9.0), "y": np.arange(9.0) % 4}), table_name="t",
                           normalize_columns=False)

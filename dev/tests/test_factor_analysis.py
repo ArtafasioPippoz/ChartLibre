@@ -65,7 +65,7 @@ def test_ok_writes_the_scores_and_draws_the_charts(qapp, tmp_path) -> None:
     from matplotlib.figure import Figure
 
     from app.data.sqlite_repo import SqliteRepo
-    from app.data_operations.factor_analysis_dialog import FactorAnalysisDialog
+    from dev.packs.multivariate.data_operations.factor_analysis_dialog import FactorAnalysisDialog
     from app.plugin_api.charts.render_figure import render_figure_from_descriptor
 
     repo = SqliteRepo(db_path=tmp_path / "f.dhub")

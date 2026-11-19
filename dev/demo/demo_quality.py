@@ -61,7 +61,7 @@ def vortex() -> pd.DataFrame:
 
 def _control_chart_with_capability(app, repo: SqliteRepo) -> None:
     """Control Chart on the roughness: an individuals chart, capability on a lognormal against USL 3.2."""
-    from app.data_operations.control_chart_dialog import SeriesControlChartDialog
+    from app.data_operations.quality.control_chart_dialog import SeriesControlChartDialog
 
     figure = repo.create_figure_descriptor(name="Roughness Ra - control chart")
     axis = repo.create_axis_descriptor(figure_id=figure, axis_index=0, chart_type="Time Series", title="Ra",
@@ -101,13 +101,13 @@ def build_quality_demo(directory: Path = DEMO_DIR) -> Path:
         repo = SqliteRepo(db_path=path)
         for table, frame in (("gauge_study", gauge_study()), ("roughness", roughness()), ("vortex", vortex())):
             repo.import_dataframe(frame, table_name=table, normalize_columns=False)
-        _ask(app, repo, "app.data_operations.gage_dialog:GageDialog", "gauge_study",
+        _ask(app, repo, "app.data_operations.quality.gage_dialog:GageDialog", "gauge_study",
              {"response": ["diameter_mm"], "part": ["part"], "operator": ["operator"]},
              params={"tolerance": "0.4"}, kinds={"part": "nominal", "operator": "nominal"})
         _ask_figure(app, repo, "app.data_operations.in_control_dialog:InControlDialog", "roughness",
                     x="day", y="ra_um")
         _control_chart_with_capability(app, repo)
-        _ask(app, repo, "app.data_operations.vector_field_dialog:VectorFieldDialog", "vortex",
+        _ask(app, repo, "app.data_operations.vector_fields.vector_field_dialog:VectorFieldDialog", "vortex",
              {"x": ["x"], "y": ["y"], "u": ["u"], "v": ["v"]})
         repo.close()
         Path(f"{path}.undo.db").unlink(missing_ok=True)

@@ -13,7 +13,7 @@ def _figures(repo: SqliteRepo) -> list[int]:
 
 
 def _dialog(repo: SqliteRepo):
-    from app.data_operations.time_series_dialog import TimeSeriesDialog
+    from dev.packs.modelling.data_operations.time_series_dialog import TimeSeriesDialog
 
     repo.import_dataframe(pd.DataFrame({"y": np.random.default_rng(0).normal(size=50)}), table_name="t",
                           normalize_columns=False)
@@ -92,7 +92,7 @@ def test_an_analysis_reads_a_charts_axis_as_a_table(qapp, tmp_path) -> None:
     import numpy as np
 
     from app.data.sqlite_repo import SqliteRepo
-    from app.data_operations.time_series_dialog import TimeSeriesDialog
+    from dev.packs.modelling.data_operations.time_series_dialog import TimeSeriesDialog
 
     repo = SqliteRepo(db_path=tmp_path / "p.dhub")
     rng = np.random.default_rng(1)
@@ -131,7 +131,7 @@ def test_draw_on_none_and_on_the_current_axis(qapp, tmp_path) -> None:
     import numpy as np
 
     from app.data.sqlite_repo import SqliteRepo
-    from app.data_operations.time_series_dialog import TimeSeriesDialog
+    from dev.packs.modelling.data_operations.time_series_dialog import TimeSeriesDialog
 
     repo = SqliteRepo(db_path=tmp_path / "p.dhub")
     repo.import_dataframe(pd.DataFrame({"v": np.random.default_rng(2).normal(size=60)}), table_name="t",
@@ -161,7 +161,7 @@ def test_draw_on_none_and_on_the_current_axis(qapp, tmp_path) -> None:
 def test_data_from_chart_offers_only_the_current_figures_axes(qapp, tmp_path) -> None:
     """ID48: "Data from: Chart" reads the figure the analysis was opened on - another figure's axes are not listed."""
     from app.data.sqlite_repo import SqliteRepo
-    from app.data_operations.time_series_dialog import TimeSeriesDialog
+    from dev.packs.modelling.data_operations.time_series_dialog import TimeSeriesDialog
 
     repo = SqliteRepo(db_path=tmp_path / "p.dhub")
     repo.import_dataframe(pd.DataFrame({"t": np.arange(30.0), "a": np.random.default_rng(3).normal(size=30)}),

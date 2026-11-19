@@ -101,14 +101,14 @@ OPERATIONS: tuple[OperationDemo, ...] = (
     OperationDemo(
         "Film thickness - a 300 mm wafer, 49 sites", "Film thickness (nm)", "film_thickness",
         "SELECT x_mm AS x, y_mm AS y, thickness_nm AS z FROM film_thickness", _SITES, "x (mm)", "y (mm)",
-        "wafer_map_dialog:WaferMapDialog",
+        "semiconductors.wafer_map_dialog:WaferMapDialog",
         style={"marker": "o", "markersize": 5, "linestyle": ""},
         setup=_setup({"diameter": "300", "mark": "notch", "mark_angle": "270", "edge_exclusion": 3.0,
                       "die_width": 26.0, "die_height": 33.0, "lower": "1005", "upper": "1040"})),
     OperationDemo(
         "Sheet resistance - a 150 mm wafer with its flat, rotated", "Sheet resistance (ohm/sq)", "sheet_resistance",
         "SELECT x_mm AS x, y_mm AS y, rs_ohm_sq AS z FROM sheet_resistance", _SITES, "x (mm)", "y (mm)",
-        "wafer_map_dialog:WaferMapDialog",
+        "semiconductors.wafer_map_dialog:WaferMapDialog",
         style={"marker": "s", "markersize": 5, "linestyle": ""},
         # Read with the flat on the right: a quarter turn clockwise brings it to the bottom.
         setup=_setup({"diameter": "150", "mark": "flat", "mark_angle": "270", "rotation": -90.0,
@@ -116,14 +116,14 @@ OPERATIONS: tuple[OperationDemo, ...] = (
     OperationDemo(
         "Particle scan - a 200 mm wafer's defects", "Particles", "particle_scan",
         "SELECT x_mm AS x, y_mm AS y FROM particle_scan", {"x": "x", "y": "y"}, "x (mm)", "y (mm)",
-        "wafer_map_dialog:WaferMapDialog",
+        "semiconductors.wafer_map_dialog:WaferMapDialog",
         style={"marker": "o", "markersize": 3, "linestyle": ""},
         setup=_setup({"diameter": "200", "mark": "notch", "mark_angle": "270", "edge_exclusion": 2.0,
                       "die_width": 12.0, "die_height": 12.0})),
     OperationDemo(
         "Line width - a 100 mm wafer, a site per die", "Line width (nm)", "line_width",
         "SELECT x_mm AS x, y_mm AS y, line_width_nm AS z FROM line_width", _SITES, "x (mm)", "y (mm)",
-        "wafer_map_dialog:WaferMapDialog",
+        "semiconductors.wafer_map_dialog:WaferMapDialog",
         style={"marker": "o", "markersize": 4, "linestyle": ""},
         setup=_setup({"diameter": "100", "mark": "flat", "mark_angle": "270", "edge_exclusion": 3.0,
                       "die_width": 9.0, "die_height": 9.0, "upper": "23"})),

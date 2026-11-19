@@ -1399,10 +1399,10 @@
       "title": "Trust pack",
       "text": "\u201c{name}\u201d (from: {author}) did not come with ChartLibre. A pack is Python code that runs with your rights on this computer.\n\nSwitch it on only if you know where it comes from. Trust it?"
     },
-    "pack.confirm_remove": {
+    "settings.restart": {
       "level": "question",
-      "title": "Remove pack",
-      "text": "Remove the pack \u201c{name}\u201d? Its file is deleted. Projects that use what it adds will ask for it."
+      "title": "Restart",
+      "text": "The changes ({what}) apply the next time ChartLibre starts."
     },
     "pack.not_added": {
       "level": "warning",

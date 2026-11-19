@@ -84,7 +84,7 @@ def test_the_preview_draws_on_a_new_axis_by_default(qapp, tmp_path, readings) ->
     import time
 
     from app.data.sqlite_repo import SqliteRepo
-    from app.data_operations.control_chart_dialog import SeriesControlChartDialog
+    from dev.packs.quality.data_operations.control_chart_dialog import SeriesControlChartDialog
 
     repo = SqliteRepo(db_path=tmp_path / "p.dhub")
     repo.import_dataframe(pd.DataFrame({"x": np.arange(40.0), "v": readings}), table_name="t",

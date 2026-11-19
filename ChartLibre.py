@@ -33,6 +33,27 @@ from app.utils.startup import select_database
 # CLI / bootstrap
 # ----------------------------------------------------------------------
 
+def _install_pack_libraries() -> None:
+    """The libraries the switched-on packs need, installed before anything scans the plugins."""
+    from PySide6.QtWidgets import QProgressDialog
+
+    from app.utils import packs
+    from app.utils.i18n import tr
+
+    if not any(packs.is_enabled(pack) and packs.missing_packages(pack) for pack in packs.find()):
+        return
+    box = QProgressDialog(tr("Installing the libraries the packs need…"), "", 0, 0)
+    box.setWindowTitle(APP_NAME)
+    box.setCancelButton(None)
+    box.setMinimumDuration(0)
+    box.show()
+    names, why = packs.install_missing(QApplication.processEvents)
+    box.close()
+    if why:
+        QMessageBox.warning(None, APP_NAME, tr("{names} could not be installed. {why}").format(
+            names=", ".join(names), why=why))
+
+
 def run_app() -> int:
     # Before the QApplication is built: on macOS this is what Cocoa's native
     # Application menu reads for the two entries it labels itself rather than
@@ -74,6 +95,8 @@ def run_app() -> int:
     # KDE name it themselves; a bare window manager does not, and without this
     # that whole class of desktop silently falls back to the shipped SVGs.
     applogger.info("Icon theme: %s", ensure_icon_theme() or "none installed")
+
+    _install_pack_libraries()
 
     try:
         # Which database this run is about, and what to do when there is

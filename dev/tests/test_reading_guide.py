@@ -8,6 +8,7 @@ import time
 import numpy as np
 import pandas as pd
 import pytest
+from _operations import operation_module
 
 from app.data.sqlite_repo import SqliteRepo
 from app.plugin_api import reading_guide as guide
@@ -117,7 +118,7 @@ def test_a_report_explains_its_own_numbers_unless_switched_off(qapp, repo: Sqlit
     repo.import_dataframe(_plant(), table_name="plant", normalize_columns=False)
     repo.import_dataframe(_field(), table_name="field", normalize_columns=False)
     repo.import_dataframe(_seasonal_walk(), table_name="shop", normalize_columns=False)
-    dialog = getattr(importlib.import_module(f"app.data_operations.{module}"), name)(repo=repo, table=table)
+    dialog = getattr(operation_module(module), name)(repo=repo, table=table)
     try:
         report = _report(qapp, dialog, casting)
         assert "How to read this" in report and expected in report
@@ -157,7 +158,7 @@ def test_a_data_operation_explains_its_report(qapp, repo: SqliteRepo, series_fig
                                               expected: str) -> None:
     import importlib
 
-    dialog = getattr(importlib.import_module(f"app.data_operations.{module}"), name)(repo=repo,
+    dialog = getattr(operation_module(module), name)(repo=repo,
                                                                                     figure_id=series_figure)
     try:
         dialog.series_selector.reload(select_all_series=True)

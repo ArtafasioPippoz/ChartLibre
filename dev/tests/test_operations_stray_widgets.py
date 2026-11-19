@@ -18,9 +18,12 @@ from app.plugin_api.data_operations.dialog_base import DataOperationDialogBase
 
 
 def _operations() -> list[type[DataOperationDialogBase]]:
+    from _operations import pack_operation_modules
+
     found = []
-    for info in pkgutil.walk_packages(package.__path__, f"{package.__name__}."):
-        module = importlib.import_module(info.name)
+    modules = [importlib.import_module(info.name)
+               for info in pkgutil.walk_packages(package.__path__, f"{package.__name__}.")]
+    for module in modules + pack_operation_modules():  # the shipped packs' analyses, from their source
         for _name, cls in inspect.getmembers(module, inspect.isclass):
             if issubclass(cls, DataOperationDialogBase) and cls.__module__ == module.__name__ \
                     and not inspect.isabstract(cls) and getattr(cls, "Name", ""):

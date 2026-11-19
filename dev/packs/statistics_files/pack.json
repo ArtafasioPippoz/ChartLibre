@@ -1,0 +1,13 @@
+{
+  "id": "statistics_files",
+  "name": "Statistics software files",
+  "version": "1.0.0",
+  "description": "Files of statistics programs: SPSS, Stata, SAS and R, and what to do with JMP, Minitab and Origin files.",
+  "author": "ChartLibre",
+  "needs_app": "0.2.0",
+  "packages": [
+    "pyreadstat",
+    "pyreadr"
+  ],
+  "default": true
+}

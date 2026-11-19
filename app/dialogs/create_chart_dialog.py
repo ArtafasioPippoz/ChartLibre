@@ -132,6 +132,7 @@ class NewPlotTabDialog(ColumnsDialog):
         fig_group = self._build_target_card()
         series_list_group = self._build_series_list_card()
         editor_group = self._build_series_editor_card()
+        query_group = self._build_query_card()
 
         # Dialog buttons and layout.
         #
@@ -154,6 +155,7 @@ class NewPlotTabDialog(ColumnsDialog):
         editor_group.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.column(0).layout().addWidget(renderer_panel, 1)
         self.column(1).layout().addWidget(editor_group, 1)
+        self.column(1).layout().addWidget(query_group, 0)
         self.column(2).layout().addWidget(fig_group, 0)
         self.column(2).layout().addWidget(series_list_group, 1)
         assert self.splitter is not None
@@ -387,13 +389,20 @@ class NewPlotTabDialog(ColumnsDialog):
         editor_form_layout.addRow(self._function_panel)
         editor_form_layout.setRowVisible(self._function_panel, False)
         editor_form_layout.addRow(field_label(_("Series name")), self._edit_series_name)
-        editor_form_layout.addRow(field_label(_("Query")), self._edit_sql)
         editor_form_layout.addRow(self._roles_scroll)
         editor_form_layout.addRow(field_label(_("Group by")), self._combo_group)
         self._editor_form_layout = editor_form_layout
         self._show_group_by()
         editor_layout.addWidget(editor_form, 1)
         return editor_group
+
+    def _build_query_card(self) -> TitledCard:
+        """The series' query in a box of its own under the Series card, closed: it is written from the
+        source and the roles, and read or changed by few."""
+        self._query_card = TitledCard(self, _("Query"), "plotQueryCard", collapsible=True, collapsed=True)
+        self._query_card.card.layout().addWidget(self._edit_sql)
+        self._edit_sql.setMinimumHeight(90)
+        return self._query_card
 
     def _connect_signals(self) -> None:
         """The controls' signals to their handlers."""
