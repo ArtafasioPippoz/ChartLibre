@@ -26,6 +26,7 @@ always a starting point to review, never treated as a finished translation.
 """
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QTimer
@@ -73,8 +74,43 @@ _NEW_CATALOG_HEADER_TEMPLATE = (
 )
 
 
-def _po_path(language: str) -> Path:
+#: The packs' source folders (dev/packs/<id>/): each can hold locales/<language>/pack.po, read by the application
+#: as it is once the pack is installed (app.utils.packs.catalogues).
+PACKS_DIR: Path = Path(__file__).resolve().parents[1] / "packs"
+
+
+def pack_sources() -> list[tuple[str, str]]:
+    """(id, name) of every pack folder in dev/packs, by id."""
+    found = []
+    for manifest in sorted(PACKS_DIR.glob("*/pack.json")):
+        try:
+            name = str(json.loads(manifest.read_text(encoding="utf-8")).get("name") or manifest.parent.name)
+        except (OSError, ValueError):
+            name = manifest.parent.name
+        found.append((manifest.parent.name, name))
+    return found
+
+
+def _po_path(language: str, pack_id: str = "") -> Path:
+    """The catalogue of *language*: the application's, or that of the pack *pack_id*."""
+    if pack_id:
+        return PACKS_DIR / pack_id / "locales" / language / "pack.po"
     return i18n.LOCALES_DIR / language / "LC_MESSAGES" / f"{i18n.DOMAIN}.po"
+
+
+def source_strings(pack_id: str = "") -> set[str]:
+    """Every string the catalogue should hold: the application's, or the pack's (its plugins' and its
+    manifest's name and description, which Preferences shows through tr())."""
+    if not pack_id:
+        return i18n.source_translator_calls()
+    folder = PACKS_DIR / pack_id
+    found = i18n.source_translator_calls(folder)
+    try:
+        manifest = json.loads((folder / "pack.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        manifest = {}
+    found.update(str(manifest[key]) for key in ("name", "description") if manifest.get(key))
+    return found
 
 
 def _leading_comment(path: Path) -> str:
@@ -115,6 +151,16 @@ class EditLocalizationDialog(SettingsTableDialog):
         card = self.add_content_card(_("Strings"), stretch=1)
         self.content_frame, self.content_layout = card, card.layout()
 
+        # Which catalogue: the application's, or one of the packs' (dev/packs/<id>/locales/<language>/pack.po).
+        self._catalogue_combo = QComboBox(panel)
+        self._catalogue_combo.addItem("ChartLibre", "")
+        for pack_id, name in pack_sources():
+            self._catalogue_combo.addItem(_("Pack: {name}").format(name=name), pack_id)
+        self._catalogue_combo.setToolTip(_("The catalogue to edit: the application's, or the one a pack carries"))
+        self._catalogue_combo.setVisible(self._catalogue_combo.count() > 1)
+        self._catalogue_combo.currentIndexChanged.connect(self._on_language_changed)
+        side.addWidget(self._catalogue_combo)
+
         self._language_combo = self._build_language_combo(panel)
         self._language_combo.currentIndexChanged.connect(self._on_language_changed)
         side.addWidget(self._language_combo)
@@ -150,6 +196,7 @@ class EditLocalizationDialog(SettingsTableDialog):
         side.addWidget(self._missing_only_check)
 
         self._translate_button: QPushButton | None = None
+        self._translate_all_button: QPushButton | None = None
         self._provider_combo: QComboBox | None = None
         self._deepl_key = str(get_value(machine_translation.DEEPL_KEY_SETTING, "") or "")
         self._providers = machine_translation.available_providers(self._deepl_key)
@@ -176,6 +223,22 @@ class EditLocalizationDialog(SettingsTableDialog):
             )
             translate_row.addStretch(1)
             side.addLayout(translate_row)
+            all_row = QHBoxLayout()
+            stdSizeAndlayout(all_row)
+            self._translate_all_button = create_action_button(
+                parent=self,
+                action_id="run",
+                action=self._on_translate_all_languages,
+                layout=all_row,
+                presentation=(
+                    load_icon("run"),
+                    _("Translate all languages (auto)"),
+                    _("Fill the empty translations of every language of this catalogue, one after the other, "
+                      "and save each"),
+                ),
+            )
+            all_row.addStretch(1)
+            side.addLayout(all_row)
 
         panel = self.add_settings_card(_("Manual"))
         side = panel.layout()
@@ -207,6 +270,22 @@ class EditLocalizationDialog(SettingsTableDialog):
         mark_editor_panel(self._table)
         self.content_layout.addWidget(self._table, 1)
 
+        copy_row = QHBoxLayout()
+        stdSizeAndlayout(copy_row)
+        create_action_button(
+            parent=self,
+            action_id="copy",
+            action=self._on_copy_source,
+            layout=copy_row,
+            presentation=(
+                load_icon("copy"),
+                _("Copy source"),
+                _("Put the English source, untranslated, into the translation of the selected rows"),
+            ),
+        )
+        copy_row.addStretch(1)
+        self.content_layout.addLayout(copy_row)
+
         self._status_label = QLabel(card)
         self._status_label.setWordWrap(True)
         self.content_layout.addWidget(self._status_label)
@@ -218,6 +297,8 @@ class EditLocalizationDialog(SettingsTableDialog):
         self._entries: dict[str, str] = {}
         #: The language the table shows, and whether it holds something its file does not.
         self._loaded_language: str | None = None
+        #: The pack whose catalogue the table shows ("" for the application's).
+        self._loaded_pack = ""
         self._dirty = False
         self._filling = False
         self._table.itemChanged.connect(self._on_item_changed)
@@ -229,6 +310,11 @@ class EditLocalizationDialog(SettingsTableDialog):
         #: the worker appends and the GUI thread drains without a lock.
         self._arrived: list[tuple[str, str]] = []
         self._translation_filled = 0
+        #: "Translate all languages": the language combo's indices still to do (None when not running),
+        #: what was filled so far and what went wrong, language by language.
+        self._all_queue: list[int] | None = None
+        self._all_filled = 0
+        self._all_reasons: list[str] = []
         self._progress_timer = QTimer(self)
         self._progress_timer.setInterval(250)
         self._progress_timer.timeout.connect(self._show_translation_progress)
@@ -249,10 +335,17 @@ class EditLocalizationDialog(SettingsTableDialog):
             combo.addItem(LANGUAGE_NAMES.get("it", "it"), "it")
         return combo
 
+    def _current_pack(self) -> str:
+        return str(self._catalogue_combo.currentData() or "")
+
     def _current_language(self) -> str:
         return str(self._language_combo.currentData() or "it")
 
     def _on_new_language(self) -> None:
+        if self._current_pack():
+            show_message(self, "dev.validation_error",
+                         detail=_("A pack's catalogue takes the languages ChartLibre has: pick one in the list."))
+            return
         choices = language_choices(exclude=set(i18n.available_languages()))
         label, ok = QInputDialog.getItem(self, _("New language"), _("Country: language"), list(choices), 0, False)
         code = choices.get(label, "") if ok else ""
@@ -296,7 +389,7 @@ class EditLocalizationDialog(SettingsTableDialog):
         """Save the language shown if the table holds a change; False only when the save failed."""
         if not self._dirty or self._loaded_language is None:
             return True
-        return self._save(self._loaded_language)
+        return self._save(self._loaded_language, self._loaded_pack)
 
     def _on_remove_language(self) -> None:
         """Remove the language shown, after a question: its folder goes to the Trash, where it can be found."""
@@ -305,10 +398,12 @@ class EditLocalizationDialog(SettingsTableDialog):
         from app.utils.messages import ask
 
         language = self._current_language()
-        folder = _po_path(language).parent.parent
+        pack_id = self._current_pack()
+        # The application's language is a folder with LC_MESSAGES in it; a pack's, locales/<language>.
+        folder = _po_path(language, pack_id).parent if pack_id else _po_path(language).parent.parent
         if not folder.is_dir():
             return
-        if language == i18n.language():
+        if language == i18n.language() and not pack_id:
             show_message(self, "dev.validation_error",
                          detail=_("This is the language the application is shown in: choose another in Settings first."))
             return
@@ -321,6 +416,9 @@ class EditLocalizationDialog(SettingsTableDialog):
         i18n._translation.cache_clear()
         # Nothing of the removed language is saved back: the table is another one's from here.
         self._dirty, self._loaded_language = False, None
+        if pack_id:  # only the pack's file goes: the language is still the application's
+            self._reload_table()
+            return
         self._language_combo.blockSignals(True)
         self._language_combo.removeItem(self._language_combo.currentIndex())
         if self._language_combo.count() == 0:
@@ -330,12 +428,13 @@ class EditLocalizationDialog(SettingsTableDialog):
 
     def _reload_table(self) -> None:
         language = self._current_language()
-        self._loaded_language = language
-        path = _po_path(language)
+        pack_id = self._current_pack()
+        self._loaded_language, self._loaded_pack = language, pack_id
+        path = _po_path(language, pack_id)
         catalog = i18n._parse_po(path) if path.is_file() else {}
         catalog.pop("", None)
 
-        merged: dict[str, str] = dict.fromkeys(sorted(i18n.source_translator_calls()), "")
+        merged: dict[str, str] = dict.fromkeys(sorted(source_strings(pack_id)), "")
         merged.update(catalog)  # existing translations, and any orphaned extra entries
         self._entries = merged
         self._populate_table()
@@ -361,6 +460,17 @@ class EditLocalizationDialog(SettingsTableDialog):
             self._filling = False
         self._dirty = False
         self._apply_filter()
+
+    def _on_copy_source(self) -> None:
+        """The selected rows' English source, as it is, into their translation (shown rows only)."""
+        self._commit_open_edit()
+        rows = sorted({index.row() for index in self._table.selectionModel().selectedIndexes()})
+        for row in rows:
+            source_item = self._table.item(row, 0)
+            translation_item = self._table.item(row, 1)
+            if source_item is None or translation_item is None or self._table.isRowHidden(row):
+                continue
+            translation_item.setText(str(source_item.data(Qt.ItemDataRole.UserRole)))
 
     def _apply_filter(self) -> None:
         missing_only = self._missing_only_check.isChecked()
@@ -393,14 +503,16 @@ class EditLocalizationDialog(SettingsTableDialog):
         """Save the language shown and close (kept for the callers that asked for OK)."""
         self.accept()
 
-    def _save(self, language: str) -> bool:
-        """Write the table to *language*'s catalogue; False, with a message, when it could not be written."""
+    def _save(self, language: str, pack_id: str = "") -> bool:
+        """Write the table to *language*'s catalogue (the pack *pack_id*'s, if given); False, with a message,
+        when it could not be written."""
         self._commit_open_edit()
-        path = _po_path(language)
+        path = _po_path(language, pack_id)
         header_comment = _leading_comment(path)
         if not header_comment:
             header_comment = (
-                f"# {LANGUAGE_NAMES.get(language, language)} translation for ChartLibre.\n"
+                f"# {LANGUAGE_NAMES.get(language, language)} translation for "
+                f"{'the pack ' + pack_id if pack_id else 'ChartLibre'}.\n"
                 "# Message ids are the English source strings."
             )
 
@@ -418,7 +530,8 @@ class EditLocalizationDialog(SettingsTableDialog):
 
         try:
             i18n._write_po(entries, path, header_comment=header_comment)
-            i18n.compile_catalog(language, force=True)
+            if not pack_id:  # a pack's file is read as it is: no .mo
+                i18n.compile_catalog(language, force=True)
         except OSError as exc:
             applogger.exception("Could not save the localization catalogue.")
             show_message(self, "dev.validation_error", detail=str(exc))
@@ -435,8 +548,41 @@ class EditLocalizationDialog(SettingsTableDialog):
     def _on_auto_translate_missing(self) -> None:
         """Start filling the empty translations - or, while running, stop."""
         if self._translation_task is not None:
+            self._all_queue = None
             self._translation_task.cancel()
             return
+        self._start_translation(ask=True)
+
+    def _on_translate_all_languages(self) -> None:
+        """Fill the empty translations of every language, one after the other - or, while running, stop."""
+        if self._translation_task is not None:
+            self._all_queue = None
+            self._translation_task.cancel()
+            return
+        if not ask_before_auto_translate(self):
+            return
+        self._all_queue = list(range(self._language_combo.count()))
+        self._all_filled, self._all_reasons = 0, []
+        self._translate_next_language()
+
+    def _translate_next_language(self) -> None:
+        """Show the next language of the queue (the one shown is saved) and translate it; at the end, say how
+        it went."""
+        while self._all_queue:
+            self._language_combo.setCurrentIndex(self._all_queue.pop(0))  # saves the one shown, loads this
+            if self._start_translation(ask=False):
+                return
+        self._all_queue = None
+        self._save_if_changed()
+        if self._all_reasons:
+            show_message(self, "dev.localization_auto_translate_partial",
+                         count=self._all_filled, reasons="; ".join(self._all_reasons))
+        else:
+            show_message(self, "dev.localization_auto_translated", count=self._all_filled)
+
+    def _start_translation(self, *, ask: bool) -> bool:
+        """Start the service on the empty translations of the table; False when there are none (said if *ask*)
+        or the question was declined."""
         missing = [
             str(source_item.data(Qt.ItemDataRole.UserRole))
             for row in range(self._table.rowCount())
@@ -445,10 +591,11 @@ class EditLocalizationDialog(SettingsTableDialog):
             and not translation_item.text().strip()
         ]
         if not missing:
-            show_message(self, "dev.localization_auto_translated", count=0)
-            return
-        if not ask_before_auto_translate(self):
-            return
+            if ask:
+                show_message(self, "dev.localization_auto_translated", count=0)
+            return False
+        if ask and not ask_before_auto_translate(self):
+            return False
 
         language = self._current_language()
         provider = str(self._provider_combo.currentData()) if self._provider_combo else "google"
@@ -479,10 +626,18 @@ class EditLocalizationDialog(SettingsTableDialog):
             work, self._on_translation_finished, self._on_translation_failed
         )
         self._set_translating(True)
+        return True
 
     def _set_translating(self, running: bool) -> None:
+        all_languages = self._all_queue is not None
         if self._translate_button is not None:
-            self._translate_button.setText(_("Stop") if running else _("Translate missing (auto)"))
+            self._translate_button.setText(
+                _("Stop") if running and not all_languages else _("Translate missing (auto)"))
+            self._translate_button.setEnabled(not (running and all_languages))
+        if self._translate_all_button is not None:
+            self._translate_all_button.setText(
+                _("Stop") if running and all_languages else _("Translate all languages (auto)"))
+            self._translate_all_button.setEnabled(not running or all_languages)
         if self._provider_combo is not None:
             self._provider_combo.setEnabled(not running)
         self._language_combo.setEnabled(not running)
@@ -540,17 +695,29 @@ class EditLocalizationDialog(SettingsTableDialog):
                 ),
             )
         )
-        left = run.failed + run.rejected
+        reasons = self._run_reasons(run)
+        if self._all_queue is not None:  # one language of "Translate all languages": save it, on to the next
+            self._all_filled += filled
+            if reasons:
+                self._all_reasons.append(f"{self._language_combo.currentText()}: {'; '.join(reasons)}")
+            self._save_if_changed()
+            self._translate_next_language()
+            return
+        if reasons:
+            show_message(
+                self, "dev.localization_auto_translate_partial",
+                count=filled, reasons="; ".join(reasons),
+            )
+        else:
+            show_message(self, "dev.localization_auto_translated", count=filled)
+
+    @staticmethod
+    def _run_reasons(run: machine_translation.TranslationRun) -> list[str]:
+        """What a translation run did not do, and why; empty when it translated everything."""
         switched = "; ".join(
             _("{first} refused the requests, continued with {second}").format(first=first, second=second)
             for first, second in run.switched
         )
-        if not left and not run.stopped:
-            if switched:
-                show_message(self, "dev.localization_auto_translate_partial", count=filled, reasons=switched)
-            else:
-                show_message(self, "dev.localization_auto_translated", count=filled)
-            return
         reasons: list[str] = [switched] if switched else []
         if run.stopped:
             reasons.append(_("stopped"))
@@ -571,13 +738,11 @@ class EditLocalizationDialog(SettingsTableDialog):
                     count=run.rejected
                 )
             )
-        show_message(
-            self, "dev.localization_auto_translate_partial",
-            count=filled, reasons="; ".join(reasons),
-        )
+        return reasons
 
     def _on_translation_failed(self, error: BaseException) -> None:
         self._translation_task = None
+        self._all_queue = None
         self._set_translating(False)
         self._reload_status_only()
         applogger.warning(
@@ -598,6 +763,7 @@ class EditLocalizationDialog(SettingsTableDialog):
 
         A save that fails says why and leaves the dialog open once; closing again gives the change up.
         """
+        self._all_queue = None
         if self._translation_task is not None:
             self._translation_task.cancel()
             self._fill_arrived()
