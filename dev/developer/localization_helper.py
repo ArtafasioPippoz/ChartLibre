@@ -233,8 +233,8 @@ class EditLocalizationDialog(SettingsTableDialog):
                 presentation=(
                     load_icon("run"),
                     _("Translate all languages (auto)"),
-                    _("Fill the empty translations of every language of this catalogue, one after the other, "
-                      "and save each"),
+                    _("Fill the empty translations of every language, in ChartLibre's catalogue and in every "
+                      "pack's, one after the other, and save each"),
                 ),
             )
             all_row.addStretch(1)
@@ -310,9 +310,10 @@ class EditLocalizationDialog(SettingsTableDialog):
         #: the worker appends and the GUI thread drains without a lock.
         self._arrived: list[tuple[str, str]] = []
         self._translation_filled = 0
-        #: "Translate all languages": the language combo's indices still to do (None when not running),
-        #: what was filled so far and what went wrong, language by language.
-        self._all_queue: list[int] | None = None
+        #: "Translate all languages": the (catalogue, language) combo indices still to do (None when not
+        #: running), how many there were, what was filled so far and what went wrong, catalogue by catalogue.
+        self._all_queue: list[tuple[int, int]] | None = None
+        self._all_total = 0
         self._all_filled = 0
         self._all_reasons: list[str] = []
         self._progress_timer = QTimer(self)
@@ -561,15 +562,23 @@ class EditLocalizationDialog(SettingsTableDialog):
             return
         if not ask_before_auto_translate(self):
             return
-        self._all_queue = list(range(self._language_combo.count()))
-        self._all_filled, self._all_reasons = 0, []
+        self._all_queue = [
+            (catalogue, language)
+            for catalogue in range(self._catalogue_combo.count())
+            for language in range(self._language_combo.count())
+        ]
+        self._all_total, self._all_filled, self._all_reasons = len(self._all_queue), 0, []
         self._translate_next_language()
 
     def _translate_next_language(self) -> None:
-        """Show the next language of the queue (the one shown is saved) and translate it; at the end, say how
-        it went."""
+        """Show the next catalogue and language of the queue (the one shown is saved) and translate it; at the
+        end, say how it went."""
         while self._all_queue:
-            self._language_combo.setCurrentIndex(self._all_queue.pop(0))  # saves the one shown, loads this
+            for combo, index in zip((self._catalogue_combo, self._language_combo), self._all_queue.pop(0)):
+                combo.blockSignals(True)
+                combo.setCurrentIndex(index)
+                combo.blockSignals(False)
+            self._on_language_changed()  # saves the one shown, loads this one
             if self._start_translation(ask=False):
                 return
         self._all_queue = None
@@ -641,6 +650,7 @@ class EditLocalizationDialog(SettingsTableDialog):
         if self._provider_combo is not None:
             self._provider_combo.setEnabled(not running)
         self._language_combo.setEnabled(not running)
+        self._catalogue_combo.setEnabled(not running)
         if running:
             self._progress_timer.start()
             self._show_translation_progress()
@@ -650,9 +660,16 @@ class EditLocalizationDialog(SettingsTableDialog):
     def _show_translation_progress(self) -> None:
         self._fill_arrived()
         done, total = self._translation_progress
-        self._status_label.setText(
-            _("Translating {done} of {total}…").format(done=done, total=total)
-        )
+        text = _("Translating {done} of {total}…").format(done=done, total=total)
+        if self._all_queue is not None:
+            text = _("{catalogue}, {language} ({number} of {count}): {progress}").format(
+                catalogue=self._catalogue_combo.currentText(),
+                language=self._language_combo.currentText(),
+                number=self._all_total - len(self._all_queue),
+                count=self._all_total,
+                progress=text,
+            )
+        self._status_label.setText(text)
 
     def _fill_arrived(self) -> int:
         """Put the translations that have arrived into their empty cells.
@@ -699,7 +716,8 @@ class EditLocalizationDialog(SettingsTableDialog):
         if self._all_queue is not None:  # one language of "Translate all languages": save it, on to the next
             self._all_filled += filled
             if reasons:
-                self._all_reasons.append(f"{self._language_combo.currentText()}: {'; '.join(reasons)}")
+                self._all_reasons.append(f"{self._catalogue_combo.currentText()}, "
+                                         f"{self._language_combo.currentText()}: {'; '.join(reasons)}")
             self._save_if_changed()
             self._translate_next_language()
             return

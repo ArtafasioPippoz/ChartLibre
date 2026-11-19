@@ -73,8 +73,9 @@ _MIN_INTERVAL_S: dict[str, float] = {"google": 0.25, "mymemory": 0.0, "deepl": 0
 
 #: Most characters one request carries. MyMemory's free tier takes 500 a
 #: request; Google takes 5000; DeepL 128 KiB, but a block is also what a
-#: failure loses, so it stays at Google's size.
-_BLOCK_CHARS: dict[str, int] = {"google": 4000, "mymemory": 450, "deepl": 4000, "argos": 4000}
+#: failure loses, and the progress moves a block at a time: a few dozen
+#: strings, not hundreds. Argos works here, a block at a time: smaller still.
+_BLOCK_CHARS: dict[str, int] = {"google": 1500, "mymemory": 450, "deepl": 1500, "argos": 500}
 
 #: DeepL's two hosts: a free-plan key ends in ":fx" and only works on the first.
 DEEPL_FREE_URL: str = "https://api-free.deepl.com/v2/translate"

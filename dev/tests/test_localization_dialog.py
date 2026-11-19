@@ -23,6 +23,11 @@ def dialog(qapp, tmp_path: Path, monkeypatch):
     monkeypatch.setattr(i18n, "source_translator_calls", lambda root=None: {"Apple", "Pear"})
     _catalogue(tmp_path, "de", {"Apple": "Apfel", "Pear": ""})
     _catalogue(tmp_path, "it", {"Apple": "Mela", "Pear": ""})
+    # One pack, in the temporary folder: nothing reaches dev/packs.
+    packs = tmp_path / "packs"
+    (packs / "fruit").mkdir(parents=True)
+    (packs / "fruit" / "pack.json").write_text('{"name": "Fruit"}', encoding="utf-8")
+    monkeypatch.setattr(helper, "PACKS_DIR", packs)
     built = helper.EditLocalizationDialog()
     yield built
     built._dirty = False
@@ -144,7 +149,10 @@ def test_translate_all_languages_fills_and_saves_each(dialog, tmp_path: Path, mo
         if dialog._all_queue is None and dialog._translation_task is None:
             break
         threading.Event().wait(0.01)
-    assert shown == [("dev.localization_auto_translated", {"count": 2})]
+    # ChartLibre's Pear in two languages; the pack's Apple, Pear and Fruit in two.
+    assert shown == [("dev.localization_auto_translated", {"count": 8})]
     for code in ("de", "it"):
         saved = i18n._parse_po(tmp_path / code / "LC_MESSAGES" / f"{i18n.DOMAIN}.po")
         assert saved["Pear"] == f"Pear-{code}"
+        pack = i18n._parse_po(tmp_path / "packs" / "fruit" / "locales" / code / "pack.po")
+        assert pack["Fruit"] == f"Fruit-{code}"
