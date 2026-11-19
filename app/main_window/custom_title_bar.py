@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app import SVG
 from app.styles.style import action_presentation, svg_icon_document
 from app.utils.i18n import _
 
@@ -52,12 +53,7 @@ _MAC_SIDEBAR_BUTTON_GAP: int = 12
 
 #: The four caption glyphs, as SVG body (24 x 24 box, drawn with the stroke
 #: svg_icon_document gives them).
-_CAPTION_GLYPHS: dict[str, str] = {
-    "minimize": '<path d="M5 12h14"/>',
-    "maximize": '<rect x="5" y="5" width="14" height="14" rx="1"/>',
-    "restore": '<path d="M8 8V5h11v11h-3"/><rect x="5" y="8" width="11" height="11" rx="1"/>',
-    "close": '<path d="M6 6l12 12M18 6L6 18"/>',
-}
+_CAPTION_GLYPHS: dict[str, str] = SVG.CAPTION
 
 
 def caption_icon(kind: str, normal: str, active: str | None = None) -> QIcon:

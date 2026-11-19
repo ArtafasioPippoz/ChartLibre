@@ -15,6 +15,7 @@ from typing import Any, ClassVar
 
 import pandas as pd
 
+from app import SVG
 from app.analysis import fit_y_by_x as fyx
 from app.plugin_api import reading_guide
 from app.plugin_api.data_operations.column_roles import (
@@ -47,10 +48,7 @@ class FitYByXDialog(RolesOperationDialogBase):
     Category = "Basic Analysis"
     CHART_PANELS = ('Scatter Plot', 'Box Plot', 'Mosaic Plot')
     Order = 11
-    Icon = """
-    <path d="M4 4v16h16"/><circle cx="8" cy="15" r="1.2"/><circle cx="11" cy="12" r="1.2"/>
-    <circle cx="14" cy="11" r="1.2"/><circle cx="17" cy="7" r="1.2"/><path d="M6 17L19 6"/>
-    """
+    Icon = SVG.FIT_Y_BY_X
     Keywords: str = (
         "fit y by x bivariate bivariata oneway one-way anova post hoc tukey games-howell dunn holm "
         "pairwise comparisons confronti multipli contingency contingenza crosstabs chi-squared "

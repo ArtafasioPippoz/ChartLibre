@@ -15,6 +15,7 @@ from typing import Any, ClassVar
 
 import pandas as pd
 
+from app import SVG
 from app.analysis import pls as pl
 from app.plugin_api import reading_guide
 from app.plugin_api.data_operations.column_roles import (
@@ -40,9 +41,7 @@ class PLSDialog(RolesOperationDialogBase):
     )
     Category = "Multivariate Methods"
     Order = 43
-    Icon = """
-    <path d="M3 18c2-9 4-12 6-6s3 6 5-2 3-6 7 1"/><path d="M3 21h18"/>
-    """
+    Icon = SVG.PLS
     Keywords: str = (
         "pls partial least squares minimi quadrati parziali spectra spettri spectrum spettro nir "
         "chemometrics chemiometria calibration calibrazione vip latent components componenti latenti "

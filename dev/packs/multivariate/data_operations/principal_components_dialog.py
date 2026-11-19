@@ -15,6 +15,7 @@ from typing import Any, ClassVar
 
 import pandas as pd
 
+from app import SVG
 from app.analysis import multivariate as mv
 from app.plugin_api import reading_guide
 from app.plugin_api.data_operations.column_roles import (
@@ -39,11 +40,7 @@ class PrincipalComponentsDialog(RolesOperationDialogBase):
     )
     Category = "Multivariate Methods"
     Order = 40
-    Icon = """
-    <circle cx="7" cy="16" r="1.3"/><circle cx="10" cy="13" r="1.3"/><circle cx="13" cy="11" r="1.3"/>
-    <circle cx="16" cy="8" r="1.3"/><circle cx="12" cy="14" r="1.3"/><circle cx="9" cy="10" r="1.3"/>
-    <path d="M4 20L20 4"/><path d="M8 6l8 12" stroke-dasharray="2 2"/>
-    """
+    Icon = SVG.PRINCIPAL_COMPONENTS
     Keywords: str = (
         "principal components componenti principali pca principal component analysis analisi delle componenti "
         "principali eigenvalues autovalori loadings scores punteggi scree dimension reduction riduzione "

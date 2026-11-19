@@ -13,6 +13,7 @@ from typing import Any, ClassVar
 
 import pandas as pd
 
+from app import SVG
 from app.analysis import impact as im
 from app.plugin_api import reading_guide
 from app.plugin_api.data_operations.column_roles import ColumnCasting, ColumnRole
@@ -27,10 +28,7 @@ class ImpactDialog(QuickAnswerDialogBase):
     Description = ("Which of many columns matters most for a result? The factors are ranked for you, "
                    "and the answer is given in words.")
     Category = "Quick answers"
-    Icon = """
-    <rect x="3" y="4" width="18" height="3.2" rx="1"/><rect x="3" y="10.4" width="11" height="3.2" rx="1"/>
-    <rect x="3" y="16.8" width="5" height="3.2" rx="1"/>
-    """
+    Icon = SVG.IMPACT
     Keywords: str = (
         "cosa impatta di più impatto impact most important factors fattori importanti drivers key "
         "driver importance importanza influence influenza cause cosa conta what matters ranking "

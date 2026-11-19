@@ -19,6 +19,7 @@ SeriesJob) and the generated-table names (generated_table_name).
 """
 from __future__ import annotations
 
+from app import SVG
 from app.styles.style import field_label
 import html
 import inspect
@@ -365,11 +366,7 @@ class DataOperationDialogBase(QDialog):
     #: thing to lose.  ``style.icon_from_svg_source`` renders it; an operation
     #: that leaves this empty gets no icon and is otherwise unaffected.
 
-    Icon = """
-    <rect x="5" y="5" width="14" height="14" rx="3"/>
-    <path d="M8.5 12h7"/>
-    <path d="M12 8.5v7"/>
-    """
+    Icon = SVG.ANALYSIS_DEFAULT
 
     #: Emitted with the run's report, as HTML, once Apply has committed.
     #: The main window forwards it to the chart panel the operation ran on, so

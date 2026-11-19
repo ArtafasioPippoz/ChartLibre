@@ -30,6 +30,7 @@ from typing import Any, ClassVar
 import numpy as np
 import pandas as pd
 
+from app import SVG
 from app.analysis.baseline import (
     ASLS_MINIMUM_POINTS,
     METHOD_ASLS,
@@ -120,10 +121,7 @@ class SeriesBaselineDialog(DataOperationDialogBase):
                   default_value=True),
     )
 
-    Icon = """
-    <path d="M3 17c3 0 3-10 6-10s3 10 6 10 3-6 6-6"/>
-    <path d="M3 19h18" stroke-dasharray="2 2"/>
-    """
+    Icon = SVG.BASELINE
     Keywords: str = "correzione linea di base baseline background fondo spectrum spettro asls rubber band"
     Goals: ClassVar[list[str]] = ["signal"]
     Category: str = "Signal Processing"

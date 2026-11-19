@@ -15,6 +15,7 @@ from typing import Any, ClassVar
 import numpy as np
 import pandas as pd
 
+from app import SVG
 from app.analysis import gaussian_process as gp
 from app.plugin_api import reading_guide
 from app.plugin_api.data_operations.dialog_base import (
@@ -126,11 +127,7 @@ class SeriesGPRegressionDialog(DataOperationDialogBase):
         ),
     )
 
-    Icon = """
-    <path d="M4 16c3-8 6-8 8 0s5 8 8 0" stroke-dasharray="2 2"/>
-    <path d="M4 12c3-6 6-6 8 0s5 6 8 0"/>
-    <path d="M4 8c3-4 6-4 8 0s5 4 8 0" stroke-dasharray="2 2"/>
-    """
+    Icon = SVG.GP_REGRESSION
     Keywords: str = (
         "gaussian process gp regression regressione gp processo gaussiano kriging uncertainty incertezza confidence band banda di "
         "confidenza"

@@ -15,6 +15,7 @@ from typing import Any, ClassVar
 import numpy as np
 import pandas as pd
 
+from app import SVG
 from app.analysis import normality as nm
 from app.data_operations.distribution_dialog import (
     qq_panel,
@@ -96,9 +97,7 @@ class NormalityDialog(DataOperationDialogBase):
                    "charts assume? The test is chosen for you, and the answer is given in words.")
     Category = "Quick answers"
     Order = 20
-    Icon = """
-    <path d="M2 19c3 0 4-12 10-12s7 12 10 12"/><path d="M2 21h20"/>
-    """
+    Icon = SVG.NORMALITY
     Keywords: str = (
         "è normale normalità normality normal gaussian gaussiana bell curve campana shapiro wilk "
         "anderson darling q-q qq plot skewness asimmetria kurtosis curtosi distribution distribuzione "

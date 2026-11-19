@@ -13,6 +13,7 @@ from typing import Any, ClassVar
 
 import pandas as pd
 
+from app import SVG
 from app.analysis import answers
 from app.plugin_api import reading_guide
 from app.plugin_api.data_operations.column_roles import (
@@ -34,10 +35,7 @@ class DifferencesDialog(QuickAnswerDialogBase):
                    "and the answer is given in words.")
     Category = "Quick answers"
     CHART_PANELS = ('Box Plot', 'Mosaic Plot')
-    Icon = """
-    <rect x="3" y="8" width="5" height="9" rx="1"/><rect x="10" y="4" width="5" height="9" rx="1"/>
-    <rect x="17" y="11" width="4" height="8" rx="1"/><path d="M2 21h20"/>
-    """
+    Icon = SVG.DIFFERENCES
     Keywords: str = (
         "ci sono differenze differenza differences compare confronta confronto gruppi groups t-test "
         "anova kruskal mann-whitney chi-squared chi quadrato significant significativo quick answer "

@@ -33,6 +33,7 @@ from typing import Any, ClassVar
 import numpy as np
 import pandas as pd
 
+from app import SVG
 from app.analysis.spectral import (
     CORRELATION_NORMALISATIONS,
     DETREND_MODES,
@@ -246,15 +247,7 @@ class SeriesSpectralDialog(DataOperationDialogBase):
     # frequency bins that the result says nothing.
     INPUT_MINIMUM_POINTS = 8
 
-    Icon = """
-    <path d="M4 18.5h16"/>
-    <path d="M4.5 18V5"/>
-    <path d="M7 16v-3"/>
-    <path d="M10 16V8"/>
-    <path d="M13 16v-6"/>
-    <path d="M16 16V6"/>
-    <path d="M19 16v-4"/>
-    """
+    Icon = SVG.SPECTRAL
     Keywords: str = (
         "analisi spettrale fft fourier frequency frequenza spectrum spettro periodogram periodogramma "
         "welch power density densita spettrale"

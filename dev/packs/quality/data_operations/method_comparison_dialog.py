@@ -13,6 +13,7 @@ from typing import Any, ClassVar
 
 import pandas as pd
 
+from app import SVG
 from app.analysis import method_comparison as mc
 from app.plugin_api import reading_guide
 from app.plugin_api.data_operations.column_roles import (
@@ -38,10 +39,7 @@ class MethodComparisonDialog(RolesOperationDialogBase):
                    "and Passing-Bablok regression with their intervals.")
     Category = "Quality and Process"
     Order = 65
-    Icon = """
-    <path d="M4 20L20 4" stroke-dasharray="2 2"/><circle cx="7" cy="16" r="1.3"/><circle cx="11" cy="12.5" r="1.3"/>
-    <circle cx="14" cy="10" r="1.3"/><circle cx="17" cy="6.5" r="1.3"/><path d="M3 21h18M3 3v18"/>
-    """
+    Icon = SVG.METHOD_COMPARISON
     Keywords: str = (
         "method comparison confronto metodi bland altman agreement accordo limits of agreement deming "
         "passing bablok regression bias laboratory laboratorio clsi ep09 validation validazione"

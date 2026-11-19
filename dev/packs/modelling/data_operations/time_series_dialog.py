@@ -17,6 +17,7 @@ from typing import Any, ClassVar
 
 import pandas as pd
 
+from app import SVG
 from app.analysis import time_series as tsa
 from app.plugin_api import reading_guide
 from app.plugin_api.data_operations.column_roles import (
@@ -48,10 +49,7 @@ class TimeSeriesDialog(RolesOperationDialogBase):
     Category = "Predictive and Specialized Modeling"
     CHART_PANELS = ('Time Series', 'Stem Plot')
     Order = 36
-    Icon = """
-    <path d="M3 16l3-4 3 2 3-6 3 3"/><path d="M15 11l3-2 3 1" stroke-dasharray="2 2"/>
-    <path d="M15 8l6-2M15 14l6 2" stroke-dasharray="1 2"/><path d="M3 21h18"/>
-    """
+    Icon = SVG.TIME_SERIES
     Keywords: str = (
         "time series serie temporale serie storica forecast previsione arima ets exponential smoothing "
         "livellamento esponenziale holt winters acf pacf autocorrelation autocorrelazione ljung-box "

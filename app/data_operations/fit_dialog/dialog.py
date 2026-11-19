@@ -12,6 +12,7 @@ series and the parameter table, and lays the result out.
 """
 from __future__ import annotations
 
+from app import SVG
 from app.styles.style import TidyMenu
 
 from app.styles.style import field_label
@@ -211,14 +212,7 @@ class SeriesFitDialog(DataOperationDialogBase):
                           "quality, independent of what x means."),
     )
 
-    Icon = """
-    <path d="M4 18.5h16"/>
-    <path d="M4.5 18V5"/>
-    <path d="M6.5 15.5c2.2-5.6 5.2-7.8 11-7.6"/>
-    <circle cx="7" cy="15" r="1.2"/>
-    <circle cx="11" cy="10.8" r="1.2"/>
-    <circle cx="16.5" cy="8" r="1.2"/>
-    """
+    Icon = SVG.FIT
     Keywords: str = (
         "fit fit curve adatta curva adattamento curve fitting curva regression regressione polynomial polinomio exponential "
         "esponenziale gaussian gaussiana sine model modello nonlinear non lineare trend tendenza"

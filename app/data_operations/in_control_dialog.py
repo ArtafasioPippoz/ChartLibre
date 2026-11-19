@@ -14,6 +14,7 @@ from typing import Any, ClassVar
 
 import pandas as pd
 
+from app import SVG
 from app.analysis import in_control as ic
 from app.analysis import time_series as tsa
 from app.data.data_source import row_value
@@ -96,10 +97,7 @@ class InControlDialog(DataOperationDialogBase):
                    "and the answer given in words.")
     Category = "Quick answers"
     Order = 40
-    Icon = """
-    <path d="M3 6h18" stroke-dasharray="2 2"/><path d="M3 18h18" stroke-dasharray="2 2"/>
-    <path d="M3 12l3-2 3 3 3-4 3 2 3-1 3 2"/>
-    """
+    Icon = SVG.IN_CONTROL
     Keywords: str = (
         "è sotto controllo in control carta di controllo control chart spc shewhart stabile stable processo "
         "process nelson western electric run rules limiti limits ucl lcl special cause causa speciale "

@@ -27,6 +27,7 @@ from typing import Any, ClassVar
 import numpy as np
 import pandas as pd
 
+from app import SVG
 from app.analysis import peaks as pk
 from app.analysis.peaks import Peak, PeakSettings, find_peaks_1d, find_peaks_2d
 from app.plugin_api import reading_guide
@@ -200,10 +201,7 @@ class SeriesPeaksDialog(DataOperationDialogBase):
     # series draws markers because joining peaks would draw a curve through
     # nothing. There was no third behaviour left for the box to choose.
 
-    Icon = """
-    <path d="M3 18l4-8 3 5 4-11 3 8 4-4"/>
-    <circle cx="14" cy="4" r="1.6"/>
-    """
+    Icon = SVG.PEAKS
     Keywords: str = (
         "picchi peak detection trova picchi maxima massimi width larghezza area prominence prominenza "
         "spectrum spettro"

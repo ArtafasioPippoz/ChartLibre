@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from app import SVG
 from app.logs.logger import applogger
 from app.styles.style.metrics import MenuItem, ShortcutLike
 from app.utils.config import get_section
@@ -66,7 +67,8 @@ class ActionSpec:
             theme_icon=_theme_icon_field(
                 entry.get("ThemeIcon") or entry.get("theme_icon")
             ),
-            svg=(entry.get("SVG") or entry.get("svg") or None),
+            # Drawn in app/SVG.py with every other drawing; a config entry may still override it.
+            svg=(entry.get("SVG") or entry.get("svg") or SVG.ACTIONS.get(action_id) or None),
         )
 
     def translated_text(self) -> str:

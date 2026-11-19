@@ -53,6 +53,7 @@ two families have to disagree about: see
 
 from __future__ import annotations
 
+from app import SVG
 from app.styles.style import field_label
 from collections.abc import Sequence
 from dataclasses import dataclass, field
@@ -428,12 +429,7 @@ class SeriesControlChartDialog(DataOperationDialogBase):
                     visible_for={"model": CAPABLE}),
     )
 
-    Icon = """
-    <path d="M3 8h18"/>
-    <path d="M3 16h18"/>
-    <path d="M3 12h18" stroke-dasharray="2 2"/>
-    <path d="M5 13l3-2 3 3 3-5 3 4 3-2"/>
-    """
+    Icon = SVG.CONTROL_CHART
     Keywords: str = (
         "carta di controllo spc statistical process control controllo statistico di processo shewhart "
         "i-mr x-bar xbar r chart p chart c chart u chart limits limiti stability stabilita capability "

@@ -27,6 +27,7 @@ from typing import Any, ClassVar
 import numpy as np
 import pandas as pd
 
+from app import SVG
 from app.analysis import decomposition as dc
 from app.data.data_source import row_value
 from app.logs.logger import applogger
@@ -209,14 +210,7 @@ class SeriesDecompositionDialog(DataOperationDialogBase):
         ),
     )
 
-    Icon = """
-    <circle cx="7" cy="7" r="2"/>
-    <circle cx="16" cy="6" r="2"/>
-    <circle cx="12" cy="13" r="2"/>
-    <circle cx="6" cy="17" r="2"/>
-    <circle cx="17" cy="17" r="2"/>
-    <path d="M12 13l-5-6M12 13l4-7M12 13l-6 4M12 13l5 4" stroke-dasharray="1 2"/>
-    """
+    Icon = SVG.DECOMPOSITION
     Keywords: str = (
         "decomposizione pca principal components componenti principali ica nmf t-sne tsne umap "
         "dimensionality reduction riduzione dimensionale embedding"

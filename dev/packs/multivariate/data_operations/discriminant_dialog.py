@@ -14,6 +14,7 @@ from typing import Any, ClassVar
 
 import pandas as pd
 
+from app import SVG
 from app.analysis import discriminant as da
 from app.plugin_api import reading_guide
 from app.plugin_api.data_operations.column_roles import (
@@ -41,11 +42,7 @@ class DiscriminantDialog(RolesOperationDialogBase):
     Category = "Multivariate Methods"
     CHART_PANELS = ('Scatter Plot', 'Box Plot')
     Order = 42
-    Icon = """
-    <circle cx="6" cy="8" r="1.6"/><circle cx="8.5" cy="5" r="1.6"/><circle cx="5" cy="12.5" r="1.6"/>
-    <circle cx="17" cy="15" r="1.6"/><circle cx="19" cy="19" r="1.6"/><circle cx="15" cy="19.5" r="1.6"/>
-    <path d="M3 21L21 3"/>
-    """
+    Icon = SVG.DISCRIMINANT
     Keywords: str = (
         "discriminant discriminante lda qda linear discriminant analysis analisi discriminante "
         "classification classificazione canonical canonica wilks groups gruppi"

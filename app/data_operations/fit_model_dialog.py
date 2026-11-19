@@ -18,6 +18,7 @@ notes. See app/analysis/linear_model.py for the arithmetic.
 """
 from __future__ import annotations
 
+from app import SVG
 from app.styles.style import TidyMenu
 
 from app.styles.style import field_label
@@ -115,11 +116,7 @@ class FitModelDialog(RolesOperationDialogBase):
     )
     Category = "Fitting Linear Models"
     Order = 20
-    Icon = """
-    <path d="M4 20V4"/><path d="M4 20h16"/>
-    <circle cx="8" cy="15" r="1"/><circle cx="11" cy="11" r="1"/><circle cx="15" cy="10" r="1"/><circle cx="18" cy="6" r="1"/>
-    <path d="M6 17L19 5"/>
-    """
+    Icon = SVG.FIT_MODEL
     Keywords: str = (
         "regression regressione linear model modello lineare least squares minimi quadrati anova "
         "analysis of variance analisi della varianza doe design of experiments response surface "

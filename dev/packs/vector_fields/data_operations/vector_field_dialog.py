@@ -12,6 +12,7 @@ from typing import Any, ClassVar
 
 import pandas as pd
 
+from app import SVG
 from app.analysis import vector_calculus as vc
 from app.plugin_api import reading_guide
 from app.plugin_api.data_operations.column_roles import (
@@ -31,10 +32,7 @@ class VectorFieldDialog(RolesOperationDialogBase):
     Category = "Curves"
     CHART_PANELS = ('Heatmap', 'Quiver 3D')
     Order = 70
-    Icon = """
-    <path d="M4 18l5-5"/><path d="M9 13l-1 3"/><path d="M9 13l-3 1"/><path d="M12 8l6-3"/><path d="M18 5l-3 0"/>
-    <path d="M18 5l-1 3"/><path d="M14 18l5-1"/>
-    """
+    Icon = SVG.VECTOR_FIELD
     Keywords: str = ("vector field campo vettoriale divergence divergenza curl rotore vorticity vorticità flow "
                      "flusso gradient gradiente 3d quiver")
     Goals: ClassVar[list[str]] = ["signal", "relate"]

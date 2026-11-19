@@ -371,10 +371,11 @@ the whole figure fails to draw. See `ContourAxisRenderer._colorbar`.
 ### 7.2 Adding a data operation
 
 A data operation is a self-contained plugin: one file under
-`app/data_operations/`, dialog and artwork included (`Icon` is inline SVG
-path data on the class, not a file — see `app/data_operations/
-dialog_base.py`'s module docstring and any existing
-operation for the shape). `app/scanners/data_operation_scanner.py`
+`app/data_operations/` with its dialog. Its `Icon` is SVG path data on the
+class; the built-in operations keep that drawing in `app/SVG.py`, where every
+SVG of the application lives (the app's mark, the title bar's glyphs, the
+action catalogue's drawn icons, the Analysis panel's tools), and set
+`Icon = SVG.NAME`. An extension pack may still write the string inline. `app/scanners/data_operation_scanner.py`
 discovers it the same way the renderer scanner discovers chart types.
 Operations write their result back as a new table prefixed with `_`
 (`generated_table_name`) so the source list can group/hide generated tables
@@ -827,7 +828,8 @@ Tests: `dev/tests/test_chart_panel_selection.py`,
 
   Inline SVG *source* (`icon_from_svg_source`) is unaffected and is still how
   plugin-carried artwork arrives — a data operation carries its `Icon` as
-  path data on the class, not as a file.
+  path data on the class, not as a file. Every drawing of the application
+  itself is in `app/SVG.py`; config.json names only the system glyphs.
 
   `style.report_icon_sources()` returns the action ids each backend answers
   for *on the machine it runs on*, and what lands under `"none"` is what that

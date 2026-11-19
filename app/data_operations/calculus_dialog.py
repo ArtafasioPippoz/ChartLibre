@@ -36,6 +36,7 @@ from typing import Any, ClassVar
 import numpy as np
 import pandas as pd
 
+from app import SVG
 from app.analysis import calculus as calc
 from app.analysis import symbolic_calculus as symbolic
 from app.data.repo.function_sql import FunctionQuery, function_sql, parse_function_sql
@@ -288,11 +289,7 @@ class SeriesCalculusDialog(DataOperationDialogBase):
         ),
     )
 
-    Icon = """
-    <path d="M7 19c0-6 2-14 5-14"/>
-    <path d="M5 12h9"/>
-    <path d="M14 19h5"/>
-    """
+    Icon = SVG.CALCULUS
     Keywords: str = "calcolo derivative derivata integral integrale differentiate integrate area slope pendenza"
     Goals: ClassVar[list[str]] = ["signal"]
     Category: str = "Curves"

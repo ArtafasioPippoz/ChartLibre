@@ -13,6 +13,7 @@ series shown in the dialog and is returned in metadata/callbacks.
 
 from __future__ import annotations
 
+from app import SVG
 from app.styles.style import field_label
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -428,10 +429,7 @@ class SeriesSmoothingDialog(DataOperationDialogBase):
     #: Computed on a worker thread: see DataOperationDialogBase.evaluate.
     RUN_IN_BACKGROUND = True
 
-    Icon = """
-    <path d="M4 13c1.7-4 3.4 4 5.1 0s3.4-4 5.1 0 3.4 4 5.8-1"/>
-    <path d="M4 17c3.3-2.3 6.7-2.3 10 0 2 1.3 4 1.3 6 0"/>
-    """
+    Icon = SVG.SMOOTHING
     Keywords: str = (
         "smussamento lisciatura noise rumore moving average media mobile savitzky-golay lowess loess "
         "filtro smooth"

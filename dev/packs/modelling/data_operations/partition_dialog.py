@@ -9,6 +9,7 @@ report in its notes. The engine is app.analysis.partition.
 """
 from __future__ import annotations
 
+from app import SVG
 from app.styles.style import field_label
 import html
 from collections.abc import Mapping
@@ -100,11 +101,7 @@ class PartitionDialog(RolesOperationDialogBase):
     )
     Category = "Predictive and Specialized Modeling"
     Order = 30
-    Icon = """
-    <circle cx="12" cy="4.5" r="2"/><circle cx="6" cy="12" r="2"/><circle cx="18" cy="12" r="2"/>
-    <circle cx="3.5" cy="19.5" r="1.6"/><circle cx="9" cy="19.5" r="1.6"/>
-    <path d="M10.6 6l-3.2 4.4M13.4 6l3.2 4.4M5 13.8l-1 4M7 13.8l1.4 4"/>
-    """
+    Icon = SVG.PARTITION
     Keywords: str = (
         "decision tree albero decisionale albero di decisione classification classificazione "
         "regression tree cart split partizioni partizione segmentation segmentazione rules regole "

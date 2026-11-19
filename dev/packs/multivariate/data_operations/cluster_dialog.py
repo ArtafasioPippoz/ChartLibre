@@ -31,6 +31,7 @@ means by cluster and, with automatic k, the silhouette of each k tried.
 
 from __future__ import annotations
 
+from app import SVG
 from app.styles.style import field_label
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -312,15 +313,7 @@ class SeriesClusterDialog(DataOperationDialogBase):
     #: Computed on a worker thread: see DataOperationDialogBase.evaluate.
     RUN_IN_BACKGROUND = True
 
-    Icon = """
-    <circle cx="7" cy="8" r="2"/>
-    <circle cx="16.5" cy="7" r="2"/>
-    <circle cx="10" cy="16" r="2"/>
-    <circle cx="18" cy="15.5" r="2"/>
-    <path d="M8.8 9.5l5.9 4.8"/>
-    <path d="M15 8.3l-3.6 6.1"/>
-    <path d="M12 16h4"/>
-    """
+    Icon = SVG.CLUSTER
     Keywords: str = (
         "cluster clustering raggruppamento gruppi groups k-means kmeans k means dbscan hierarchical gerarchico "
         "ward normal mixtures miscele normali gaussian mixture silhouette segmentation segmentazione"

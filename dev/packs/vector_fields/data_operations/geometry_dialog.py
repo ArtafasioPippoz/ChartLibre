@@ -48,6 +48,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app import SVG
 from app.analysis import geometry as geo
 from app.data.data_source import (
     parse_roles,
@@ -357,10 +358,7 @@ class SeriesGeometryDialog(DataOperationDialogBase):
     INPUT_MINIMUM_POINTS = 1
 
     #: A square with a rotated copy of itself behind it.
-    Icon = """
-    <rect x="3" y="9" width="10" height="10" rx="1"/>
-    <path d="M14.5 4.5l6.2 6.2-6.2 6.2-6.2-6.2z"/>
-    """
+    Icon = SVG.GEOMETRY
     Keywords: str = "geometria rotate ruota translate trasla scale scala mirror specchia coordinates coordinate"
     Goals: ClassVar[list[str]] = ["prepare"]
     Category: str = "Transform"

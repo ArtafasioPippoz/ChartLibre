@@ -685,7 +685,7 @@ class MainWindow(QMainWindow):
             ("delete", _("Delete the selected tables"), lambda _button: self._table_panel._delete_selected()),
             ("chart_from_columns", _("A new chart of this table"),
              lambda _button: self._table_panel._on_new_plot_tab()),
-            ("column_info", _("The table's columns, types and cells; a function's formula; a query's SQL"),
+            ("table_edit", _("The table's columns, types and cells; a function's formula; a query's SQL"),
              lambda _button: self._table_panel.edit_selected()),
             ("table_more", _("More"), lambda button: self._table_panel.show_menu_at(
                 button.mapToGlobal(button.rect().bottomLeft()))),

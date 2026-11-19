@@ -16,6 +16,7 @@ from typing import Any, ClassVar
 
 import pandas as pd
 
+from app import SVG
 from app.analysis import multivariate as mv
 from app.plugin_api import reading_guide
 from app.plugin_api.data_operations.column_roles import (
@@ -40,12 +41,7 @@ class FactorAnalysisDialog(RolesOperationDialogBase):
     )
     Category = "Multivariate Methods"
     Order = 41
-    Icon = """
-    <circle cx="6" cy="6" r="2"/><circle cx="6" cy="18" r="2"/>
-    <rect x="15" y="3" width="5" height="3.5" rx="0.8"/><rect x="15" y="10.2" width="5" height="3.5" rx="0.8"/>
-    <rect x="15" y="17.5" width="5" height="3.5" rx="0.8"/>
-    <path d="M8 6.5l7-1.5M8 7l7 4.5M8 17l7-4.5M8 17.5l7 1.5"/>
-    """
+    Icon = SVG.FACTOR_ANALYSIS
     Keywords: str = (
         "factor analysis analisi fattoriale fattori latenti latent factors varimax quartimax equamax "
         "promax rotation rotazione loadings saturazioni communality comunalità maximum likelihood "

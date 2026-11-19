@@ -17,6 +17,7 @@ from typing import Any, ClassVar
 import numpy as np
 import pandas as pd
 
+from app import SVG
 from app.analysis.outliers import (
     OUTLIER_ELLIPTIC_ENVELOPE,
     OUTLIER_IQR,
@@ -256,15 +257,7 @@ class SeriesOutlierDialog(DataOperationDialogBase):
         ),
     )
 
-    Icon = """
-    <circle cx="7" cy="8" r="1.3"/>
-    <circle cx="10.5" cy="11" r="1.3"/>
-    <circle cx="8.5" cy="15" r="1.3"/>
-    <circle cx="14" cy="9" r="1.3"/>
-    <circle cx="16" cy="14" r="1.3"/>
-    <circle cx="19" cy="5.5" r="1.5"/>
-    <path d="M17.8 6.7l-2 2"/>
-    """
+    Icon = SVG.OUTLIER
     Keywords: str = (
         "anomalies anomalie outlier valori anomali esclusi grubbs iqr z-score mahalanobis isolation "
         "forest"

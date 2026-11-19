@@ -19,6 +19,7 @@ from typing import Any, ClassVar
 import numpy as np
 import pandas as pd
 
+from app import SVG
 from app.analysis import wafer as wf
 from app.data.data_source import quote_identifier
 from app.plugin_api import reading_guide
@@ -84,9 +85,7 @@ class WaferMapDialog(DataOperationDialogBase):
                    "defect density - notch or flat, any diameter, rotation.")
     Category = "Quality and Process"
     Order = 30
-    Icon = """
-    <path d="M12 3a9 9 0 1 0 1.2 .08L12 4.6z"/><path d="M7 8h10M7 12h10M7 16h10M9 6v12M12 4.6v14.4M15 6v12"/>
-    """
+    Icon = SVG.WAFER_MAP
     Keywords: str = (
         "wafer fetta semiconductor semiconduttori die binning resa yield notch flat defect difetti particle "
         "particelle defect density uniformity uniformità thickness spessore map mappa"

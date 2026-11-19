@@ -29,6 +29,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app import SVG
 from app.analysis import NUMERICAL_FAILURES
 from app.analysis import statistics as st
 from app.data.data_source import parse_roles, quote_identifier, row_value
@@ -216,13 +217,7 @@ class SeriesStatisticsDialog(DataOperationDialogBase):
     # anyone wants reported.
     INPUT_MINIMUM_POINTS = 2
 
-    Icon = """
-    <path d="M5 19h14"/>
-    <path d="M7 16v-5"/>
-    <path d="M12 16V7"/>
-    <path d="M17 16v-8"/>
-    <path d="M6 5h12"/>
-    """
+    Icon = SVG.STATISTICS
     Keywords: str = (
         "statistiche descriptive descrittive mean media median mediana standard deviation deviazione "
         "standard summary riepilogo min max quantile percentile"

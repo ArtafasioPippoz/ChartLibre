@@ -7,6 +7,7 @@ imported/exported as text files.
 """
 from __future__ import annotations
 
+from app import SVG
 from app.styles.style import TidyMenu
 
 from app.styles.style import field_label
@@ -203,7 +204,7 @@ class SeriesFunctionDialog(DataOperationDialogBase):
     #: More points than this and Preview / OK ask first (about a second for each draw of a live series).
     POINTS_WARNING = 100_000
 
-    Icon = '<path d="M4 20c4 0 4-16 8-16"/><path d="M12 4c4 0 4 16 8 16"/>'
+    Icon = SVG.FUNCTION
     Keywords = "funzione formula expression espressione plot function grafico di funzione"
     Goals: ClassVar[list[str]] = []
     Category = "Graph"

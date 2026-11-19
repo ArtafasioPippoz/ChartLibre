@@ -13,6 +13,7 @@ from typing import Any, ClassVar
 
 import pandas as pd
 
+from app import SVG
 from app.analysis import gage
 from app.analysis.capability import parse_limit
 from app.plugin_api import reading_guide
@@ -35,9 +36,7 @@ class GageDialog(RolesOperationDialogBase):
                    "the ANOVA method, % of the study variation and of the tolerance, distinct categories.")
     Category = "Quality and Process"
     Order = 61
-    Icon = """
-    <path d="M4 18a8 8 0 1 1 16 0"/><path d="M12 18l4-6"/><path d="M8 18h8"/>
-    """
+    Icon = SVG.GAGE
     Keywords: str = (
         "gage r&r gauge r&r msa measurement system analysis analisi del sistema di misura ripetibilità "
         "riproducibilità repeatability reproducibility variability chart operatori parti ndc"

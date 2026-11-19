@@ -50,6 +50,7 @@ from typing import Any, ClassVar
 import numpy as np
 import pandas as pd
 
+from app import SVG
 from app.analysis.roots import (
     INTERP_CUBIC,
     INTERP_LINEAR,
@@ -250,11 +251,7 @@ class SeriesRootsDialog(DataOperationDialogBase):
     )
 
     #: A curve crossing a horizontal line, with the crossing marked.
-    Icon = """
-    <path d="M3 12h18"/>
-    <path d="M3 19c4 0 5-14 9-14s5 10 9 10"/>
-    <circle cx="8.4" cy="12" r="1.8"/>
-    """
+    Icon = SVG.ROOTS
     Keywords: str = "radici zeri zeros crossing attraversamento threshold soglia level livello"
     Goals: ClassVar[list[str]] = ["signal"]
     Category: str = "Curves"

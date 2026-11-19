@@ -22,6 +22,7 @@ import numpy as np
 import pandas as pd
 from PySide6.QtCore import Signal
 
+from app import SVG
 from app.analysis.interpolation import (
     MODEL_EXPONENTIAL,
     MODEL_GAUSSIAN,
@@ -288,15 +289,7 @@ class SeriesInterpolateDialog(DataOperationDialogBase):
     #: Computed on a worker thread: see DataOperationDialogBase.evaluate.
     RUN_IN_BACKGROUND = True
 
-    Icon = """
-    <path d="M4 18.5h16"/>
-    <path d="M4.5 18V5"/>
-    <path d="M6.5 15.5l4.2-4.2 3.2 2.4 4.2-6.2"/>
-    <circle cx="6.5" cy="15.5" r="1"/>
-    <circle cx="10.7" cy="11.3" r="1"/>
-    <circle cx="13.9" cy="13.7" r="1"/>
-    <circle cx="18.1" cy="7.5" r="1"/>
-    """
+    Icon = SVG.INTERPOLATE
     Keywords: str = (
         "interpolazione missing values valori mancanti fill riempi spline linear lineare resample "
         "ricampiona"

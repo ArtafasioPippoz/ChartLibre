@@ -26,6 +26,7 @@ from typing import Any, ClassVar
 
 import numpy as np
 
+from app import SVG
 from app.analysis.regression import (
     KIND_GRADIENT_BOOSTING,
     KIND_HUBER,
@@ -218,12 +219,7 @@ class SeriesRegressionDialog(DataOperationDialogBase):
         ),
     )
 
-    Icon = """
-    <path d="M4 18c3-1 4-8 6-8s2 6 4 6 3-9 6-9"/>
-    <circle cx="6" cy="15" r="1"/>
-    <circle cx="12" cy="9" r="1"/>
-    <circle cx="16" cy="14" r="1"/>
-    """
+    Icon = SVG.REGRESSION
     Keywords: str = (
         "regressione robust robusta machine learning random forest gradient boosting svr huber ransac "
         "theil-sen ml"

@@ -30,6 +30,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app import SVG
 from app.dialogs.create_chart_dialog import NewPlotTabDialog
 from app.scanners.data_operation_scanner import data_operations, reads_roles
 from app.styles.style import icon_from_svg_source, load_icon
@@ -88,9 +89,7 @@ def doe_tool() -> dict:
     return {
         "value": "Create a table from a DOE", "kind": TOOL, "tool": "doe",
         # Drawn like the plugins' icons, in the panel's accent: a grid of runs.
-        "icon": '<rect x="4" y="4" width="16" height="16" rx="2"/><circle cx="8" cy="8" r="1.4"/>'
-                '<circle cx="16" cy="8" r="1.4"/><circle cx="8" cy="16" r="1.4"/><circle cx="16" cy="16" r="1.4"/>'
-                '<circle cx="12" cy="12" r="1.4"/>',
+        "icon": SVG.DOE,
         "category": _DOE_CATEGORY, "order": _DOE_ORDER,
         "description": "Generate an experiment matrix with factors and responses; analyse it with Fit Model.",
     }
@@ -99,8 +98,7 @@ def doe_tool() -> dict:
 def predict_tool() -> dict:
     return {
         "value": "Predict with a saved model", "kind": TOOL, "tool": "predict_model",
-        "icon": '<circle cx="6" cy="17" r="1.6"/><circle cx="12" cy="11" r="1.6"/><circle cx="18" cy="6" r="1.6"/>'
-                '<path d="M4 20h16M4 20V4"/>',
+        "icon": SVG.PREDICT,
         "category": "Predictive and Specialized Modeling", "order": 900,
         "description": "Apply a model kept in the project to a table: its predictions in a new table.",
     }
@@ -115,12 +113,11 @@ def quality_charts() -> list[dict]:
     return [
         {"value": "Pareto Plot", "kind": TOOL, "tool": "chart:Pareto Chart", "category": "Quality and Process",
          "order": 61, "description": "The causes or defects by count, largest first, with the cumulative share.",
-         "icon": '<path d="M4 20V6M8 20V9M12 20v-7M16 20v-4M20 20v-2"/><path d="M4 6l4 -2 4 -1 4 -0.5 4 -0.3"/>'},
+         "icon": SVG.PARETO},
         {"value": "Ishikawa Diagram", "kind": TOOL, "tool": "chart:Fishbone Diagram",
          "category": "Quality and Process", "order": 62,
          "description": "Cause and effect (fishbone): the causes of a problem, grouped by category.",
-         "icon": '<path d="M3 12h16l2 0"/><path d="M6 12l3-5M11 12l3-5M6 12l3 5M11 12l3 5"/>'
-                 '<path d="M19 9l2 3-2 3"/>'},
+         "icon": SVG.ISHIKAWA},
     ]
 
 

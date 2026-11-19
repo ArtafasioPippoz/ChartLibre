@@ -28,6 +28,7 @@ from typing import Any, ClassVar
 
 import numpy as np
 
+from app import SVG
 from app.analysis.filtering import (
     AUTO_CUTOFF1,
     AUTO_CUTOFF2,
@@ -207,9 +208,7 @@ class SeriesFilterDialog(DataOperationDialogBase):
     #: Computed on a worker thread: see DataOperationDialogBase.evaluate.
     RUN_IN_BACKGROUND = True
 
-    Icon = """
-    <path d="M3 12h4l2-7 4 14 2-7h6"/>
-    """
+    Icon = SVG.FILTER
     Keywords: str = (
         "filtro filtraggio filter low-pass passa basso high-pass passa alto band-pass butterworth "
         "detrend trend demodulate scipy signal"

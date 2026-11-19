@@ -13,6 +13,7 @@ from typing import Any, ClassVar
 
 import pandas as pd
 
+from app import SVG
 from app.analysis import multivariate as mv
 from app.plugin_api import reading_guide
 from app.plugin_api.data_operations.column_roles import (
@@ -40,10 +41,7 @@ class MultivariateDialog(RolesOperationDialogBase):
     )
     Category = "Multivariate Methods"
     Order = 39
-    Icon = """
-    <rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/>
-    <circle cx="16" cy="6" r="1.2"/><circle cx="18" cy="8" r="1.2"/><circle cx="6" cy="17" r="1.2"/><circle cx="8" cy="15" r="1.2"/>
-    """
+    Icon = SVG.MULTIVARIATE
     Keywords: str = (
         "multivariate multivariata correlation correlazione correlations correlazioni pearson spearman kendall "
         "correlation matrix matrice di correlazione scatterplot matrix matrice di dispersione p-value"

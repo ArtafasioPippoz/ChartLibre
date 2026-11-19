@@ -14,6 +14,7 @@ from typing import Any, ClassVar
 import numpy as np
 import pandas as pd
 
+from app import SVG
 from app.analysis import distribution as dist
 from app.data.data_source import row_value
 from app.plugin_api import reading_guide
@@ -105,9 +106,7 @@ class DistributionDialog(DataOperationDialogBase):
     Description = "One series at a time: the histogram, quantiles, moments and normality tests."
     Category = "Basic Analysis"
     Order = 10
-    Icon = """
-    <path d="M4 20V14h3v6M8.5 20V8h3v12M13 20V5h3v15M17.5 20v-9h3v9"/><path d="M3 20h18"/>
-    """
+    Icon = SVG.DISTRIBUTION
     Keywords: str = (
         "distribution distribuzione quantiles quantili percentiles percentili moments momenti "
         "normality normalità histogram istogramma"

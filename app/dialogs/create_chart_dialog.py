@@ -11,6 +11,7 @@ scatter plot next to the words "Scatter Plot" is decoration, not information.
 """
 from __future__ import annotations
 
+from app import SVG
 from app.styles.style import field_label
 from collections.abc import Sequence
 from dataclasses import dataclass, field
@@ -91,12 +92,7 @@ class NewPlotTabDialog(ColumnsDialog):
     renderer changes.  Each role can be mapped to a table/query column and is
     persisted through ``SqliteRepo.create_series_descriptor(..., roles=...)``.
     """
-    Icon = """
-        <path d="M4 19.5h16"/>
-        <path d="M4.5 19V5"/>
-        <path d="M7 15l3.2-3.2 2.5 2.5L18 8"/>
-        <path d="M15.5 8H18v2.5"/>
-        """
+    Icon = SVG.CREATE_CHART
     def __init__(
         self,
         repo: SqliteRepo,
