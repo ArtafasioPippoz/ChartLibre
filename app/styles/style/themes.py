@@ -202,16 +202,21 @@ def _native_mac_controls(app: QApplication, qss: str, dark: bool) -> str:
 
 
 #: The buttons Cocoa has no colour for - the accent's, the red of one that deletes - keep the sheet's colours on
-#: a Cocoa push button's shape: as tall as the plain ones beside them, as round. The Fluent sheet's took their
-#: shape from its plain-button rule, gone on macOS.
+#: a Cocoa push button's shape: as round, words of the same weight, and the same 20-point face with nothing above
+#: or below it - what a layout counts of a Cocoa button (its widget is taller, the face inside). Counted as a
+#: 32-point box, a coloured one sat a point or two off a Cocoa one beside it in a row taller than both
+#: (Localization's New language... and Remove...). The Fluent sheet's took their shape from its plain-button
+#: rule, gone on macOS.
 _MAC_COLOURED_BUTTONS = """
 QPushButton[primary="true"], QPushButton[accent="true"], QPushButton[destructive="true"],
 QDialogButtonBox QPushButton[primary="true"], QMessageBox QPushButton[primary="true"],
 QPushButton#primaryDialogButton {
   border-radius: 6px;
   padding: 2px 14px;
-  min-height: 15px;
-  margin: 1px 6px 3px 6px;
+  min-height: 14px;
+  max-height: 14px;
+  margin: 0px 6px;
+  font-weight: normal;
 }
 """
 

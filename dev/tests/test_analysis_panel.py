@@ -79,3 +79,11 @@ def test_quality_and_process_lists_the_pareto_plot_and_the_ishikawa_diagram(qapp
     assert {"Control Chart", "Pareto Plot", "Ishikawa Diagram"} <= set(quality)
     assert quality["Ishikawa Diagram"]["tool"] == "chart:Fishbone Diagram"
     assert quality["Pareto Plot"]["tool"] == "chart:Pareto Chart"
+
+
+def test_every_analysis_has_its_icon_from_svg_py() -> None:
+    from app.widgets.analysis_panel import entry_name, panel_entries
+
+    # The icons moved into app/SVG.py as Icon = SVG.NAME; the scanner read only literals and listed them bare.
+    bare = [entry_name(e) for e in panel_entries() if not (e.get("icon") or e.get("action_icon"))]
+    assert bare == []

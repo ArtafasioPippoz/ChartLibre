@@ -83,13 +83,6 @@ QFrame#chartSurfaceCard {
   background: palette(base);
 }
 
-/* The guided analysis: the Analysis panel's way in, tinted with the accent
-   so it reads apart from the frames of analyses under it. */
-QFrame#guidedAnalysisCard {
-  background: rgba(@ACCENT_RGB@, 0.08);
-  border: 1px solid rgba(@ACCENT_RGB@, 0.22);
-}
-
 QWidget#basePropertiesPanel {
   background: palette(base);
 }
@@ -810,6 +803,14 @@ QLineEdit {
 QLineEdit:focus,
 QAbstractSpinBox:focus {
   border: 1px solid palette(highlight);
+}
+
+/* Unavailable: the words greyed, as Cocoa greys a disabled field's - the color above held them at full ink. */
+QLineEdit:disabled,
+QAbstractSpinBox:disabled,
+QPlainTextEdit:disabled,
+QTextEdit:disabled {
+  color: palette(mid);
 }
 
 /* ...but not the editors inside other controls, which draw their own frame:

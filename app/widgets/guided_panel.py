@@ -76,6 +76,7 @@ class GuidedAnalysisPanel(NavPanel):
         for entry in quick:
             button = QPushButton(entry_icon(entry), _(entry.name), box)
             button.setObjectName("quickAnswerButton")
+            button.setProperty("primary", True)  # the panel's way in: blue, as a dialog's OK
             button.setToolTip(_(entry.description))
             button.clicked.connect(lambda _checked=False, e=entry: self.entry_requested.emit(e))
             box_layout.addWidget(button)
@@ -177,6 +178,7 @@ class GuidedAnalysisPanel(NavPanel):
                 continue
             button = QPushButton(entry_icon(entry), _(question.template).format(**question.values), self._questions)
             button.setObjectName("quickAnswerButton")
+            button.setProperty("primary", True)
             button.setToolTip(_(entry.description))
             button.clicked.connect(
                 lambda _checked=False, e=entry, q=question: self.question_requested.emit(e, q.roles, q.kinds))

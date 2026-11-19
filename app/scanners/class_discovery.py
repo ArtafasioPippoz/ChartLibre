@@ -29,7 +29,7 @@ from app.logs.logger import applogger
 # Parsing every plugin file took a quarter of a second of each start, to find what it found the
 # time before. A file is read again only when its date or size changed; the cache is a file in the
 # user's cache folder, and losing it costs one full scan.
-_SCAN_CACHE_VERSION = 1
+_SCAN_CACHE_VERSION = 2  # 2: an Icon = SVG.NAME read as its drawing
 _scan_cache: dict[str, Any] | None = None
 
 
@@ -179,6 +179,7 @@ def extract_class_string_attr(
     Accepted:
         Name = "Scatter"
         Name: str = "Scatter"
+        Icon = SVG.DISTRIBUTION   (a drawing of app/SVG.py, read as its string)
 
     Rejected:
         Name = SOME_CONST
@@ -188,23 +189,33 @@ def extract_class_string_attr(
         if isinstance(stmt, ast.Assign):
             for target in stmt.targets:
                 if isinstance(target, ast.Name) and target.id == attr_name:
-                    try:
-                        value = ast.literal_eval(stmt.value)
-                    except _NOT_A_LITERAL:
-                        return None
-                    return value if isinstance(value, str) else None
+                    return _string_value(stmt.value)
 
         if isinstance(stmt, ast.AnnAssign):
             if isinstance(stmt.target, ast.Name) and stmt.target.id == attr_name:
                 if stmt.value is None:
                     return None
-                try:
-                    value = ast.literal_eval(stmt.value)
-                except _NOT_A_LITERAL:
-                    return None
-                return value if isinstance(value, str) else None
+                return _string_value(stmt.value)
 
     return None
+
+
+def _string_value(node: ast.expr) -> str | None:
+    """A string literal's text, or an ``SVG.NAME`` drawing's (app/SVG.py: constants only); None for anything else.
+
+    The analyses' Icon moved into app/SVG.py as ``Icon = SVG.DISTRIBUTION``: read as a literal only, every one of
+    those icons came out None and the Analysis panel listed them bare.
+    """
+    if (isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id == "SVG"):
+        from app import SVG
+
+        value = getattr(SVG, node.attr, None)
+        return value if isinstance(value, str) else None
+    try:
+        value = ast.literal_eval(node)
+    except _NOT_A_LITERAL:
+        return None
+    return value if isinstance(value, str) else None
 
 
 def extract_class_int_attr(
