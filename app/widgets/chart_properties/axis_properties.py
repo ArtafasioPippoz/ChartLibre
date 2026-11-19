@@ -45,6 +45,7 @@ from app.styles.style import (
     MARGIN_PANEL,
     CardFrame,
     create_action_button,
+    keep_check_box_whole,
     mark_icon_only,
     stdSizeAndlayout,
 )
@@ -278,11 +279,25 @@ class AxisPropertiesWidget(BaseProperties):
         position_form.add_row(_("Max points"), self._max_points_combo)
 
         def check_row(checks: list[QCheckBox]) -> QWidget:
+            # Each letter above its own box, centred: beside it, macOS' layout rectangle for a check box (smaller
+            # than the box) let each letter fall under the next box.
             holder = QWidget(appearance_section.body)
             layout = QHBoxLayout(holder)
             stdSizeAndlayout(layout)
+            layout.setSpacing(14)
             for check in checks:
-                layout.addWidget(check)
+                label = QLabel(check.text(), holder)
+                label.setToolTip(check.toolTip())
+                label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+                check.setText("")
+                check.setStyleSheet("QCheckBox { spacing: 0px; }")  # no words beside it: the box alone, centred
+                keep_check_box_whole(check)
+                column = QVBoxLayout()
+                column.setContentsMargins(0, 0, 0, 0)
+                column.setSpacing(2)
+                column.addWidget(label, 0, Qt.AlignmentFlag.AlignHCenter)
+                column.addWidget(check, 0, Qt.AlignmentFlag.AlignHCenter)
+                layout.addLayout(column)
             layout.addStretch(1)
             return holder
 

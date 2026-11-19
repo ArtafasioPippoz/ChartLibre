@@ -160,33 +160,10 @@ QAbstractButton[iconOnly="true"] {
   icon-size: 20px 20px;
 }
 
-QPushButton {
-  /* A visibly grey pill against the now-lighter card (see
-     [card="true"] above), not palette(button)'s near-white — that
-     used to read lighter than the card it sat on. */
-  background: rgba(@SHADOW_RGB@, 0.06);
-  color: palette(button-text);
-  border-radius: 6px;
-  padding: 4px 14px;
-  min-height: 15px;
-}
-
-
+/* Plain buttons: the system's own (Cocoa's push button, drawn by Qt's macOS style) - no background, border or
+   padding here, or Qt draws the button itself. Words only, as on macOS. */
 QPushButton {
   icon-size: 0px 0px;
-}
-
-QPushButton:hover {
-  background: rgba(@SHADOW_RGB@, 0.10);
-}
-
-QPushButton:pressed {
-  background: rgba(@SHADOW_RGB@, 0.16);
-}
-
-QPushButton:disabled {
-  color: palette(mid);
-  border-color: rgba(@SHADOW_RGB@, 0.10);
 }
 
 
@@ -1212,47 +1189,15 @@ QWidget#inspectorSectionBody QComboBox:focus,
 QWidget#inspectorSectionBody QPlainTextEdit:focus {
   border: 1px solid palette(highlight);
 }
-/* Check boxes: an empty box with an edge when off (the native one vanished on a grey card), a blue box with a
-   white tick when on. */
+/* Check boxes: the system's own (Cocoa's NSButton check box, drawn by Qt's macOS style), as in the system's own
+   settings - no indicator rule here, or Qt draws the box itself and it stops looking native. */
 QCheckBox {
   spacing: 8px;
 }
-QCheckBox::indicator {
-  width: 14px;
-  height: 14px;
-  border-radius: 4px;
-}
-QCheckBox::indicator:unchecked {
-  background: palette(base);
-  border: 1px solid palette(mid);
-}
-QCheckBox::indicator:checked {
-  background: palette(highlight);
-  border: 1px solid palette(highlight);
-  image: url(@ICON:checkbox_tick@);
-}
-QCheckBox::indicator:indeterminate {
-  background: palette(highlight);
-  border: 1px solid palette(highlight);
-}
-/* Option buttons: an empty ring when off (the native one nearly vanished on a grey card), a blue disc when
-   on. */
+/* Option buttons: the system's own, as the check boxes above. */
 QRadioButton {
   spacing: 8px;
   padding: 3px 0px;
-}
-QRadioButton::indicator {
-  width: 14px;
-  height: 14px;
-  border-radius: 8px;
-}
-QRadioButton::indicator:unchecked {
-  background: palette(base);
-  border: 1px solid palette(mid);
-}
-QRadioButton::indicator:checked {
-  background: palette(highlight);
-  border: 1px solid palette(highlight);
 }
 /* The player's round buttons (Chart properties > Animation): grey discs, and the accent one for Play. */
 QToolButton#playerButton {

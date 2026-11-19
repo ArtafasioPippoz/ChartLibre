@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 import platform
+import re
 from pathlib import Path
 
 from PySide6 import QtWidgets
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QWidget
 
 from app.logs.logger import applogger
@@ -139,6 +141,57 @@ def _frameless_combo_popups() -> None:
     _combo_init_patched = True
 
 
+#: Selectors Cocoa draws better than any sheet: a plain push button (in a button box too), and the box of a check
+#: box or an option button, in any state.
+_NATIVE_MAC_SELECTOR = re.compile(
+    r"^(?:QDialogButtonBox\s+)?QPushButton(?::[a-z-]+)*$|^(?:QCheckBox|QRadioButton)::indicator(?::[a-z-]+)*$"
+)
+#: What such a rule may still say without taking the drawing from Cocoa.
+_NATIVE_MAC_KEPT = ("icon-size",)
+
+
+def _without_native_mac_rules(qss: str) -> str:
+    """*qss* without what it says about the controls in ``_NATIVE_MAC_SELECTOR``, bar ``_NATIVE_MAC_KEPT``."""
+    qss = re.sub(r"/\*.*?\*/", "", qss, flags=re.DOTALL)
+
+    def rule(match: re.Match[str]) -> str:
+        selectors = [part.strip() for part in match.group(1).split(",")]
+        if not all(_NATIVE_MAC_SELECTOR.match(selector) for selector in selectors):
+            return match.group(0)
+        kept = [d.strip() for d in match.group(2).split(";") if d.strip().startswith(_NATIVE_MAC_KEPT)]
+        return f"{match.group(1).strip()} {{ {'; '.join(kept)}; }}\n" if kept else ""
+
+    return re.sub(r"([^{}]+)\{([^{}]*)\}", rule, qss)
+
+
+def _native_mac_controls(app: QApplication, qss: str, dark: bool) -> str:
+    """On macOS, buttons, check boxes and option buttons as Cocoa draws them, in the theme's light or dark.
+
+    The system's settings (Preview's, say) are the model: a check box is a rounded square filled with the accent
+    and a white tick when on, a thin edge when off. Qt's macOS style draws exactly those - NSButton's - so long as
+    no sheet draws them itself (the Dark theme's Fluent sheet does: its rules for them go), and in the
+    appearance the application asks for: the theme's, not the desktop's, or a dark desktop drew dark controls on
+    the light theme's cards.
+    """
+    app.styleHints().setColorScheme(Qt.ColorScheme.Dark if dark else Qt.ColorScheme.Light)
+    return _without_native_mac_rules(qss) + _MAC_COLOURED_BUTTONS
+
+
+#: The buttons Cocoa has no colour for - the accent's, the red of one that deletes - keep the sheet's colours on
+#: a Cocoa push button's shape: as tall as the plain ones beside them, as round. The Fluent sheet's took their
+#: shape from its plain-button rule, gone on macOS.
+_MAC_COLOURED_BUTTONS = """
+QPushButton[primary="true"], QPushButton[accent="true"], QPushButton[destructive="true"],
+QDialogButtonBox QPushButton[primary="true"], QMessageBox QPushButton[primary="true"],
+QPushButton#primaryDialogButton {
+  border-radius: 6px;
+  padding: 2px 14px;
+  min-height: 15px;
+  margin: 1px 6px 3px 6px;
+}
+"""
+
+
 def apply_platform_style(
     app: QApplication, preference: str | None = None
 ) -> PlatformStyle:
@@ -186,6 +239,8 @@ def apply_platform_style(
     # Images a sheet needs (a combo's chevrons): url(@ICON:name@), drawn from
     # the system's own symbols rather than shipped as artwork.
     themed = _substitute_qss_symbols(themed)
+    if system == "darwin":
+        themed = _native_mac_controls(app, themed, palette.dark)
     _icons._ACTIVE_THEME_IS_DARK = palette.dark
     app.setPalette(palette.qpalette())
 
