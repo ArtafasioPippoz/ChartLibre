@@ -42,3 +42,16 @@ def test_the_copied_code_runs_in_the_workpad(project) -> None:
     outcome = pad.run(code)
     assert "error" not in repr(outcome).lower()[:200], outcome
     assert len(project.operations()) == 2
+
+
+def test_the_windows_own_choices_are_in_the_call_and_run_again(project) -> None:
+    """A smoothing's method is not a parameter: it travels as entries, and a re-run uses it."""
+    analysis_api.run_analysis(project, "Smoothing", "sig", {"x": ["t"], "y": ["a"]},
+                              entries={"method_combo": "Savitzky-Golay Filter (SciPy)"})
+    records = project.operations()
+    assert records[0].entries["method_combo"] == "Savitzky-Golay Filter (SciPy)"
+    code = analysis_api.history_code(records, project)
+    assert "entries={'method_combo': 'Savitzky-Golay Filter (SciPy)'}" in code, code
+    again = analysis_api.run_records(project, records)
+    assert isinstance(again[0], analysis_api.AnalysisResult), again
+    assert project.operations()[-1].entries["method_combo"] == "Savitzky-Golay Filter (SciPy)"

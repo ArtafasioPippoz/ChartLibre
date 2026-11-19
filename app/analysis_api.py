@@ -96,7 +96,7 @@ def _quote(name: str) -> str:
 
 
 def call_text(function: str, name: str, table: str, roles: Mapping[str, Any], parameters: Mapping[str, Any], *,
-              model: str = "", draw_on: str = "new_figure") -> str:
+              model: str = "", draw_on: str = "new_figure", entries: Mapping[str, Any] | None = None) -> str:
     """A call as Python source: Analysis("Fit Y by X", "t", {"x": ["a"]}, degree=2)."""
     arguments = [repr(name), repr(table), repr({key: list(value) for key, value in dict(roles).items()})]
     plain = {key: value for key, value in dict(parameters).items() if str(key).isidentifier()}
@@ -108,6 +108,8 @@ def call_text(function: str, name: str, table: str, roles: Mapping[str, Any], pa
         arguments.append(f"model={model!r}")
     if draw_on != "new_figure":
         arguments.append(f"draw_on={draw_on!r}")
+    if entries:
+        arguments.append(f"entries={dict(entries)!r}")
     return f"{function}({', '.join(arguments)})"
 
 
@@ -192,9 +194,13 @@ def _list_of_columns(value: Any) -> list[str]:
 
 def _filled_dialog(repo: Any, analysis: str, table: str, roles: Mapping[str, Any] | None,
                    parameters: Mapping[str, Any] | None, model: str, draw_on: str,
-                   current_figure: Callable[[], int | None]) -> tuple[Any, str, dict[str, list[str]]]:
-    """The analysis' dialog built on *table* and filled: (dialog, its name, the roles as set). Not run, not shown."""
+                   current_figure: Callable[[], int | None],
+                   entries: Mapping[str, Any] | None = None) -> tuple[Any, str, dict[str, list[str]]]:
+    """The analysis' dialog built on *table* and filled: (dialog, its name, the roles as set). Not run, not shown.
+
+    *entries* are the window's own choices that are not parameters (a smoothing's dimension), by name."""
     from app.scanners.data_operation_scanner import import_class_from_file, reads_roles
+    from app.utils.dialog_state import set_dialog_entries
 
     name, entry = find_analysis(analysis)
     table = find_table(repo, table)
@@ -230,6 +236,8 @@ def _filled_dialog(repo: Any, analysis: str, table: str, roles: Mapping[str, Any
                 raise AnalysisError(f"No table named '{table}'.")
             dialog.current_figure_id = current_figure()
             dialog.roles_widget.set_casting(casting)
+        if entries:
+            set_dialog_entries(dialog, entries, quietly=False)
         for form in dialog.parameter_forms():
             form.set_values(dict(parameters or {}))
         if model and getattr(dialog, "model_combo", None) is not None:
@@ -262,7 +270,7 @@ def run_analysis(repo: Any, analysis: str, table: str, roles: Mapping[str, Any] 
                  parameters: Mapping[str, Any] | None = None, *, model: str = "", draw_on: str = "new_figure",
                  current_figure: Callable[[], int | None] = lambda: None,
                  keep_waiting: Callable[[], bool] = lambda: True,
-                 timeout: float = ANALYSIS_TIMEOUT_S) -> AnalysisResult:
+                 timeout: float = ANALYSIS_TIMEOUT_S, entries: Mapping[str, Any] | None = None) -> AnalysisResult:
     """Run *analysis* on *table* as its dialog's OK would, and return what it gave.
 
     *roles* maps each role of the analysis (see describe_analysis) to its columns; *parameters* are its parameter
@@ -275,7 +283,8 @@ def run_analysis(repo: Any, analysis: str, table: str, roles: Mapping[str, Any] 
     tables_before = set(repo.list_user_tables()["Table"].astype(str))
     operations_before = {record.id for record in repo.operations()}
     started = time.monotonic()
-    dialog, name, casting = _filled_dialog(repo, analysis, table, roles, parameters, model, draw_on, current_figure)
+    dialog, name, casting = _filled_dialog(repo, analysis, table, roles, parameters, model, draw_on, current_figure,
+                                            entries)
     table = getattr(dialog, "table", table)
     try:
         problems = dialog.problems() if hasattr(dialog, "problems") else []
@@ -312,7 +321,7 @@ SETTINGS_FORMAT = "chartlibre-analysis"
 SETTINGS_VERSION = 1
 
 
-def settings_of(source: Any) -> dict[str, Any]:
+def settings_of(source: Any, repo: Any = None) -> dict[str, Any]:
     """An analysis' settings as a plain dict - from a result, or a recorded operation of the history."""
     from app import APP_VERSION
 
@@ -326,17 +335,22 @@ def settings_of(source: Any) -> dict[str, Any]:
         name, (table, roles) = str(source.operation), found
         parameters = {key: value for key, value in dict(source.parameters).items() if key != "model"}
         model = str(dict(source.parameters).get("model") or dict(source.entries).get("model_combo") or "")
-    return {"format": SETTINGS_FORMAT, "version": SETTINGS_VERSION, "analysis": name, "table": table,
-            "roles": {key: list(value) for key, value in dict(roles).items()}, "parameters": dict(parameters),
-            "model": model, "app_version": str(APP_VERSION)}
+    settings = {"format": SETTINGS_FORMAT, "version": SETTINGS_VERSION, "analysis": name, "table": table,
+                "roles": {key: list(value) for key, value in dict(roles).items()}, "parameters": dict(parameters),
+                "model": model, "app_version": str(APP_VERSION)}
+    if not isinstance(source, AnalysisResult):
+        entries = _changed_entries(repo, source, dict(source.parameters))
+        if entries:
+            settings["entries"] = entries
+    return settings
 
 
-def save_settings(path: Any, source: Any) -> dict[str, Any]:
+def save_settings(path: Any, source: Any, repo: Any = None) -> dict[str, Any]:
     """Write the settings of *source* (a result or a recorded operation) to the JSON file *path*."""
     import json
     from pathlib import Path
 
-    settings = settings_of(source)
+    settings = settings_of(source, repo)
     Path(path).write_text(json.dumps(settings, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return settings
 
@@ -363,7 +377,8 @@ def load_settings(path: Any) -> dict[str, Any]:
 def run_settings(repo: Any, settings: Mapping[str, Any], table: str | None = None, **parameters: Any) -> AnalysisResult:
     """Run the analysis the settings describe - on *table* when given - with *parameters* changed where given."""
     return run_analysis(repo, str(settings["analysis"]), table or str(settings["table"]), settings.get("roles"),
-                        {**dict(settings.get("parameters") or {}), **parameters}, model=str(settings.get("model") or ""))
+                        {**dict(settings.get("parameters") or {}), **parameters}, model=str(settings.get("model") or ""),
+                        entries=settings.get("entries"))
 
 
 def open_settings_dialog(repo: Any, settings: Mapping[str, Any], parent: Any = None, table: str | None = None) -> Any:
@@ -382,17 +397,17 @@ def run_records(repo: Any, records: Iterable[Any]) -> list[AnalysisResult | Anal
     outcomes: list[AnalysisResult | AnalysisError] = []
     for record in records:
         try:
-            outcomes.append(run_settings(repo, settings_of(record)))
+            outcomes.append(run_settings(repo, settings_of(record, repo)))
         except AnalysisError as error:
             outcomes.append(error)
     return outcomes
 
 
-def history_script(records: Iterable[Any], project: str = "") -> str:
+def history_script(records: Iterable[Any], project: str = "", repo: Any = None) -> str:
     """A Python script that makes the recorded operations again on a project file given on the command line."""
     calls = []
     for record in records:
-        call = record_call(record)
+        call = record_call(record, repo)
         calls.append(f"    {call}" if call else f"    # {record.operation}: its series are not one table's columns")
     body = "\n".join(calls) or "    pass"
     return (f'"""The analyses of {project or "a ChartLibre project"}, as calls.\n\n'
@@ -584,10 +599,14 @@ def make_callables(repo_getter: Callable[[], Any], *, current_figure: Callable[[
     """(Analysis, Chart) bound to a project - the workpad's names, or a script's. *on_change* hears the figures made."""
 
     def Analysis(name: str, table: str, columns: Any = None, *, roles: Mapping[str, Any] | None = None,  # noqa: N802
-                 model: str = "", draw_on: str = "new_figure", **parameters: Any) -> AnalysisResult:
-        """Run an analysis: Analysis("Fit Y by X", "table", ["column"], degree=2); see analysis_names()."""
+                 model: str = "", draw_on: str = "new_figure", entries: Mapping[str, Any] | None = None,
+                 **parameters: Any) -> AnalysisResult:
+        """Run an analysis: Analysis("Fit Y by X", "table", ["column"], degree=2); see analysis_names().
+
+        *entries* are the window's choices that are not parameters, as a copied call lists them."""
         result = run_analysis(repo_getter(), name, table, _roles_of(name, columns, roles), parameters, model=model,
-                              draw_on=draw_on, current_figure=current_figure, keep_waiting=keep_waiting)
+                              draw_on=draw_on, current_figure=current_figure, keep_waiting=keep_waiting,
+                              entries=entries)
         on_change(result.figures)
         return result
 
@@ -664,7 +683,60 @@ def record_source(record: Any) -> tuple[str, dict[str, list[str]]] | None:
     return tables.pop(), {"x": [x] if x else [], "y": ys}
 
 
-def record_call(record: Any) -> str | None:
+#: Entries that say where the data came from or where the result goes: not part of what the analysis does.
+_SOURCE_ENTRY = re.compile(r"table|source|series|roles|cast|destination|model_combo|radio|figure|chart|output", re.I)
+_ENTRY_DEFAULTS: dict[tuple[int, str], dict[str, Any]] = {}
+
+
+def _default_entries(repo: Any, analysis: str) -> dict[str, Any] | None:
+    """The entries of *analysis*' window as it opens from its defaults, or None when it cannot be built."""
+    from app.scanners.data_operation_scanner import import_class_from_file, reads_roles
+    from app.utils.dialog_state import dialog_entries
+
+    key = (id(repo), analysis)
+    if key in _ENTRY_DEFAULTS:
+        return _ENTRY_DEFAULTS[key]
+    scratch: int | None = None
+    dialog = None
+    try:
+        name, entry = find_analysis(analysis)
+        cls = import_class_from_file(entry)
+        if reads_roles(entry):
+            tables = [str(table) for table in repo.list_user_tables()["Table"]]
+            dialog = cls(repo=repo, table=tables[0] if tables else None)
+        else:
+            scratch = int(repo.create_figure_descriptor(name=f"{name} (defaults)"))
+            dialog = cls(repo=repo, figure_id=scratch)
+        dialog.revert_entries()
+        found = dialog_entries(dialog, inputs_only=True)
+    except Exception:
+        return None
+    finally:
+        if dialog is not None:
+            dialog.close()
+        if scratch is not None:
+            try:
+                repo.delete_figure(scratch)
+            except Exception:
+                pass
+    _ENTRY_DEFAULTS[key] = found
+    return found
+
+
+def _changed_entries(repo: Any, record: Any, parameters: Mapping[str, Any]) -> dict[str, Any]:
+    """The window's choices of a recorded operation that are not parameters and differ from the defaults."""
+    if repo is None:
+        return {}
+    defaults = _default_entries(repo, str(record.operation))
+    if defaults is None:
+        return {}
+    model = dict(record.entries).get("model_combo")
+    return {key: value for key, value in dict(record.entries).items()
+            if key in defaults and defaults[key] != value and key not in parameters
+            and not _SOURCE_ENTRY.search(key) and value != model}
+
+
+def record_call(record: Any, repo: Any = None) -> str | None:
     """The Analysis(...) call that makes a recorded operation again, or None when it was not run on a table
     (an analysis of a chart's series has no table to name)."""
     found = record_source(record)
@@ -673,7 +745,8 @@ def record_call(record: Any) -> str | None:
     parameters = _changed_parameters(str(record.operation),
                                      {key: value for key, value in dict(record.parameters).items() if key != "model"})
     model = str(dict(record.parameters).get("model") or dict(record.entries).get("model_combo") or "")
-    return call_text("Analysis", str(record.operation), found[0], found[1], parameters, model=model)
+    return call_text("Analysis", str(record.operation), found[0], found[1], parameters, model=model,
+                     entries=_changed_entries(repo, record, dict(record.parameters)))
 
 
 def _changed_parameters(analysis: str, parameters: Mapping[str, Any]) -> dict[str, Any]:
@@ -689,11 +762,11 @@ def _changed_parameters(analysis: str, parameters: Mapping[str, Any]) -> dict[st
             if not (key == "destination" and value == "new_figure") and not (key in defaults and defaults[key] == value)}
 
 
-def history_code(records: Iterable[Any]) -> str:
+def history_code(records: Iterable[Any], repo: Any = None) -> str:
     """The calls of *records*, one a line, in order; a comment where one cannot be written."""
     lines = []
     for record in records:
-        call = record_call(record)
+        call = record_call(record, repo)
         lines.append(call if call else f"# {record.operation}: its series are not one table's columns")
     return "\n".join(lines)
 

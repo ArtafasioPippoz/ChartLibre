@@ -124,7 +124,7 @@ class OperationHistoryDialog(PanelDialog):
         name = re.sub(r"\W+", "_", picked[0].operation.lower()).strip("_") or "analysis"
         path, _filter = QFileDialog.getSaveFileName(self, _("Save settings"), f"{name}.json", "JSON (*.json)")
         if path:
-            analysis_api.save_settings(path, picked[0])
+            analysis_api.save_settings(path, picked[0], self._repo)
 
     def open_settings(self) -> None:
         """An analysis' own window, filled from a settings file."""
@@ -144,7 +144,7 @@ class OperationHistoryDialog(PanelDialog):
         path, _filter = QFileDialog.getSaveFileName(self, _("Export script"), "analyses.py", "Python (*.py)")
         if path:
             project = Path(str(self._repo.db_path)).name if getattr(self._repo, "db_path", None) else ""
-            Path(path).write_text(analysis_api.history_script(self._picked(), project), encoding="utf-8")
+            Path(path).write_text(analysis_api.history_script(self._picked(), project, self._repo), encoding="utf-8")
 
     def run_again(self) -> None:
         """The picked operations run again on this project (all of them in order), after asking."""
@@ -162,7 +162,7 @@ class OperationHistoryDialog(PanelDialog):
 
     def copy_code(self) -> None:
         """The picked operation's call (all of them: one a line) on the clipboard."""
-        QApplication.clipboard().setText(analysis_api.history_code(self._picked()))
+        QApplication.clipboard().setText(analysis_api.history_code(self._picked(), self._repo))
 
     def save_as_function(self) -> None:
         """Ask a name, then keep the picked operation as a Python function of the project."""
