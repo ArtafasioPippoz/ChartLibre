@@ -279,6 +279,7 @@ def _render_figure_from_descriptor(
             _apply_axis_runtime_options(ax=ax, axis_desc=axis_desc)
             _apply_column_labels(ax=ax, axis_desc=axis_desc, repo=repo)
             _keep_dates_in_range(ax, axis_desc)
+            _apply_series_effects(ax, series_list)
 
         _apply_shared_z_ranges(all_axes, ax_by_id)
         _clear_redundant_shared_axis_labels(shared_axes)
@@ -292,6 +293,60 @@ def _render_figure_from_descriptor(
         _normalize_axes_fill_policy(figure, descriptor)
         _apply_panel_labels(figure, descriptor, base_axes, ax_by_id)
         _apply_text_effects(figure, descriptor, all_axes, ax_by_id)
+
+
+def _apply_series_effects(ax: Any, series_list: list[Any]) -> None:
+    """Each series' "path_effects" - an outline, a shadow, a glow - on what it drew and on its legend entry
+    (dev/plans/path_effects_plan.txt, C2 and F).
+
+    What a series drew is what its renderer tagged with its name (SeriesArtistTags); a renderer that does not tag
+    draws without the effect. Its texts (value labels) take the text effect instead.
+    """
+    from matplotlib.lines import Line2D
+    from matplotlib.text import Text
+
+    from app.plugin_api.charts.base import in_legend
+    from app.plugin_api.charts.path_effects import to_matplotlib
+
+    wanted: dict[str, str] = {}
+    for sd in series_list:
+        text = str((getattr(sd, "style", None) or {}).get("path_effects") or "").strip()
+        if text:
+            wanted[str(sd.name)] = text
+    if not wanted:
+        return
+
+    def effects_for(artist: Any, text: str) -> list[Any] | None:
+        return to_matplotlib(text, "line" if isinstance(artist, Line2D) else "patch")
+
+    refused: set[str] = set()
+    by_label: dict[str, str] = {}
+    for artist in ax.get_children():
+        name = getattr(artist, "_chartlibre_series", None)
+        if name not in wanted or isinstance(artist, Text):
+            continue
+        effects = effects_for(artist, wanted[name])
+        if effects is None:
+            refused.add(name)
+            continue
+        artist.set_path_effects(effects)
+        if in_legend(artist):
+            by_label[str(artist.get_label())] = wanted[name]
+    for container in ax.containers:  # bars: the legend entry is the container's
+        names = {getattr(patch, "_chartlibre_series", None) for patch in getattr(container, "patches", None) or []}
+        name = next((name for name in names if name in wanted), None)
+        label = str(container.get_label())
+        if name is not None and name not in refused and label and not label.startswith("_"):
+            by_label[label] = wanted[name]
+    for name in refused:
+        applogger.warning("Effect %r of series %r is not one that can be drawn: left out.", wanted[name], name)
+    for legend in (ax.get_legend(), *getattr(ax.figure, "legends", [])):
+        if legend is None:
+            continue
+        for handle, text in zip(legend.legend_handles, legend.get_texts()):
+            spec = by_label.get(text.get_text())
+            if spec and handle is not None and (effects := effects_for(handle, spec)):
+                handle.set_path_effects(effects)
 
 
 def _axes_texts(ax: Any) -> list[Any]:

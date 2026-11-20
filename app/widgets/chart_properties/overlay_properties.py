@@ -54,6 +54,7 @@ from app.widgets.inspector import SegmentedControl
 from app.widgets.chart_properties.base_properties import BaseProperties
 from app.widgets.drop_down_controls.color_combo import MatplotlibColorCombo
 from app.widgets.drop_down_controls.line_combo import LineStyleCombo
+from app.widgets.drop_down_controls.path_effect_combo import PathEffectCombo
 
 #: The shapes ``BaseAxisRenderer.apply_annotation`` can draw.
 ANNOTATION_TYPES: Final[tuple[str, ...]] = ("arrow", "text", "boxed text")
@@ -83,6 +84,7 @@ _GENERIC_FONT_FAMILIES: Final[tuple[str, ...]] = (
 # key; widget cells (COLOR/LINESTYLE/FONT/SIZE) read/write one kwargs key.
 _FLOAT, _TEXT, _ENUM = "float", "text", "enum"
 _COLOR, _LINESTYLE, _FONT, _SIZE, _KWARGS = "color", "linestyle", "font", "size", "kwargs"
+_EFFECT = "effect"
 
 #: kwargs keys a widget column also consumes on load (Matplotlib aliases).
 _KWARG_ALIASES: Final[dict[str, tuple[str, ...]]] = {
@@ -120,6 +122,7 @@ _LINE_COLS: Final[tuple[_Col, ...]] = (
     _Col("Value", _FLOAT, "value"),
     _Col("Color", _COLOR, "color"),
     _Col("Style", _LINESTYLE, "linestyle"),
+    _Col("Effect", _EFFECT, "path_effects"),
     _Col("Kwargs JSON", _KWARGS),
 )
 _MEASUREMENT_COLS: Final[tuple[_Col, ...]] = (
@@ -130,7 +133,7 @@ _MEASUREMENT_COLS: Final[tuple[_Col, ...]] = (
     _Col("Color", _COLOR, "color"),
     _Col("Kwargs JSON", _KWARGS),
 )
-_WIDGET_KINDS: Final[frozenset[str]] = frozenset({_COLOR, _LINESTYLE, _FONT, _SIZE})
+_WIDGET_KINDS: Final[frozenset[str]] = frozenset({_COLOR, _LINESTYLE, _FONT, _SIZE, _EFFECT})
 
 
 #: Room a column asks for when the table is measured against the panel (px).
@@ -421,6 +424,11 @@ class OverlayPropertiesWidget(BaseProperties):
             if text and not combo.set_current_linestyle(text):
                 kwargs[col.key] = stored
             return combo
+        if col.kind == _EFFECT:
+            combo = self._table_combo(PathEffectCombo(table))
+            if text and not combo.set_current_effect(text):
+                kwargs[col.key] = stored
+            return combo
         if col.kind == _FONT:
             combo = self._table_combo(self._font_combo(table))
             if text and not self._select_by_text(combo, text):
@@ -474,6 +482,10 @@ class OverlayPropertiesWidget(BaseProperties):
             style = widget.current_linestyle().strip()
             if style and style != DEFAULT:
                 kwargs[col.key] = style
+        elif isinstance(widget, PathEffectCombo):
+            effect = widget.current_effect().strip()
+            if effect:
+                kwargs[col.key] = effect
         elif isinstance(widget, QSpinBox):
             if widget.value() > 0:
                 kwargs[col.key] = widget.value()

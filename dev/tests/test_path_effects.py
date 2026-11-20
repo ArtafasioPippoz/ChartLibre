@@ -162,3 +162,54 @@ def test_the_combo_keeps_presets_and_effects_of_its_own(qapp) -> None:
     axis_combo = PathEffectCombo(inherit="Figure's")
     assert axis_combo.current_effect() == ""
     assert axis_combo.set_current_effect("none") and axis_combo.current_effect() == "none"
+
+
+# ----------------------------------------------------------------------
+# Step 3: series, their legend entries, reference lines
+# ----------------------------------------------------------------------
+def test_a_series_effect_reaches_what_it_drew_and_its_legend_entry() -> None:
+    from types import SimpleNamespace
+
+    from app.plugin_api.charts.base import SeriesArtistTags
+    from app.plugin_api.charts.render_figure import _apply_series_effects
+
+    figure, ax = plt.subplots()
+    try:
+        tags = SeriesArtistTags(ax)
+        tags.next("line")
+        ax.plot([0, 1], [0, 1], label="Line")
+        tags.next("bars")
+        ax.bar([0, 1], [1, 2], label="Bars")
+        tags.next("plain")
+        ax.plot([0, 1], [1, 0], label="Plain")
+        tags.done()
+        ax.legend()
+        _apply_series_effects(ax, [SimpleNamespace(name="line", style={"path_effects": "outline(4, white)"}),
+                                   SimpleNamespace(name="bars", style={"path_effects": "shadow"}),
+                                   SimpleNamespace(name="plain", style={})])
+        line, plain = ax.lines
+        assert _kinds(line.get_path_effects()) == ["Stroke", "Normal"]
+        assert plain.get_path_effects() == []
+        assert all(_kinds(bar.get_path_effects()) == ["SimplePatchShadow", "Normal"] for bar in ax.patches)
+        handles = dict(zip((text.get_text() for text in ax.get_legend().get_texts()),
+                           ax.get_legend().legend_handles))
+        assert _kinds(handles["Line"].get_path_effects()) == ["Stroke", "Normal"]
+        assert _kinds(handles["Bars"].get_path_effects()) == ["SimplePatchShadow", "Normal"]
+        assert handles["Plain"].get_path_effects() == []
+    finally:
+        plt.close(figure)
+
+
+def test_a_reference_line_draws_its_effect() -> None:
+    from app.plugin_api.charts.base import BaseAxisRenderer
+
+    figure, ax = plt.subplots()
+    try:
+        BaseAxisRenderer().apply_reference_line(
+            ax, {"value": 1, "orientation": "horizontal", "kwargs": {"path_effects": "shadow"}})
+        BaseAxisRenderer().apply_reference_line(ax, {"value": 2, "kwargs": {"path_effects": "blur"}})
+        shadowed, refused = ax.lines
+        assert _kinds(shadowed.get_path_effects()) == ["SimpleLineShadow", "Normal"]
+        assert refused.get_path_effects() == []  # drawn, without the effect
+    finally:
+        plt.close(figure)

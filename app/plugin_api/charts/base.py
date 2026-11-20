@@ -577,6 +577,14 @@ class BaseAxisRenderer:
         # Matplotlib from inventing "_child3".
         kwargs.setdefault("label", "_nolegend_" if not kwargs.get("label") else kwargs["label"])
 
+        # Its effect is kept as text ("outline(3, white)"), drawn as matplotlib's (charts.path_effects).
+        if "path_effects" in kwargs:
+            from app.plugin_api.charts.path_effects import to_matplotlib
+
+            effects = to_matplotlib(str(kwargs.pop("path_effects") or ""), "line")
+            if effects:
+                kwargs["path_effects"] = effects
+
         orientation = str(line.get("orientation", "vertical") or "vertical").lower()
         draw = ax.axhline if orientation.startswith("h") else ax.axvline
         try:

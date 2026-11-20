@@ -226,6 +226,8 @@ class PieAxisRenderer(BaseAxisRenderer):
 
         result = ax.pie(values, **pie_kwargs)
         wedges = result[0]
+        for wedge in wedges:  # the series' name: its effect finds them (path_effects)
+            wedge._chartlibre_series = sd.name
 
         # A pie drawn on non-square axes is an ellipse, and an ellipse cannot
         # be read: equal aspect is part of the chart, not a preference.

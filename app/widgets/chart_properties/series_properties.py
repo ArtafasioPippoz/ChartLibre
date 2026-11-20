@@ -41,6 +41,7 @@ from app.styles.style import (
 from app.utils.config import get_constant
 from app.utils.i18n import _
 from app.utils.messages import ask
+from app.widgets.drop_down_controls.path_effect_combo import PathEffectCombo
 from app.widgets.chart_properties.base_properties import BaseProperties
 from app.widgets.chart_jump_bar import AxisStepper
 from app.widgets.inspector import InspectorCard, InspectorForm, InspectorSection
@@ -171,6 +172,7 @@ class SeriesPropertiesWidget(BaseProperties):
             self._line_editor,
             self._marker_editor,
             self._bar_picture_editor,
+            self._effect_combo,
         )
 
     def _build_ui(self) -> None:
@@ -398,7 +400,8 @@ class SeriesPropertiesWidget(BaseProperties):
         self._sql_query_edit.setPlainText(with_sort(sql, column) if on else without_sort(sql))
 
     def _build_groups(self) -> None:
-        """Create the series' controls and their sections (self._groups): Legend, Line, Marker, Query."""
+        """Create the series' controls and their sections (self._groups): Legend, Line, Marker, Bar picture, Effect,
+        Query."""
         section = self
         self._legend_label_edit = QLineEdit(section)
         stdSizeAndlayout(self._legend_label_edit)
@@ -448,6 +451,10 @@ class SeriesPropertiesWidget(BaseProperties):
         self._marker_editor = MarkerStyleEditor(section, repo=lambda: self._repo,
                                                 line_colour=lambda: self._line_editor.colour())
         self._bar_picture_editor = BarPictureEditor(section, repo=lambda: self._repo)
+        # An outline, a shadow or a glow under what the series draws, and its legend entry (charts.path_effects).
+        self._effect_combo = PathEffectCombo(section)
+        self._effect_combo.setToolTip(_("An outline, a shadow or a glow drawn under the series' lines, points, bars "
+                                        "or wedges, and under its legend entry"))
         self._sort_x_check.toggled.connect(self._sort_toggled)
 
         self._group_forms: dict[str, InspectorForm] = {}
@@ -471,6 +478,7 @@ class SeriesPropertiesWidget(BaseProperties):
             group(_("Line"), "line", [("", self._line_editor)]),
             group(_("Marker"), "marker", [("", self._marker_editor)]),
             group(_("Bar picture"), "bar_picture", [("", self._bar_picture_editor)]),
+            group(_("Effect"), "effect", [(_("Effect"), self._effect_combo)]),
             group(_("Query"), "query", [("", self._sql_query_edit), ("", self._sort_x_check)], collapsed=True,
               foldable=True),
         ]
@@ -770,6 +778,8 @@ class SeriesPropertiesWidget(BaseProperties):
             self._line_editor.load(style)
             self._marker_editor.load(style)
             self._bar_picture_editor.load(style)
+            if not self._effect_combo.set_current_effect(str(style.get("path_effects") or "")):
+                self._effect_combo.set_current_effect("")
             # Only a bar chart's series can be drawn as pictures.
             self._groups[3].setVisible(self._is_bar_series(int(series_desc.id)))
 
@@ -800,6 +810,7 @@ class SeriesPropertiesWidget(BaseProperties):
             self._line_editor.clear()
             self._marker_editor.clear()
             self._bar_picture_editor.clear()
+            self._effect_combo.set_current_effect("")
             self._groups[3].setVisible(False)
 
     # ------------------------------------------------------------------
@@ -934,5 +945,6 @@ class SeriesPropertiesWidget(BaseProperties):
                 **self._line_editor.values(),
                 **self._marker_editor.values(),
                 **self._bar_picture_editor.values(),
+                "path_effects": self._effect_combo.current_effect() or None,  # None removes the key
             }
         )

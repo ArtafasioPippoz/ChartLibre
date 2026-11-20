@@ -19,6 +19,7 @@ from app.plugin_api.charts.base import (
     LINE_KWARGS,
     PATCH_KWARGS,
     BaseAxisRenderer,
+    SeriesArtistTags,
     SeriesData,
     SeriesFrame,
     merge,
@@ -240,7 +241,9 @@ class BarAxisRenderer(BaseAxisRenderer):
         category_pos = {value: index for index, value in enumerate(categories)}
         layer_count = max(1, len(valid_series))
 
+        tags = SeriesArtistTags(ax)  # each series' bars carry its name: its effect finds them (path_effects)
         for layer_index, sd in enumerate(valid_series):
+            tags.next(sd.name)
             self._render_series(
                 ax=ax,
                 sd=sd,
@@ -249,6 +252,7 @@ class BarAxisRenderer(BaseAxisRenderer):
                 layer_index=layer_index,
                 layer_count=layer_count,
             )
+        tags.done()
 
         tick_options = self.merge_style(axis_options, valid_series[0].style or {})
         self._apply_category_ticks(ax, categories, tick_options)
