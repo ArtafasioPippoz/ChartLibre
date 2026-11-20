@@ -54,6 +54,7 @@ from app.styles.style import field_label
 from app.widgets.inspector import InspectorForm, InspectorSection, SegmentedControl
 from app.widgets.chart_properties.base_properties import BaseProperties
 from app.widgets.dictionary_editor import DictEditorPanel
+from app.widgets.drop_down_controls.path_effect_combo import PathEffectCombo
 from app.widgets.font_scale_control import FontScaleControl
 
 AxisDescriptorLike: TypeAlias = Any
@@ -147,6 +148,7 @@ class AxisPropertiesWidget(BaseProperties):
             self._lines_combo,
             *self._extended_option_widgets(),
             self._font_scale,
+            self._text_effect,
         )
 
     # ------------------------------------------------------------------
@@ -246,6 +248,8 @@ class AxisPropertiesWidget(BaseProperties):
             self._projection_combo.addItem(label, value)
         self._hide_axis_check = QCheckBox(_("Hide"), appearance_section.body)
         self._font_scale = FontScaleControl(title_section.body)
+        # The halo, outline or shadow of this axis' texts; "Figure's" takes the figure's (Figure properties).
+        self._text_effect = PathEffectCombo(title_section.body, inherit=_("Figure's"))
         # How the lines of a title or label written over several ("Time\n(s)") line up.
         self._lines_combo = QComboBox(title_section.body)
         for value, label in (("center", "Centred"), ("left", "Left"), ("right", "Right")):
@@ -256,6 +260,7 @@ class AxisPropertiesWidget(BaseProperties):
         title_form.add_row(_("Title"), self._axis_label_edit)
         title_form.add_row(_("Lines"), self._lines_combo)
         title_form.add_row(_("Font"), self._font_scale)
+        title_form.add_row(_("Effect"), self._text_effect)
 
         span = self._build_span_row(position_section.body)
         # Two rows, each as wide as the others: the two spin boxes side by side were squeezed to a digit.
@@ -1326,6 +1331,8 @@ class AxisPropertiesWidget(BaseProperties):
                 max(0, self._lines_combo.findData(str(options.get("label_multialignment") or "center")))
             )
             self._font_scale.set_factor(options.get("font_scale", 1.0))
+            if not self._text_effect.set_current_effect(str(options.get("text_effect") or "")):
+                self._text_effect.set_current_effect("")
             self._load_extended_axis_options(options)
 
         # Translated for reading; the raw chart_type is what the signal
@@ -1373,6 +1380,7 @@ class AxisPropertiesWidget(BaseProperties):
             self._max_points_combo.setCurrentIndex(0)
             self._lines_combo.setCurrentIndex(0)
             self._font_scale.set_factor(1.0)
+            self._text_effect.set_current_effect("")
             self._clear_extended_axis_options()
         self._renderer_key = ""
         self._renderer_value.clear()
@@ -1535,6 +1543,7 @@ class AxisPropertiesWidget(BaseProperties):
             "downsample_threshold": self._max_points_combo.currentData(),  # None: the figure's
             "label_multialignment": str(self._lines_combo.currentData() or "center"),
             "font_scale": float(self._font_scale.factor()),
+            "text_effect": self._text_effect.current_effect(),
             # The renderer's own name, never the translated one the panel shows.
             "renderer": self._renderer_key,
         }

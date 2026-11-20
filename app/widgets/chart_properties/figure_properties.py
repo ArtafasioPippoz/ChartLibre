@@ -64,6 +64,7 @@ from app.widgets.chart_panel import RESIZE_MODE_CHOICES
 from app.widgets.chart_properties.base_properties import BaseProperties
 from PySide6.QtGui import QPalette
 from app.widgets.inspector import InspectorCard, InspectorForm, drawn_icon
+from app.widgets.drop_down_controls.path_effect_combo import PathEffectCombo
 from app.widgets.font_scale_control import FontScaleControl
 from app.widgets.pair_grid import PairGrid
 
@@ -315,6 +316,7 @@ class FigurePropertiesWidget(BaseProperties):
             *self._margin_spins.values(),
             self._fig_frameon,
             self._font_scale,
+            self._text_effect,
             self._panel_labels_combo,
             self._panel_position_combo,
         )
@@ -600,6 +602,8 @@ class FigurePropertiesWidget(BaseProperties):
         self._font_scale = FontScaleControl(opts_section)
         fit_spin_width(self._font_scale)
         self._font_scale.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        # The halo, outline or shadow of every text of the figure; an axis can have its own.
+        self._text_effect = PathEffectCombo(opts_section)
 
         # How the panel shows this figure - it used to be three checkable
         # entries in ChartPanel's own context menu, kept in sync by comparing
@@ -651,6 +655,7 @@ class FigurePropertiesWidget(BaseProperties):
             (_("View"), self._resize_mode_combo),
             (_("DPI"), self._fig_dpi),
             (_("Font size"), self._font_scale),
+            (_("Text effect"), self._text_effect),
             (_("Width"), self._fig_width_cm),
             (_("Height"), self._fig_height_cm),
             (_("Template"), self._journal_combo),
@@ -776,6 +781,7 @@ class FigurePropertiesWidget(BaseProperties):
         self._fig_height_cm.setValue(height_cm)
         self._fig_frameon.setChecked(False)
         self._font_scale.set_factor(1.0)
+        self._text_effect.set_current_effect("")
         self._select_layout_mode(self.DEFAULT_LAYOUT_MODE)
         self._select_downsample_threshold(self.DEFAULT_DOWNSAMPLE_THRESHOLD)
         self._reset_layout_preset_combo()
@@ -808,6 +814,7 @@ class FigurePropertiesWidget(BaseProperties):
             self._fig_height_cm,
             self._fig_frameon,
             self._font_scale,
+            self._text_effect,
             self._fig_layout_mode,
             self._downsample_combo,
             self._mosaic_edit,
@@ -878,6 +885,7 @@ class FigurePropertiesWidget(BaseProperties):
             self._fig_height_cm.setValue(height_cm)
             self._fig_frameon.setChecked(False)
             self._font_scale.set_factor(1.0)
+            self._text_effect.set_current_effect("")
             self._select_layout_mode(self.DEFAULT_LAYOUT_MODE)
             self._select_downsample_threshold(self.DEFAULT_DOWNSAMPLE_THRESHOLD)
             self._reset_layout_preset_combo()
@@ -920,6 +928,8 @@ class FigurePropertiesWidget(BaseProperties):
         self._load_margins_into_spins(fig_opts)
         self._fig_frameon.setChecked(bool(fig_opts.get("border", False)))
         self._font_scale.set_factor(fig_opts.get("font_scale", 1.0))
+        if not self._text_effect.set_current_effect(str(fig_opts.get("text_effect") or "")):
+            self._text_effect.set_current_effect("")
 
         current_layout = str(
             fig_opts.get("layout_mode", fig_opts.get("layout", self.DEFAULT_LAYOUT_MODE))
@@ -1343,6 +1353,7 @@ class FigurePropertiesWidget(BaseProperties):
             "name": self._name_edit.text().strip(),
             "border": bool(self._fig_frameon.isChecked()),
             "font_scale": float(self._font_scale.factor()),
+            "text_effect": self._text_effect.current_effect(),
             "layout_mode": str(
                 self._fig_layout_mode.currentData() or self.DEFAULT_LAYOUT_MODE
             ),

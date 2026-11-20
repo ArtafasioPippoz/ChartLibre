@@ -291,6 +291,74 @@ def _render_figure_from_descriptor(
         _apply_layout(figure, descriptor)
         _normalize_axes_fill_policy(figure, descriptor)
         _apply_panel_labels(figure, descriptor, base_axes, ax_by_id)
+        _apply_text_effects(figure, descriptor, all_axes, ax_by_id)
+
+
+def _axes_texts(ax: Any) -> list[Any]:
+    """Every piece of text an axes draws: titles, axis labels and offsets, tick labels, its texts (annotations,
+    data labels, panel letters) and its legend's."""
+    texts = [ax.title, getattr(ax, "_left_title", None), getattr(ax, "_right_title", None)]
+    for axis_name in ("xaxis", "yaxis", "zaxis"):
+        axis = getattr(ax, axis_name, None)
+        if axis is None:
+            continue
+        texts += [axis.label, axis.get_offset_text()]
+        for tick in [*axis.get_major_ticks(), *axis.get_minor_ticks()]:
+            texts += [tick.label1, tick.label2]
+    texts.extend(ax.texts)
+    legend = ax.get_legend()
+    if legend is not None:
+        texts += [*legend.get_texts(), legend.get_title()]
+    return [text for text in texts if text is not None]
+
+
+def _apply_text_effects(
+    figure: Figure,
+    descriptor: FigureDescriptor,
+    axes: list[AxisDescriptor],
+    ax_by_id: dict[int, Any],
+) -> None:
+    """The halo, outline, shadow or glow of the texts (dev/plans/path_effects_plan.txt, C1).
+
+    The figure's "text_effect" is every text's - its title's, its legends', and each axis' that has none of its
+    own -; an axis' "text_effect" replaces it there ("none" takes it away). A tick label made later, when the view
+    is zoomed, copies the first tick's effect (matplotlib's Axis._copy_tick_props), so zooming keeps it.
+    """
+    from app.plugin_api.charts.path_effects import to_matplotlib
+
+    options = descriptor.options if isinstance(descriptor.options, dict) else {}
+    figure_text = str(options.get("text_effect") or "").strip()
+    figure_effects = to_matplotlib(figure_text, "text") if figure_text else []
+    if figure_effects is None:
+        applogger.warning("Text effect %r of the figure is not one that can be drawn: left out.", figure_text)
+        figure_effects = []
+    known: set[int] = set()
+    for axis_desc in axes:
+        ax = ax_by_id.get(int(axis_desc.id))
+        if ax is None:
+            continue
+        known.add(id(ax))
+        axis_options = axis_desc.options if isinstance(axis_desc.options, dict) else {}
+        own = str(axis_options.get("text_effect") or "").strip()
+        effects = to_matplotlib(own, "text") if own else figure_effects
+        if effects is None:
+            applogger.warning("Text effect %r of axis id=%r is not one that can be drawn: left out.",
+                              own, axis_desc.id)
+            effects = figure_effects
+        if effects:
+            for text in _axes_texts(ax):
+                text.set_path_effects(effects)
+    if not figure_effects:
+        return
+    for ax in figure.axes:  # a colorbar's axes, which no descriptor knows, take the figure's
+        if id(ax) not in known:
+            for text in _axes_texts(ax):
+                text.set_path_effects(figure_effects)
+    for text in [getattr(figure, "_suptitle", None), *figure.texts,
+                 *(text for legend in getattr(figure, "legends", []) for text in [*legend.get_texts(),
+                                                                                   legend.get_title()])]:
+        if text is not None:
+            text.set_path_effects(figure_effects)
 
 
 def _apply_panel_labels(

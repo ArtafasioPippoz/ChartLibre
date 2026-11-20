@@ -86,3 +86,79 @@ def test_a_chart_with_effects_draws_and_exports() -> None:
             assert buffer.getvalue()
     finally:
         plt.close(figure)
+
+
+# ----------------------------------------------------------------------
+# Step 2: the texts of a chart, and the combo
+# ----------------------------------------------------------------------
+def _texts_with_effects(ax) -> tuple[int, int]:
+    from app.plugin_api.charts.render_figure import _axes_texts
+
+    texts = _axes_texts(ax)
+    return sum(1 for text in texts if text.get_path_effects()), len(texts)
+
+
+def test_the_figure_effect_reaches_every_text_and_an_axis_can_change_it() -> None:
+    from types import SimpleNamespace
+
+    from app.plugin_api.charts.render_figure import _apply_text_effects
+
+    figure, (first, second, third) = plt.subplots(1, 3)
+    try:
+        for ax in (first, second, third):
+            ax.plot([0, 1], [0, 1], label="a")
+            ax.set_title("t")
+            ax.set_xlabel("x")
+            ax.legend()
+            ax.annotate("note", (0.5, 0.5))
+        figure.suptitle("All")
+        axes = [SimpleNamespace(id=1, options={}), SimpleNamespace(id=2, options={"text_effect": "none"}),
+                SimpleNamespace(id=3, options={"text_effect": "shadow"})]
+        descriptor = SimpleNamespace(options={"text_effect": "outline(3, white)"})
+        _apply_text_effects(figure, descriptor, axes, {1: first, 2: second, 3: third})
+        with_effect, total = _texts_with_effects(first)
+        assert with_effect == total
+        assert _texts_with_effects(second)[0] == 0
+        assert _kinds(third.title.get_path_effects()) == ["SimplePatchShadow", "Normal"]
+        assert _kinds(figure._suptitle.get_path_effects()) == ["Stroke", "Normal"]
+        assert _kinds(first.get_legend().get_texts()[0].get_path_effects()) == ["Stroke", "Normal"]
+        # Zoomed: the tick labels made then copy the effect of the first.
+        first.set_xlim(0, 0.1)
+        figure.canvas.draw()
+        assert all(tick.label1.get_path_effects() for tick in first.xaxis.get_major_ticks())
+    finally:
+        plt.close(figure)
+
+
+def test_a_bad_axis_effect_falls_back_to_the_figure_one() -> None:
+    from types import SimpleNamespace
+
+    from app.plugin_api.charts.render_figure import _apply_text_effects
+
+    figure, ax = plt.subplots()
+    try:
+        ax.set_title("t")
+        _apply_text_effects(figure, SimpleNamespace(options={"text_effect": "shadow"}),
+                            [SimpleNamespace(id=1, options={"text_effect": "blur"})], {1: ax})
+        assert _kinds(ax.title.get_path_effects()) == ["SimplePatchShadow", "Normal"]
+    finally:
+        plt.close(figure)
+
+
+def test_the_combo_keeps_presets_and_effects_of_its_own(qapp) -> None:
+    from app.widgets.drop_down_controls.path_effect_combo import CUSTOM, PathEffectCombo
+
+    figure_combo = PathEffectCombo()
+    assert figure_combo.current_effect() == ""
+    assert figure_combo.set_current_effect("shadow")
+    assert figure_combo.current_effect() == "shadow"
+    count = figure_combo.count()
+    assert figure_combo.set_current_effect("glow(4, red) + shadow")
+    assert figure_combo.count() == count + 1 and figure_combo.current_effect() == "glow(4, red) + shadow"
+    assert figure_combo.itemData(figure_combo.count() - 1) == CUSTOM
+    assert not figure_combo.set_current_effect("blur")
+    assert figure_combo.set_current_effect("none") and figure_combo.current_effect() == ""  # None is ""
+
+    axis_combo = PathEffectCombo(inherit="Figure's")
+    assert axis_combo.current_effect() == ""
+    assert axis_combo.set_current_effect("none") and axis_combo.current_effect() == "none"
