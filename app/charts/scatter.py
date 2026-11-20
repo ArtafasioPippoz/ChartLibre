@@ -500,17 +500,17 @@ class ScatterAxisRenderer(BaseAxisRenderer):
             size = style.get("markersize") or base_kwargs.get("markersize")
             every = _marker_every(style.get("markevery"))
             drawn = np.zeros(len(picture_values), dtype=bool)
-            in_legend = False
+            legend_done = False
             for name in dict.fromkeys(picture_values.tolist()):
                 at = np.flatnonzero(picture_values == name)[::every]
                 if name and picture_markers.draw(ax, x_values[at], y_values[at], picture_markers.PREFIX + name,
                                                  size_points=size, colour=flat_color,
                                                  zorder=float(style.get("zorder") or 2.5),
-                                                 label=(label or "") if not in_legend else ""):
+                                                 label=(label or "") if not legend_done else ""):
                     drawn[picture_values == name] = True
-                    in_legend = in_legend or bool(label)
+                    legend_done = legend_done or bool(label)
             if drawn.all():
-                return in_legend
+                return legend_done
             keep = ~drawn
             x_values, y_values = x_values[keep], y_values[keep]
             color_values = color_values[keep] if color_values is not None else None
