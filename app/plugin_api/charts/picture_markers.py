@@ -7,6 +7,7 @@ multicolour one or a photo keeps its own.
 """
 from __future__ import annotations
 
+import re
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
@@ -16,6 +17,7 @@ from typing import Any
 import numpy as np
 
 PREFIX = "image:"
+SIZE_STEPS = 8  # a bubble chart's pictures come in this many sizes
 MAX_POINTS = 2000  # more pictures than this draw slowly: an even sample of them is drawn
 
 _source: ContextVar[Callable[[str], Any] | None] = ContextVar("picture_source", default=None)
@@ -136,6 +138,64 @@ def draw(ax, xs: Any, ys: Any, marker: str, *, size_points: float | None, colour
     if label:  # the legend shows the series' colour as a square: a picture has no legend handle of its own
         ax.add_line(Line2D([], [], linestyle="", marker="s", color=colour or "0.4", label=label))
     return True
+
+
+def draw_named(ax, xs: Any, ys: Any, names: Any, *, size_points: float | None, colour: Any = None,
+               zorder: float = 2.5, label: str = "", every: int = 1, areas: Any = None) -> np.ndarray:
+    """Each point drawn as the picture its name in *names* says; the mask of the points that got one.
+
+    A point whose name is empty or not in the project is left to the caller (the series' own marker). The legend
+    entry is made once, with the first name drawn. *areas* (a bubble's size column, in points squared) gives each
+    point its own size: its square root is the picture's side; the sizes are drawn in at most SIZE_STEPS steps.
+    """
+    xs, ys, names = np.asarray(xs), np.asarray(ys), np.asarray(names).astype(str)
+    drawn = np.zeros(len(names), dtype=bool)
+    legend_done = False
+    sides = None
+    if areas is not None:
+        sides = np.sqrt(np.clip(np.nan_to_num(np.asarray(areas, dtype=float), nan=0.0), 0, None))
+        if sides.max() > 0:
+            steps = np.linspace(sides[sides > 0].min(), sides.max(), SIZE_STEPS)
+            sides = np.where(sides > 0, steps[np.abs(sides[:, None] - steps[None, :]).argmin(axis=1)], 0.0)
+    for name in dict.fromkeys(names.tolist()):
+        same = names == name
+        for side in ([None] if sides is None else np.unique(sides[same])):
+            at = np.flatnonzero(same if side is None else same & (sides == side))[::max(int(every or 1), 1)]
+            if name and len(at) and draw(ax, xs[at], ys[at], PREFIX + name,
+                                         size_points=size_points if not side else float(side), colour=colour,
+                                         zorder=zorder, label=label if not legend_done else ""):
+                drawn[at] = True
+                legend_done = legend_done or bool(label)
+    return drawn
+
+
+_TOKEN = re.compile(r"\{image:([^{}]+)\}")
+
+
+def split_title(title: str) -> tuple[str, list[str]]:
+    """A title's text without its {image:name} tokens, and the picture names those tokens gave, in order."""
+    names = [name.strip() for name in _TOKEN.findall(title or "")]
+    return (_TOKEN.sub("", title or "").strip() if names else (title or "")), names
+
+
+def draw_title_pictures(ax, names: list[str]) -> int:
+    """Put the pictures *names* left of the axes' title, as tall as its text; how many were drawn."""
+    from matplotlib.offsetbox import AnnotationBbox, OffsetImage
+
+    title = ax.title
+    side = float(title.get_fontsize()) * 1.3
+    drawn = 0
+    for name in names:
+        array = picture(PREFIX + name, side, ax.figure.dpi, title.get_color())
+        if array is None:
+            continue
+        box = AnnotationBbox(OffsetImage(array, zoom=0.5), (0, 0.5), xycoords=title, boxcoords="offset points",
+                             xybox=(-(side + 4) * drawn - 4, 0), box_alignment=(1, 0.5), frameon=False, pad=0,
+                             annotation_clip=False)
+        box._chartlibre_picture = PREFIX + name
+        ax.add_artist(box)
+        drawn += 1
+    return drawn
 
 
 def draw_bars(ax, positions: Any, values: Any, thickness: float, *, name: str, unit: float = 0.0,

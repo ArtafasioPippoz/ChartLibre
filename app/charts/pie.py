@@ -43,7 +43,11 @@ class PieAxisRenderer(BaseAxisRenderer):
     """
 
     RequiredRoles: ClassVar[list[str]] = ["value"]
-    OptionalRoles: ClassVar[list[str]] = ["label", "explode"]
+    OptionalRoles: ClassVar[list[str]] = [
+        "label", "explode",
+        # A column naming, for each wedge, a picture of the project to draw on it (Project > Pictures).
+        "picture",
+    ]
 
     #: A pie's wedges have to sum to one whole.
     MaxSeries: int | None = 1
@@ -209,6 +213,7 @@ class PieAxisRenderer(BaseAxisRenderer):
 
         sd = drawable[0]
         values, labels, explode = self._wedges(sd)
+        pictures = self._wedge_pictures(sd)
         if values.size == 0:
             applogger.info("Series '%s' skipped: no positive values.", sd.name)
             return
@@ -225,11 +230,39 @@ class PieAxisRenderer(BaseAxisRenderer):
         # A pie drawn on non-square axes is an ellipse, and an ellipse cannot
         # be read: equal aspect is part of the chart, not a preference.
         ax.set_aspect("equal")
+        if pictures is not None:
+            self._draw_pictures(ax, wedges, pictures)
 
         if self.opt("show_legend", options) and labels is not None:
             ax.legend(wedges, labels, loc="center left", bbox_to_anchor=(1.0, 0.5))
         # Draw descriptor annotations after renderer-owned artists.
         self.apply_annotations(ax, options or {})
+
+    @staticmethod
+    def _wedge_pictures(sd: SeriesData) -> list[str] | None:
+        """The picture named for each drawn wedge (same rows as _wedges keeps), None without the role."""
+        if "picture" not in sd.df.columns:
+            return None
+        values = to_numbers(column_of(sd.df, "value"))
+        keep = values.notna() & (values > 0)
+        return [str(name) for name in sd.df.loc[keep, "picture"].tolist()]
+
+    @staticmethod
+    def _draw_pictures(ax: Any, wedges: Any, pictures: list[str]) -> None:
+        """Each picture at its wedge's middle, smaller on a narrow wedge; a donut's on the ring."""
+        from app.plugin_api.charts import picture_markers
+
+        for wedge, name in zip(wedges, pictures, strict=False):
+            if not name or name in ("nan", "None"):
+                continue
+            angle = np.deg2rad((wedge.theta1 + wedge.theta2) / 2)
+            span = (wedge.theta2 - wedge.theta1) / 360
+            inner = wedge.r - wedge.width if wedge.width else 0.0
+            radius = (wedge.r + inner) / 2 if wedge.width else wedge.r * 0.62
+            centre = np.array(wedge.center)
+            point = centre + radius * np.array([np.cos(angle), np.sin(angle)])
+            picture_markers.draw(ax, [point[0]], [point[1]], picture_markers.PREFIX + name,
+                                 size_points=34 if span > 0.08 else 22, zorder=3)
 
     # ------------------------------------------------------------------
     # Data

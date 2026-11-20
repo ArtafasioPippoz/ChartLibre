@@ -200,6 +200,55 @@ def test_a_column_names_the_picture_of_each_point(qapp, repo):
     figure.savefig(__import__("io").BytesIO(), format="svg")
 
 
+def test_a_column_names_the_picture_of_each_point_of_a_line(qapp, repo):
+    repo.add_image("dot", SVG)
+    repo.import_dataframe(pd.DataFrame({"a": np.arange(6.0), "b": np.arange(6.0),
+                                        "kind": ["dot", "dot", "", "dot", "nothing", "dot"]}),
+                          table_name="d", normalize_columns=False)
+    figure_id = int(repo.create_figure_descriptor(name="F"))
+    axis_id = int(repo.create_axis_descriptor(figure_id=figure_id, axis_index=0, chart_type="Time Series", title="t",
+                                              x_label="x", y_label="y", options={"show_rolling": False}))
+    repo.create_series_descriptor(axis_id=axis_id, series_index=0, name="s",
+                                  sql_query="SELECT a AS x, b AS y, kind AS picture FROM d",
+                                  roles={"x": "x", "y": "y", "picture": "picture"}, style={"linestyle": "-"})
+    figure = Figure()
+    render_figure_from_descriptor(figure=figure, descriptor=repo.load_figure_descriptor(figure_id), repo=repo)
+    ax = figure.axes[0]
+    assert sum(isinstance(a, AnnotationBbox) for a in ax.get_children()) == 4 and ax.lines
+
+
+def test_bubbles_drawn_as_pictures_come_in_the_size_of_their_column(qapp):
+    from types import SimpleNamespace
+
+    from app.plugin_api.charts import picture_markers
+
+    with picture_markers.pictures_from(lambda name: SimpleNamespace(kind="svg", data=SVG, name=name)):
+        ax = Figure().subplots()
+        drawn = picture_markers.draw_named(ax, [0, 1, 2], [0, 1, 2], ["dot"] * 3, size_points=10, colour="r",
+                                           areas=[100.0, 400.0, 400.0])
+    assert drawn.all()
+    sizes = {box.offsetbox.get_data().shape[0] for box in ax.artists if isinstance(box, AnnotationBbox)}
+    assert len(sizes) == 2
+
+
+def test_a_pie_draws_a_picture_on_each_wedge_and_a_title_takes_pictures(qapp, repo):
+    repo.add_image("dot", SVG)
+    repo.import_dataframe(pd.DataFrame({"v": [3.0, 2.0, 1.0], "p": ["dot", "", "dot"]}), table_name="d",
+                          normalize_columns=False)
+    figure_id = int(repo.create_figure_descriptor(name="F"))
+    axis_id = int(repo.create_axis_descriptor(figure_id=figure_id, axis_index=0, chart_type="Pie Chart",
+                                              title="Share {image:dot}", x_label="", y_label="", options={}))
+    repo.create_series_descriptor(axis_id=axis_id, series_index=0, name="s",
+                                  sql_query="SELECT v AS value, p AS picture FROM d",
+                                  roles={"value": "value", "picture": "picture"}, style={})
+    figure = Figure()
+    render_figure_from_descriptor(figure=figure, descriptor=repo.load_figure_descriptor(figure_id), repo=repo)
+    ax = figure.axes[0]
+    assert sum(isinstance(a, AnnotationBbox) for a in ax.get_children()) == 3  # 2 wedges and the title's
+    assert ax.get_title() == "Share"
+    figure.savefig(__import__("io").BytesIO(), format="svg")
+
+
 def test_the_icon_library_searches_and_adds_icons_with_their_licence(qapp, repo):
     from app.dialogs.icon_library_dialog import IconLibraryDialog
     from app.utils import icon_library

@@ -54,6 +54,8 @@ class TimeSeriesAxisRenderer(BaseAxisRenderer):
     RequiredRoles = ["x", "y"]
     OptionalRoles = [
         "color",
+        # A column naming, for each point, a picture of the project to draw it as (Project > Pictures).
+        "picture",
         # Error bands: one column for a symmetric half-width, or a low/high
         # pair for an asymmetric interval.
         "xerr",
@@ -185,6 +187,8 @@ class TimeSeriesAxisRenderer(BaseAxisRenderer):
 
     def render_axis(self, ax, series: list[SeriesData], options: dict) -> None:
         """Render one or more time series on the given axis."""
+        from app.plugin_api.charts import picture_markers
+
         base_kwargs = self.get_kwargs(options)
 
         raw_plot_kwargs = {
@@ -279,6 +283,10 @@ class TimeSeriesAxisRenderer(BaseAxisRenderer):
             # Optional sort by X ascending.
             if bool(style.get("sort_x", False)):
                 frame = frame.sort_values("x", kind="stable")
+            # The pictures named per point, in the frame's order (before the gaps add rows of their own).
+            point_pictures = (sd.df["picture"][mask].reindex(frame.index).astype(str).to_numpy()
+                              if "picture" in sd.df.columns else None)
+            picture_xy = (frame["x"].to_numpy(), frame["y"].to_numpy(dtype=float))
 
             frame = self._insert_gaps(frame, gap_threshold, temporal=x_is_temporal)
 
@@ -311,6 +319,13 @@ class TimeSeriesAxisRenderer(BaseAxisRenderer):
                 legend_handles_found |= self._draw_raw(ax, tags, frame, common_line_kwargs, has_line, has_marker,
                                                        marker_style, flat_color, color_is_discrete,
                                                        series_label if show_in_legend else "")
+
+            if point_pictures is not None:  # naming a picture is asking for it, line or not
+                every = _marker_every(style.get("markevery"))
+                picture_markers.draw_named(
+                    ax, picture_xy[0], picture_xy[1], point_pictures, size_points=style.get("markersize"),
+                    colour=flat_color, zorder=float(style.get("zorder") or 2.5), every=every,
+                    label=series_label if show_in_legend and not has_line and not show_raw else "")
 
             if marked_points is not None and len(marked_points[0]):
                 tags.follow(())  # each in its own colour

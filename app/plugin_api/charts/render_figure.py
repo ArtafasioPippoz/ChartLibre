@@ -1122,7 +1122,12 @@ def _apply_axis_runtime_options(ax: Any, axis_desc: AxisDescriptor) -> None:
     lines = {"multialignment": align} if (align := multialignment(options)) else {}
     title = axis_options.axis_title(options, axis_desc.title or "")
     if title:
+        from app.plugin_api.charts import picture_markers
+
+        title, title_pictures = picture_markers.split_title(title)  # {image:name} puts a picture beside the title
         ax.set_title(display_text(title), **lines)
+        if title_pictures:
+            picture_markers.draw_title_pictures(ax, title_pictures)
 
     xlabel = options.get("x_label", axis_desc.x_label)
     ylabel = options.get("y_label", axis_desc.y_label)
