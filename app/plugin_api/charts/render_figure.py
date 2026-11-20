@@ -295,6 +295,23 @@ def _render_figure_from_descriptor(
         _apply_text_effects(figure, descriptor, all_axes, ax_by_id)
 
 
+#: Most points, bars or wedges one series draws with its effect (dev/plans/path_effects_plan.txt, G): each effect
+#: draws them all again, a glow four times. Downsampling keeps a series far below this unless it is switched off.
+PATH_EFFECT_MAX_POINTS = get_constant("path_effect_max_points", 50_000)
+
+
+def _drawn_points(artist: Any) -> int:
+    """How many points, paths or shapes *artist* draws: what an effect draws again."""
+    for getter in ("get_xdata", "get_offsets", "get_paths"):
+        method = getattr(artist, getter, None)
+        if method is not None:
+            try:
+                return len(method())
+            except TypeError:
+                continue
+    return 1
+
+
 def _apply_series_effects(ax: Any, series_list: list[Any]) -> None:
     """Each series' "path_effects" - an outline, a shadow, a glow - on what it drew and on its legend entry
     (dev/plans/path_effects_plan.txt, C2 and F).
@@ -319,11 +336,23 @@ def _apply_series_effects(ax: Any, series_list: list[Any]) -> None:
     def effects_for(artist: Any, text: str) -> list[Any] | None:
         return to_matplotlib(text, "line" if isinstance(artist, Line2D) else "patch")
 
-    refused: set[str] = set()
-    by_label: dict[str, str] = {}
+    mine: dict[str, list[Any]] = {}
     for artist in ax.get_children():
         name = getattr(artist, "_chartlibre_series", None)
-        if name not in wanted or isinstance(artist, Text):
+        if name in wanted and not isinstance(artist, Text):
+            mine.setdefault(name, []).append(artist)
+    for name, artists in mine.items():
+        drawn = sum(_drawn_points(artist) for artist in artists)
+        if drawn > PATH_EFFECT_MAX_POINTS:
+            applogger.warning("Effect %r of series %r left out: %d points, more than %d (path_effect_max_points) "
+                              "would each be drawn again.", wanted[name], name, drawn, PATH_EFFECT_MAX_POINTS)
+            del wanted[name]
+
+    refused: set[str] = set()
+    by_label: dict[str, str] = {}
+    for artist in (artist for artists in mine.values() for artist in artists):
+        name = artist._chartlibre_series
+        if name not in wanted:
             continue
         effects = effects_for(artist, wanted[name])
         if effects is None:

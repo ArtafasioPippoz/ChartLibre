@@ -243,3 +243,30 @@ def test_the_dictionary_editor_offers_the_effect_combo(qapp) -> None:
     assert panel.value_for_key("path_effects") == "glow(6)"
     assert not panel._key_items["path_effects"].icon(1).isNull()  # its preview
     assert index.data(Qt.ItemDataRole.DisplayRole)
+
+
+# ----------------------------------------------------------------------
+# Step 5: a series too dense for its effect
+# ----------------------------------------------------------------------
+def test_a_series_with_too_many_points_is_drawn_without_its_effect(monkeypatch) -> None:
+    from types import SimpleNamespace
+
+    import app.plugin_api.charts.render_figure as render
+    from app.plugin_api.charts.base import SeriesArtistTags
+
+    monkeypatch.setattr(render, "PATH_EFFECT_MAX_POINTS", 100)
+    figure, ax = plt.subplots()
+    try:
+        tags = SeriesArtistTags(ax)
+        tags.next("dense")
+        ax.scatter(range(150), range(150), label="Dense")
+        tags.next("light")
+        ax.plot(range(50), range(50), label="Light")
+        tags.done()
+        render._apply_series_effects(ax, [SimpleNamespace(name="dense", style={"path_effects": "shadow"}),
+                                          SimpleNamespace(name="light", style={"path_effects": "shadow"})])
+        (points,), (line,) = ax.collections, ax.lines
+        assert not points.get_path_effects()  # None or []: no effect
+        assert _kinds(line.get_path_effects()) == ["SimpleLineShadow", "Normal"]
+    finally:
+        plt.close(figure)
