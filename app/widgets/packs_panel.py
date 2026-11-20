@@ -32,7 +32,7 @@ FAMILY_WORDS = {
 
 def describe(pack: packs.Pack) -> str:
     """The lines of a pack's row: its name and version, what it adds or what is wrong (what it is: the detail below)."""
-    lines = [f"{pack.name}  {pack.version}".rstrip()]
+    lines = [f"{tr(pack.name)}  {pack.version}".rstrip()]
     if pack.error:
         lines.append(tr("Not usable: {why}").format(why=tr(pack.error)))
         return "\n".join(lines)

@@ -1,0 +1,347 @@
+# हिन्दी translation for the pack signal.
+# Message ids are the English source strings.
+
+msgid ""
+msgstr "Project-Id-Version: ChartLibre\nLanguage: hi\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\n"
+
+msgid "Analyse frequencies"
+msgstr "एनालिटिक्स"
+
+msgid "As a fraction of the signal's full range. 0.1 keeps peaks standing at least a tenth of the range above their surroundings."
+msgstr "सिग्नल की पूरी रेंज का एक अंश के रूप में। 0.1 चोटियों को अपने परिवेश के ऊपर कम से कम दसवां वर्ग खड़ा रहता है।"
+
+msgid "Asymmetry. Smaller pushes the baseline further below the peaks; it should stay well under 0.5."
+msgstr "Asymmetry. Smaller चोटियों के नीचे बेसलाइन को आगे बढ़ा देता है; यह 0.5 के तहत अच्छी तरह से रहना चाहिए।"
+
+msgid "Baseline"
+msgstr "बेसलाइन"
+
+msgid "Between samples"
+msgstr "नमूनों के बीच"
+
+msgid "Choose a decomposition (a curve per component) or a manifold embedding (a 2D scatter)."
+msgstr "एक अपघटन (एक वक्र प्रति घटक) या एक कई गुना एम्बेडिंग (एक 2D स्कैटर) चुनें।"
+
+msgid "Choose the baseline estimator."
+msgstr "बेसलाइन estimator चुनें।"
+
+msgid "Choose the spectral or correlation estimator."
+msgstr "वर्णक्रमीय या सहसंबंध estimator चुनें।"
+
+msgid "Component"
+msgstr "घटक"
+
+msgid "Component 1"
+msgstr "घटक 1"
+
+msgid "Component 2"
+msgstr "घटक 2"
+
+msgid "Components"
+msgstr "अवयव"
+
+msgid "Convert to decibels"
+msgstr "दशमलव को परिवर्तित करें"
+
+msgid "Cubic spline"
+msgstr "घन spline"
+
+msgid "Curve"
+msgstr "वक्र"
+
+msgid "Damping (sigma)"
+msgstr "डंपिंग (सिग्मा)"
+
+msgid "Damping sigma of the Laplace variable s = sigma + i*omega. Zero reduces the transform to the Fourier transform; increasing it weights early samples more and suppresses late ones, which is what makes a decaying or unstable signal integrable."
+msgstr "लाप्लेस वैरिएबल s = sigma + i *omega की डैपिंग सिग्मा। शून्य फोरियर में परिवर्तन को कम कर देता है; इसे शुरुआती नमूनों को बढ़ा देता है और देर से दबा देता है, जो कि एक क्षय या अस्थिर संकेत एकीकृत बनाता है।"
+
+msgid "Decompose or embed several series together (PCA, ICA, NMF, t-SNE, ...)"
+msgstr "कई श्रृंखलाओं को एक साथ डीकोमेज़ या एम्बेड करें (पीसीए, आईसीए, एनएमएफ, टी-एसएनई, ...)"
+
+msgid "Detrend"
+msgstr "डेट्रेंड"
+
+msgid "Direction"
+msgstr "दिशा"
+
+msgid "Draw the estimated baseline itself."
+msgstr "अनुमानित बेसलाइन खुद ही आकर्षित करें।"
+
+msgid "Estimates"
+msgstr "अनुमान"
+
+msgid "Every selected series is linearly resampled onto this many evenly spaced points across their shared x range, before decomposing or embedding them together."
+msgstr "प्रत्येक चयनित श्रृंखला को रैखिक रूप से अपने साझा एक्स रेंज में कई समान रूप से स्थानित बिंदुओं पर फिर से नमूना दिया जाता है, जो उन्हें एक साथ जोड़ने या एम्बेड करने से पहले होती है।"
+
+msgid "Explained variance"
+msgstr "व्याख्या की गई भिन्नता"
+
+msgid "Express the result as 10*log10 of the value."
+msgstr "परिणाम को मान के 10 * लॉग 10 के रूप में व्यक्त करें।"
+
+msgid "Filter by"
+msgstr "द्वारा फ़िल्टर करें"
+
+msgid "Find"
+msgstr "खोजना"
+
+msgid "Find and measure peaks"
+msgstr "ढूँढना और मापना चोटियों"
+
+msgid "Find where a series crosses a level"
+msgstr "ज्ञात करें कि एक श्रृंखला एक स्तर को पार करती है"
+
+msgid "Fold the negative frequencies onto the positive ones. Correct for real-valued signals."
+msgstr "सकारात्मक लोगों पर नकारात्मक आवृत्तियों को मोड़ो। वास्तविक मूल्य वाले संकेतों के लिए सही।"
+
+msgid "Found on the surface's own exact x/y grid."
+msgstr "सतह के अपने सटीक x/y ग्रिड पर पाया गया।"
+
+msgid "Fraction of each segment shared with the next."
+msgstr "प्रत्येक खंड का फ्रैक्शन अगले साथ साझा किया गया है।"
+
+msgid "Grid points"
+msgstr "ग्रिड अंक"
+
+msgid "Half-prominence bounds"
+msgstr "अर्ध-प्रेरणा सीमा"
+
+msgid "Height (absolute)"
+msgstr "ऊंचाई (absolute)"
+
+msgid "How each bracketed crossing is refined. The three bracketing solvers cannot leave the interval they were given; Newton can, and is checked afterwards."
+msgstr "प्रत्येक कोष्ठित क्रॉसिंग को कैसे परिष्कृत किया जाता है। तीन कोष्ठक सॉलर्स उन्हें दिए गए अंतराल को नहीं छोड़ सकते; न्यूटन कर सकते हैं, और बाद में जांच कर सकते हैं।"
+
+msgid "How many components to extract. Clamped to the number of selected series."
+msgstr "कितने घटकों को निकालने के लिए। चयनित श्रृंखला की संख्या के लिए क्लैंप किया गया।"
+
+msgid "How many decimal places of x the solver has to settle before it stops. Nine is far below the precision of any measured x; the cost of raising it is a few iterations."
+msgstr "एक्स के कितने दशमलव स्थानों को रोकने से पहले हल करने वाले को तय करना पड़ता है। नौ किसी भी मापा एक्स की सटीकता से बहुत नीचे है; इसे बढ़ाने की लागत कुछ पुनरावृत्ति है।"
+
+msgid "How many nearby points each one is connected to. Lowered automatically if it does not fit the sample count."
+msgstr "कितने पास के अंक प्रत्येक से जुड़ा हुआ है। स्वचालित रूप से कम अगर यह नमूना गिनती फिट नहीं है।"
+
+msgid "How many scales to evaluate between the longest period the record supports and the Nyquist frequency, spaced logarithmically."
+msgstr "सबसे लंबे समय तक रिकॉर्ड समर्थन और Nyquist आवृत्ति के बीच मूल्यांकन करने के लिए कितने पैमाने, स्थानित logarithmically।"
+
+msgid "Input"
+msgstr "इनपुट"
+
+msgid "Iterations"
+msgstr "वायुयान"
+
+msgid "Keeps the first crossings in x order when a noisy series crosses the level hundreds of times."
+msgstr "जब एक शोर श्रृंखला सैकड़ों बार स्तर को पार करती है तो पहले क्रॉसिंग को एक्स ऑर्डर में रखता है।"
+
+msgid "Keeps the most prominent peaks when many are found."
+msgstr "जब कई पाए जाते हैं तो सबसे प्रमुख चोटियों को बचाता है।"
+
+msgid "Kind"
+msgstr "मेहर"
+
+msgid "Lambda"
+msgstr "लैम्ब्डा"
+
+msgid "Largest lag to keep. 0 keeps every lag."
+msgstr "सबसे बड़ा अंतराल रखने के लिए। 0 हर अंतराल को बनाए रखता है।"
+
+msgid "Level"
+msgstr "स्तर"
+
+msgid "Max lags"
+msgstr "मैक्स लैग"
+
+msgid "Maximum iterations"
+msgstr "अधिकतम पुनरावृत्ति"
+
+msgid "Method"
+msgstr "विधि"
+
+msgid "Minimum"
+msgstr "न्यूनतम"
+
+msgid "Minimum separation"
+msgstr "न्यूनतम जुदाई"
+
+msgid "Minimum width"
+msgstr "न्यूनतम चौड़ाई"
+
+msgid "Model"
+msgstr "मॉडल"
+
+msgid "Monotone cubic (PCHIP)"
+msgstr "मोनोटोन घन (PCHIP)"
+
+msgid "Morlet central frequency w0. Higher values resolve frequency more finely at the cost of time resolution; 6 is the usual compromise and the value at which the wavelet is near-admissible."
+msgstr "मोरलेट केंद्रीय आवृत्ति w0. उच्च मान समय संकल्प की लागत पर अधिक बारीक आवृत्ति को हल करते हैं; 6 सामान्य समझौता है और जिस मूल्य पर तरंग निकट-admissible है।"
+
+msgid "Morlet w0"
+msgstr "मोरलेट w0"
+
+msgid "Neighbors"
+msgstr "पड़ोसी"
+
+msgid "No peaks passed the filter. Lower the minimum, or switch from height to prominence if the baseline is not at zero."
+msgstr "कोई चोटियों ने फ़िल्टर पारित नहीं किया। न्यूनतम, या ऊंचाई से निकटता तक स्विच करें यदि बेसलाइन शून्य पर नहीं है।"
+
+msgid "No results."
+msgstr "कोई परिणाम नहीं।"
+
+msgid "Normalisation"
+msgstr "सामान्यीकरण"
+
+msgid "One-sided spectrum"
+msgstr "एक तरफा स्पेक्ट्रम"
+
+msgid "Peak ({x} &rarr; {y})"
+msgstr "Pok ({x} &rarr; {y})"
+
+msgid "Peaks, baseline correction, spectral analysis, decomposition and roots, with the spectrogram chart."
+msgstr "पीक, बेसलाइन सुधार, वर्णक्रमीय विश्लेषण, अपघटन और जड़ें, स्पेक्ट्रोग्राम चार्ट के साथ।"
+
+msgid "Per crossing. Brent and TOMS 748 rarely need ten; the limit is what stops a pathological bracket from hanging the dialog."
+msgstr "प्रति क्रॉसिंग। ब्रेंट और TOMS 748 को शायद ही कभी दस की आवश्यकता होती है; सीमा यह है कि संवाद को लटकाने से एक पैथोलॉजिकल ब्रैकेट को रोकता है।"
+
+msgid "Perplexity"
+msgstr "Perplexity"
+
+msgid "Points"
+msgstr "अंक"
+
+msgid "Points at half prominence. Raise it to reject single-sample spikes, which are usually instrument artefacts rather than features."
+msgstr "आधे प्रवीणता पर अंक। इसे एकल-नमूना स्पाइक्स को अस्वीकार करने के लिए उठाएँ, जो आमतौर पर सुविधाओं के बजाय साधन कलाकृतियां हैं।"
+
+msgid "Points. Of any two peaks closer than this, the more prominent is kept - which is how a single noisy peak stops being reported as several."
+msgstr "अंक। इसके करीब किसी भी दो चोटियों में से, अधिक प्रमुख रखा जाता है - जो कि कैसे एक एकल शोर चोटी कई के रूप में रिपोर्ट किया जा रहा है।"
+
+msgid "Prominence"
+msgstr "प्रोमिनेंस"
+
+msgid "Prominence (relative)"
+msgstr "प्रवीणता (relative)"
+
+msgid "Prominence measures a peak against its own surroundings and survives a sloping baseline. Height compares it to zero, which only means something when the baseline is at zero."
+msgstr "प्रवीणता अपने परिवेश के खिलाफ एक चोटी को मापती है और एक sloping baseline जीवित रहती है। ऊंचाई इसे शून्य से तुलना करती है, जिसका मतलब केवल कुछ ऐसा होता है जब बेसलाइन शून्य होता है।"
+
+msgid "Re-weighting passes."
+msgstr "फिर से वजन गुजरता है।"
+
+msgid "Remove a constant or linear trend from each segment first. A trend leaks into the lowest frequency bins and hides everything near it."
+msgstr "पहले प्रत्येक खंड से एक स्थिर या रैखिक प्रवृत्ति को हटा दें। एक प्रवृत्ति सबसे कम आवृत्ति डिब्बे में लीक हो जाती है और इसके पास सब कुछ छिपाती है।"
+
+msgid "Report at most"
+msgstr "रिपोर्ट करें"
+
+msgid "Residual"
+msgstr "रेजीडुअल"
+
+msgid "Roughly, how many neighbours each point is assumed to have. Lowered automatically if it does not fit the sample count."
+msgstr "शायद ही कभी, प्रत्येक बिंदु के कितने पड़ोसियों को माना जाता है। स्वचालित रूप से कम अगर यह नमूना गिनती फिट नहीं है।"
+
+msgid "Samples per Welch segment. Longer segments resolve finer frequency detail; shorter ones average away more noise."
+msgstr "प्रति वेल्च खंड के नमूने। लंबे खंड बारीक आवृत्ति विस्तार को हल करते हैं; छोटे लोग औसत से अधिक शोर करते हैं।"
+
+msgid "Scales"
+msgstr "स्केल"
+
+msgid "Scaling"
+msgstr "स्केलिंग"
+
+msgid "Segment length"
+msgstr "सेगमेंट की लंबाई"
+
+msgid "Segment overlap"
+msgstr "सेगमेंट ओवरलैप"
+
+msgid "Select one or more source series."
+msgstr "एक या अधिक स्रोत श्रृंखला का चयन करें।"
+
+msgid "Series"
+msgstr "शृंखला"
+
+msgid "Signal analysis"
+msgstr "सिग्नल विश्लेषण"
+
+msgid "Smoothness. Larger makes the baseline stiffer, so it bends less to follow narrow peaks."
+msgstr "चिकनाई। बड़ा बेसलाइन कठोर बनाता है, इसलिए यह संकीर्ण चोटियों का पालन करने के लिए कम झुकता है।"
+
+msgid "Solver"
+msgstr "सोल्वर"
+
+msgid "Source"
+msgstr "स्रोत"
+
+msgid "Straight line"
+msgstr "सीधी रेखा"
+
+msgid "Subtract a spectrum's background (AsLS or rubber band)"
+msgstr "एक स्पेक्ट्रम की पृष्ठभूमि (एएसएलएस या रबर बैंड) को घटाएं"
+
+msgid "Taper applied to each segment before the FFT."
+msgstr "टेपर एफएफटी से पहले प्रत्येक खंड पर लागू होता है।"
+
+msgid "The series never crosses this level. Check the level against the data's range - a crossing no two samples straddle cannot be found from these samples."
+msgstr "श्रृंखला कभी भी इस स्तर को पार नहीं करती है। डेटा की सीमा के खिलाफ स्तर की जाँच करें - इन नमूनों से एक क्रॉसिंग नो दो नमूने नहीं पाए जा सकते हैं।"
+
+msgid "The surface never reaches this level - z stays on one side of it everywhere on the grid."
+msgstr "सतह कभी इस स्तर तक नहीं पहुंचती - z ग्रिड पर हर जगह इसके एक तरफ रहता है।"
+
+msgid "The y value to solve for. 0 finds the zeros; any other value finds where the series crosses that level, which is the same problem shifted."
+msgstr "0 के लिए हल करने के लिए वाई मान शून्य पाता है; किसी भी अन्य मूल्य को पता चलता है कि श्रृंखला उस स्तर को पार करती है, जो उसी समस्या को स्थानांतरित करती है।"
+
+msgid "This surface's points were not a complete x/y grid, so the peaks below were found on a linearly interpolated one - treat them as approximate."
+msgstr "इस सतह के बिंदु एक पूर्ण x/y ग्रिड नहीं थे, इसलिए नीचे दिए गए चोटियों को रैखिक रूप से एक परस्पर जोड़ दिया गया था - उन्हें लगभग के रूप में इलाज किया।"
+
+msgid "This surface's points were not a complete x/y grid, so this level curve was traced on a linearly interpolated one - treat it as approximate."
+msgstr "इस सतह के बिंदु एक पूर्ण x/y ग्रिड नहीं थे, इसलिए इस स्तर की वक्र को रैखिक रूप से एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-एक-"
+
+msgid "Tolerance (digits)"
+msgstr "सहिष्णुता (अंक)"
+
+msgid "Traced on the surface's own exact x/y grid."
+msgstr "सतह के अपने सटीक x/y ग्रिड पर अनुरेखित।"
+
+msgid "Variance share"
+msgstr "वैरिएशन शेयर"
+
+msgid "What the series is assumed to do between two points. Linear claims nothing the samples do not; the two curved options fit a smooth signal better and can overshoot a noisy one into crossings that are not there."
+msgstr "श्रृंखला को दो बिंदुओं के बीच क्या करना माना जाता है। रैखिक का दावा है कि नमूने कुछ नहीं करते हैं; दो घुमावदार विकल्प एक चिकनी संकेत को बेहतर तरीके से फिट करते हैं और वहां नहीं होने वाले क्रॉसिंग में एक शोर को ओवरशॉट कर सकते हैं।"
+
+msgid "Which turning points to look for."
+msgstr "कौन सी बातें देखने को मिलती हैं।"
+
+msgid "Width"
+msgstr "चौड़ाई"
+
+msgid "Window"
+msgstr "विंडो"
+
+msgid "density: power per unit frequency. spectrum: power per segment."
+msgstr "घनत्व: प्रति यूनिट आवृत्ति शक्ति। स्पेक्ट्रम: प्रति खंड शक्ति।"
+
+msgid "falling"
+msgstr "गिरना"
+
+msgid "level {level}"
+msgstr "स्तर {level}"
+
+msgid "maximum"
+msgstr "अधिकतम"
+
+msgid "minimum"
+msgstr "न्यूनतम"
+
+msgid "p"
+msgstr "पी"
+
+msgid "rising"
+msgstr "बढ़ना"
+
+msgid "truncated"
+msgstr "छंटनी"
+
+msgid "unbiased divides by the overlap at each lag; biased divides by N; none returns the raw sum of products."
+msgstr "प्रत्येक अंतराल पर ओवरलैप द्वारा निष्पक्ष लाभांश; एन द्वारा पूर्वाग्रहित लाभांश; कोई भी उत्पाद की कच्ची राशि वापस नहीं देता है।"
+
+msgid "{count} point(s) embedded from {series} series into 2 dimensions."
+msgstr "{count} बिंदु (s) {series} श्रृंखला से 2 आयामों में एम्बेडेड है।"

@@ -70,20 +70,20 @@ msgstr "...y {count} más, en Mostrar detalles."
 msgid "...and {count} more."
 msgstr "...y {count} más."
 
+msgid "0 finds it from the dates (12 for months, 7 for days, 4 for quarters); 1 means none."
+msgstr "0 lo encuentra a partir de las fechas (12 para meses, 7 para días, 4 para trimestres); 1 significa ninguno."
+
 msgid "0 interpolates every point exactly; larger values allow the spline to depart from noisy data."
 msgstr "0 interpola cada punto exactamente; los valores más grandes permiten que la spline se aleje de los datos ruidosos."
+
+msgid "1 for a series that wanders or has a trend; 0 for one that comes back to its mean."
+msgstr "1 para una serie que deambula o tiene una tendencia; 0 para una que vuelve a su media."
 
 msgid "1 for the slope, 2 for the curvature."
 msgstr "1 para la pendiente, 2 para la curvatura."
 
-msgid "1 leaves x alone; 2 doubles it about the centre below."
-msgstr "1 deja x solo; 2 lo dobla alrededor del centro de abajo."
-
-msgid "1 leaves y alone; 2 doubles it about the centre below."
-msgstr "1 lo deja solo; 2 lo dobla sobre el centro de abajo."
-
-msgid "1 leaves z alone; 2 doubles it about the centre below."
-msgstr "1 deja solo a z; 2 lo dobla sobre el centro de abajo."
+msgid "1 takes away last season's value: for a season that repeats steadily."
+msgstr "1 quita el valor de la temporada pasada: para una temporada que se repite constantemente."
 
 msgid "2D (x, y)"
 msgstr "2D (x, y)"
@@ -112,6 +112,9 @@ msgstr "95 % c banda de confianza"
 msgid "95% prediction band"
 msgstr "Banda de predicción del 95%"
 
+msgid "95% prediction interval"
+msgstr "Intervalo de predicción del 95%"
+
 msgid "A \"How to read this\" box in every report"
 msgstr "Un cuadro \"Cómo leer esto\" en cada informe"
 
@@ -126,9 +129,6 @@ msgstr "Una columna"
 
 msgid "A column cannot be both a response and a factor: {columns}."
 msgstr "Una columna no puede ser a la vez una respuesta y un factor: {columns}."
-
-msgid "A field in space needs both Z and W; a flat one neither."
-msgstr "Un campo en el espacio necesita tanto Z como W; uno plano tampoco."
 
 msgid "A frame back"
 msgstr "Un marco atrás"
@@ -151,6 +151,9 @@ msgstr "Una línea a través de todos los ejes, en esta x."
 msgid "A line along the whole axes, at this y."
 msgstr "Una línea a lo largo de todos los ejes, en esta y."
 
+msgid "A measure in time order: its autocorrelation (ACF, PACF, Ljung-Box), its trend and season (STL), and an ARIMA or exponential-smoothing forecast with its prediction interval."
+msgstr "Una medida en orden temporal: su autocorrelación (ACF, PACF, Ljung-Box), su tendencia y temporada (STL) y un pronóstico ARIMA o de suavizado exponencial con su intervalo de predicción."
+
 msgid "A model called {name} exists. Replace it?"
 msgstr "Existe un modelo llamado {name}. ¿Desea sustituirlo?"
 
@@ -162,9 +165,6 @@ msgstr "Un modelo que se ejecuta en este ordenador a través de Ollama (ollama.c
 
 msgid "A new chart of this table"
 msgstr "Un nuevo gráfico de esta tabla"
-
-msgid "A pack switched on or off is applied the next time the app starts."
-msgstr "Un paquete activado o desactivado se aplica la próxima vez que se inicie la aplicación."
 
 msgid "A pattern: \"-\" a dash, \".\" a dot, a space a longer gap - for example ..--  or  -- . --\nor matplotlib's (offset, (on, off, ...)) in line widths - for example (0, (5, 2, 1, 2))"
 msgstr "Un patrón: \"-\" un dash, \".\" un punto, un espacio una brecha más larga - por ejemplo ..-- o ...\no matplotlib (offset, (on, off, ...)) en anchos de línea - por ejemplo (0, (5, 2, 1, 2))"
@@ -187,6 +187,9 @@ msgstr "Una segunda escala a lo largo de la parte superior (x) o la derecha (y):
 msgid "A series drawn from a stored SymPy function is differentiated or integrated as a formula - d/dx (a*x**2) = 2*a*x - rather than from its points; the result is a stored function too. Off: as any series."
 msgstr "Una serie extraída de una función SymPy almacenada se diferencia o integra como una fórmula - d/dx (a *x**2) = 2* a *x - en lugar de desde sus puntos; el resultado también es una función almacenada. Apagado: como cualquier serie."
 
+msgid "A step lasts from then on; a pulse affects that one time only."
+msgstr "Un paso dura desde entonces; un pulso afecta eso solo una vez."
+
 msgid "A table needs at least one column. Add another column before deleting this one."
 msgstr "Una tabla necesita al menos una columna. Añade otra columna antes de eliminar esta."
 
@@ -205,9 +208,6 @@ msgstr "Un término es significativo cuando su valor p es a lo sumo este; la per
 msgid "A text note pinned to this point: x = {x}, y = {y}."
 msgstr "Una nota de texto anclada a este punto: x = {x}, y = {y}."
 
-msgid "A vector field sampled on a grid: its divergence (where it spreads out or gathers) and its curl (where and how fast it turns), in 2D or 3D."
-msgstr "Un campo vectorial muestreado en una cuadrícula: su divergencia (donde se extiende o se reúne) y su rizo (dónde y qué tan rápido gira), en 2D o 3D."
-
 msgid "A vertical or horizontal line across the whole axes, at a value in data coordinates. Color and style have their own columns; anything else goes in Kwargs JSON, for example: {\"linewidth\": 2, \"label\": \"limit\"}."
 msgstr "Una línea vertical u horizontal a través de todos los ejes, a un valor en coordenadas de datos. El color y el estilo tienen sus propias columnas; cualquier otra cosa vale en Kwargs JSON, por ejemplo: {\"linewidth\": 2, \"label\": \"limit\"}."
 
@@ -225,6 +225,27 @@ msgstr "AIC {value} para {model}, el más bajo de los modelos probados: AIC pesa
 
 msgid "API key"
 msgstr "Clave API"
+
+msgid "ARIMA d (differences)"
+msgstr "ARIMA d (diferencias)"
+
+msgid "ARIMA only: a date (or a number of the time column) when something changed - a new process, a policy, a fault. Its estimate is the change it made."
+msgstr "Solo ARIMA: una fecha (o un número de la columna de tiempo) cuando algo cambió: un nuevo proceso, una política, una falla. Su estimación es el cambio que realizó."
+
+msgid "ARIMA only: the input enters the model at the lag where its prewhitened cross-correlation is strongest; its coefficient says how much Y moves per unit of X. Ahead of that lag the forecast uses X's own forecast."
+msgstr "Solo ARIMA: la entrada entra en el modelo en el desfase donde su correlación cruzada preblanqueada es más fuerte; su coeficiente dice cuánto se mueve Y por unidad de X. Antes de ese retraso, el pronóstico utiliza el propio pronóstico de X."
+
+msgid "ARIMA p (autoregressive)"
+msgstr "ARIMA p (autorregresivo)"
+
+msgid "ARIMA q (moving average)"
+msgstr "ARIMA q (media móvil)"
+
+msgid "ARIMA with a season: how many past seasons the next value depends on (the ACF's spikes at the season's multiples)."
+msgstr "ARIMA con una temporada: de cuántas temporadas pasadas depende el próximo valor (los picos de la ACF en los múltiplos de la temporada)."
+
+msgid "ARIMA: the next value from the last ones (p), the changes (d) and the last errors (q), with a season (P, D, Q) of its own. ARIMA, order chosen by AIC: the differences from the stationarity tests, then the p, q, P, Q with the lowest AIC. Exponential smoothing: a level, a trend and a season that each follow the newest values most. State space: a level and a slope that wander a little each step (a local linear trend), with a season - estimated by the Kalman filter."
+msgstr "ARIMA: el siguiente valor de los últimos (p), los cambios (d) y los últimos errores (q), con una temporada (P, D, Q) propia. ARIMA, orden elegido por AIC: las diferencias de las pruebas de estacionariedad, luego la p, q, P, Q con el AIC más bajo. Suavizado exponencial: un nivel, una tendencia y una temporada que cada uno sigue los valores más nuevos. Espacio de estado: un nivel y una pendiente que deambulan un poco a cada paso (una tendencia lineal local), con una estación, estimada por el filtro de Kalman."
 
 msgid "AUC = {value}: of a row that is {level} and one that is not, the model gives the first the higher probability {percent}% of the time. 0.5 is a coin toss, 1 never wrong; above 0.8 is usually called good."
 msgstr "AUC = {value}: de una fila que es {level} y una que no lo es, el modelo le da a la primera la mayor probabilidad {percent}% del tiempo. 0.5 es un lanzamiento de moneda, 1 nunca es incorrecto; por encima de 0.8 generalmente se llama bueno."
@@ -331,32 +352,8 @@ msgstr "Añadir línea vertical en x = {value}"
 msgid "Add {orientation} line"
 msgstr "Añadir {orientation} línea"
 
-msgid "Added to every new x, after the matrix."
-msgstr "Añadido a cada nueva x, después de la matriz."
-
-msgid "Added to every new y, after the matrix."
-msgstr "Añadido a cada nueva y, después de la matriz."
-
-msgid "Added to every new z, after the matrix."
-msgstr "Añadido a cada nueva z, después de la matriz."
-
-msgid "Added to every x, after any rotation. Negative moves left."
-msgstr "Añadido a cada x, después de cualquier rotación. Movimientos negativos a la izquierda."
-
-msgid "Added to every y, after any rotation. Negative moves down."
-msgstr "Añadido a cada y, después de cualquier rotación. Los negativos se mueven hacia abajo."
-
-msgid "Added to every z, after any rotation."
-msgstr "Añadido a cada z, después de cualquier rotación."
-
 msgid "Additional kwargs editor can be inserted here by the host."
 msgstr "El anfitrión puede insertar un editor de kwargs adicional aquí."
-
-msgid "Adds this much x for each unit of y above the centre."
-msgstr "Añade esta cantidad de x por cada unidad de y por encima del centro."
-
-msgid "Adds this much y for each unit of x right of the centre."
-msgstr "Añade esta cantidad de y por cada unidad de x a la derecha del centro."
 
 msgid "Adds: {what}"
 msgstr "Añade: {what}"
@@ -387,6 +384,9 @@ msgstr "Todos los grupos"
 
 msgid "All operations"
 msgstr "Todas las operaciones"
+
+msgid "All rows"
+msgstr "Todas las filas"
 
 msgid "All statistics"
 msgstr "Todas las estadísticas"
@@ -448,15 +448,6 @@ msgstr "Valor p de Anderson: interpolado"
 msgid "Anderson-Darling normality"
 msgstr "Normalidad Anderson-Darling"
 
-msgid "Angle"
-msgstr "Ángulo"
-
-msgid "Angle (°)"
-msgstr "Ángulo (°)"
-
-msgid "Angles (x, y, z)"
-msgstr "Ángulos (x, y, z)"
-
 msgid "Animate this figure"
 msgstr "Animate esta figura"
 
@@ -490,23 +481,11 @@ msgstr "Estilo de aplicación"
 msgid "Appearance"
 msgstr "Aspecto"
 
-msgid "Apple Foundation Models"
-msgstr "Modelos de Apple Foundation"
-
 msgid "Application Log"
 msgstr "Registro de aplicaciones"
 
 msgid "Applied"
 msgstr "Aplicado"
-
-msgid "Applied first. Positive turns y towards z (right-hand rule)."
-msgstr "Aplicado primero. El positivo gira y hacia z (regla de la derecha)."
-
-msgid "Applied last. Positive turns x towards y - the 2D rotation."
-msgstr "Aplicado en último lugar. El positivo gira x hacia y - la rotación 2D."
-
-msgid "Applied second. Positive turns z towards x."
-msgstr "Segundo aplicado. El positivo gira z hacia x."
 
 msgid "Applied. Undo takes the whole of it back."
 msgstr "El deshacer lo lleva todo."
@@ -573,6 +552,12 @@ msgstr "Autor"
 
 msgid "Auto"
 msgstr "Automático"
+
+msgid "Autocorrelation (ACF)"
+msgstr "Autocorrelación (ACF)"
+
+msgid "Autocorrelation, first 12 lags"
+msgstr "Autocorrelación, primeros 12 retrasos"
 
 msgid "Automatic"
 msgstr "Automático"
@@ -664,6 +649,9 @@ msgstr "Entre 1 y 1,33: capaz sólo justo - el mínimo habitual es 1,33."
 msgid "Bins"
 msgstr "Contenedores"
 
+msgid "Boosted Tree: how much each tree corrects the ones before. Smaller needs more trees."
+msgstr "Árbol potenciado: cuánto corrige cada árbol a los anteriores. Más pequeño necesita más árboles."
+
 msgid "Border"
 msgstr "Borde"
 
@@ -739,26 +727,8 @@ msgstr "Compuesto central, circunscrito"
 msgid "Central composite, face-centered"
 msgstr "Compuesto central, centrado en la cara"
 
-msgid "Central differences on the grid (numpy.gradient); one-sided at its edges, where they are less accurate."
-msgstr "Diferencias centrales en la cuadrícula (numpy.gradient); unilaterales en sus bordes, donde son menos precisas."
-
-msgid "Centre"
-msgstr "Centro"
-
-msgid "Centre on the data"
-msgstr "Centrarse en los datos"
-
 msgid "Centre on the median"
 msgstr "Centro en la mediana"
-
-msgid "Centre x"
-msgstr "Centro x"
-
-msgid "Centre y"
-msgstr "Centro y"
-
-msgid "Centre z"
-msgstr "Centro z"
 
 msgid "Chance"
 msgstr "Oportunidad"
@@ -814,9 +784,6 @@ msgstr "Se comprueba cuando se guarda o escribe una consulta, y cuando se abre u
 msgid "Chi-squared, Yates' correction"
 msgstr "Chi-cuadrado, corrección de Yates"
 
-msgid "Choose a series, then press Preview."
-msgstr "Elige una serie y, a continuación, pulsa Vista previa."
-
 msgid "Choose a table and at least one Y column."
 msgstr "Elija una tabla y al menos una columna Y."
 
@@ -837,6 +804,9 @@ msgstr "Elige el archivo: CSV u otro texto delimitado, Excel, JSON, u otro progr
 
 msgid "Choose the fitting/interpolation model."
 msgstr "Elija el modelo de ajuste/interpolación."
+
+msgid "Choose the kernel."
+msgstr "Elige el kernel."
 
 msgid "Choose the operation."
 msgstr "Elija la operación."
@@ -931,6 +901,9 @@ msgstr "Información de la columna..."
 msgid "Column Info: {column}"
 msgstr "Información de la columna: {column}"
 
+msgid "Column contributions"
+msgstr "Contribuciones de columna"
+
 msgid "Column names must be unique."
 msgstr "Los nombres de las columnas deben ser únicos."
 
@@ -966,6 +939,9 @@ msgstr "Computar métricas"
 
 msgid "Confusion matrix"
 msgstr "Matriz de confusión"
+
+msgid "Confusion matrix (training rows)"
+msgstr "Matriz de confusión (filas de entrenamiento)"
 
 msgid "Connect to database"
 msgstr "Conectar a la base de datos"
@@ -1048,9 +1024,6 @@ msgstr "No se ha podido escribir el informe: {reason}"
 msgid "Count"
 msgstr "Recuento"
 
-msgid "Counter-clockwise, about the centre below. The query spells this out as cos(radians(...)) rather than as a decimal, so it can be read and edited afterwards."
-msgstr "En sentido contrario a las agujas del reloj, alrededor del centro de abajo. La consulta lo explica como cos(radianes(...)) en lugar de como un decimal, por lo que se puede leer y editar después."
-
 msgid "Create Query Table"
 msgstr "Crear tabla de consulta"
 
@@ -1099,17 +1072,17 @@ msgstr "Créditos"
 msgid "Cross"
 msgstr "Cruz"
 
+msgid "Cross-correlation with {input}, prewhitened"
+msgstr "Correlación cruzada con {input}, preblanqueado"
+
+msgid "Cross-correlation with {input}, strongest lags"
+msgstr "Correlación cruzada con {input}, rezagos más fuertes"
+
 msgid "Crosshair"
 msgstr "Crosshair"
 
-msgid "Curl"
-msgstr "Curl"
-
 msgid "Curve"
 msgstr "Curva"
-
-msgid "Curves"
-msgstr "Curvas"
 
 msgid "Custom"
 msgstr "Aduanas"
@@ -1156,6 +1129,9 @@ msgstr "Conjunto de datos"
 msgid "Dates"
 msgstr "Fechas"
 
+msgid "Decision tree of a continuous or nominal response on many factors: split and prune a step at a time, or automatically on validation rows; leaves, column contributions and each row's leaf and prediction."
+msgstr "Árbol de decisión de una respuesta continua o nominal en muchos factores: dividir y podar un paso a la vez, o automáticamente en filas de validación; hojas, contribuciones de columnas y la hoja y predicción de cada fila."
+
 msgid "Decreasing"
 msgstr "Disminuyendo"
 
@@ -1185,9 +1161,6 @@ msgstr "Eliminar"
 
 msgid "Delete '{column}' and everything in it? This can be undone."
 msgstr "¿Eliminar '{column}' y todo lo que contiene? Esto se puede deshacer."
-
-msgid "Delete a pack you added. A pack that came with ChartLibre can only be switched off."
-msgstr "Eliminar un paquete que ha añadido. Un paquete que venía con ChartLibre solo se puede desactivar."
 
 msgid "Delete a template"
 msgstr "Eliminar una plantilla"
@@ -1312,9 +1285,6 @@ msgstr "Distribución"
 msgid "Distribution fit"
 msgstr "Ajuste de distribución"
 
-msgid "Divergence"
-msgstr "Divergencia"
-
 msgid "Divergence: where the field spreads out (above 0) or gathers in (below 0) - a source or a sink. Curl: where it turns, and which way - 0 where it flows without turning."
 msgstr "Divergencia: donde el campo se extiende (por encima de 0) o se acumula (por debajo de 0): una fuente o un sumidero. Curl: dónde gira y en qué dirección - 0 donde fluye sin girar."
 
@@ -1338,9 +1308,6 @@ msgstr "Haga doble clic en una columna para quitarla de este rol."
 
 msgid "Double-click an effect to remove it."
 msgstr "Haga doble clic en un efecto para eliminarlo."
-
-msgid "Download and install, into ChartLibre's own Python, the libraries the chosen pack needs. It needs the Internet."
-msgstr "Descargue e instale, en el propio Python de ChartLibre, las bibliotecas que necesita el paquete elegido. Necesita Internet."
 
 msgid "Drag a rectangle over the chart to select points, for hiding or splitting into a new series."
 msgstr "Arrastre un rectángulo sobre el gráfico para seleccionar puntos, para ocultar o dividir en una nueva serie."
@@ -1369,9 +1336,6 @@ msgstr "Dibujando cada figura y escribiendo el informe..."
 msgid "Drawing the frames…"
 msgstr "Dibujando los marcos..."
 
-msgid "Draws a square mesh (a box in 3D) over the source's extent and the same mesh after the transform. A rotation turns it, a scale stretches it, a shear leans it over - which is easier to read off the mesh than off the points."
-msgstr "Dibuja una malla cuadrada (un cuadro en 3D) sobre la extensión de la fuente y la misma malla después de la transformación. Una rotación lo gira, una escala lo estira, una cizalla lo inclina, lo que es más fácil de leer de la malla que de los puntos."
-
 msgid "Drop repeated rows (UNION instead of UNION ALL)"
 msgstr "Suelte las filas repetidas (UNION en lugar de UNION ALL)"
 
@@ -1390,8 +1354,8 @@ msgstr "Cada marco dibuja las filas con un valor de esta columna: un año, un ti
 msgid "Each library is used under its own licence, named above and shipped with the package it belongs to. Versions are the ones installed here, not the ones pinned."
 msgstr "Cada biblioteca se utiliza bajo su propia licencia, mencionada anteriormente y enviada con el paquete al que pertenece. Las versiones son las instaladas aquí, no las fijadas."
 
-msgid "Each new coordinate is its row of the matrix times x and y (and z, for a 3D series), about the centre below. With offsets adds the last column afterwards. Untick 'Centre on the data' and set the centre to 0 for the matrix exactly as written."
-msgstr "Cada nueva coordenada es su fila de la matriz multiplicada por x e y (y z, para una serie 3D), alrededor del centro de abajo. Con compensaciones añade la última columna después. Desmarque 'Centrar en los datos' y establezca el centro en 0 para la matriz exactamente como está escrita."
+msgid "Each of the last values forecast one step ahead from only the values before it, the model refitted each time; its errors beside those of the naive forecast (the last value). Below 1 relative to naive: the model forecasts better than it."
+msgstr "Cada uno de los últimos valores pronosticados un paso por delante de solo los valores anteriores, el modelo se reacomoda cada vez; sus errores junto a los del pronóstico ingenuo (el último valor). Por debajo de 1 en relación con ingenuo: el modelo pronostica mejor que él."
 
 msgid "Each of {count} series fitted separately"
 msgstr "Cada una de las series {count} se instala por separado"
@@ -1401,9 +1365,6 @@ msgstr "Cada parámetro con su valor: a=1, b=2. x, y y z son las coordenadas."
 
 msgid "Each point is one sample of the {series} series, placed so that samples alike are near each other. Read the groups and the paths the points draw: the axes have no unit, and far-apart distances say little."
 msgstr "Cada punto es una muestra de la serie {series}, colocada de modo que las muestras estén cerca unas de otras. Lee los grupos y los caminos que dibujan los puntos: los ejes no tienen unidad y las distancias lejanas dicen poco."
-
-msgid "Each role needs a column of its own."
-msgstr "Cada rol necesita una columna propia."
 
 msgid "Each row's origin: Both, Left only or Right only."
 msgstr "Origen de cada fila: ambos, solo izquierda o solo derecha."
@@ -1642,9 +1603,6 @@ msgstr "Tasa de falsos positivos"
 msgid "Family"
 msgstr "Familia"
 
-msgid "Field"
-msgstr "Campo"
-
 msgid "Figure"
 msgstr "Figura"
 
@@ -1741,6 +1699,9 @@ msgstr "Ajuste Y por X"
 msgid "Fit all ~100 continuous distributions instead of the 15 common ones. Considerably slower - seconds per refresh - and many of the extra candidates fit no real measurement."
 msgstr "Ajustar todas las distribuciones continuas de ~100 en lugar de las 15 comunes. Considerablemente más lento, segundos por actualización, y muchos de los candidatos adicionales no se ajustan a ninguna medida real."
 
+msgid "Fit by number of trees"
+msgstr "Ajuste por número de árboles"
+
 msgid "Fit data models"
 msgstr "Ajustar modelos de datos"
 
@@ -1773,6 +1734,12 @@ msgstr "Tamaño de fuente"
 
 msgid "For data copied one series per row: the clipboard is read with rows and columns exchanged."
 msgstr "Para los datos copiados una serie por fila: el portapapeles se lee con filas y columnas intercambiadas."
+
+msgid "Forecast"
+msgstr "Pronóstico"
+
+msgid "Forecast periods"
+msgstr "Períodos de previsión"
 
 msgid "Forget a saved template"
 msgstr "Olvidar una plantilla guardada"
@@ -1843,6 +1810,9 @@ msgstr "Espacio entre ejes compartidos uno al lado del otro. 0 los dibuja al ras
 msgid "Gap between shared axes stacked one above the other. 0 draws them flush."
 msgstr "Espacio entre ejes compartidos apilados uno encima del otro. 0 los dibuja al ras."
 
+msgid "Gaussian process regression with an uncertainty band"
+msgstr "Regresión del proceso gaussiano con una banda de incertidumbre"
+
 msgid "Generated data"
 msgstr "Datos generados"
 
@@ -1851,12 +1821,6 @@ msgstr "Esquema de tabla generado"
 
 msgid "Generated tables"
 msgstr "Cuadros generados"
-
-msgid "GitHub Copilot"
-msgstr "Copiloto de GitHub"
-
-msgid "GitHub Copilot's models through GitHub Models, with a GitHub token - or any OpenAI-compatible chat endpoint."
-msgstr "Modelos de GitHub Copilot a través de modelos de GitHub, con un token de GitHub, o cualquier punto final de chat compatible con OpenAI."
 
 msgid "Give X, Y and Z this coordinate's grid and ticks."
 msgstr "Dale a X, Y y Z la cuadrícula y las marcas de esta coordenada."
@@ -1878,6 +1842,9 @@ msgstr "Global: un ajuste de todas las series marcadas, con los parámetros sele
 
 msgid "Goodness of fit"
 msgstr "Bondad de ajuste"
+
+msgid "Granger causality (VAR)"
+msgstr "Causalidad de Granger (VAR)"
 
 msgid "Graph"
 msgstr "Gráfico"
@@ -1905,6 +1872,9 @@ msgstr "Comparación de grupos (ANOVA)"
 
 msgid "Groups"
 msgstr "Grupos"
+
+msgid "Grow the tree"
+msgstr "Cultiva el árbol"
 
 msgid "Guess starting parameters"
 msgstr "Adivina los parámetros de inicio"
@@ -1944,6 +1914,9 @@ msgstr "Ayúdame a elegir"
 
 msgid "Help me choose…"
 msgstr "Ayúdame a elegir..."
+
+msgid "Here it follows {measure} one step behind: the model predicts little beyond the last value. A model that fits better (ARIMA chosen by AIC, a season) brings it onto the data."
+msgstr "Aquí sigue {measure} un paso por detrás: el modelo predice poco más allá del último valor. Un modelo que se ajusta mejor (ARIMA elegido por AIC, una temporada) lo trae a los datos."
 
 msgid "Hide"
 msgstr "Ocultar"
@@ -2029,6 +2002,9 @@ msgstr "Cómo se pondera un residuo grande. Los mínimos cuadrados confían en c
 msgid "How densely to sample."
 msgstr "Qué tan densamente muestrear."
 
+msgid "How far back the autocorrelations look."
+msgstr "Qué tan atrás se ven las autocorrelaciones."
+
 msgid "How finely the mapping is estimated. Clipped to the number of points in the series when the series is shorter than this."
 msgstr "Con qué precisión se estima el mapeo. Recortado al número de puntos de la serie cuando la serie es más corta que esto."
 
@@ -2047,6 +2023,15 @@ msgstr "¿Cuántos marcos permanecen en pantalla, el actual incluido"
 msgid "How many of the analyses opened last the navigation bar lists under Recent; 0 hides the section."
 msgstr "Cuántos de los análisis se abrieron por última vez en las listas de la barra de navegación en Reciente; 0 oculta la sección."
 
+msgid "How many past errors the next value depends on: the lags where the ACF stands out."
+msgstr "De cuántos errores pasados depende el siguiente valor: los retrasos donde se destaca el ACF."
+
+msgid "How many past seasons' errors the next value depends on."
+msgstr "De cuántos errores de temporadas pasadas depende el siguiente valor."
+
+msgid "How many past values the next depends on: the lags where the PACF stands out."
+msgstr "De cuántos valores pasados depende el siguiente: los rezagos donde se destaca el PACF."
+
 msgid "How many points the fitted curve is drawn with, evenly spaced; 0 draws it only at the data's x."
 msgstr "Con cuántos puntos se dibuja la curva ajustada, espaciada uniformemente; 0 la dibuja solo en la x de los datos."
 
@@ -2056,38 +2041,23 @@ msgstr "Cuántos subconjuntos aleatorios intenta RANSAC antes de mantener el mej
 msgid "How many rows of a table the assistant may send as an example."
 msgstr "Cuántas filas de una tabla puede enviar el asistente como ejemplo."
 
+msgid "How many times ahead to forecast."
+msgstr "Cuántas veces por delante pronosticar."
+
+msgid "How many times the rows are split: one fewer than the leaves. For a Boosted Tree, the splits of each tree."
+msgstr "Cuántas veces se dividen las filas: una menos que las hojas. Para un árbol potenciado, las divisiones de cada árbol."
+
+msgid "How many trees a Bootstrap Forest or a Boosted Tree grows."
+msgstr "Cuántos árboles crece un Bosque Bootstrap o un Árbol Boosted."
+
 msgid "How much each boosting stage corrects the previous one."
 msgstr "Hasta qué punto cada etapa de refuerzo corrige la anterior."
 
 msgid "How much each point counts. Relative: each residual divided by its value, for data spanning orders of magnitude. Error bars: each residual divided by the series' yerr column - its points' own errors - so a precise point counts more."
 msgstr "Cuánto cuenta cada punto. Relativo: cada residuo dividido por su valor, para datos que abarcan órdenes de magnitud. Barras de error: cada residuo dividido por la columna yerr de la serie, los propios errores de sus puntos, por lo que un punto preciso cuenta más."
 
-msgid "How much of x goes into the new x."
-msgstr "Cuánto de x va en la nueva x."
-
-msgid "How much of x goes into the new y."
-msgstr "Cuánto de x entra en la nueva y."
-
-msgid "How much of x goes into the new z."
-msgstr "Cuánto de x entra en la nueva z."
-
-msgid "How much of y goes into the new x."
-msgstr "Cuánto de y entra en la nueva x."
-
-msgid "How much of y goes into the new y."
-msgstr "Cuánto de y entra en la nueva y."
-
-msgid "How much of y goes into the new z."
-msgstr "Cuánto de y entra en la nueva z."
-
-msgid "How much of z goes into the new x."
-msgstr "Cuánto de z va en la nueva x."
-
-msgid "How much of z goes into the new y."
-msgstr "Cuánto de z entra en la nueva y."
-
-msgid "How much of z goes into the new z."
-msgstr "Cuánto de z entra en la nueva z."
+msgid "How much the {measure} drops when a column is shuffled, on the {rows} rows - for any model, the forest and the boosted tree included."
+msgstr "Cuánto cae el {measure} cuando se baraja una columna, en las {rows} filas, para cualquier modelo, el bosque y el árbol potenciado incluidos."
 
 msgid "How the analyses take the column: as measurements (continuous), ordered levels (ordinal) or categories (nominal). Forced here, it is the column's type in every analysis."
 msgstr "Cómo los análisis toman la columna: como mediciones (continuas), niveles ordenados (ordinales) o categorías (nominales). Forzado aquí, es el tipo de columna en cada análisis."
@@ -2149,6 +2119,9 @@ msgstr "Importar función"
 msgid "Import..."
 msgstr "Importar..."
 
+msgid "Importance"
+msgstr "Importancia"
+
 msgid "In"
 msgstr "En"
 
@@ -2182,15 +2155,6 @@ msgstr "Valores iniciales actualizados."
 msgid "Inner: matched rows only"
 msgstr "Interior: solo filas coincidentes"
 
-msgid "Install the libraries"
-msgstr "Instalar las bibliotecas"
-
-msgid "Installed: {names}."
-msgstr "Instaladas: {names}."
-
-msgid "Installing {names}…"
-msgstr "Instalando {names}…"
-
 msgid "Instantaneous frequency"
 msgstr "Frecuencia instantánea"
 
@@ -2208,6 +2172,12 @@ msgstr "Intervalo"
 
 msgid "Intervals [a, b)"
 msgstr "Intervalos [a, b)"
+
+msgid "Intervention"
+msgstr "Intervención"
+
+msgid "Intervention at"
+msgstr "Intervención en"
 
 msgid "Invert"
 msgstr "Invertir"
@@ -2239,9 +2209,6 @@ msgstr "¿ {measure} es normal?"
 msgid "Its arguments are the parameters only: x and y are given, not passed."
 msgstr "Sus argumentos son solo los parámetros: x e y se dan, no se pasan."
 
-msgid "Its curl, coloured by its size"
-msgstr "Su rizo, coloreado por su tamaño"
-
 msgid "Its histogram, quantiles and fitted distributions: Distribution of {measure}"
 msgstr "Su histograma, cuantiles y distribuciones ajustadas: Distribución de {measure}"
 
@@ -2250,6 +2217,9 @@ msgstr "Su tendencia, temporada y previsión: Serie temporal de {measure}"
 
 msgid "Its width at half that height is {width} in x: the span to integrate for its area (Calculus)."
 msgstr "Su anchura a la mitad de esa altura es {width} en x: el lazo para integrarse para su área (Calculus)."
+
+msgid "JMP documentation"
+msgstr "Documentación JMP"
 
 msgid "JMP documentation:"
 msgstr "Documentación de JMP:"
@@ -2293,6 +2263,9 @@ msgstr "Guardado por el llavero del sistema en este ordenador, nunca en un archi
 msgid "Kept with the figure in the project, and printed under it in reports."
 msgstr "Se mantiene con la figura en el proyecto, y se imprime debajo de ella en los informes."
 
+msgid "Kernel"
+msgstr "Núcleo"
+
 msgid "Kind"
 msgstr "Tipo"
 
@@ -2335,11 +2308,20 @@ msgstr "Etiquetas"
 msgid "Lack of fit"
 msgstr "Falta de ajuste"
 
+msgid "Lag"
+msgstr "Retraso"
+
+msgid "Lags"
+msgstr "Retrasos"
+
 msgid "Language"
 msgstr "Idioma"
 
 msgid "Lasso drops the terms that do not help, Ridge shrinks them all, Elastic Net mixes the two; the strength is chosen by cross-validation."
 msgstr "Lazo elimina los términos que no ayudan, Ridge los reduce a todos, Elastic Net mezcla los dos; la fuerza se elige mediante validación cruzada."
+
+msgid "Later"
+msgstr "Más tarde"
 
 msgid "Latin hypercube"
 msgstr "Hipercubo latino"
@@ -2349,6 +2331,15 @@ msgstr "Coloque los ejes como un mosaico: una letra por celda, A el primer eje, 
 
 msgid "Layout"
 msgstr "- ¿Qué?"
+
+msgid "Leaf"
+msgstr "Hoja"
+
+msgid "Leaf report"
+msgstr "Informe Leaf"
+
+msgid "Leaf {leaf}"
+msgstr "Hoja {leaf}"
 
 msgid "Learning rate"
 msgstr "Tasa de aprendizaje"
@@ -2365,6 +2356,9 @@ msgstr "Omita los valores entre dos extremos - 10, 90 - para que los dos lados l
 msgid "Leave the selected rows out of every chart and analysis (Hide = 1); they stay in the table, greyed."
 msgstr "Deje las filas seleccionadas fuera de cada gráfico y análisis (Ocultar = 1); permanecen en la tabla, en gris."
 
+msgid "Leaves"
+msgstr "Hojas"
+
 msgid "Left"
 msgstr "Izquierda"
 
@@ -2376,6 +2370,9 @@ msgstr "Leyenda"
 
 msgid "Length"
 msgstr "Longitud"
+
+msgid "Length scale"
+msgstr "Escala de longitud"
 
 msgid "Less"
 msgstr "Menos"
@@ -2551,9 +2548,6 @@ msgstr "Editor de estilos de Matplotlib"
 msgid "Matplotlib default"
 msgstr "Matplotlib predeterminado"
 
-msgid "Matrix"
-msgstr "Matriz"
-
 msgid "Max"
 msgstr "Máx."
 
@@ -2638,17 +2632,14 @@ msgstr "Minimizar"
 msgid "Minimum"
 msgstr "Mínimo"
 
+msgid "Minimum leaf size"
+msgstr "Tamaño mínimo de la hoja"
+
 msgid "Minimum stopband attenuation, in dB (Chebyshev II / Elliptic)."
 msgstr "Atenuación mínima de la banda de parada, en dB (Chebyshev II / Elíptica)."
 
 msgid "Minor"
 msgstr "Menor"
-
-msgid "Mirror across"
-msgstr "Espejo a través de"
-
-msgid "Mirror line"
-msgstr "Línea de espejo"
 
 msgid "Misclassification {percent}%: the model puts {count} of {rows} rows in another group than their own. These are the rows it was fitted to: on new rows it usually does a little worse."
 msgstr "Clasificación errónea {percent}%: el modelo coloca {count} de {rows} filas en otro grupo que no sea el suyo. Estas son las filas en las que se instaló: en las filas nuevas suele ir un poco peor."
@@ -2671,6 +2662,9 @@ msgstr "Nombre del modelo"
 msgid "Modelling type"
 msgstr "Tipo de modelado"
 
+msgid "Models tried, best AIC first"
+msgstr "Modelos probados, el mejor AIC primero"
+
 msgid "Modify stored function"
 msgstr "Modificar función almacenada"
 
@@ -2692,20 +2686,8 @@ msgstr "Más..."
 msgid "Mosaic"
 msgstr "Mosaico"
 
-msgid "Motion"
-msgstr "Movimiento"
-
 msgid "Move annotation"
 msgstr "Mover anotación"
-
-msgid "Move x by"
-msgstr "Mover x por"
-
-msgid "Move y by"
-msgstr "Mover y por"
-
-msgid "Move z by"
-msgstr "Mover z por"
 
 msgid "Multi-peak builder"
 msgstr "Constructor de picos múltiples"
@@ -2908,6 +2890,9 @@ msgstr "Aún no se ha guardado ninguna plantilla."
 msgid "No template saved yet: save one from a figure first."
 msgstr "No se guarda plantilla todavía: guardar uno de una figura primero."
 
+msgid "Noise level"
+msgstr "Nivel de ruido"
+
 msgid "None"
 msgstr "Ninguno"
 
@@ -3007,9 +2992,6 @@ msgstr "Coeficiente de probabilidades"
 msgid "Of"
 msgstr "De"
 
-msgid "Offset"
-msgstr "Offset"
-
 msgid "Ollama"
 msgstr "Ollama"
 
@@ -3022,6 +3004,9 @@ msgstr "Un eje por valor de esta columna - uno por especie, por lote, por sitio 
 msgid "One character (for example ★ ♣ A), drawn with the font shipped with the app so it looks the same everywhere;\nor matplotlib's mathtext, for example $\\clubsuit$;\nor (sides, style, angle) - style 0 a polygon, 1 a star, 2 an asterisk - for example (5, 1, 0)"
 msgstr "Un personaje (por ejemplo ★ ♣ A), dibujado con la fuente enviada con la aplicación por lo que se ve igual en todas partes;\no mathtext de matplotlib, por ejemplo $\\clubsuit$;\no (lados, estilo, ángulo) - estilo 0 un polígono, 1 estrella, 2 un asterisco - por ejemplo (5, 1, 0)"
 
+msgid "One more split: the one that best separates the response."
+msgstr "Una división más: la que mejor separa la respuesta."
+
 msgid "One report per column: continuous, or the groups."
 msgstr "Un informe por columna: continuo, o los grupos."
 
@@ -3030,6 +3015,9 @@ msgstr "Una fila por combinación distinta. Ninguno comprobado: una fila de tota
 
 msgid "One series at a time: the histogram, quantiles, moments and normality tests."
 msgstr "Una serie a la vez: las pruebas de histograma, quantiles, momentos y normalidad."
+
+msgid "One tree you can read; a Bootstrap Forest (many trees on resampled rows, averaged); or a Boosted Tree (many small trees, each correcting the ones before)."
+msgstr "Un árbol que se puede leer; un bosque de botstrap (muchos árboles en filas remuestradas, promedio); o un árbol picado (muchos árboles pequeños, cada uno corregiendo los anteriores)."
 
 msgid "One value at a time, every value up to the frame's, or the last few"
 msgstr "Un valor a la vez, cada valor hasta el cuadro, o los últimos pocos"
@@ -3070,9 +3058,6 @@ msgstr "Base de datos abierta"
 msgid "Open documentation for the selected method."
 msgstr "Documentación abierta para el método seleccionado."
 
-msgid "Open folder"
-msgstr "Abrir carpeta"
-
 msgid "Open recent"
 msgstr "Abierto recientemente"
 
@@ -3106,11 +3091,14 @@ msgstr "Opcional descripción"
 msgid "Optional range as 'start, stop'. Empty = data range plus Extend."
 msgstr "Rango opcional como 'start, stop'. Vacío = rango de datos más Extender."
 
-msgid "Optional: the field's z component, with Z."
-msgstr "Opcional: componente z del campo, con Z."
+msgid "Optional: 1 (or Validation) on the rows kept out of the fit, to judge it."
+msgstr "Opcional: 1 (o Validación) en las filas mantenidas fuera del ajuste, para juzgarlo."
 
-msgid "Optional: the nodes' z, for a field in space."
-msgstr "Opcional: la z de los nodos, para un campo en el espacio."
+msgid "Optional: another series measured at the same times - the cross-correlation says whether it leads or follows Y, and by how much."
+msgstr "Opcional: otra serie medida al mismo tiempo - la Cruz-correlación dice si conduce o sigue Y, y por cuánto."
+
+msgid "Optional: dates, times or a run number. Without it, the rows' order."
+msgstr "Opcional: fechas, tiempos o número de ejecución. Sin ella, la orden de las filas."
 
 msgid "Order"
 msgstr "Orden"
@@ -3175,6 +3163,18 @@ msgstr "Estimaciones de parámetros (unidades codificadas)"
 msgid "Parameters"
 msgstr "Parámetros"
 
+msgid "Partial autocorrelation (PACF)"
+msgstr "Autocorrelación parcial (PACF)"
+
+msgid "Partial dependence on {factor}"
+msgstr "La dependencia parcial de {factor}"
+
+msgid "Partition"
+msgstr "Partición"
+
+msgid "Partition for {response}"
+msgstr "Partición para {response}"
+
 msgid "Passband ripple, in dB (Chebyshev I / Elliptic)."
 msgstr "Banda de pascua, en dB (Chebyshev I / Elliptic)."
 
@@ -3201,6 +3201,9 @@ msgstr "Peaks"
 
 msgid "Pearson chi-squared"
 msgstr "Pearson chi-squared"
+
+msgid "Permutation importance"
+msgstr "Importancia de la permutación"
 
 msgid "Personality"
 msgstr "Personalidad"
@@ -3283,6 +3286,12 @@ msgstr "Predecir con un modelo guardado"
 msgid "Predict with a saved model…"
 msgstr "Predecir con un modelo guardado…"
 
+msgid "Predicted"
+msgstr "Predicted"
+
+msgid "Predicted is each value forecast one step ahead from the ones before it, as JMP's Predicted; the Residual is the value minus it."
+msgstr "Predecidos es cada valor pronostica un paso adelante de los anteriores, como el Predicto de JMP; el Residual es el valor menos él."
+
 msgid "Prediction interval ({level}%)"
 msgstr "Intervalo de predicción ({level}%)"
 
@@ -3292,11 +3301,11 @@ msgstr "Perfil de predicción"
 msgid "Prediction profiler"
 msgstr "Perfilador de predicción"
 
+msgid "Predictive and Specialized Modeling"
+msgstr "Modelado predictivo y especializado"
+
 msgid "Preset"
 msgstr "Preset"
-
-msgid "Press Preview to see where the points move."
-msgstr "Presione Vista previa para ver dónde se mueven los puntos."
 
 msgid "Preview"
 msgstr "Vista previa"
@@ -3324,6 +3333,9 @@ msgstr "Vista previa: los outliers de la serie {count} están ocultos."
 
 msgid "Previous axis"
 msgstr "Eje anterior"
+
+msgid "Prewhitened CCF"
+msgstr "CCF preblanco"
 
 msgid "Prob > D"
 msgstr "Prob √≥ D"
@@ -3358,6 +3370,12 @@ msgstr "Propiedad"
 msgid "Provider"
 msgstr "Proveedor"
 
+msgid "Prune"
+msgstr "Prune"
+
+msgid "Pulse (one time)"
+msgstr "Pulso (una vez)"
+
 msgid "Put the result in f_numeric and return it."
 msgstr "Pon el resultado en f_numeric y devuélvelo."
 
@@ -3369,9 +3387,6 @@ msgstr "Parcela Q-Q"
 
 msgid "Quantiles"
 msgstr "Quantiles"
-
-msgid "Quantity"
-msgstr "Cantidad"
 
 msgid "Query"
 msgstr "Query"
@@ -3396,6 +3411,9 @@ msgstr "Curva ROC"
 
 msgid "Random order"
 msgstr "Orden aleatoria"
+
+msgid "Random seed"
+msgstr "Semillas aleatorias"
 
 msgid "Random within strata"
 msgstr "El azar dentro de los estratos"
@@ -3547,6 +3565,9 @@ msgstr "Informe escrito: {path}"
 msgid "Reports"
 msgstr "Informes"
 
+msgid "Reports the Durbin-Watson diagnostic for lag-one residual correlation. Values near 2 indicate little lag-one correlation; no generic p-value is reported."
+msgstr "Informa el diagnóstico de Durbin-Watson para la correlación residual de lag-one. Los valores cercanos a 2 indican una correlación de lag-one poco; no se reporta un valor p genérico."
+
 msgid "Rescale or reshape a series' distribution"
 msgstr "Reconstruir o remodelar la distribución de una serie"
 
@@ -3561,6 +3582,9 @@ msgstr "Residual by predicted"
 
 msgid "Residual diagnostics"
 msgstr "Diagnóstico residual"
+
+msgid "Residual randomness and independence"
+msgstr "Aleatoriedad y independencia residuales"
 
 msgid "Residual sum of squares: {cost}"
 msgstr "Residual sum of squares: {cost}"
@@ -3594,6 +3618,9 @@ msgstr "La respuesta {number} no tiene nombre."
 
 msgid "Responses"
 msgstr "Respuestas"
+
+msgid "Restart now"
+msgstr "Reiniciar ahora"
 
 msgid "Restore the table?"
 msgstr "¿Restorear la mesa?"
@@ -3640,20 +3667,14 @@ msgstr "Funciones"
 msgid "Rolling window size, in points, used to compute the local median."
 msgstr "El tamaño de la ventana, en puntos, se utiliza para calcular la mediana local."
 
-msgid "Rotate, move, scale or mirror a series' coordinates"
-msgstr "Girar, mover, escalar o reflejar las coordenadas de una serie"
+msgid "Rolling-origin validation"
+msgstr "Validación de origen rodante"
+
+msgid "Rolling-origin validation, one step ahead"
+msgstr "Validación de origen rodante, un paso adelante"
 
 msgid "Rotation"
 msgstr "Rotación"
-
-msgid "Rotation x (°)"
-msgstr "Rotación x (°)"
-
-msgid "Rotation y (°)"
-msgstr "Rotación y (°)"
-
-msgid "Rotation z (°)"
-msgstr "Rotación z (°)"
 
 msgid "Row"
 msgstr "Fila"
@@ -3678,6 +3699,9 @@ msgstr "Las filas marcadas Hide se dejan fuera a menos que esto sea revisado, ya
 
 msgid "Rows × columns"
 msgstr "Rows × columns"
+
+msgid "Rows, by leaf"
+msgstr "Filas, por hoja"
 
 msgid "Rows: {ra} added, {rr} removed, {rm} modified  ·  Columns: {ca} added, {cr} removed, {cm} modified"
 msgstr "Filas: {ra} añadido, {rr} removido, {rm} modificado · Columnas: {ca} añadido, {cr} removido, {cm} modificado"
@@ -3862,15 +3886,6 @@ msgstr "Escala y rango"
 msgid "Scale by the IQR"
 msgstr "Escala por el IQR"
 
-msgid "Scale x by"
-msgstr "Escala x por"
-
-msgid "Scale y by"
-msgstr "Scale y by"
-
-msgid "Scale z by"
-msgstr "Scale z by"
-
 msgid "Scatter Plot"
 msgstr "Scatter Plot"
 
@@ -3888,6 +3903,21 @@ msgstr "Propiedades de búsqueda..."
 
 msgid "Search…"
 msgstr "Buscar..."
+
+msgid "Season ({n}) and remainder"
+msgstr "Estación ({n}) y resto"
+
+msgid "Season length"
+msgstr "Longitud de la temporada"
+
+msgid "Seasonal D"
+msgstr "Seasonal D"
+
+msgid "Seasonal P"
+msgstr "Estacional P"
+
+msgid "Seasonal Q"
+msgstr "Seasonal Q"
 
 msgid "Second cutoff"
 msgstr "Segundo corte"
@@ -4006,15 +4036,6 @@ msgstr "Compartir el rango {axis} con los otros ejes que lo comparten."
 msgid "Shared"
 msgstr "Compartido"
 
-msgid "Shear"
-msgstr "Shear"
-
-msgid "Shear x per y"
-msgstr "Shear x per y"
-
-msgid "Shear y per x"
-msgstr "Oído por x"
-
 msgid "Sheet"
 msgstr "Sheet"
 
@@ -4027,9 +4048,6 @@ msgstr "Mostrar tablas de datos"
 msgid "Show generated tables"
 msgstr "Mostrar tablas generadas"
 
-msgid "Show grid"
-msgstr "Mostrar cuadrícula"
-
 msgid "Show in legend"
 msgstr "Mostrar en la leyenda"
 
@@ -4041,6 +4059,18 @@ msgstr "Mostrar sólo las filas seleccionadas de '{table}"
 
 msgid "Show only the Selected rows on the charts"
 msgstr "Mostrar sólo las filas seleccionadas en las tablas"
+
+msgid "Show residual Durbin-Watson statistic"
+msgstr "Mostrar estadística residual de Durbin-Watson"
+
+msgid "Show residual Ljung-Box tests"
+msgstr "Mostrar las pruebas residuales de Ljung-Box"
+
+msgid "Show residual runs test"
+msgstr "Mostrar la prueba de carreras residuales"
+
+msgid "Show residual turning-point test"
+msgstr "Mostrar la prueba de punto de giro residual"
 
 msgid "Show selected rows"
 msgstr "Mostrar filas seleccionadas"
@@ -4138,11 +4168,23 @@ msgstr "Spline k"
 msgid "Spline smoothing"
 msgstr "Aislamiento de espacias"
 
+msgid "Split"
+msgstr "Dividir"
+
 msgid "Split by"
 msgstr "Dividido por"
 
+msgid "Split history"
+msgstr "Historias divididas"
+
 msgid "Split the series into one per value of this column - one per species, per batch, per site - each with its own colour and legend entry. The columns the chart already uses are not offered."
 msgstr "Dividir la serie en uno por valor de esta columna - uno por especie, por lote, por sitio - cada uno con su propio color y entrada de leyenda. Las columnas que el gráfico ya utiliza no se ofrecen."
+
+msgid "Split while the validation rows say the tree predicts better."
+msgstr "Dividir mientras las filas de validación dicen que el árbol predice mejor."
+
+msgid "Splits"
+msgstr "Dividencias"
 
 msgid "Spreadsheets and text"
 msgstr "hojas de cálculo y texto"
@@ -4171,6 +4213,15 @@ msgstr "Inicio del rango de y para z = f(x, y)."
 msgid "Start params"
 msgstr "Comience params"
 
+msgid "Starting guess for how quickly the fit can vary with x. Re-optimized automatically while fitting - a starting point, not a fixed choice."
+msgstr "Empieza a adivinar por lo rápido que el ajuste puede variar con x. Re-optimizado automáticamente mientras se ajusta - un punto de partida, no una opción fija."
+
+msgid "Starting guess for the observation noise variance, added to the kernel. Also re-optimized while fitting."
+msgstr "Empezar conjetura para la varianza de ruido de observación, añadido al núcleo. También re-optimizado mientras se ajusta."
+
+msgid "Stationarity tests"
+msgstr "Pruebas de estabilidad"
+
 msgid "Statistic"
 msgstr "Estadística"
 
@@ -4194,6 +4245,9 @@ msgstr "Error Std."
 
 msgid "Step"
 msgstr "Paso"
+
+msgid "Step (lasting)"
+msgstr "Paso (última)"
 
 msgid "Step size used by integer/fixed-step spacing."
 msgstr "Tamaño del paso utilizado por el espaciamiento del paso entero/fijo."
@@ -4300,6 +4354,12 @@ msgstr "Prueba"
 msgid "Test matrix preview"
 msgstr "Previsualización de la matriz de prueba"
 
+msgid "Tests whether residual autocorrelations through the selected lags are jointly zero."
+msgstr "Pruebas si las autocorreaciones residuales a través de los lags seleccionados son conjuntamente cero."
+
+msgid "Tests whether the number of local peaks and troughs in the residuals is consistent with a random sequence."
+msgstr "Prueba si el número de picos y tros locales en los residuos es consistente con una secuencia aleatoria."
+
 msgid "That is {share}% of what was measured: the peaks' areas are read from the rest. A baseline that rises into a peak takes part of it too."
 msgstr "Eso es {share}% de lo que se midió: las áreas de los picos son leídas del resto. Una línea de base que se eleva en un pico también toma parte de ella."
 
@@ -4372,6 +4432,9 @@ msgstr "La columna la operación lee como x; el número de fila cuando no hay ni
 msgid "The column the others might explain or predict."
 msgstr "La columna que los demás podrían explicar o predecir."
 
+msgid "The column to predict: continuous gives a regression tree, nominal a classification tree."
+msgstr "La columna para predecir: continua da un árbol de regresión, nominal un árbol de clasificación."
+
 msgid "The column whose values name the groups of rows that may be correlated."
 msgstr "La columna cuyos valores llaman los grupos de filas que pueden ser correlacionados."
 
@@ -4380,6 +4443,9 @@ msgstr "Las columnas se dibujan como un gráfico propio, que la operación luego
 
 msgid "The columns that might drive it."
 msgstr "Las columnas que podrían conducirlo."
+
+msgid "The columns the tree may split on."
+msgstr "Las columnas del árbol pueden dividirse."
 
 msgid "The columns to model: one model each."
 msgstr "Las columnas a modelar: un modelo cada una."
@@ -4411,14 +4477,8 @@ msgstr "La distribución en la que se mapean los valores transformados."
 msgid "The factors, most impact first"
 msgstr "Los factores, la mayoría de los impactos primero"
 
-msgid "The field's x component."
-msgstr "El componente x del campo."
-
-msgid "The field's y component."
-msgstr "El componente y del campo."
-
-msgid "The field, coloured by its divergence"
-msgstr "El campo, coloreado por su divergencia"
+msgid "The fewest rows a leaf may hold."
+msgstr "Las filas más pequeñas que una hoja puede contener."
 
 msgid "The figure's style - Browse… chooses another"
 msgstr "El estilo de la figura - Navega... elige otro"
@@ -4434,12 +4494,6 @@ msgstr "Los primeros {count} componente(s) llevan {percent}% de la variación de
 
 msgid "The first {count} components carry {percent}% of the variation of the {columns} columns: a scatter of them shows most of what the columns hold. An eigenvalue above 1 - more than one column's worth - is the usual line for a component worth keeping: {kept} here."
 msgstr "Los primeros {count} componentes llevan {percent}% de la variación de las columnas {columns}: una dispersión de ellos muestra la mayor parte de lo que las columnas sostienen. Un eigenvalue por encima de 1 - más de un valor de columna - es la línea habitual para un componente que vale la pena mantener: {kept} aquí."
-
-msgid "The fixed point's z."
-msgstr "El punto fijo es z."
-
-msgid "The fixed point. Rotation, scaling, mirroring and shearing all leave this point exactly where it is; a translation ignores it."
-msgstr "El punto fijo. La rotación, el escalado, el espejo y el esquilar todos dejan este punto exactamente donde está; una traducción lo ignora."
 
 msgid "The formula for every chart of the function; the values and the range for this series."
 msgstr "La fórmula para cada gráfico de la función; los valores y el rango de esta serie."
@@ -4465,9 +4519,6 @@ msgstr "El intervalo sale 0, por lo que el cambio se llama real."
 msgid "The key works: {provider} answered."
 msgstr "Las obras clave: {provider} respondió."
 
-msgid "The line to reflect in, through the centre below. In 3D, z is left alone."
-msgstr "La línea para reflexionar, a través del centro de abajo. En 3D, z se deja solo."
-
 msgid "The linear region around zero of a symlog scale."
 msgstr "La región lineal alrededor de cero de una escala de symlog."
 
@@ -4477,8 +4528,8 @@ msgstr "El archivo de registro se vacía cada vez que comienza la aplicación, p
 msgid "The log was cleared."
 msgstr "El registro fue despejado."
 
-msgid "The model built into macOS (Apple Intelligence): no key, and nothing leaves the computer."
-msgstr "El modelo incorporado en macOS (Apple Intelligence): ninguna llave, y nada deja el ordenador."
+msgid "The measure, one value per time."
+msgstr "La medida, un valor por vez."
 
 msgid "The model has no effects: select columns and press Add."
 msgstr "El modelo no tiene efectos: seleccionar columnas y presionar Add."
@@ -4498,12 +4549,6 @@ msgstr "El siguiente es menos de 2 sobre él: los dos encajan también."
 msgid "The next is {gap} above it: a clear choice (more than 2, the usual line)."
 msgstr "El siguiente es {gap} sobre él: una opción clara (más de 2, la línea habitual)."
 
-msgid "The nodes' x."
-msgstr "El x de los nodos."
-
-msgid "The nodes' y."
-msgstr "Los nodos' y."
-
 msgid "The numeric columns to run on, one series each."
 msgstr "Las columnas numéricas para correr, una serie cada una."
 
@@ -4515,9 +4560,6 @@ msgstr "La operación se ejecuta en la figura de la que se abrió."
 
 msgid "The operations applied to or from this table"
 msgstr "Las operaciones aplicadas a este cuadro o desde éste"
-
-msgid "The other half of the fixed point."
-msgstr "La otra mitad del punto fijo."
 
 msgid "The parameter of the figure's function that changes from frame to frame"
 msgstr "El parámetro de la función de la figura que cambia de marco a marco"
@@ -4588,6 +4630,9 @@ msgstr "La plantilla no se puede aplicar; vea el registro."
 msgid "The worksheet, or the part of the file to read: a MATLAB variable, a Prism table, a SPICE plot..."
 msgstr "La hoja de trabajo, o la parte del archivo para leer: una variable MATLAB, una tabla Prism, una parcela SPICE..."
 
+msgid "Theme"
+msgstr "Tema"
+
 msgid "These tests read the values in the order they are in. A small p-value says the order is not random: a trend, a cycle or a memory from one value to the next."
 msgstr "Estas pruebas leen los valores en el orden en que están. Un pequeño valor p dice que el orden no es aleatorio: una tendencia, un ciclo o una memoria de un valor a otro."
 
@@ -4654,6 +4699,9 @@ msgstr "Ancho de azul"
 msgid "Time Series"
 msgstr "Series temporales"
 
+msgid "Time or order"
+msgstr "Tiempo o orden"
+
 msgid "Time series"
 msgstr "Series temporales"
 
@@ -4678,8 +4726,14 @@ msgstr "Top"
 msgid "Total"
 msgstr "Total"
 
+msgid "Training"
+msgstr "Capacitación"
+
 msgid "Transpose"
 msgstr "Transpose"
+
+msgid "Tree"
+msgstr "Árbol"
 
 msgid "Trees"
 msgstr "Árboles"
@@ -4747,9 +4801,6 @@ msgstr "Escribe la llave primero."
 msgid "Type what you want to do: \"anova\", \"outliers\", \"peaks\", \"tree\"…"
 msgstr "Escribe lo que quieras hacer: \"anova\", \"outliers\", \"peaks\", \"tree\"..."
 
-msgid "U"
-msgstr "U"
-
 msgid "URL"
 msgstr "URL"
 
@@ -4761,6 +4812,9 @@ msgstr "Bajo el resultado principal de cada informe, dos frases sobre cuáles so
 
 msgid "Undo every change made here and close"
 msgstr "Deshacer todos los cambios hechos aquí y cerrar"
+
+msgid "Undo the last split."
+msgstr "Deshacer la última división."
 
 msgid "Undo: {what}"
 msgstr "Deshacer: {what}"
@@ -4807,9 +4861,6 @@ msgstr "Uso del eje existente"
 msgid "Use latest fitted parameters"
 msgstr "Utilice los últimos parámetros ajustados"
 
-msgid "Use the middle of the series' own extent as the fixed point instead of the values above - which is what is wanted when the intent is 'turn this shape', not 'turn it about the origin'."
-msgstr "Usar el centro de la serie como punto fijo en lugar de los valores anteriores - que es lo que se desea cuando la intención es 'hacer esta forma', no 'volver sobre el origen'."
-
 msgid "User manual and credits"
 msgstr "Manual de usuario y créditos"
 
@@ -4819,11 +4870,14 @@ msgstr "Nombre de usuario"
 msgid "Using y in the body makes it a surface f(x, y)."
 msgstr "Usar y en el cuerpo lo hace una superficie f(x, y)."
 
-msgid "V"
-msgstr "V"
-
 msgid "VIP {value} for {variable}, the most important: how much it weighs in the components, against the average variable's 1. Above 0.8, the usual line, a variable is worth keeping."
 msgstr "VIP {value} para {variable}, el más importante: cuánto pesa en los componentes, contra la variable media 1. Por encima de 0.8, la línea habitual, una variable vale la pena mantener."
+
+msgid "Validation"
+msgstr "Validación"
+
+msgid "Validation share"
+msgstr "Parte de validación"
 
 msgid "Value"
 msgstr "Valor"
@@ -4836,9 +4890,6 @@ msgstr "Valores que significan \"no valor\", separados por comas: se importan co
 
 msgid "Values that stand for \"no value\", separated by commas: filled like the empty cells. Text is matched whatever its case (na is NA); a number by its value (-999 is -999.0). Empty cells - NULL and blank text - are always filled."
 msgstr "Los valores que representan \"no valor\", separados por comas: llenos como las celdas vacías. El texto se combina con cualquier caso (na es NA); un número por su valor (-999 es -999.0). Las células vacías - NULL y texto en blanco - están siempre llenas."
-
-msgid "Vector Field"
-msgstr "Vector Field"
 
 msgid "Version"
 msgstr "Versión"
@@ -4855,8 +4906,8 @@ msgstr "Violin Plot"
 msgid "Visible"
 msgstr "Visible"
 
-msgid "W"
-msgstr "W"
+msgid "Wald-Wolfowitz test of whether positive and negative residuals occur in a random order around zero. Ties at zero are omitted."
+msgstr "Wald-Wolfowitz prueba de si los residuos positivos y negativos ocurren en un orden al azar alrededor de cero."
 
 msgid "Web"
 msgstr "Web"
@@ -4957,6 +5008,9 @@ msgstr "¿Cuál de muchas columnas importa más para un resultado? Los factores 
 msgid "Which one is the result?"
 msgstr "¿Cuál es el resultado?"
 
+msgid "Which rows the validation share draws."
+msgstr "Lo que rema la cuota de validación dibuja."
+
 msgid "Whole table"
 msgstr "Mesa completa"
 
@@ -4974,6 +5028,9 @@ msgstr "Ventana"
 
 msgid "Window size"
 msgstr "Tamaño de ventana"
+
+msgid "With no validation column: this share of rows, at random, judges the tree. 0 for none."
+msgstr "Sin columna de validación: esta parte de filas, al azar, juzga el árbol. 0 para ninguno."
 
 msgid "Without the keyring package the key is read from the environment (ANTHROPIC_API_KEY for Claude)."
 msgstr "Sin el paquete clave se lee la clave del medio ambiente (ANTHROPIC_API_KEY para Claude)."
@@ -5041,6 +5098,12 @@ msgstr "X espaciamiento"
 msgid "X to"
 msgstr "X a"
 
+msgid "X, input"
+msgstr "X, entrada"
+
+msgid "X, input in the model (transfer function)"
+msgstr "X, entrada en el modelo (función de transferencia)"
+
 msgid "Y"
 msgstr "Y..."
 
@@ -5059,6 +5122,9 @@ msgstr "Y puntos"
 msgid "Y to"
 msgstr "Y a"
 
+msgid "Y, time series"
+msgstr "Y, series de tiempo"
+
 msgid "Yeo-Johnson"
 msgstr "Yeo-Johnson"
 
@@ -5076,9 +5142,6 @@ msgstr "Tú."
 
 msgid "Your name, or your group's"
 msgstr "Tu nombre, o tu grupo"
-
-msgid "Z"
-msgstr "Z"
 
 msgid "Z axis: click to edit it"
 msgstr "Z axis: haga clic para editarlo"
@@ -5106,15 +5169,6 @@ msgstr "automático"
 
 msgid "axis {number}"
 msgstr "axis {number}"
-
-msgid "b1"
-msgstr "b1"
-
-msgid "b2"
-msgstr "b2"
-
-msgid "b3"
-msgstr "b3"
 
 msgid "bar"
 msgstr "bar"
@@ -5173,32 +5227,8 @@ msgstr "gran efecto"
 msgid "less than once in 1000"
 msgstr "menos de una vez en 1000"
 
-msgid "m11"
-msgstr "m11"
-
-msgid "m12"
-msgstr "m12"
-
-msgid "m13"
-msgstr "m13"
-
-msgid "m21"
-msgstr "m21"
-
-msgid "m22"
-msgstr "m22"
-
-msgid "m23"
-msgstr "m23"
-
-msgid "m31"
-msgstr "m31"
-
-msgid "m32"
-msgstr "m32"
-
-msgid "m33"
-msgstr "m33"
+msgid "look"
+msgstr "Mira."
 
 msgid "measured"
 msgstr "medida"
@@ -5232,6 +5262,9 @@ msgstr "of of"
 
 msgid "p-value"
 msgstr "p-value"
+
+msgid "packs"
+msgstr "packs"
 
 msgid "pip install keyring to keep it here"
 msgstr "pip instalar llavero para mantenerlo aquí"
@@ -5413,6 +5446,12 @@ msgstr "{factor} afecta {response}"
 msgid "{factor} had no effect on {response}"
 msgstr "{factor} no tuvo efecto en {response}"
 
+msgid "{input}'s past added nothing to forecasting {measure}"
+msgstr "El pasado de {input} no aportó nada a la previsión de {measure}"
+
+msgid "{input}'s past helps forecast {measure} (Granger)"
+msgstr "El pasado de {input} ayuda a pronosticar {measure} (Granger)"
+
 msgid "{label}: {value}"
 msgstr "{label}: {value}"
 
@@ -5428,8 +5467,20 @@ msgstr "{measures} números, {groups} categorías, {times} fechas"
 msgid "{measure} again, grouped by another column"
 msgstr "{measure} de nuevo, agrupado por otra columna"
 
+msgid "{measure} and its forecast"
+msgstr "{measure} y su pronóstico"
+
+msgid "{measure} by number of splits"
+msgstr "{measure} por número de divisiones"
+
+msgid "{measure} by number of trees"
+msgstr "{measure} por número de árboles"
+
 msgid "{measure} by {group}"
 msgstr "{measure} by {group}"
+
+msgid "{measure} comes back to a stable level"
+msgstr "{measure} vuelve a un nivel estable"
 
 msgid "{measure} depends on {group}"
 msgstr "{measure} depende de {group}"
@@ -5455,6 +5506,9 @@ msgstr "{measure} a lo largo del tiempo"
 msgid "{measure} shifted at one point"
 msgstr "{measure} cambió a un punto"
 
+msgid "{measure} wandered with no level to come back to"
+msgstr "{measure} vagaba sin nivel para volver a"
+
 msgid "{measure}: control chart"
 msgstr "{measure}: cuadro de control"
 
@@ -5469,9 +5523,6 @@ msgstr "{model} {tokens_in} fichas en, {tokens_out}"
 
 msgid "{model}: the values are changed, not the rows. Statistics on the new column describe the transformed scale - a mean of logarithms is a geometric mean, not the arithmetic one."
 msgstr "{model}: los valores son cambiados, no las filas. Estadísticas en la nueva columna describen la escala transformada - un medio de logaritmos es un medio geométrico, no el aritmético."
-
-msgid "{names} could not be installed. {why}"
-msgstr "No se ha podido instalar {names}. {why}"
 
 msgid "{names}: needs a value."
 msgstr "{names}: necesita un valor."
@@ -5512,9 +5563,6 @@ msgstr "{name}: '{number}' no es un número."
 msgid "{ndc} distinct categories: the system tells that many groups of parts apart - 5 or more is the usual minimum."
 msgstr "{ndc} categorías distintas: el sistema dice que muchos grupos de partes separadas - 5 o más es el mínimo habitual."
 
-msgid "{n} nodes, {dims}D"
-msgstr "{n} nodos, {dims}D"
-
 msgid "{personality} needs a continuous Y; {columns} is nominal - choose Nominal or Ordinal Logistic."
 msgstr "{personality} necesita una Y continua; {columns} es nominal - elegir la lógica nominal o ordinal."
 
@@ -5535,6 +5583,9 @@ msgstr "{p}: si {null}, un resultado por lo menos este fuerte surgiría por casu
 
 msgid "{response} at {cutoff} (cycles per unit of x): changes on the other side of it are taken out, those on this side pass. Near the cut-off both are only partly kept - a peak there loses some of its height."
 msgstr "{response} en {cutoff} (ciclos por unidad de x): cambios en el otro lado de ella se sacan, los de este paso lateral. Cerca del corte ambos se guardan sólo parcialmente - un pico que pierde parte de su altura."
+
+msgid "{response} by leaf"
+msgstr "{response} por hoja"
 
 msgid "{role} takes {kinds} columns only: {columns}."
 msgstr "{role} toma {kinds} columnas solamente: {columns}."
@@ -5599,11 +5650,329 @@ msgstr "{y} no dependía de {x}"
 msgid "▲ number · ● category · ◐ ordered category · ◷ date"
 msgstr "Número de identificación · ● categoría ·  ⁇"
 
+msgid "1 leaves x alone; 2 doubles it about the centre below."
+msgstr "1 deja x solo; 2 lo dobla alrededor del centro de abajo."
+
+msgid "1 leaves y alone; 2 doubles it about the centre below."
+msgstr "1 lo deja solo; 2 lo dobla sobre el centro de abajo."
+
+msgid "1 leaves z alone; 2 doubles it about the centre below."
+msgstr "1 deja solo a z; 2 lo dobla sobre el centro de abajo."
+
+msgid "A field in space needs both Z and W; a flat one neither."
+msgstr "Un campo en el espacio necesita tanto Z como W; uno plano tampoco."
+
+msgid "A pack switched on or off is applied the next time the app starts."
+msgstr "Un paquete activado o desactivado se aplica la próxima vez que se inicie la aplicación."
+
+msgid "A vector field sampled on a grid: its divergence (where it spreads out or gathers) and its curl (where and how fast it turns), in 2D or 3D."
+msgstr "Un campo vectorial muestreado en una cuadrícula: su divergencia (donde se extiende o se reúne) y su rizo (dónde y qué tan rápido gira), en 2D o 3D."
+
+msgid "Added to every new x, after the matrix."
+msgstr "Añadido a cada nueva x, después de la matriz."
+
+msgid "Added to every new y, after the matrix."
+msgstr "Añadido a cada nueva y, después de la matriz."
+
+msgid "Added to every new z, after the matrix."
+msgstr "Añadido a cada nueva z, después de la matriz."
+
+msgid "Added to every x, after any rotation. Negative moves left."
+msgstr "Añadido a cada x, después de cualquier rotación. Movimientos negativos a la izquierda."
+
+msgid "Added to every y, after any rotation. Negative moves down."
+msgstr "Añadido a cada y, después de cualquier rotación. Los negativos se mueven hacia abajo."
+
+msgid "Added to every z, after any rotation."
+msgstr "Añadido a cada z, después de cualquier rotación."
+
+msgid "Adds this much x for each unit of y above the centre."
+msgstr "Añade esta cantidad de x por cada unidad de y por encima del centro."
+
+msgid "Adds this much y for each unit of x right of the centre."
+msgstr "Añade esta cantidad de y por cada unidad de x a la derecha del centro."
+
+msgid "Angle"
+msgstr "Ángulo"
+
+msgid "Angle (°)"
+msgstr "Ángulo (°)"
+
+msgid "Angles (x, y, z)"
+msgstr "Ángulos (x, y, z)"
+
+msgid "Apple Foundation Models"
+msgstr "Modelos de Apple Foundation"
+
+msgid "Applied first. Positive turns y towards z (right-hand rule)."
+msgstr "Aplicado primero. El positivo gira y hacia z (regla de la derecha)."
+
+msgid "Applied last. Positive turns x towards y - the 2D rotation."
+msgstr "Aplicado en último lugar. El positivo gira x hacia y - la rotación 2D."
+
+msgid "Applied second. Positive turns z towards x."
+msgstr "Segundo aplicado. El positivo gira z hacia x."
+
+msgid "Central differences on the grid (numpy.gradient); one-sided at its edges, where they are less accurate."
+msgstr "Diferencias centrales en la cuadrícula (numpy.gradient); unilaterales en sus bordes, donde son menos precisas."
+
+msgid "Centre"
+msgstr "Centro"
+
+msgid "Centre on the data"
+msgstr "Centrarse en los datos"
+
+msgid "Centre x"
+msgstr "Centro x"
+
+msgid "Centre y"
+msgstr "Centro y"
+
+msgid "Centre z"
+msgstr "Centro z"
+
+msgid "Choose a series, then press Preview."
+msgstr "Elige una serie y, a continuación, pulsa Vista previa."
+
+msgid "Counter-clockwise, about the centre below. The query spells this out as cos(radians(...)) rather than as a decimal, so it can be read and edited afterwards."
+msgstr "En sentido contrario a las agujas del reloj, alrededor del centro de abajo. La consulta lo explica como cos(radianes(...)) en lugar de como un decimal, por lo que se puede leer y editar después."
+
+msgid "Curl"
+msgstr "Curl"
+
+msgid "Curves"
+msgstr "Curvas"
+
+msgid "Delete a pack you added. A pack that came with ChartLibre can only be switched off."
+msgstr "Eliminar un paquete que ha añadido. Un paquete que venía con ChartLibre solo se puede desactivar."
+
+msgid "Divergence"
+msgstr "Divergencia"
+
+msgid "Download and install, into ChartLibre's own Python, the libraries the chosen pack needs. It needs the Internet."
+msgstr "Descargue e instale, en el propio Python de ChartLibre, las bibliotecas que necesita el paquete elegido. Necesita Internet."
+
+msgid "Draws a square mesh (a box in 3D) over the source's extent and the same mesh after the transform. A rotation turns it, a scale stretches it, a shear leans it over - which is easier to read off the mesh than off the points."
+msgstr "Dibuja una malla cuadrada (un cuadro en 3D) sobre la extensión de la fuente y la misma malla después de la transformación. Una rotación lo gira, una escala lo estira, una cizalla lo inclina, lo que es más fácil de leer de la malla que de los puntos."
+
+msgid "Each new coordinate is its row of the matrix times x and y (and z, for a 3D series), about the centre below. With offsets adds the last column afterwards. Untick 'Centre on the data' and set the centre to 0 for the matrix exactly as written."
+msgstr "Cada nueva coordenada es su fila de la matriz multiplicada por x e y (y z, para una serie 3D), alrededor del centro de abajo. Con compensaciones añade la última columna después. Desmarque 'Centrar en los datos' y establezca el centro en 0 para la matriz exactamente como está escrita."
+
+msgid "Each role needs a column of its own."
+msgstr "Cada rol necesita una columna propia."
+
+msgid "Field"
+msgstr "Campo"
+
+msgid "GitHub Copilot"
+msgstr "Copiloto de GitHub"
+
+msgid "GitHub Copilot's models through GitHub Models, with a GitHub token - or any OpenAI-compatible chat endpoint."
+msgstr "Modelos de GitHub Copilot a través de modelos de GitHub, con un token de GitHub, o cualquier punto final de chat compatible con OpenAI."
+
+msgid "How much of x goes into the new x."
+msgstr "Cuánto de x va en la nueva x."
+
+msgid "How much of x goes into the new y."
+msgstr "Cuánto de x entra en la nueva y."
+
+msgid "How much of x goes into the new z."
+msgstr "Cuánto de x entra en la nueva z."
+
+msgid "How much of y goes into the new x."
+msgstr "Cuánto de y entra en la nueva x."
+
+msgid "How much of y goes into the new y."
+msgstr "Cuánto de y entra en la nueva y."
+
+msgid "How much of y goes into the new z."
+msgstr "Cuánto de y entra en la nueva z."
+
+msgid "How much of z goes into the new x."
+msgstr "Cuánto de z va en la nueva x."
+
+msgid "How much of z goes into the new y."
+msgstr "Cuánto de z entra en la nueva y."
+
+msgid "How much of z goes into the new z."
+msgstr "Cuánto de z entra en la nueva z."
+
+msgid "Install the libraries"
+msgstr "Instalar las bibliotecas"
+
+msgid "Installed: {names}."
+msgstr "Instaladas: {names}."
+
+msgid "Installing {names}…"
+msgstr "Instalando {names}…"
+
+msgid "Its curl, coloured by its size"
+msgstr "Su rizo, coloreado por su tamaño"
+
+msgid "Matrix"
+msgstr "Matriz"
+
+msgid "Mirror across"
+msgstr "Espejo a través de"
+
+msgid "Mirror line"
+msgstr "Línea de espejo"
+
+msgid "Motion"
+msgstr "Movimiento"
+
+msgid "Move x by"
+msgstr "Mover x por"
+
+msgid "Move y by"
+msgstr "Mover y por"
+
+msgid "Move z by"
+msgstr "Mover z por"
+
+msgid "Offset"
+msgstr "Offset"
+
+msgid "Open folder"
+msgstr "Abrir carpeta"
+
+msgid "Optional: the field's z component, with Z."
+msgstr "Opcional: componente z del campo, con Z."
+
+msgid "Optional: the nodes' z, for a field in space."
+msgstr "Opcional: la z de los nodos, para un campo en el espacio."
+
+msgid "Press Preview to see where the points move."
+msgstr "Presione Vista previa para ver dónde se mueven los puntos."
+
+msgid "Quantity"
+msgstr "Cantidad"
+
+msgid "Rotate, move, scale or mirror a series' coordinates"
+msgstr "Girar, mover, escalar o reflejar las coordenadas de una serie"
+
+msgid "Rotation x (°)"
+msgstr "Rotación x (°)"
+
+msgid "Rotation y (°)"
+msgstr "Rotación y (°)"
+
+msgid "Rotation z (°)"
+msgstr "Rotación z (°)"
+
+msgid "Scale x by"
+msgstr "Escala x por"
+
+msgid "Scale y by"
+msgstr "Scale y by"
+
+msgid "Scale z by"
+msgstr "Scale z by"
+
+msgid "Shear"
+msgstr "Shear"
+
+msgid "Shear x per y"
+msgstr "Shear x per y"
+
+msgid "Shear y per x"
+msgstr "Oído por x"
+
+msgid "Show grid"
+msgstr "Mostrar cuadrícula"
+
+msgid "The field's x component."
+msgstr "El componente x del campo."
+
+msgid "The field's y component."
+msgstr "El componente y del campo."
+
+msgid "The field, coloured by its divergence"
+msgstr "El campo, coloreado por su divergencia"
+
+msgid "The fixed point's z."
+msgstr "El punto fijo es z."
+
+msgid "The fixed point. Rotation, scaling, mirroring and shearing all leave this point exactly where it is; a translation ignores it."
+msgstr "El punto fijo. La rotación, el escalado, el espejo y el esquilar todos dejan este punto exactamente donde está; una traducción lo ignora."
+
+msgid "The line to reflect in, through the centre below. In 3D, z is left alone."
+msgstr "La línea para reflexionar, a través del centro de abajo. En 3D, z se deja solo."
+
+msgid "The model built into macOS (Apple Intelligence): no key, and nothing leaves the computer."
+msgstr "El modelo incorporado en macOS (Apple Intelligence): ninguna llave, y nada deja el ordenador."
+
+msgid "The nodes' x."
+msgstr "El x de los nodos."
+
+msgid "The nodes' y."
+msgstr "Los nodos' y."
+
+msgid "The other half of the fixed point."
+msgstr "La otra mitad del punto fijo."
+
+msgid "U"
+msgstr "U"
+
+msgid "Use the middle of the series' own extent as the fixed point instead of the values above - which is what is wanted when the intent is 'turn this shape', not 'turn it about the origin'."
+msgstr "Usar el centro de la serie como punto fijo en lugar de los valores anteriores - que es lo que se desea cuando la intención es 'hacer esta forma', no 'volver sobre el origen'."
+
+msgid "V"
+msgstr "V"
+
+msgid "Vector Field"
+msgstr "Vector Field"
+
+msgid "W"
+msgstr "W"
+
+msgid "Z"
+msgstr "Z"
+
+msgid "b1"
+msgstr "b1"
+
+msgid "b2"
+msgstr "b2"
+
+msgid "b3"
+msgstr "b3"
+
+msgid "m11"
+msgstr "m11"
+
+msgid "m12"
+msgstr "m12"
+
+msgid "m13"
+msgstr "m13"
+
+msgid "m21"
+msgstr "m21"
+
+msgid "m22"
+msgstr "m22"
+
+msgid "m23"
+msgstr "m23"
+
+msgid "m31"
+msgstr "m31"
+
+msgid "m32"
+msgstr "m32"
+
+msgid "m33"
+msgstr "m33"
+
+msgid "{names} could not be installed. {why}"
+msgstr "No se ha podido instalar {names}. {why}"
+
+msgid "{n} nodes, {dims}D"
+msgstr "{n} nodos, {dims}D"
+
 msgid "0 chooses them by cross-validation: another component only while it cuts the prediction error by 5% or more."
 msgstr "0 los elige por validación cruzada: otro componente solo mientras reduce el error de predicción en un 5% o más."
-
-msgid "0 finds it from the dates (12 for months, 7 for days, 4 for quarters); 1 means none."
-msgstr "0 lo encuentra a partir de las fechas (12 para meses, 7 para días, 4 para trimestres); 1 significa ninguno."
 
 msgid "0 takes as many as the correlations have eigenvalues above 1 (see the scree plot)."
 msgstr "0 toma tantos como correlaciones tengan valores propios por encima de 1 (ver la gráfica de scree)."
@@ -5611,17 +5980,8 @@ msgstr "0 toma tantos como correlaciones tengan valores propios por encima de 1 
 msgid "1 and 2 sigma lines"
 msgstr "1 y 2 líneas sigma"
 
-msgid "1 for a series that wanders or has a trend; 0 for one that comes back to its mean."
-msgstr "1 para una serie que deambula o tiene una tendencia; 0 para una que vuelve a su media."
-
-msgid "1 takes away last season's value: for a season that repeats steadily."
-msgstr "1 quita el valor de la temporada pasada: para una temporada que se repite constantemente."
-
 msgid "3 is the Shewhart convention: on a stable normal process it gives about one false alarm per 370 points, which balances missed signals against chasing noise."
 msgstr "3 es la convención de Shewhart: en un proceso normal estable, da aproximadamente una falsa alarma por 370 puntos, lo que equilibra las señales perdidas con el ruido de persecución."
-
-msgid "95% prediction interval"
-msgstr "Intervalo de predicción del 95%"
 
 msgid "A GPX file's track, route and waypoints: latitude, longitude, elevation, time."
 msgstr "Pista, ruta y waypoints de un archivo GPX: latitud, longitud, altura, tiempo."
@@ -5659,9 +6019,6 @@ msgstr "Algunos factores ocultos detrás de muchas columnas correlacionadas: Pro
 msgid "A logic analyser's or a digital simulation's signals: a row per change, every signal's value."
 msgstr "Señales de un analizador lógico o de una simulación digital: una fila por cambio, el valor de cada señal."
 
-msgid "A measure in time order: its autocorrelation (ACF, PACF, Ljung-Box), its trend and season (STL), and an ARIMA or exponential-smoothing forecast with its prediction interval."
-msgstr "Una medida en orden temporal: su autocorrelación (ACF, PACF, Ljung-Box), su tendencia y temporada (STL) y un pronóstico ARIMA o de suavizado exponencial con su intervalo de predicción."
-
 msgid "A measured die above it is binned High; empty: no upper limit."
 msgstr "Un dado medido por encima de él se clasifica como Alto; vacío: sin límite superior."
 
@@ -5674,35 +6031,8 @@ msgstr "Una muesca en obleas de 200 mm y más, una plana en las más pequeñas."
 msgid "A spectrum (IR, UV-Vis, Raman, NMR, MS) in JCAMP-DX: x and y with their units; each block a dataset."
 msgstr "Un espectro (IR, UV-Vis, Raman, NMR, MS) en JCAMP-DX: x e y con sus unidades; cada uno bloquea un conjunto de datos."
 
-msgid "A step lasts from then on; a pulse affects that one time only."
-msgstr "Un paso dura desde entonces; un pulso afecta eso solo una vez."
-
 msgid "A wafer's measurements or defects on the wafer and per die: contour map, die bins and yield, defect density - notch or flat, any diameter, rotation."
 msgstr "Mediciones o defectos de una oblea en la oblea y por troquel: mapa de contorno, contenedores de troquel y rendimiento, densidad de defectos: muesca o plano, cualquier diámetro, rotación."
-
-msgid "ARIMA d (differences)"
-msgstr "ARIMA d (diferencias)"
-
-msgid "ARIMA only: a date (or a number of the time column) when something changed - a new process, a policy, a fault. Its estimate is the change it made."
-msgstr "Solo ARIMA: una fecha (o un número de la columna de tiempo) cuando algo cambió: un nuevo proceso, una política, una falla. Su estimación es el cambio que realizó."
-
-msgid "ARIMA only: the input enters the model at the lag where its prewhitened cross-correlation is strongest; its coefficient says how much Y moves per unit of X. Ahead of that lag the forecast uses X's own forecast."
-msgstr "Solo ARIMA: la entrada entra en el modelo en el desfase donde su correlación cruzada preblanqueada es más fuerte; su coeficiente dice cuánto se mueve Y por unidad de X. Antes de ese retraso, el pronóstico utiliza el propio pronóstico de X."
-
-msgid "ARIMA p (autoregressive)"
-msgstr "ARIMA p (autorregresivo)"
-
-msgid "ARIMA q (moving average)"
-msgstr "ARIMA q (media móvil)"
-
-msgid "ARIMA with a season: how many past seasons the next value depends on (the ACF's spikes at the season's multiples)."
-msgstr "ARIMA con una temporada: de cuántas temporadas pasadas depende el próximo valor (los picos de la ACF en los múltiplos de la temporada)."
-
-msgid "ARIMA: the next value from the last ones (p), the changes (d) and the last errors (q), with a season (P, D, Q) of its own. ARIMA, order chosen by AIC: the differences from the stationarity tests, then the p, q, P, Q with the lowest AIC. Exponential smoothing: a level, a trend and a season that each follow the newest values most. State space: a level and a slope that wander a little each step (a local linear trend), with a season - estimated by the Kalman filter."
-msgstr "ARIMA: el siguiente valor de los últimos (p), los cambios (d) y los últimos errores (q), con una temporada (P, D, Q) propia. ARIMA, orden elegido por AIC: las diferencias de las pruebas de estacionariedad, luego la p, q, P, Q con el AIC más bajo. Suavizado exponencial: un nivel, una tendencia y una temporada que cada uno sigue los valores más nuevos. Espacio de estado: un nivel y una pendiente que deambulan un poco a cada paso (una tendencia lineal local), con una estación, estimada por el filtro de Kalman."
-
-msgid "All rows"
-msgstr "Todas las filas"
 
 msgid "An Apache Arrow IPC file (Feather)."
 msgstr "Un archivo IPC de Apache Arrow (Feather)."
@@ -5728,12 +6058,6 @@ msgstr "Como una fracción del rango completo de la señal. 0.1 mantiene los pic
 msgid "Asymmetry. Smaller pushes the baseline further below the peaks; it should stay well under 0.5."
 msgstr "Asimetría. Más pequeño empuja la línea de base más por debajo de los picos; debe permanecer muy por debajo de 0.5."
 
-msgid "Autocorrelation (ACF)"
-msgstr "Autocorrelación (ACF)"
-
-msgid "Autocorrelation, first 12 lags"
-msgstr "Autocorrelación, primeros 12 retrasos"
-
 msgid "Between samples"
 msgstr "Entre muestras"
 
@@ -5751,9 +6075,6 @@ msgstr "Bland-Altman"
 
 msgid "Bland-Altman agreement"
 msgstr "Acuerdo Bland-Altman"
-
-msgid "Boosted Tree: how much each tree corrects the ones before. Smaller needs more trees."
-msgstr "Árbol potenciado: cuánto corrige cada árbol a los anteriores. Más pequeño necesita más árboles."
 
 msgid "By"
 msgstr "Por"
@@ -5794,9 +6115,6 @@ msgstr "Elija la familia de algoritmos de agrupamiento."
 msgid "Choose the exact scipy.cluster function/workflow to use."
 msgstr "Elija la función/flujo de trabajo scipy.cluster exacto a utilizar."
 
-msgid "Choose the kernel."
-msgstr "Elige el kernel."
-
 msgid "Choose the spectral or correlation estimator."
 msgstr "Elija el estimador espectral o de correlación."
 
@@ -5833,9 +6151,6 @@ msgstr "Grupos en dos componentes principales"
 msgid "Coefficients"
 msgstr "Coeficientes"
 
-msgid "Column contributions"
-msgstr "Contribuciones de columna"
-
 msgid "Columnar and scientific"
 msgstr "Columnar y científico"
 
@@ -5859,9 +6174,6 @@ msgstr "Componentes"
 
 msgid "Confidence"
 msgstr "Confianza"
-
-msgid "Confusion matrix (training rows)"
-msgstr "Matriz de confusión (filas de entrenamiento)"
 
 msgid "Consecutive points averaged into each plotted subgroup. Rational subgrouping: choose it so variation within a subgroup is only common-cause noise."
 msgstr "Puntos consecutivos promediados en cada subgrupo graficado. Subagrupamiento racional: elígelo para que la variación dentro de un subgrupo sea solo ruido de causa común."
@@ -5887,12 +6199,6 @@ msgstr "Correlaciones"
 msgid "Correlations weigh every column the same, whatever its unit - the usual choice. Covariances let the columns with the widest spread lead, for columns in one unit."
 msgstr "Las correlaciones pesan todas las columnas igual, cualquiera que sea su unidad: la opción habitual. Las covarianzas permiten que las columnas con la mayor extensión lideren, para columnas en una unidad."
 
-msgid "Cross-correlation with {input}, prewhitened"
-msgstr "Correlación cruzada con {input}, preblanqueado"
-
-msgid "Cross-correlation with {input}, strongest lags"
-msgstr "Correlación cruzada con {input}, rezagos más fuertes"
-
 msgid "Cross-validation"
 msgstr "Validación cruzada"
 
@@ -5916,9 +6222,6 @@ msgstr "Amortiguación (sigma)"
 
 msgid "Damping sigma of the Laplace variable s = sigma + i*omega. Zero reduces the transform to the Fourier transform; increasing it weights early samples more and suppresses late ones, which is what makes a decaying or unstable signal integrable."
 msgstr "Sigma de amortiguación de la variable de Laplace s = sigma + i*omega. El cero reduce la transformada a la transformada de Fourier; aumentarla pesa más las muestras tempranas y suprime las tardías, que es lo que hace que una señal en descomposición o inestable sea integrable."
-
-msgid "Decision tree of a continuous or nominal response on many factors: split and prune a step at a time, or automatically on validation rows; leaves, column contributions and each row's leaf and prediction."
-msgstr "Árbol de decisión de una respuesta continua o nominal en muchos factores: dividir y podar un paso a la vez, o automáticamente en filas de validación; hojas, contribuciones de columnas y la hoja y predicción de cada fila."
 
 msgid "Decompose or embed several series together (PCA, ICA, NMF, t-SNE, ...)"
 msgstr "Descomponer o incrustar varias series juntas (PCA, Ica, NMF, t-SNE, ...)"
@@ -5995,9 +6298,6 @@ msgstr "Cada característica dividida por su desviación estándar, de modo que 
 msgid "Each feature's mean in each cluster."
 msgstr "La media de cada característica en cada clúster."
 
-msgid "Each of the last values forecast one step ahead from only the values before it, the model refitted each time; its errors beside those of the naive forecast (the last value). Below 1 relative to naive: the model forecasts better than it."
-msgstr "Cada uno de los últimos valores pronosticados un paso por delante de solo los valores anteriores, el modelo se reacomoda cada vez; sus errores junto a los del pronóstico ingenuo (el último valor). Por debajo de 1 en relación con ingenuo: el modelo pronostica mejor que él."
-
 msgid "Each row across the features as a parallel plot, coloured by its cluster."
 msgstr "Cada fila a través de las características como una trama paralela, coloreada por su grupo."
 
@@ -6064,9 +6364,6 @@ msgstr "Encuentra y mide picos"
 msgid "Find where a series crosses a level"
 msgstr "Encuentra dónde una serie cruza un nivel"
 
-msgid "Fit by number of trees"
-msgstr "Ajuste por número de árboles"
-
 msgid "Flags runs, trends and other patterns that stay inside the limits - the signals a limits-only chart misses. The zone rules switch themselves off on a chart whose limits move."
 msgstr "Marca carreras, tendencias y otros patrones que se mantienen dentro de los límites: las señales que un gráfico de solo límites pierde. Las reglas de zona se apagan solas en un gráfico cuyos límites se mueven."
 
@@ -6081,12 +6378,6 @@ msgstr "Para Cpm; necesita ambos límites."
 
 msgid "For X in different units. Off for a spectrum: scaling gives the wavelengths that carry only noise the weight of the bands."
 msgstr "Para X en diferentes unidades. Apagado para un espectro: el escalado da a las longitudes de onda que solo transportan ruido el peso de las bandas."
-
-msgid "Forecast"
-msgstr "Pronóstico"
-
-msgid "Forecast periods"
-msgstr "Períodos de previsión"
 
 msgid "Found on the surface's own exact x/y grid."
 msgstr "Se encuentra en la propia cuadrícula x/y exacta de la superficie."
@@ -6103,12 +6394,6 @@ msgstr "Gage R&R"
 msgid "Gamma"
 msgstr "Gamma"
 
-msgid "Gaussian process regression with an uncertainty band"
-msgstr "Regresión del proceso gaussiano con una banda de incertidumbre"
-
-msgid "Granger causality (VAR)"
-msgstr "Causalidad de Granger (VAR)"
-
 msgid "GraphPad Prism (.pzfx)"
 msgstr "GraphPad Prism (.pzfx)"
 
@@ -6121,9 +6406,6 @@ msgstr "Grupo significa"
 msgid "Group similar rows - k-means, hierarchical (Ward), normal mixtures, DBSCAN and more - with k chosen by the silhouette; each cluster's size and means, its rows on the principal components."
 msgstr "Agrupe filas similares (k-medias, jerárquicas (Ward), mezclas normales, DBSCAN y más) con k elegida por la silueta; el tamaño y las medias de cada grupo, sus filas en los componentes principales."
 
-msgid "Grow the tree"
-msgstr "Cultiva el árbol"
-
 msgid "Half the shift to detect, in sigmas: 0.5 for a shift of one sigma."
 msgstr "La mitad del turno para detectar, en sigmas: 0.5 para un turno de un sigma."
 
@@ -6133,9 +6415,6 @@ msgstr "Límites de media prominencia"
 msgid "Height (absolute)"
 msgstr "Altura (absoluta)"
 
-msgid "Here it follows {measure} one step behind: the model predicts little beyond the last value. A model that fits better (ARIMA chosen by AIC, a season) brings it onto the data."
-msgstr "Aquí sigue {measure} un paso por detrás: el modelo predice poco más allá del último valor. Un modelo que se ajusta mejor (ARIMA elegido por AIC, una temporada) lo trae a los datos."
-
 msgid "Highlight flagged"
 msgstr "Destacado marcado"
 
@@ -6144,9 +6423,6 @@ msgstr "Cómo se mueven juntas las columnas continuas: la matriz de correlación
 
 msgid "How each bracketed crossing is refined. The three bracketing solvers cannot leave the interval they were given; Newton can, and is checked afterwards."
 msgstr "Cómo se refina cada cruce entre corchetes. Los tres solucionadores de paréntesis no pueden salir del intervalo que se les dio; Newton puede, y se comprueba después."
-
-msgid "How far back the autocorrelations look."
-msgstr "Qué tan atrás se ven las autocorrelaciones."
 
 msgid "How likely each group is before the measures are seen: its share of the rows, or the same for every group."
 msgstr "Qué tan probable es cada grupo antes de que se vean las medidas: su parte de las filas, o lo mismo para cada grupo."
@@ -6160,47 +6436,17 @@ msgstr "Cuántos decimales de x tiene que resolver el solucionador antes de dete
 msgid "How many nearby points each one is connected to. Lowered automatically if it does not fit the sample count."
 msgstr "A cuántos puntos cercanos está conectado cada uno. Se baja automáticamente si no se ajusta al recuento de muestras."
 
-msgid "How many past errors the next value depends on: the lags where the ACF stands out."
-msgstr "De cuántos errores pasados depende el siguiente valor: los retrasos donde se destaca el ACF."
-
-msgid "How many past seasons' errors the next value depends on."
-msgstr "De cuántos errores de temporadas pasadas depende el siguiente valor."
-
-msgid "How many past values the next depends on: the lags where the PACF stands out."
-msgstr "De cuántos valores pasados depende el siguiente: los rezagos donde se destaca el PACF."
-
 msgid "How many scales to evaluate between the longest period the record supports and the Nyquist frequency, spaced logarithmically."
 msgstr "Cuántas escalas evaluar entre el periodo más largo que soporta el registro y la frecuencia de Nyquist, espaciadas logarítmicamente."
-
-msgid "How many times ahead to forecast."
-msgstr "Cuántas veces por delante pronosticar."
-
-msgid "How many times the rows are split: one fewer than the leaves. For a Boosted Tree, the splits of each tree."
-msgstr "Cuántas veces se dividen las filas: una menos que las hojas. Para un árbol potenciado, las divisiones de cada árbol."
-
-msgid "How many trees a Bootstrap Forest or a Boosted Tree grows."
-msgstr "Cuántos árboles crece un Bosque Bootstrap o un Árbol Boosted."
 
 msgid "How much of the variation the measuring system adds: repeatability and reproducibility by the ANOVA method, % of the study variation and of the tolerance, distinct categories."
 msgstr "Qué parte de la variación añade el sistema de medición: repetibilidad y reproducibilidad por el método ANOVA, % de la variación del estudio y de la tolerancia, categorías distintas."
 
-msgid "How much the {measure} drops when a column is shuffled, on the {rows} rows - for any model, the forest and the boosted tree included."
-msgstr "Cuánto cae el {measure} cuando se baraja una columna, en las {rows} filas, para cualquier modelo, el bosque y el árbol potenciado incluidos."
-
 msgid "Identity"
 msgstr "Identidad"
 
-msgid "Importance"
-msgstr "Importancia"
-
 msgid "Input"
 msgstr "Entrada"
-
-msgid "Intervention at"
-msgstr "Intervención en"
-
-msgid "Intervention"
-msgstr "Intervención"
 
 msgid "Into how many parts the rows are split; each part is predicted by a model fitted on the others."
 msgstr "En cuántas partes se dividen las filas; cada parte se predice mediante un modelo ajustado a las demás."
@@ -6210,9 +6456,6 @@ msgstr "Iteraciones"
 
 msgid "JCAMP-DX spectrum"
 msgstr "Espectro JCAMP-DX"
-
-msgid "JMP documentation"
-msgstr "Documentación JMP"
 
 msgid "K-means convergence threshold."
 msgstr "Umbral de convergencia de K-medias."
@@ -6235,12 +6478,6 @@ msgstr "Instrumentos de laboratorio"
 msgid "LabVIEW measurement (.lvm)"
 msgstr "Medición LabVIEW (.lvm)"
 
-msgid "Lag"
-msgstr "Retraso"
-
-msgid "Lags"
-msgstr "Retrasos"
-
 msgid "Lambda"
 msgstr "Lambda"
 
@@ -6249,21 +6486,6 @@ msgstr "Mayor k"
 
 msgid "Largest lag to keep. 0 keeps every lag."
 msgstr "Mayor retraso a mantener. 0 mantiene cada retraso."
-
-msgid "Leaf"
-msgstr "Hoja"
-
-msgid "Leaf report"
-msgstr "Informe Leaf"
-
-msgid "Leaf {leaf}"
-msgstr "Hoja {leaf}"
-
-msgid "Leaves"
-msgstr "Hojas"
-
-msgid "Length scale"
-msgstr "Escala de longitud"
 
 msgid "Level"
 msgstr "Nivel"
@@ -6355,9 +6577,6 @@ msgstr "Comparación de métodos"
 msgid "Min samples"
 msgstr "Muestras mín."
 
-msgid "Minimum leaf size"
-msgstr "Tamaño mínimo de la hoja"
-
 msgid "Minimum samples for DBSCAN/OPTICS core points."
 msgstr "Muestras mínimas para puntos centrales DBSCAN/OPTICS."
 
@@ -6366,9 +6585,6 @@ msgstr "Separación mínima"
 
 msgid "Minimum width"
 msgstr "Ancho mínimo"
-
-msgid "Models tried, best AIC first"
-msgstr "Modelos probados, el mejor AIC primero"
 
 msgid "Monitor process stability (I-MR, X-bar, p, np, c, u)"
 msgstr "Monitorear la estabilidad del proceso (I-MR, X-bar, p, np, c, u)"
@@ -6406,9 +6622,6 @@ msgstr "No hay picos pasados el filtro. Bajar el mínimo, o cambiar de altura a 
 msgid "No points signal. The process is in statistical control - which says it is stable, not that it meets any specification."
 msgstr "No hay señal de puntos. El proceso está en control estadístico - que dice que es estable, no que cumple con ninguna especificación."
 
-msgid "Noise level"
-msgstr "Nivel de ruido"
-
 msgid "Normalisation"
 msgstr "Normalización"
 
@@ -6427,12 +6640,6 @@ msgstr "Número de grupos que se solicitan."
 msgid "On"
 msgstr "Sobre"
 
-msgid "One more split: the one that best separates the response."
-msgstr "Una división más: la que mejor separa la respuesta."
-
-msgid "One tree you can read; a Bootstrap Forest (many trees on resampled rows, averaged); or a Boosted Tree (many small trees, each correcting the ones before)."
-msgstr "Un árbol que se puede leer; un bosque de botstrap (muchos árboles en filas remuestradas, promedio); o un árbol picado (muchos árboles pequeños, cada uno corregiendo los anteriores)."
-
 msgid "One-sided spectrum"
 msgstr "Un espectro unilateral"
 
@@ -6442,20 +6649,11 @@ msgstr "Operador"
 msgid "Operators"
 msgstr "Operadores"
 
-msgid "Optional: 1 (or Validation) on the rows kept out of the fit, to judge it."
-msgstr "Opcional: 1 (o Validación) en las filas mantenidas fuera del ajuste, para juzgarlo."
-
 msgid "Optional: a column of groups - species, batch, site; the score plot and the biplot colour the rows by it."
 msgstr "Opcional: una columna de grupos - especie, lote, sitio; la trama de puntuación y el color biplot las filas por él."
 
 msgid "Optional: a column of groups - species, batch, site; the score plot colours the rows by it."
 msgstr "Opcional: una columna de grupos - especie, lote, sitio; la trama de la partitura colores las filas por ella."
-
-msgid "Optional: another series measured at the same times - the cross-correlation says whether it leads or follows Y, and by how much."
-msgstr "Opcional: otra serie medida al mismo tiempo - la Cruz-correlación dice si conduce o sigue Y, y por cuánto."
-
-msgid "Optional: dates, times or a run number. Without it, the rows' order."
-msgstr "Opcional: fechas, tiempos o número de ejecución. Sin ella, la orden de las filas."
 
 msgid "Optional: who measured. Without it, repeatability alone."
 msgstr "Opcional: quién midió. Sin ella, la repetibilidad sola."
@@ -6490,18 +6688,6 @@ msgstr "Parte"
 msgid "Partial Least Squares"
 msgstr "Plazas mínimas parciales"
 
-msgid "Partial autocorrelation (PACF)"
-msgstr "Autocorrelación parcial (PACF)"
-
-msgid "Partial dependence on {factor}"
-msgstr "La dependencia parcial de {factor}"
-
-msgid "Partition"
-msgstr "Partición"
-
-msgid "Partition for {response}"
-msgstr "Partición para {response}"
-
 msgid "Parts"
 msgstr "Partes"
 
@@ -6516,9 +6702,6 @@ msgstr "Por cruce. Brent y TOMS 748 rara vez necesitan diez; el límite es lo qu
 
 msgid "Percentile method (ISO 22514-4): the fitted distribution's 0.135% and 99.865% points stand for -/+3 sigma, its median for the mean."
 msgstr "Método de percentil (ISO 22514-4): el 0.135% y 99.865% puntos de distribución ajustados representan -/+3 sigma, su mediana para el medio."
-
-msgid "Permutation importance"
-msgstr "Importancia de la permutación"
 
 msgid "Perplexity"
 msgstr "Perplejidad"
@@ -6538,18 +6721,6 @@ msgstr "Puntos trazados"
 msgid "Points. Of any two peaks closer than this, the more prominent is kept - which is how a single noisy peak stops being reported as several."
 msgstr "Puntos. De cada dos picos más cercanos que este, el más prominente se mantiene - que es cómo un solo pico ruidoso deja de ser reportado como varios."
 
-msgid "Predicted"
-msgstr "Predicted"
-
-msgid "Predicted is each value forecast one step ahead from the ones before it, as JMP's Predicted; the Residual is the value minus it."
-msgstr "Predecidos es cada valor pronostica un paso adelante de los anteriores, como el Predicto de JMP; el Residual es el valor menos él."
-
-msgid "Predictive and Specialized Modeling"
-msgstr "Modelado predictivo y especializado"
-
-msgid "Prewhitened CCF"
-msgstr "CCF preblanco"
-
 msgid "Principal Components"
 msgstr "Componentes principales"
 
@@ -6568,12 +6739,6 @@ msgstr "Prominencia (relativa)"
 msgid "Prominence measures a peak against its own surroundings and survives a sloping baseline. Height compares it to zero, which only means something when the baseline is at zero."
 msgstr "La prominencia mide un pico contra su propio entorno y sobrevive a una base de referencia inclinada. La altura la compara con cero, lo que sólo significa algo cuando la base es cero."
 
-msgid "Prune"
-msgstr "Prune"
-
-msgid "Pulse (one time)"
-msgstr "Pulso (una vez)"
-
 msgid "Quality and Process"
 msgstr "Calidad y proceso"
 
@@ -6585,9 +6750,6 @@ msgstr "RF"
 
 msgid "RMSECV by number of components"
 msgstr "RMSECV por número de componentes"
-
-msgid "Random seed"
-msgstr "Semillas aleatorias"
 
 msgid "Re-weighting passes."
 msgstr "Pases de re ponderación."
@@ -6607,29 +6769,14 @@ msgstr "Render como"
 msgid "Report at most"
 msgstr "Informe al máximo"
 
-msgid "Reports the Durbin-Watson diagnostic for lag-one residual correlation. Values near 2 indicate little lag-one correlation; no generic p-value is reported."
-msgstr "Informa el diagnóstico de Durbin-Watson para la correlación residual de lag-one. Los valores cercanos a 2 indican una correlación de lag-one poco; no se reporta un valor p genérico."
-
 msgid "Residual"
 msgstr "Residual"
-
-msgid "Residual randomness and independence"
-msgstr "Aleatoriedad y independencia residuales"
-
-msgid "Rolling-origin validation"
-msgstr "Validación de origen rodante"
-
-msgid "Rolling-origin validation, one step ahead"
-msgstr "Validación de origen rodante, un paso adelante"
 
 msgid "Rotated factor loadings"
 msgstr "Carga de factor rotativo"
 
 msgid "Roughly, how many neighbours each point is assumed to have. Lowered automatically if it does not fit the sample count."
 msgstr "Aproximadamente, cuántos vecinos se supone que tienen cada punto. Se redujo automáticamente si no encaja en el recuento de la muestra."
-
-msgid "Rows, by leaf"
-msgstr "Filas, por hoja"
 
 msgid "Rule"
 msgstr "Artículo"
@@ -6676,21 +6823,6 @@ msgstr "Puntajes"
 msgid "Scree plot"
 msgstr "Scree plot"
 
-msgid "Season ({n}) and remainder"
-msgstr "Estación ({n}) y resto"
-
-msgid "Season length"
-msgstr "Longitud de la temporada"
-
-msgid "Seasonal D"
-msgstr "Seasonal D"
-
-msgid "Seasonal P"
-msgstr "Estacional P"
-
-msgid "Seasonal Q"
-msgstr "Seasonal Q"
-
 msgid "Segment length"
 msgstr "Longitud del segmento"
 
@@ -6699,18 +6831,6 @@ msgstr "Segment overlap"
 
 msgid "Select one or more source series."
 msgstr "Seleccione una o más series de fuentes."
-
-msgid "Show residual Durbin-Watson statistic"
-msgstr "Mostrar estadística residual de Durbin-Watson"
-
-msgid "Show residual Ljung-Box tests"
-msgstr "Mostrar las pruebas residuales de Ljung-Box"
-
-msgid "Show residual runs test"
-msgstr "Mostrar la prueba de carreras residuales"
-
-msgid "Show residual turning-point test"
-msgstr "Mostrar la prueba de punto de giro residual"
 
 msgid "Sigma (overall)"
 msgstr "Sigma (sobretodo)"
@@ -6742,38 +6862,14 @@ msgstr "Solver"
 msgid "Spectroscopy and XRD"
 msgstr "Espectroscopia y XRD"
 
-msgid "Split"
-msgstr "Dividir"
-
-msgid "Split history"
-msgstr "Historias divididas"
-
-msgid "Split while the validation rows say the tree predicts better."
-msgstr "Dividir mientras las filas de validación dicen que el árbol predice mejor."
-
-msgid "Splits"
-msgstr "Dividencias"
-
 msgid "Standardized canonical coefficients"
 msgstr "Coeficientes canónicos estandarizados"
-
-msgid "Starting guess for how quickly the fit can vary with x. Re-optimized automatically while fitting - a starting point, not a fixed choice."
-msgstr "Empieza a adivinar por lo rápido que el ajuste puede variar con x. Re-optimizado automáticamente mientras se ajusta - un punto de partida, no una opción fija."
-
-msgid "Starting guess for the observation noise variance, added to the kernel. Also re-optimized while fitting."
-msgstr "Empezar conjetura para la varianza de ruido de observación, añadido al núcleo. También re-optimizado mientras se ajusta."
 
 msgid "Stata"
 msgstr "Stata"
 
-msgid "Stationarity tests"
-msgstr "Pruebas de estabilidad"
-
 msgid "Statistics software"
 msgstr "Programas informáticos de estadísticas"
-
-msgid "Step (lasting)"
-msgstr "Paso (última)"
 
 msgid "Straight line"
 msgstr "Línea recta"
@@ -6790,26 +6886,14 @@ msgstr "Retraer el fondo de un espectro (AsLS o banda de goma)"
 msgid "Taper applied to each segment before the FFT."
 msgstr "Taper aplicado a cada segmento antes de la FFT."
 
-msgid "Tests whether residual autocorrelations through the selected lags are jointly zero."
-msgstr "Pruebas si las autocorreaciones residuales a través de los lags seleccionados son conjuntamente cero."
-
-msgid "Tests whether the number of local peaks and troughs in the residuals is consistent with a random sequence."
-msgstr "Prueba si el número de picos y tros locales en los residuos es consistente con una secuencia aleatoria."
-
 msgid "The A/B/C zones the run rules are phrased in: \"two of three beyond two sigma\" is a statement about a line worth seeing."
 msgstr "Las zonas A/B/C las reglas de ejecución se expresan en: \"dos de tres más allá de dos sigma\" es una declaración sobre una línea que vale la pena ver."
 
 msgid "The column holding the sample size (units inspected) at each point."
 msgstr "La columna que contiene el tamaño de la muestra (unidades inspeccionadas) en cada punto."
 
-msgid "The column to predict: continuous gives a regression tree, nominal a classification tree."
-msgstr "La columna para predecir: continua da un árbol de regresión, nominal un árbol de clasificación."
-
 msgid "The column whose groups the rows are classified into."
 msgstr "La columna cuyos grupos se clasifican las filas."
-
-msgid "The columns the tree may split on."
-msgstr "Las columnas del árbol pueden dividirse."
 
 msgid "The continuous columns to correlate, two by two."
 msgstr "Las columnas continuas para correlacionar, dos por dos."
@@ -6826,9 +6910,6 @@ msgstr "Las medidas continuas que distinguen a los grupos."
 msgid "The decision interval: 4 or 5 sigmas, with k = 0.5."
 msgstr "El intervalo de decisión: 4 o 5 sigmas, con k = 0.5."
 
-msgid "The fewest rows a leaf may hold."
-msgstr "Las filas más pequeñas que una hoja puede contener."
-
 msgid "The grid's shift from the centre, mm: half a die puts a die corner on the centre."
 msgstr "El cambio de la cuadrícula desde el centro, mm: la mitad de un murciélago pone una esquina en el centro."
 
@@ -6843,9 +6924,6 @@ msgstr "Los límites se mueven con el tamaño de la muestra, por lo que las regl
 
 msgid "The many measures to predict them from: a spectrum's columns."
 msgstr "Las muchas medidas para predecirlas de: columnas de un espectro."
-
-msgid "The measure, one value per time."
-msgstr "La medida, un valor por vez."
 
 msgid "The measured values."
 msgstr "Los valores medidos."
@@ -6901,9 +6979,6 @@ msgstr "Los puntos de esta superficie no eran una cuadrícula x/y completa, por 
 msgid "This surface's points were not a complete x/y grid, so this level curve was traced on a linearly interpolated one - treat it as approximate."
 msgstr "Los puntos de esta superficie no eran una cuadrícula x/y completa, por lo que esta curva de nivel fue trazada en una interpolada linealmente - tratarla como aproximada."
 
-msgid "Time or order"
-msgstr "Tiempo o orden"
-
 msgid "Tolerance (USL - LSL)"
 msgstr "Tolerancia (USL - LSL)"
 
@@ -6916,20 +6991,11 @@ msgstr "Parámetros S de Touchstone"
 msgid "Traced on the surface's own exact x/y grid."
 msgstr "Trazado en la propia red x/y exacta de la superficie."
 
-msgid "Training"
-msgstr "Capacitación"
-
-msgid "Tree"
-msgstr "Árbol"
-
 msgid "Try every k from 2 to the largest and keep the one with the best mean silhouette. DBSCAN, OPTICS and MeanShift find their own number of clusters."
 msgstr "Pruebe cada k de 2 a la más grande y mantenga el uno con la mejor silueta media. DBSCAN, OPTICS y MeanShift encuentran su propio número de clusters."
 
 msgid "Turns the data counterclockwise about the centre, degrees: a map read with the notch elsewhere brought to the mark."
 msgstr "Gire los datos en sentido contrario sobre el centro, grados: un mapa leído con la nota en otro lugar traído a la marca."
-
-msgid "Undo the last split."
-msgstr "Deshacer la última división."
 
 msgid "Upper control limit"
 msgstr "Límite de control superior"
@@ -6945,12 +7011,6 @@ msgstr "Especificaciones superiores (USL)"
 
 msgid "VCD (value change dump)"
 msgstr "VCD (valor de cambio de dump)"
-
-msgid "Validation"
-msgstr "Validación"
-
-msgid "Validation share"
-msgstr "Parte de validación"
 
 msgid "Variable (in column order)"
 msgstr "Variable (en orden de columna)"
@@ -6982,9 +7042,6 @@ msgstr "Wafer"
 msgid "Wafer Map"
 msgstr "Mapa de Wafer"
 
-msgid "Wald-Wolfowitz test of whether positive and negative residuals occur in a random order around zero. Ties at zero are omitted."
-msgstr "Wald-Wolfowitz prueba de si los residuos positivos y negativos ocurren en un orden al azar alrededor de cero."
-
 msgid "Weibull"
 msgstr "Weibull"
 
@@ -7000,9 +7057,6 @@ msgstr "A qué grupo pertenece una fila, desde medidas continuas: análisis disc
 msgid "Which part each measurement is of."
 msgstr "Que parte de cada medición es de."
 
-msgid "Which rows the validation share draws."
-msgstr "Lo que rema la cuota de validación dibuja."
-
 msgid "Which turning points to look for."
 msgstr "Que puntos de inflexión para buscar."
 
@@ -7015,17 +7069,8 @@ msgstr "Con un límite de especificación el informe da la capacidad del proceso
 msgid "With automatic k: the mean silhouette of each k tried."
 msgstr "Con k automático: la silueta media de cada k probado."
 
-msgid "With no validation column: this share of rows, at random, judges the tree. 0 for none."
-msgstr "Sin columna de validación: esta parte de filas, al azar, juzga el árbol. 0 para ninguno."
-
 msgid "X, covariates"
 msgstr "X, covaria"
-
-msgid "X, input"
-msgstr "X, entrada"
-
-msgid "X, input in the model (transfer function)"
-msgstr "X, entrada en el modelo (función de transferencia)"
 
 msgid "X, reference"
 msgstr "X, referencia"
@@ -7041,9 +7086,6 @@ msgstr "Y, grupo"
 
 msgid "Y, method tested"
 msgstr "Y, método probado"
-
-msgid "Y, time series"
-msgstr "Y, series de tiempo"
 
 msgid "density: power per unit frequency. spectrum: power per segment."
 msgstr "densidad: potencia por frecuencia de unidad. espectro: potencia por segmento."
@@ -7102,29 +7144,8 @@ msgstr "{count} de {total} puntos de señal. El proceso no está bajo control es
 msgid "{count} point(s) embedded from {series} series into 2 dimensions."
 msgstr "{count} punto(s) incrustado de {series} serie en 2 dimensiones."
 
-msgid "{input}'s past added nothing to forecasting {measure}"
-msgstr "El pasado de {input} no aportó nada a la previsión de {measure}"
-
-msgid "{input}'s past helps forecast {measure} (Granger)"
-msgstr "El pasado de {input} ayuda a pronosticar {measure} (Granger)"
-
-msgid "{measure} and its forecast"
-msgstr "{measure} y su pronóstico"
-
-msgid "{measure} by number of splits"
-msgstr "{measure} por número de divisiones"
-
-msgid "{measure} by number of trees"
-msgstr "{measure} por número de árboles"
-
 msgid "{measure} by part and operator"
 msgstr "{measure} por parte y operador"
-
-msgid "{measure} comes back to a stable level"
-msgstr "{measure} vuelve a un nivel estable"
-
-msgid "{measure} wandered with no level to come back to"
-msgstr "{measure} vagaba sin nivel para volver a"
 
 msgid "{name}: defects"
 msgstr "{name}: defectos"
@@ -7140,9 +7161,6 @@ msgstr "{name}: morir significa"
 
 msgid "{name}: map"
 msgstr "{name}: mapa"
-
-msgid "{response} by leaf"
-msgstr "{response} por hoja"
 
 msgid "{x} and {y} are correlated"
 msgstr "{x} y {y} están correlacionados"
@@ -7692,9 +7710,6 @@ msgstr "Importe la tabla en el portapapeles con filas y columnas intercambiadas:
 
 msgid "JOIN type"
 msgstr "TIPO DE UNIÓN"
-
-msgid "Kernel"
-msgstr "Núcleo"
 
 msgid "Link: a chain for a table linked to its source, Q for a saved query"
 msgstr "Enlace: una cadena para una tabla vinculada a su fuente, Q para una consulta guardada"

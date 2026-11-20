@@ -1,0 +1,347 @@
+# 日本語 translation for the pack signal.
+# Message ids are the English source strings.
+
+msgid ""
+msgstr "Project-Id-Version: ChartLibre\nLanguage: ja\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\n"
+
+msgid "Analyse frequencies"
+msgstr "頻度を分析する"
+
+msgid "As a fraction of the signal's full range. 0.1 keeps peaks standing at least a tenth of the range above their surroundings."
+msgstr "信号のフルレンジの分岐として0.1は、周囲の上の範囲の少なくとも10分のピークを保ちます。"
+
+msgid "Asymmetry. Smaller pushes the baseline further below the peaks; it should stay well under 0.5."
+msgstr "暗殺者。より小さいはピークの下のベースラインをさらに押します;それは0.5の下でよくとどまるべきです。"
+
+msgid "Baseline"
+msgstr "ベースライン"
+
+msgid "Between samples"
+msgstr "サンプル間"
+
+msgid "Choose a decomposition (a curve per component) or a manifold embedding (a 2D scatter)."
+msgstr "分解(コンポーネントごとの曲線)またはマニホールドの埋め込み(2Dスキャッター)を選択します。"
+
+msgid "Choose the baseline estimator."
+msgstr "ベースライン推定器を選択します。"
+
+msgid "Choose the spectral or correlation estimator."
+msgstr "分光または相関推定器を選択します。"
+
+msgid "Component"
+msgstr "コンポーネント"
+
+msgid "Component 1"
+msgstr "コンポーネント 1"
+
+msgid "Component 2"
+msgstr "コンポーネント 2"
+
+msgid "Components"
+msgstr "コンポーネント"
+
+msgid "Convert to decibels"
+msgstr "デシベルに変換する"
+
+msgid "Cubic spline"
+msgstr "キュービックスプライン"
+
+msgid "Curve"
+msgstr "カーブ"
+
+msgid "Damping (sigma)"
+msgstr "ダンピング(シグマ)"
+
+msgid "Damping sigma of the Laplace variable s = sigma + i*omega. Zero reduces the transform to the Fourier transform; increasing it weights early samples more and suppresses late ones, which is what makes a decaying or unstable signal integrable."
+msgstr "Laplace 変数 s = sigma + i*omega の sigma を破壊します。 Zero は、Fourier 変換への変換を削減します。 初期のサンプルを増加させ、遅くなるものを抑制します。これは、決定または不安定な信号が統合可能になります。"
+
+msgid "Decompose or embed several series together (PCA, ICA, NMF, t-SNE, ...)"
+msgstr "PCA、ICA、NMF、t-SNE、..."
+
+msgid "Detrend"
+msgstr "デトレンド"
+
+msgid "Direction"
+msgstr "アクセス"
+
+msgid "Draw the estimated baseline itself."
+msgstr "推定ベースライン自体を描画します。"
+
+msgid "Estimates"
+msgstr "見積り"
+
+msgid "Every selected series is linearly resampled onto this many evenly spaced points across their shared x range, before decomposing or embedding them together."
+msgstr "選択したすべてのシリーズは、共有されたx範囲を渡るこの多くの均等に間隔をあいたポイントにリニアリサンプリングされ、それらを一緒に分解または埋め込む前に。"
+
+msgid "Explained variance"
+msgstr "説明された分散"
+
+msgid "Express the result as 10*log10 of the value."
+msgstr "値の10*log10として結果を表現します。"
+
+msgid "Filter by"
+msgstr "フィルターによる"
+
+msgid "Find"
+msgstr "詳しくはこちら"
+
+msgid "Find and measure peaks"
+msgstr "ピークの検索と測定"
+
+msgid "Find where a series crosses a level"
+msgstr "シリーズがレベルを交差させる場所を見つける"
+
+msgid "Fold the negative frequencies onto the positive ones. Correct for real-valued signals."
+msgstr "負の周波数を肯定的なものにフォールドします。 実際の評価された信号を修正します。"
+
+msgid "Found on the surface's own exact x/y grid."
+msgstr "表面自身の厳密なx/yの格子で見つけられる。"
+
+msgid "Fraction of each segment shared with the next."
+msgstr "次のセグメントと共有される各セグメントのフラクション。"
+
+msgid "Grid points"
+msgstr "グリッドポイント"
+
+msgid "Half-prominence bounds"
+msgstr "ハーフプロミネンスバインド"
+
+msgid "Height (absolute)"
+msgstr "高さ(絶対)"
+
+msgid "How each bracketed crossing is refined. The three bracketing solvers cannot leave the interval they were given; Newton can, and is checked afterwards."
+msgstr "各ブラケットの交差が精製される方法。3つのブラケットのソルバーは、与えられた間隔を離れることができません。ニュートンは、その後にチェックされます。"
+
+msgid "How many components to extract. Clamped to the number of selected series."
+msgstr "抽出するコンポーネントの数。選択したシリーズの数に締め金で止める。"
+
+msgid "How many decimal places of x the solver has to settle before it stops. Nine is far below the precision of any measured x; the cost of raising it is a few iterations."
+msgstr "x の小数点数点のソルバーが止まる前に解決しなければならない。Nine は、測定された x の精度をはるかに下回る; 上げのコストは、いくつかの反復である。"
+
+msgid "How many nearby points each one is connected to. Lowered automatically if it does not fit the sample count."
+msgstr "各々のポイントがどの位に繋がっているか。サンプル数に合わないと自動的に下げられる。"
+
+msgid "How many scales to evaluate between the longest period the record supports and the Nyquist frequency, spaced logarithmically."
+msgstr "記録サポートとNyquist周波数の最長期間の間に評価する数のスケール、間隔を付けられたlogarithmically。"
+
+msgid "Input"
+msgstr "入力内容"
+
+msgid "Iterations"
+msgstr "反復"
+
+msgid "Keeps the first crossings in x order when a noisy series crosses the level hundreds of times."
+msgstr "騒々しいシリーズが数百回レベルを交差させるとき、x の順序で最初の交差を保ちます。"
+
+msgid "Keeps the most prominent peaks when many are found."
+msgstr "多くが発見されたとき最も顕著なピークを保って下さい。"
+
+msgid "Kind"
+msgstr "よくある質問"
+
+msgid "Lambda"
+msgstr "ラムダ"
+
+msgid "Largest lag to keep. 0 keeps every lag."
+msgstr "最大のラグを保持します。 0 はすべてのラグを保持します。"
+
+msgid "Level"
+msgstr "レベルレベル"
+
+msgid "Max lags"
+msgstr "最高のラグ"
+
+msgid "Maximum iterations"
+msgstr "最高の反復"
+
+msgid "Method"
+msgstr "メソッド"
+
+msgid "Minimum"
+msgstr "最小限"
+
+msgid "Minimum separation"
+msgstr "最低の分離"
+
+msgid "Minimum width"
+msgstr "最小幅"
+
+msgid "Model"
+msgstr "モデル:"
+
+msgid "Monotone cubic (PCHIP)"
+msgstr "Monotoneの立方体(PCHIP)"
+
+msgid "Morlet central frequency w0. Higher values resolve frequency more finely at the cost of time resolution; 6 is the usual compromise and the value at which the wavelet is near-admissible."
+msgstr "モルレ中央周波数 w0. より高い値は、時間の解像度のコストで頻度をより細かく解決します; 6 は、通常の妥協とウェーブレットがほぼ許容する値です。"
+
+msgid "Morlet w0"
+msgstr "モルレット w0"
+
+msgid "Neighbors"
+msgstr "ネイバーズ"
+
+msgid "No peaks passed the filter. Lower the minimum, or switch from height to prominence if the baseline is not at zero."
+msgstr "ピークはフィルタを通過しません。 ベースラインがゼロでない場合は、最小値、または高さから優先順位を下げます。"
+
+msgid "No results."
+msgstr "結果はありません。"
+
+msgid "Normalisation"
+msgstr "正規化"
+
+msgid "One-sided spectrum"
+msgstr "片面スペクトル"
+
+msgid "Peak ({x} &rarr; {y})"
+msgstr "ピーク ({x} &rarr; {y})"
+
+msgid "Peaks, baseline correction, spectral analysis, decomposition and roots, with the spectrogram chart."
+msgstr "ピーク、ベースライン補正、スペクトル分析、分解およびルート、スペクトログラムチャート付き。"
+
+msgid "Per crossing. Brent and TOMS 748 rarely need ten; the limit is what stops a pathological bracket from hanging the dialog."
+msgstr "交差するごとに。 ブレントとTOMS 748はほとんど10を必要としません。 制限は、ダイアログをぶら下げることから病理学的ブラケットを停止するものです。"
+
+msgid "Perplexity"
+msgstr "パープレクチャリティ"
+
+msgid "Points"
+msgstr "ポイントポイント"
+
+msgid "Points at half prominence. Raise it to reject single-sample spikes, which are usually instrument artefacts rather than features."
+msgstr "ハーフプロミネンスのポイント。 シングルサンプルのスパイクを拒否するためにそれを上げます。これは、通常、機能ではなく、楽器のアーファクトです。"
+
+msgid "Points. Of any two peaks closer than this, the more prominent is kept - which is how a single noisy peak stops being reported as several."
+msgstr "ポイント。 これよりも近い2つのピークのうち、より顕著に保たれている - 単一の騒々しいピークがいくつか報告されているのはどのようにして止まっているか。"
+
+msgid "Prominence"
+msgstr "プロミネンス"
+
+msgid "Prominence (relative)"
+msgstr "約束(相対的な)"
+
+msgid "Prominence measures a peak against its own surroundings and survives a sloping baseline. Height compares it to zero, which only means something when the baseline is at zero."
+msgstr "独自の周囲に対してピークを測定し、傾斜ベースラインを存続させます。高さはゼロに比較します。つまり、ベースラインがゼロにあるときにのみ意味します。"
+
+msgid "Re-weighting passes."
+msgstr "再重量を量るパス。"
+
+msgid "Remove a constant or linear trend from each segment first. A trend leaks into the lowest frequency bins and hides everything near it."
+msgstr "各セグメントから一定または線形の傾向を最初に削除します。トレンドは、最も低い周波数のビンに漏れ、それの近くですべてを隠します。"
+
+msgid "Report at most"
+msgstr "ほとんどのレポート"
+
+msgid "Residual"
+msgstr "レジデンシャル"
+
+msgid "Roughly, how many neighbours each point is assumed to have. Lowered automatically if it does not fit the sample count."
+msgstr "当然のことながら、各ポイントが持つと想定されるのはいくつものネグブラーです。サンプルカウントに合わないと自動的に下げられます。"
+
+msgid "Samples per Welch segment. Longer segments resolve finer frequency detail; shorter ones average away more noise."
+msgstr "Welch セグメントごとのサンプル。 より長いセグメントは、より細かい周波数の詳細を解決します。 より短いものは、より多くのノイズを離れて平均します。"
+
+msgid "Scales"
+msgstr "スケール"
+
+msgid "Scaling"
+msgstr "スケーリング"
+
+msgid "Segment length"
+msgstr "区分の長さ"
+
+msgid "Segment overlap"
+msgstr "セグメントオーバーラップ"
+
+msgid "Select one or more source series."
+msgstr "1つ以上のソースシリーズを選択します。"
+
+msgid "Series"
+msgstr "シリーズ"
+
+msgid "Signal analysis"
+msgstr "信号解析"
+
+msgid "Smoothness. Larger makes the baseline stiffer, so it bends less to follow narrow peaks."
+msgstr "滑らかさ。より大きいのはベースラインのより堅いです、従ってそれは狭いピークに従うためにより少し曲げます。"
+
+msgid "Solver"
+msgstr "ソルバー"
+
+msgid "Source"
+msgstr "ソース"
+
+msgid "Straight line"
+msgstr "ストレートライン"
+
+msgid "Subtract a spectrum's background (AsLS or rubber band)"
+msgstr "スペクトルの背景(AsLSまたはゴムバンド)を抽出する"
+
+msgid "Taper applied to each segment before the FFT."
+msgstr "FFTの前に各セグメントにTaperが適用されます。"
+
+msgid "The series never crosses this level. Check the level against the data's range - a crossing no two samples straddle cannot be found from these samples."
+msgstr "このレベルを交差させないシリーズ。データの範囲からレベルを確認してください - 交差する2つのサンプルストラドルは、これらのサンプルから見つけることができません。"
+
+msgid "The surface never reaches this level - z stays on one side of it everywhere on the grid."
+msgstr "表面は、このレベルに達しません - z はグリッド上のどこにもそれの片側にとどまります。"
+
+msgid "The y value to solve for. 0 finds the zeros; any other value finds where the series crosses that level, which is the same problem shifted."
+msgstr "y 値が解決します。 0 はゼロを見つけます。 他の値では、同じ問題がシフトされたシリーズがそのレベルを交差する場所を見つけます。"
+
+msgid "This surface's points were not a complete x/y grid, so the peaks below were found on a linearly interpolated one - treat them as approximate."
+msgstr "この表のポイントは、完全なx/yグリッドではなかったため、下のピークは線形に補間された点で発見され、近似として扱います。"
+
+msgid "This surface's points were not a complete x/y grid, so this level curve was traced on a linearly interpolated one - treat it as approximate."
+msgstr "この表のポイントは、完全なx/yグリッドではなかったため、このレベルの曲線は線形に補間された1で追跡され、それは近似として扱います。"
+
+msgid "Tolerance (digits)"
+msgstr "許容(数字)"
+
+msgid "Traced on the surface's own exact x/y grid."
+msgstr "表面自身の厳密なx/yの格子でひっくり返して下さい。"
+
+msgid "Variance share"
+msgstr "バリエーションシェア"
+
+msgid "What the series is assumed to do between two points. Linear claims nothing the samples do not; the two curved options fit a smooth signal better and can overshoot a noisy one into crossings that are not there."
+msgstr "2つのポイント間でシリーズが行うことを想定しています。 リニアクレームは、サンプルは何もしません。 2つの曲線のオプションは、スムーズな信号に合い、そこにない交差に騒々しい1をオーバーシュートすることができます。"
+
+msgid "Which turning points to look for."
+msgstr "どのポイントが見えるか。"
+
+msgid "Width"
+msgstr "フリガナ"
+
+msgid "Window"
+msgstr "ウィンドウ"
+
+msgid "density: power per unit frequency. spectrum: power per segment."
+msgstr "密度:単位の頻度ごとの力。スペクトル:区分ごとの力。"
+
+msgid "falling"
+msgstr "落ちる"
+
+msgid "level {level}"
+msgstr "レベル{level}"
+
+msgid "maximum"
+msgstr "最小限"
+
+msgid "minimum"
+msgstr "最小限"
+
+msgid "p"
+msgstr "ふりがな"
+
+msgid "rising"
+msgstr "人気カテゴリー"
+
+msgid "truncated"
+msgstr "ツイート"
+
+msgid "unbiased divides by the overlap at each lag; biased divides by N; none returns the raw sum of products."
+msgstr "各ラグのオーバーラップによる偏差分; Nによる偏差分; どれも製品の生の合計を返します。"
+
+msgid "{count} point(s) embedded from {series} series into 2 dimensions."
+msgstr "{series}シリーズから2次元に埋め込まれる{count}ポイント(s)。"

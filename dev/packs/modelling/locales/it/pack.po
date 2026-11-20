@@ -1,0 +1,422 @@
+# Italiano translation for the pack modelling.
+# Message ids are the English source strings.
+
+msgid ""
+msgstr "Project-Id-Version: ChartLibre\nLanguage: it\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\n"
+
+msgid "0 finds it from the dates (12 for months, 7 for days, 4 for quarters); 1 means none."
+msgstr "0 lo rileva dalle date (12 per i mesi, 7 per i giorni, 4 per i trimestri); 1 significa nessuno."
+
+msgid "1 for a series that wanders or has a trend; 0 for one that comes back to its mean."
+msgstr "1 per una serie che oscilla o presenta una tendenza; 0 per una serie che ritorna alla sua media."
+
+msgid "1 takes away last season's value: for a season that repeats steadily."
+msgstr "1 sottrae il valore della stagione precedente: per una stagione che si ripete costantemente."
+
+msgid "95% prediction interval"
+msgstr "Intervallo di previsione del 95%"
+
+msgid "A measure in time order: its autocorrelation (ACF, PACF, Ljung-Box), its trend and season (STL), and an ARIMA or exponential-smoothing forecast with its prediction interval."
+msgstr "Una misura in ordine temporale: la sua autocorrelazione (ACF, PACF, Ljung-Box), la sua tendenza e stagionalità (STL) e una previsione ARIMA o di smoothing esponenziale con il suo intervallo di previsione."
+
+msgid "A step lasts from then on; a pulse affects that one time only."
+msgstr "Un passaggio dura da quel momento in poi; un impulso ha effetto solo una volta."
+
+msgid "ARIMA d (differences)"
+msgstr "ARIMA d (differenze)"
+
+msgid "ARIMA only: a date (or a number of the time column) when something changed - a new process, a policy, a fault. Its estimate is the change it made."
+msgstr "Solo ARIMA: una data (o un numero della colonna temporale) in cui è cambiato qualcosa - un nuovo processo, una politica, un guasto. La sua stima è il cambiamento che ha apportato."
+
+msgid "ARIMA only: the input enters the model at the lag where its prewhitened cross-correlation is strongest; its coefficient says how much Y moves per unit of X. Ahead of that lag the forecast uses X's own forecast."
+msgstr "Solo ARIMA: l'input entra nel modello al lag in cui la sua correlazione incrociata pre-sbiancata è più forte; il suo coefficiente indica di quanto si sposta Y per unità di X. Prima di tale lag, la previsione utilizza la previsione di X stessa."
+
+msgid "ARIMA p (autoregressive)"
+msgstr "ARIMA p (autoregressivo)"
+
+msgid "ARIMA q (moving average)"
+msgstr "ARIMA q (media mobile)"
+
+msgid "ARIMA with a season: how many past seasons the next value depends on (the ACF's spikes at the season's multiples)."
+msgstr "ARIMA con una stagionalità: da quante stagioni passate dipende il valore successivo (i picchi dell'ACF ai multipli della stagionalità)."
+
+msgid "ARIMA: the next value from the last ones (p), the changes (d) and the last errors (q), with a season (P, D, Q) of its own. ARIMA, order chosen by AIC: the differences from the stationarity tests, then the p, q, P, Q with the lowest AIC. Exponential smoothing: a level, a trend and a season that each follow the newest values most. State space: a level and a slope that wander a little each step (a local linear trend), with a season - estimated by the Kalman filter."
+msgstr "ARIMA: il valore successivo rispetto agli ultimi (p), le variazioni (d) e gli ultimi errori (q), con una stagionalità (P, D, Q) propria. ARIMA, ordine scelto dall'AIC: le differenze rispetto ai test di stazionarietà, quindi i valori p, q, P, Q con l'AIC più basso. Smoothing esponenziale: un livello, una tendenza e una stagionalità che seguono maggiormente i valori più recenti. Spazio di stato: un livello e una pendenza che variano leggermente a ogni passo (una tendenza lineare locale), con una stagionalità, stimati dal filtro di Kalman."
+
+msgid "Actual"
+msgstr "Effettivo"
+
+msgid "Actual by predicted"
+msgstr "Effettivo per previsto"
+
+msgid "All rows"
+msgstr "Tutte le righe"
+
+msgid "Autocorrelation (ACF)"
+msgstr "Autocorrelazione (ACF)"
+
+msgid "Autocorrelation, first 12 lags"
+msgstr "Autocorrelazione, primi 12 lag"
+
+msgid "Automatic"
+msgstr "Automatico"
+
+msgid "Boosted Tree: how much each tree corrects the ones before. Smaller needs more trees."
+msgstr "Boosted Tree: quanto ogni albero corregge quelli precedenti. Un valore inferiore richiede più alberi."
+
+msgid "Chance"
+msgstr "Probabilità"
+
+msgid "Choose the kernel."
+msgstr "Scegliere il kernel."
+
+msgid "Column contributions"
+msgstr "Contributi delle colonne"
+
+msgid "Confusion matrix (training rows)"
+msgstr "Matrice di confusione (righe di addestramento)"
+
+msgid "Cross-correlation with {input}, prewhitened"
+msgstr "Correlazione incrociata con {input}, pre-sbiancata"
+
+msgid "Cross-correlation with {input}, strongest lags"
+msgstr "Correlazione incrociata con {input}, ritardi più forti"
+
+msgid "Decision tree of a continuous or nominal response on many factors: split and prune a step at a time, or automatically on validation rows; leaves, column contributions and each row's leaf and prediction."
+msgstr "Albero decisionale di una risposta continua o nominale su molti fattori: suddivisione e potatura un passaggio alla volta, oppure automaticamente sulle righe di convalida; foglie, contributi delle colonne e foglia e previsione di ciascuna riga."
+
+msgid "Each of the last values forecast one step ahead from only the values before it, the model refitted each time; its errors beside those of the naive forecast (the last value). Below 1 relative to naive: the model forecasts better than it."
+msgstr "Ciascuno degli ultimi valori prevede un passo avanti rispetto ai soli valori che lo precedono, il modello viene riadattato ogni volta; i suoi errori accanto a quelli della previsione ingenua (l'ultimo valore). Inferiore a 1 rispetto alla previsione ingenua: il modello prevede meglio di essa."
+
+msgid "False positive rate"
+msgstr "Tasso di falsi positivi"
+
+msgid "Fit by number of trees"
+msgstr "Adattamento in base al numero di alberi"
+
+msgid "Forecast"
+msgstr "Previsione"
+
+msgid "Forecast periods"
+msgstr "Periodi di previsione"
+
+msgid "Gaussian process regression with an uncertainty band"
+msgstr "Regressione del processo gaussiano con banda di incertezza"
+
+msgid "Gaussian process regression, partition trees and time series models."
+msgstr "Regressione con processo gaussiano, alberi di partizione e modelli di serie temporali."
+
+msgid "Granger causality (VAR)"
+msgstr "Causalità di Granger (VAR)"
+
+msgid "Grow the tree"
+msgstr "Fai crescere l'albero"
+
+msgid "Here it follows {measure} one step behind: the model predicts little beyond the last value. A model that fits better (ARIMA chosen by AIC, a season) brings it onto the data."
+msgstr "Qui segue {measure} un passo indietro: il modello prevede poco oltre l'ultimo valore. Un modello che si adatta meglio (ARIMA scelto da AIC, una stagione) lo applica ai dati."
+
+msgid "How far back the autocorrelations look."
+msgstr "Fino a che punto si estendono le autocorrelazioni."
+
+msgid "How many past errors the next value depends on: the lags where the ACF stands out."
+msgstr "Da quanti errori passati dipende il valore successivo: i lag in cui l'ACF si distingue."
+
+msgid "How many past seasons' errors the next value depends on."
+msgstr "Da quanti errori delle stagioni passate dipende il valore successivo."
+
+msgid "How many past values the next depends on: the lags where the PACF stands out."
+msgstr "Da quanti valori passati dipende il valore successivo: i lag in cui la PACF si distingue."
+
+msgid "How many times ahead to forecast."
+msgstr "Quante volte in anticipo effettuare la previsione."
+
+msgid "How many times the rows are split: one fewer than the leaves. For a Boosted Tree, the splits of each tree."
+msgstr "Quante volte le righe vengono suddivise: una in meno rispetto alle foglie. Per un albero potenziato, le divisioni di ciascun albero."
+
+msgid "How many trees a Bootstrap Forest or a Boosted Tree grows."
+msgstr "Quanti alberi crescono in una foresta bootstrap o in un albero boosted."
+
+msgid "How much the {measure} drops when a column is shuffled, on the {rows} rows - for any model, the forest and the boosted tree included."
+msgstr "Di quanto diminuisce il valore {measure} quando una colonna viene mescolata, sulle {rows} righe - per qualsiasi modello, inclusi la foresta e l'albero potenziato."
+
+msgid "Importance"
+msgstr "Importanza"
+
+msgid "Intervention"
+msgstr "Intervento"
+
+msgid "Intervention at"
+msgstr "Intervento a"
+
+msgid "JMP documentation"
+msgstr "Documentazione JMP"
+
+msgid "Kernel"
+msgstr "Kernel"
+
+msgid "Lag"
+msgstr "Ritardo"
+
+msgid "Lags"
+msgstr "Ritardi"
+
+msgid "Leaf"
+msgstr "Foglia"
+
+msgid "Leaf report"
+msgstr "Report foglia"
+
+msgid "Leaf {leaf}"
+msgstr "Foglia {leaf}"
+
+msgid "Learning rate"
+msgstr "Tasso di apprendimento"
+
+msgid "Leaves"
+msgstr "Fogli"
+
+msgid "Length scale"
+msgstr "Scala di lunghezza"
+
+msgid "Method"
+msgstr "Metodo"
+
+msgid "Minimum leaf size"
+msgstr "Dimensione minima della foglia"
+
+msgid "Models tried, best AIC first"
+msgstr "Modelli provati, prima il miglior AIC"
+
+msgid "Noise level"
+msgstr "Livello di rumore"
+
+msgid "One more split: the one that best separates the response."
+msgstr "Un'altra suddivisione: quella che separa meglio la risposta."
+
+msgid "One tree you can read; a Bootstrap Forest (many trees on resampled rows, averaged); or a Boosted Tree (many small trees, each correcting the ones before)."
+msgstr "Un albero che si può leggere; una foresta bootstrap (molti alberi su righe ricampionate, con valori medi); oppure un albero potenziato (molti alberi piccoli, ciascuno dei quali corregge quelli precedenti)."
+
+msgid "Optional: 1 (or Validation) on the rows kept out of the fit, to judge it."
+msgstr "Facoltativo: 1 (o Convalida) sulle righe escluse dall'adattamento, per valutarlo."
+
+msgid "Optional: another series measured at the same times - the cross-correlation says whether it leads or follows Y, and by how much."
+msgstr "Facoltativo: un'altra serie misurata negli stessi momenti - la correlazione incrociata indica se precede o segue Y, e di quanto."
+
+msgid "Optional: dates, times or a run number. Without it, the rows' order."
+msgstr "Facoltativo: date, orari o un numero di esecuzione. Senza di esso, l'ordine delle righe."
+
+msgid "Parameter estimates"
+msgstr "Stime dei parametri"
+
+msgid "Partial autocorrelation (PACF)"
+msgstr "Autocorrelazione parziale (PACF)"
+
+msgid "Partial dependence on {factor}"
+msgstr "Dipendenza parziale da {factor}"
+
+msgid "Partition"
+msgstr "Partizione"
+
+msgid "Partition for {response}"
+msgstr "Partizione per {response}"
+
+msgid "Permutation importance"
+msgstr "Importanza della permutazione"
+
+msgid "Predicted"
+msgstr "Previsto"
+
+msgid "Predicted is each value forecast one step ahead from the ones before it, as JMP's Predicted; the Residual is the value minus it."
+msgstr "Il valore previsto è ciascun valore previsto un passo avanti rispetto a quelli precedenti, come il valore Previsto di JMP; il Residuo è il valore meno tale valore."
+
+msgid "Predictive and Specialized Modeling"
+msgstr "Modellazione predittiva e specializzata"
+
+msgid "Predictive modelling"
+msgstr "Modellazione predittiva"
+
+msgid "Prewhitened CCF"
+msgstr "CCF pre-sbiancato"
+
+msgid "Prune"
+msgstr "Potatura"
+
+msgid "Pulse (one time)"
+msgstr "Impulso (una tantum)"
+
+msgid "ROC curve"
+msgstr "Curva ROC"
+
+msgid "Random seed"
+msgstr "Seed casuale"
+
+msgid "Reports the Durbin-Watson diagnostic for lag-one residual correlation. Values near 2 indicate little lag-one correlation; no generic p-value is reported."
+msgstr "Riporta la diagnostica di Durbin-Watson per la correlazione residua con lag pari a uno. Valori prossimi a 2 indicano una scarsa correlazione di primo ordine; non viene riportato alcun valore p generico."
+
+msgid "Residual randomness and independence"
+msgstr "Cas​ualità e indipendenza dei residui"
+
+msgid "Response {name}"
+msgstr "Risposta {name}"
+
+msgid "Rolling-origin validation"
+msgstr "Convalida rolling-origin"
+
+msgid "Rolling-origin validation, one step ahead"
+msgstr "Convalida rolling-origin, un passo avanti"
+
+msgid "Row"
+msgstr "Riga"
+
+msgid "Rows, by leaf"
+msgstr "Righe, per foglia"
+
+msgid "Season ({n}) and remainder"
+msgstr "Stagione ({n}) e resto"
+
+msgid "Season length"
+msgstr "Durata della stagione"
+
+msgid "Seasonal D"
+msgstr "D stagionale"
+
+msgid "Seasonal P"
+msgstr "P stagionale"
+
+msgid "Seasonal Q"
+msgstr "Q stagionale"
+
+msgid "Show residual Durbin-Watson statistic"
+msgstr "Mostra la statistica residua di Durbin-Watson"
+
+msgid "Show residual Ljung-Box tests"
+msgstr "Mostra test Ljung-Box residui"
+
+msgid "Show residual runs test"
+msgstr "Mostra test delle sequenze residue"
+
+msgid "Show residual turning-point test"
+msgstr "Mostra test dei punti di svolta residui"
+
+msgid "Split"
+msgstr "Dividi"
+
+msgid "Split history"
+msgstr "Cronologia delle divisioni"
+
+msgid "Split while the validation rows say the tree predicts better."
+msgstr "Esegui la suddivisione mentre le righe di convalida indicano che l'albero prevede meglio."
+
+msgid "Splits"
+msgstr "Divisioni"
+
+msgid "Starting guess for how quickly the fit can vary with x. Re-optimized automatically while fitting - a starting point, not a fixed choice."
+msgstr "Stima iniziale della velocità con cui l'adattamento può variare in funzione di x. Riottimizzato automaticamente durante l'adattamento - un punto di partenza, non una scelta fissa."
+
+msgid "Starting guess for the observation noise variance, added to the kernel. Also re-optimized while fitting."
+msgstr "Stima iniziale della varianza del rumore di osservazione, aggiunta al kernel. Viene inoltre riottimizzata durante il fitting."
+
+msgid "Stationarity tests"
+msgstr "Test di stazionarietà"
+
+msgid "Step (lasting)"
+msgstr "Passo (durata)"
+
+msgid "Summary"
+msgstr "Riepilogo"
+
+msgid "Tests whether residual autocorrelations through the selected lags are jointly zero."
+msgstr "Verifica se le autocorrelazioni residue attraverso i lag selezionati sono congiuntamente pari a zero."
+
+msgid "Tests whether the number of local peaks and troughs in the residuals is consistent with a random sequence."
+msgstr "Verifica se il numero di picchi e di minimi locali nei residui è coerente con una sequenza casuale."
+
+msgid "The column to predict: continuous gives a regression tree, nominal a classification tree."
+msgstr "La colonna da prevedere: continua fornisce un albero di regressione, nominale un albero di classificazione."
+
+msgid "The columns the tree may split on."
+msgstr "Le colonne su cui l'albero può essere suddiviso."
+
+msgid "The fewest rows a leaf may hold."
+msgstr "Il minor numero di righe che una foglia può contenere."
+
+msgid "The measure, one value per time."
+msgstr "La misura, un valore per volta."
+
+msgid "Time Series"
+msgstr "Serie temporali"
+
+msgid "Time or order"
+msgstr "Tempo o ordine"
+
+msgid "Training"
+msgstr "Addestramento"
+
+msgid "Tree"
+msgstr "Albero"
+
+msgid "Trees"
+msgstr "Alberi"
+
+msgid "Trend"
+msgstr "Tendenza"
+
+msgid "True positive rate"
+msgstr "Tasso di veri positivi"
+
+msgid "Undo the last split."
+msgstr "Annulla l'ultima divisione."
+
+msgid "Validation"
+msgstr "Convalida"
+
+msgid "Validation share"
+msgstr "Quota di validazione"
+
+msgid "Wald-Wolfowitz test of whether positive and negative residuals occur in a random order around zero. Ties at zero are omitted."
+msgstr "Test di Wald-Wolfowitz per verificare se i residui positivi e negativi si verificano in ordine casuale intorno allo zero. I pareggi a zero sono omessi."
+
+msgid "Which rows the validation share draws."
+msgstr "Quali righe disegna la quota di convalida."
+
+msgid "With no validation column: this share of rows, at random, judges the tree. 0 for none."
+msgstr "Senza colonna di convalida: questa percentuale di righe, in modo casuale, valuta l'albero. 0 per nessuna."
+
+msgid "X"
+msgstr "X"
+
+msgid "X, input"
+msgstr "X, input"
+
+msgid "X, input in the model (transfer function)"
+msgstr "X, input nel modello (funzione di trasferimento)"
+
+msgid "Y"
+msgstr "Y"
+
+msgid "Y, time series"
+msgstr "Y, serie temporali"
+
+msgid "{input}'s past added nothing to forecasting {measure}"
+msgstr "Il passato di {input} non ha aggiunto nulla alla previsione di {measure}"
+
+msgid "{input}'s past helps forecast {measure} (Granger)"
+msgstr "Il passato di {input} aiuta a prevedere {measure} (Granger)"
+
+msgid "{measure} and its forecast"
+msgstr "{measure} e la sua previsione"
+
+msgid "{measure} by number of splits"
+msgstr "{measure} per numero di divisioni"
+
+msgid "{measure} by number of trees"
+msgstr "{measure} per numero di alberi"
+
+msgid "{measure} comes back to a stable level"
+msgstr "{measure} torna a un livello stabile"
+
+msgid "{measure} wandered with no level to come back to"
+msgstr "{measure} ha oscillato senza un livello a cui tornare"
+
+msgid "{response} by leaf"
+msgstr "{response} per foglia"

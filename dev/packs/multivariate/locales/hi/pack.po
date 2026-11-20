@@ -1,0 +1,428 @@
+# हिन्दी translation for the pack multivariate.
+# Message ids are the English source strings.
+
+msgid ""
+msgstr "Project-Id-Version: ChartLibre\nLanguage: hi\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\n"
+
+msgid "0 chooses them by cross-validation: another component only while it cuts the prediction error by 5% or more."
+msgstr "0 उन्हें क्रॉस-वैलिडेशन द्वारा चुनता है: एक अन्य घटक केवल जबकि यह 5% या उससे अधिक की भविष्यवाणी त्रुटि में कटौती करता है।"
+
+msgid "0 takes as many as the correlations have eigenvalues above 1 (see the scree plot)."
+msgstr "0 के रूप में कई लेता है के रूप में correlations 1 के ऊपर eigenvalues है (देखें scree साजिश)।"
+
+msgid "A few directions that carry most of the variation of many columns: eigenvalues and their share, loadings, each row's scores; scree, score and loading plots."
+msgstr "कुछ दिशाओं में जो कई स्तंभों के भिन्नता को ले जाते हैं: eigenvalues और उनके शेयर, लदान, प्रत्येक पंक्ति के स्कोर; स्क्री, स्कोर और लदान की साजिश।"
+
+msgid "A few hidden factors behind many correlated columns: Maximum Likelihood or Principal Axis, rotated (Varimax, Quartimax, Equamax, Promax); loadings, communalities, each row's scores."
+msgstr "कई सहसंबंधित स्तंभों के पीछे कुछ छिपे हुए कारक: अधिकतम संभावना या प्रिंसिपल एक्सिस, घुमाया गया (Varimax, Quartimax, Equamax, Promax); लोडिंग, कम्युनिटी, प्रत्येक पंक्ति के स्कोर।"
+
+msgid "Actual"
+msgstr "वास्तविक"
+
+msgid "Actual by predicted"
+msgstr "भविष्यवाणी करके वास्तविक"
+
+msgid "Algorithm"
+msgstr "एल्गोरिथ्म"
+
+msgid "Biplot"
+msgstr "बिप्लॉट"
+
+msgid "By"
+msgstr "द्वारा"
+
+msgid "Canonical analysis"
+msgstr "कैनोनिकल विश्लेषण"
+
+msgid "Canonical plot"
+msgstr "Canonical साजिश"
+
+msgid "Canonical scores by {response}"
+msgstr "{response} द्वारा कैनोनिकल स्कोर"
+
+msgid "Choose k automatically"
+msgstr "स्वचालित रूप से k चुनें"
+
+msgid "Choose the clustering algorithm family."
+msgstr "क्लस्टरिंग एल्गोरिथ्म परिवार चुनें।"
+
+msgid "Choose the exact scipy.cluster function/workflow to use."
+msgstr "सटीक scipy.cluster समारोह/workflow का उपयोग करने के लिए चुनें।"
+
+msgid "Choose whether clusters are rendered as one point-colored series or as separate series."
+msgstr "चुनें कि क्लस्टर को एक बिंदु-रंगीन श्रृंखला या अलग श्रृंखला के रूप में प्रस्तुत किया गया है या नहीं।"
+
+msgid "Choose which numeric columns are used as clustering features."
+msgstr "कौन से संख्यात्मक स्तंभों का उपयोग क्लस्टरिंग सुविधाओं के रूप में किया जाता है।"
+
+msgid "Choosing k"
+msgstr "K का चयन"
+
+msgid "Cluster"
+msgstr "क्लस्टर"
+
+msgid "Cluster means"
+msgstr "क्लस्टर का मतलब"
+
+msgid "Cluster profiles"
+msgstr "क्लस्टर प्रोफाइल"
+
+msgid "Clusters"
+msgstr "क्लस्टर"
+
+msgid "Clusters on two principal components"
+msgstr "दो प्रमुख घटकों पर क्लस्टर"
+
+msgid "Coefficients"
+msgstr "गुणांक"
+
+msgid "Columns"
+msgstr "स्तंभ"
+
+msgid "Columns standardized"
+msgstr "कॉलम मानकीकृत"
+
+msgid "Communalities"
+msgstr "समुदाय"
+
+msgid "Component"
+msgstr "घटक"
+
+msgid "Components"
+msgstr "अवयव"
+
+msgid "Confusion matrix"
+msgstr "संलयन मैट्रिक्स"
+
+msgid "Correlation"
+msgstr "सहसंबंध"
+
+msgid "Correlations"
+msgstr "कोरिलेशन"
+
+msgid "Correlations weigh every column the same, whatever its unit - the usual choice. Covariances let the columns with the widest spread lead, for columns in one unit."
+msgstr "Correlations हर स्तंभ समान वजन, जो भी इसकी इकाई - सामान्य पसंद है। Covariances स्तंभों को एक इकाई में स्तंभों के लिए व्यापक रूप से फैलने वाले लीड के साथ जाने देते हैं।"
+
+msgid "Cross-validation"
+msgstr "क्रॉस-वैलिडेशन"
+
+msgid "Cross-validation folds"
+msgstr "क्रॉस-वैलिडेशन फोल्ड"
+
+msgid "Cut criterion"
+msgstr "कटाव"
+
+msgid "Cut threshold"
+msgstr "थ्रेसहोल्ड"
+
+msgid "Cut threshold for distance/inconsistent criteria. Leave at auto for median linkage distance."
+msgstr "दूरी / असंगत मानदंडों के लिए दहलीज काट लें। औसत लिंकेज दूरी के लिए ऑटो पर छोड़ दें।"
+
+msgid "Discriminant"
+msgstr "भेदभावपूर्ण"
+
+msgid "Distance metric"
+msgstr "दूरी मीट्रिक"
+
+msgid "Do the clusters differ in {column}?"
+msgstr "क्या क्लस्टर {column} में भिन्न होते हैं?"
+
+msgid "Each cluster's mean silhouette: near 1 well apart, near 0 on a border, below 0 misplaced."
+msgstr "प्रत्येक क्लस्टर का मतलब सिल्हूट: 1 के पास अच्छी तरह से अलग, 0 के पास एक सीमा पर, 0 से नीचे की जगह है।"
+
+msgid "Each feature divided by its standard deviation, so that each counts the same whatever its unit - leave on unless the features share one unit and scale."
+msgstr "प्रत्येक विशेषता को अपने मानक विचलन द्वारा विभाजित किया गया है, ताकि प्रत्येक उसकी इकाई को गिन सके - तब तक छोड़ दें जब तक कि सुविधाएँ एक इकाई और पैमाने को साझा नहीं करती हैं।"
+
+msgid "Each feature's mean in each cluster."
+msgstr "प्रत्येक विशेषता का मतलब प्रत्येक क्लस्टर में होता है।"
+
+msgid "Each row across the features as a parallel plot, coloured by its cluster."
+msgstr "प्रत्येक पंक्ति में एक समानांतर साजिश के रूप में, इसके क्लस्टर द्वारा रंग दिया गया है।"
+
+msgid "Eigenvalue"
+msgstr "Eigenvalue"
+
+msgid "Eigenvalues"
+msgstr "Eigenvalues"
+
+msgid "Eigenvectors"
+msgstr "Eigenvector"
+
+msgid "Factor Analysis"
+msgstr "फैक्टर विश्लेषण"
+
+msgid "Factor correlations"
+msgstr "फैक्टर correlations"
+
+msgid "Factor loading plot"
+msgstr "फैक्टरी लोड हो रहा है साजिश"
+
+msgid "Factors"
+msgstr "कारक"
+
+msgid "Family"
+msgstr "परिवार"
+
+msgid "Features"
+msgstr "सुविधाएँ"
+
+msgid "For X in different units. Off for a spectrum: scaling gives the wavelengths that carry only noise the weight of the bands."
+msgstr "विभिन्न इकाइयों में एक्स के लिए: एक स्पेक्ट्रम के लिए बंद: स्केलिंग तरंगदैर्ध्य देता है जो केवल बैंड के वजन को शोर करता है।"
+
+msgid "Group means"
+msgstr "समूह का अर्थ"
+
+msgid "Group similar rows - k-means, hierarchical (Ward), normal mixtures, DBSCAN and more - with k chosen by the silhouette; each cluster's size and means, its rows on the principal components."
+msgstr "समूह समान पंक्तियाँ - k-means, hierarchical (Ward), सामान्य मिश्रण, DBSCAN और अधिक - K सिल्हूट द्वारा चुना के साथ; प्रत्येक क्लस्टर का आकार और अर्थ, प्रमुख घटकों पर इसकी पंक्तियां।"
+
+msgid "How continuous columns move together: the correlation matrix, each pair's correlation with its confidence interval and p-value, and the scatterplot matrix."
+msgstr "कैसे निरंतर स्तंभ एक साथ आगे बढ़ते हैं: सहसंबंध मैट्रिक्स, प्रत्येक जोड़ी के अपने आत्मविश्वास अंतराल और पी-मूल्य के साथ सहसंबंध, और स्कैटरप्लॉट मैट्रिक्स।"
+
+msgid "How likely each group is before the measures are seen: its share of the rows, or the same for every group."
+msgstr "प्रत्येक समूह के उपायों से पहले होने की संभावना है: पंक्तियों का हिस्सा, या हर समूह के लिए समान।"
+
+msgid "How to read this"
+msgstr "कैसे इसे पढ़ने के लिए"
+
+msgid "Into how many parts the rows are split; each part is predicted by a model fitted on the others."
+msgstr "कितने हिस्सों में पंक्तियों को विभाजित किया जाता है; प्रत्येक भाग को दूसरों पर फिट एक मॉडल द्वारा भविष्यवाणी की जाती है।"
+
+msgid "K-means convergence threshold."
+msgstr "K-means अभिसरण सीमा।"
+
+msgid "K-means iterations"
+msgstr "K-mean पुनरावृत्ति"
+
+msgid "K-means threshold"
+msgstr "K-means थ्रेसहोल्ड"
+
+msgid "Largest k"
+msgstr "सबसे बड़ा k"
+
+msgid "Linear: the groups share one covariance, the boundaries are planes. Quadratic: each group has its own, the boundaries curve; it needs more rows."
+msgstr "रैखिक: समूह एक समरूपता साझा करते हैं, सीमाएं समतल हैं। क्वाड्रैटिक: प्रत्येक समूह का अपना, सीमा वक्र होता है; इसे अधिक पंक्तियों की आवश्यकता होती है।"
+
+msgid "Linkage method"
+msgstr "लिंकेज विधि"
+
+msgid "Loading matrix"
+msgstr "मैट्रिक्स लोड करना"
+
+msgid "Loading plot"
+msgstr "भूखंड लोड"
+
+msgid "Max runtime"
+msgstr "अधिकतम रनटाइम"
+
+msgid "Maximum Likelihood: JMP's default, for columns roughly normal. Principal Axis: no assumption of normality, steadier with few rows."
+msgstr "अधिकतम संभावना: JMP का डिफ़ॉल्ट, मोटे तौर पर सामान्य स्तंभों के लिए। प्रिंसिपल एक्सिस: सामान्यता की कोई धारणा नहीं, कुछ पंक्तियों के साथ स्थिर।"
+
+msgid "Maximum k-means iterations."
+msgstr "अधिकतम K-means पुनरावृत्तियाँ।"
+
+msgid "Maximum seconds to wait for clustering. Use 0 for no timeout."
+msgstr "क्लस्टरिंग के लिए प्रतीक्षा करने के लिए अधिकतम सेकंड।"
+
+msgid "Mean"
+msgstr "मीन"
+
+msgid "Mean silhouette"
+msgstr "मीन सिल्हूट"
+
+msgid "Method"
+msgstr "विधि"
+
+msgid "Min samples"
+msgstr "न्यूनतम नमूने"
+
+msgid "Minimum samples for DBSCAN/OPTICS core points."
+msgstr "DBSCAN/OPTICS कोर अंक के लिए न्यूनतम नमूने।"
+
+msgid "Multivariate"
+msgstr "Multivariate"
+
+msgid "Multivariate Methods"
+msgstr "बहुविध तरीके"
+
+msgid "Multivariate methods"
+msgstr "Multivariate तरीकों"
+
+msgid "Neighborhood radius"
+msgstr "पड़ोस त्रिज्या"
+
+msgid "Neighborhood radius for DBSCAN. 0 uses the default 0.5."
+msgstr "DBSCAN के लिए पड़ोस त्रिज्या 0 डिफ़ॉल्ट 0.5 का उपयोग करता है।"
+
+msgid "Normalize features by standard deviation before k-means."
+msgstr "K-mean से पहले मानक विचलन द्वारा सुविधाओं को सामान्यीकृत करें।"
+
+msgid "Number"
+msgstr "संख्या"
+
+msgid "Number of clusters to request."
+msgstr "अनुरोध करने के लिए समूहों की संख्या।"
+
+msgid "On"
+msgstr "पर"
+
+msgid "Optional: a column of groups - species, batch, site; the score plot and the biplot colour the rows by it."
+msgstr "वैकल्पिक: समूहों का एक स्तंभ - प्रजातियां, बैच, साइट; स्कोर प्लॉट और बिप्लॉट रंग इसके द्वारा पंक्तियाँ।"
+
+msgid "Optional: a column of groups - species, batch, site; the score plot colours the rows by it."
+msgstr "वैकल्पिक: समूहों का एक स्तंभ - प्रजातियां, बैच, साइट; स्कोर प्लॉट इसके द्वारा पंक्तियों को रंग देता है।"
+
+msgid "PLS"
+msgstr "पीएलएस"
+
+msgid "Pairwise correlations, strongest evidence first"
+msgstr "जोड़ीदार कोरिलेशन, सबसे मजबूत सबूत पहले"
+
+msgid "Partial Least Squares"
+msgstr "आंशिक पूर्वोत्तर वर्ग"
+
+msgid "Pearson measures a straight-line relation; Spearman and Kendall any relation that keeps going one way, and are not swayed by outliers."
+msgstr "Pearson एक सीधी रेखा के संबंध को मापता है; Spearman और Kendall कोई भी संबंध जो एक तरह से चल रहा है, और outliers द्वारा दूर नहीं कर रहे हैं।"
+
+msgid "Principal Components"
+msgstr "प्रिंसिपल अवयव"
+
+msgid "Principal components, factor analysis, clustering, discriminant, partial least squares and correlations, with dendrogram and parallel plot."
+msgstr "प्रिंसिपल घटक, कारक विश्लेषण, क्लस्टरिंग, भेदभावपूर्ण, आंशिक कम से कम वर्गों और सहसंबंधों, डेंडरोग्राम और समानांतर साजिश के साथ।"
+
+msgid "Prior probabilities"
+msgstr "पूर्व संभावना"
+
+msgid "RMSECV by number of components"
+msgstr "RMSECV घटकों की संख्या से"
+
+msgid "Render as"
+msgstr "Render as"
+
+msgid "Response {name}"
+msgstr "प्रतिक्रिया {name}"
+
+msgid "Rotated factor loadings"
+msgstr "Rotated कारक लोड हो रहा है"
+
+msgid "Rotation"
+msgstr "घूर्णी"
+
+msgid "Rows"
+msgstr "पंक्तियाँ"
+
+msgid "Scale X to unit variance"
+msgstr "स्केल X से यूनिट भिन्नता"
+
+msgid "Scatterplot matrix"
+msgstr "Scatterplot मैट्रिक्स"
+
+msgid "Score plot"
+msgstr "स्कोर साजिश"
+
+msgid "Scores"
+msgstr "स्कोर"
+
+msgid "Scree plot"
+msgstr "स्क्री प्लॉट"
+
+msgid "Silhouette"
+msgstr "सिल्हूट"
+
+msgid "Silhouette by cluster"
+msgstr "सिल्हूट क्लस्टर द्वारा"
+
+msgid "Standardized canonical coefficients"
+msgstr "मानकीकृत कैनोनिकल गुणांक"
+
+msgid "Summary"
+msgstr "सारांश"
+
+msgid "The column whose groups the rows are classified into."
+msgstr "जिस कॉलम में पंक्तियों को वर्गीकृत किया गया है, उस स्तंभ को वर्गीकृत किया गया है।"
+
+msgid "The continuous columns to correlate, two by two."
+msgstr "निरंतर स्तंभों को सहसंबंधित करने के लिए, दो से दो।"
+
+msgid "The continuous columns whose correlations the factors explain."
+msgstr "निरंतर स्तंभ जिनकी ओरिएंटेशन कारकों की व्याख्या करता है।"
+
+msgid "The continuous columns whose variation is summed up."
+msgstr "निरंतर स्तंभ जिनके भिन्नता को संक्षेप में प्रस्तुत किया गया है।"
+
+msgid "The continuous measures that tell the groups apart."
+msgstr "निरंतर उपाय जो समूहों को अलग-अलग बताते हैं।"
+
+msgid "The largest number of clusters tried."
+msgstr "समूहों की सबसे बड़ी संख्या की कोशिश की।"
+
+msgid "The many measures to predict them from: a spectrum's columns."
+msgstr "कई उपायों से उन्हें भविष्यवाणी करने के लिए: एक स्पेक्ट्रम के स्तंभ।"
+
+msgid "The rows on the first two principal components of the features, coloured by cluster."
+msgstr "सुविधाओं के पहले दो प्रमुख घटकों पर पंक्तियां, क्लस्टर द्वारा रंगीन।"
+
+msgid "The values to predict: a concentration, a property."
+msgstr "मूल्य भविष्यवाणी करने के लिए: एक एकाग्रता, एक संपत्ति।"
+
+msgid "Try every k from 2 to the largest and keep the one with the best mean silhouette. DBSCAN, OPTICS and MeanShift find their own number of clusters."
+msgstr "प्रत्येक k को 2 से सबसे बड़ा करने के लिए प्रयास करें और एक को सबसे अच्छा मतलब सिल्हूट के साथ रखें। DBSCAN, OPTICS और MeanShift अपनी संख्या में क्लस्टर पाते हैं।"
+
+msgid "Variable (in column order)"
+msgstr "चर (स्तम्भ क्रम में)"
+
+msgid "Variable importance (VIP)"
+msgstr "चर महत्व (वीआईपी)"
+
+msgid "Variable importance (VIP), highest 15"
+msgstr "चर महत्व (वीआईपी), उच्चतम 15"
+
+msgid "Variance explained"
+msgstr "विविधता समझाया"
+
+msgid "Varimax: each factor with few large loadings, the usual choice. Quartimax: each column on few factors. Equamax: between the two. Promax: lets the factors correlate, when the traits they stand for do."
+msgstr "Varimax: प्रत्येक कारक में कुछ बड़े लोडिंग, सामान्य विकल्प होते हैं। Quartimax: प्रत्येक स्तंभ कुछ कारकों पर। Equamax: दो के बीच। प्रोमैक्स: कारकों को संक्षिप्त करने देता है, जब वे ऐसा करने के लिए खड़े होते हैं।"
+
+msgid "Which group a row belongs to, from continuous measures: linear or quadratic discriminant analysis, canonical plot, Wilks' lambda and the misclassified rows."
+msgstr "जो समूह एक पंक्ति के अंतर्गत आता है, निरंतर उपायों से: रैखिक या द्विघातीय भेदभाव विश्लेषण, कैनोनिकल प्लॉट, विल्क्स लैम्ब्डा और गलत वर्गीकृत पंक्तियों।"
+
+msgid "Whiten features"
+msgstr "व्हाइटन फीचर्स"
+
+msgid "With automatic k: the mean silhouette of each k tried."
+msgstr "स्वत: कश्मीर के साथ: प्रत्येक कश्मीर का मतलब सिल्हूट की कोशिश की।"
+
+msgid "X"
+msgstr "एक्स"
+
+msgid "X, covariates"
+msgstr "X, covariates"
+
+msgid "Y"
+msgstr "वाई"
+
+msgid "Y from many X that move together - a spectrum's wavelengths: a few latent components, their number chosen by cross-validation; variable importance (VIP), loadings, scores, predictions."
+msgstr "कई X से Y जो एक साथ चलते हैं - एक स्पेक्ट्रम की तरंगदैर्ध्य: कुछ देर से घटक, उनकी संख्या क्रॉस-वैलिडेशन द्वारा चुनी गई; चर महत्व (VIP), लोडिंग, स्कोर, भविष्यवाणियां।"
+
+msgid "Y, columns"
+msgstr "Y, स्तंभ"
+
+msgid "Y, group"
+msgstr "Y, समूह"
+
+msgid "more factors are needed"
+msgstr "अधिक कारकों की आवश्यकता होती है"
+
+msgid "the groups differ on them"
+msgstr "समूह उन पर भिन्न होते हैं"
+
+msgid "the groups of {response} had the same means of {covariates}"
+msgstr "{response} के समूह में {covariates} का एक ही साधन था।"
+
+msgid "{count} factor(s) were enough to explain the correlations"
+msgstr "{count} कारक(s) कोरिलेशन की व्याख्या करने के लिए पर्याप्त थे"
+
+msgid "{x} and {y} are correlated"
+msgstr "{x} और {y} सहसंबंधित हैं"
+
+msgid "{x} and {y} were not correlated"
+msgstr "{x} और {y} सहसंबंधित नहीं थे।"

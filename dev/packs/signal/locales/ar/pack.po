@@ -1,0 +1,347 @@
+# العربية translation for the pack signal.
+# Message ids are the English source strings.
+
+msgid ""
+msgstr "Project-Id-Version: ChartLibre\nLanguage: ar\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\n"
+
+msgid "Analyse frequencies"
+msgstr "ترددات التحليل"
+
+msgid "As a fraction of the signal's full range. 0.1 keeps peaks standing at least a tenth of the range above their surroundings."
+msgstr "كجزء من النطاق الكامل للإشارة 0.1 يبقي الذروة واقفة على الأقل عُشر النطاق فوق محيطهم"
+
+msgid "Asymmetry. Smaller pushes the baseline further below the peaks; it should stay well under 0.5."
+msgstr "عدم التماثل - يدفع أصغر حجما خط الأساس إلى ما دون الذروة؛ وينبغي أن يبقى أقل بكثير من 0.5."
+
+msgid "Baseline"
+msgstr "خط الأساس"
+
+msgid "Between samples"
+msgstr "بين العينات"
+
+msgid "Choose a decomposition (a curve per component) or a manifold embedding (a 2D scatter)."
+msgstr "اختر التحلل (حانة لكل عنصر) أو ضمادة متعددة العينات (محطّة 2D)."
+
+msgid "Choose the baseline estimator."
+msgstr "اختر تقدير خط الأساس"
+
+msgid "Choose the spectral or correlation estimator."
+msgstr "اختر جهاز تقييم الطيف أو الترابط."
+
+msgid "Component"
+msgstr "العنصر"
+
+msgid "Component 1"
+msgstr "العنصر 1"
+
+msgid "Component 2"
+msgstr "العنصر 2"
+
+msgid "Components"
+msgstr "العناصر"
+
+msgid "Convert to decibels"
+msgstr "تحويل إلى ديسيبل"
+
+msgid "Cubic spline"
+msgstr "التلميذ العنيف"
+
+msgid "Curve"
+msgstr "العنكة"
+
+msgid "Damping (sigma)"
+msgstr "سد (سيغما)"
+
+msgid "Damping sigma of the Laplace variable s = sigma + i*omega. Zero reduces the transform to the Fourier transform; increasing it weights early samples more and suppresses late ones, which is what makes a decaying or unstable signal integrable."
+msgstr "(زيرو) يخفض التحول إلى التحول الرابع؛ ويزيد من وزن العينات المبكرة ويكبح المتأخرات، وهو ما يجعل الإشارة المتدهورة أو غير مستقرة غير قابلة للتجزئة."
+
+msgid "Decompose or embed several series together (PCA, ICA, NMF, t-SNE, ...)"
+msgstr "Decompose or embed several series together (PCA, ICA, NMF, t-SNE, ...)"
+
+msgid "Detrend"
+msgstr "Detrend"
+
+msgid "Direction"
+msgstr "التوجيه"
+
+msgid "Draw the estimated baseline itself."
+msgstr "رسم خط الأساس المقدر نفسه."
+
+msgid "Estimates"
+msgstr "التقديرات"
+
+msgid "Every selected series is linearly resampled onto this many evenly spaced points across their shared x range, before decomposing or embedding them together."
+msgstr "وكل سلسلة مختارة تُعاد تشكيلها بشكل متتالي على هذه النقاط الكثيرة التي تتسع على نحو متكافئ عبر نطاقها المشترك X، قبل التخلص منها أو دمجها معاً."
+
+msgid "Explained variance"
+msgstr "الفرق الموضح"
+
+msgid "Express the result as 10*log10 of the value."
+msgstr "يعربون عن النتيجة التي بلغت 10*log10 من القيمة."
+
+msgid "Filter by"
+msgstr "المصورون"
+
+msgid "Find"
+msgstr "اعثر على"
+
+msgid "Find and measure peaks"
+msgstr "البحث وقياس الذروة"
+
+msgid "Find where a series crosses a level"
+msgstr "اعثروا على المكان الذي تعبر فيه سلسلة"
+
+msgid "Fold the negative frequencies onto the positive ones. Correct for real-valued signals."
+msgstr "اربطوا الترددات السلبية على الاشارات الايجابية تصحيحاً للاشارات القيمة"
+
+msgid "Found on the surface's own exact x/y grid."
+msgstr "وجدت على السطح بالضبط X/y الشبكة."
+
+msgid "Fraction of each segment shared with the next."
+msgstr "Fraction of each segment shared with the next."
+
+msgid "Grid points"
+msgstr "نقاط الظلم"
+
+msgid "Half-prominence bounds"
+msgstr "حدود نصف الأهمية"
+
+msgid "Height (absolute)"
+msgstr "مرتفع (مطلق)"
+
+msgid "How each bracketed crossing is refined. The three bracketing solvers cannot leave the interval they were given; Newton can, and is checked afterwards."
+msgstr "كيف يجري صقل كل معبر معقوفتين، ولا يمكن للمذيبات الثلاث التي بين قوسين أن تترك الفترة التي أعطيت فيها؛ ويمكن لـ(نيوتن) أن تفحص بعد ذلك."
+
+msgid "How many components to extract. Clamped to the number of selected series."
+msgstr "كم عدد المكوّنات التي يجب استخلاصها، مدمجة في عدد سلسلة مختارة."
+
+msgid "How many decimal places of x the solver has to settle before it stops. Nine is far below the precision of any measured x; the cost of raising it is a few iterations."
+msgstr "كم عدد الأماكن العشرية لـ (إكس) المذيبة يجب أن تستقر قبل أن تتوقف، تسعة منها أقل بكثير من دقة أي حرف ×؛ تكلفة رفعها هي بضع مرات."
+
+msgid "How many nearby points each one is connected to. Lowered automatically if it does not fit the sample count."
+msgstr "كم عدد النقاط القريبة التي يرتبط بها كل واحد، تخفض تلقائياً إذا لم تتناسب مع عدد العينات"
+
+msgid "How many scales to evaluate between the longest period the record supports and the Nyquist frequency, spaced logarithmically."
+msgstr "كم عدد الجداول التي يتعين تقييمها بين أطول فترة يدعم فيها السجل وتواتر نيكيست، من الناحية السوقية الفضائية."
+
+msgid "Input"
+msgstr "الناتج"
+
+msgid "Iterations"
+msgstr "المطالعات"
+
+msgid "Keeps the first crossings in x order when a noisy series crosses the level hundreds of times."
+msgstr "يحافظ على المعابر الأولى في نظام اكس عندما تعبر سلسلة مزعجة المستوى مئات المرات."
+
+msgid "Keeps the most prominent peaks when many are found."
+msgstr "يحافظ على أهمّ ذروة عندما يعثر على الكثيرين."
+
+msgid "Kind"
+msgstr "نوعاً ما"
+
+msgid "Lambda"
+msgstr "Lambda"
+
+msgid "Largest lag to keep. 0 keeps every lag."
+msgstr "أضخم كيلوغرام ليحتفظ به 0 يبقي كل رافعة"
+
+msgid "Level"
+msgstr "الرتبة"
+
+msgid "Max lags"
+msgstr "ماكس لاغز"
+
+msgid "Maximum iterations"
+msgstr "الحد الأقصى للجرعات"
+
+msgid "Method"
+msgstr "المنهجية"
+
+msgid "Minimum"
+msgstr "الحد الأدنى"
+
+msgid "Minimum separation"
+msgstr "الحد الأدنى للفصل"
+
+msgid "Minimum width"
+msgstr "الحد الأدنى للاستعارة"
+
+msgid "Model"
+msgstr "النموذج النموذجي"
+
+msgid "Monotone cubic (PCHIP)"
+msgstr "مكعب مونوتون"
+
+msgid "Morlet central frequency w0. Higher values resolve frequency more finely at the cost of time resolution; 6 is the usual compromise and the value at which the wavelet is near-admissible."
+msgstr "&apos; ١ &apos; التواتر المركزي &apos; &apos; ثالثا - القيم العليا تُحل على نحو أدق بكلفة حل الوقت؛ ٦ هي الحل التوفيقي المعتاد والقيمة التي يقترب منها الملوحة من القبول."
+
+msgid "Morlet w0"
+msgstr "Morlet w0"
+
+msgid "Neighbors"
+msgstr "الجيران"
+
+msgid "No peaks passed the filter. Lower the minimum, or switch from height to prominence if the baseline is not at zero."
+msgstr "لا توجد ذروة تمرّر التصفية، اخفض الحدّ الأدنى، أو التحول من الطول إلى الأهمية إذا لم يكن خط الأساس صفراً."
+
+msgid "No results."
+msgstr "لا نتائج."
+
+msgid "Normalisation"
+msgstr "التطبيع"
+
+msgid "One-sided spectrum"
+msgstr "طيف من جانب واحد"
+
+msgid "Peak ({x} &rarr; {y})"
+msgstr ""
+
+msgid "Peaks, baseline correction, spectral analysis, decomposition and roots, with the spectrogram chart."
+msgstr "Peaks, baseline correction, spectral analysis, decomposition and roots, with the spectrogram chart."
+
+msgid "Per crossing. Brent and TOMS 748 rarely need ten; the limit is what stops a pathological bracket from hanging the dialog."
+msgstr "ونادراً ما يحتاج (برينت) و(تومس) إلى عشرة؛ والحد الأقصى هو ما يوقف الأقواس المرضية من تعليق الهاتف."
+
+msgid "Perplexity"
+msgstr "النضوج"
+
+msgid "Points"
+msgstr "النقاط"
+
+msgid "Points at half prominence. Raise it to reject single-sample spikes, which are usually instrument artefacts rather than features."
+msgstr "نقطتان بنصف الأهمية، نرفعها لرفض المسامير ذات العين الواحدة، التي عادة ما تكون مصنوعات يدوية بدلاً من الملامح."
+
+msgid "Points. Of any two peaks closer than this, the more prominent is kept - which is how a single noisy peak stops being reported as several."
+msgstr "النقاط - من بين أي ذروتين أقرب من هذا، يُبقي أكثر بروزاً - وهو كيف أن ذروة مزعجة واحدة تتوقف عن الإبلاغ عنها كعدد."
+
+msgid "Prominence"
+msgstr "الأهمية"
+
+msgid "Prominence (relative)"
+msgstr "Prominence (relative)"
+
+msgid "Prominence measures a peak against its own surroundings and survives a sloping baseline. Height compares it to zero, which only means something when the baseline is at zero."
+msgstr "فالإبراز يقيس ذروته تجاه محيطه وينجو من خط أساس منحدر، ويقارنه بقوة الصفر، وهذا يعني شيئاً فقط عندما يكون خط الأساس صفراً."
+
+msgid "Re-weighting passes."
+msgstr "تصاريح إعادة الوزن."
+
+msgid "Remove a constant or linear trend from each segment first. A trend leaks into the lowest frequency bins and hides everything near it."
+msgstr "إزالة اتجاه ثابت أو خطي من كل جزء أولاً الاتجاه يتسرب إلى أدنى مستويات التردد ويخفي كل شيء قربه"
+
+msgid "Report at most"
+msgstr "التقرير على الأكثر"
+
+msgid "Residual"
+msgstr "تصريف الأعمال المتبقية"
+
+msgid "Roughly, how many neighbours each point is assumed to have. Lowered automatically if it does not fit the sample count."
+msgstr "وتقريباً، كم من الجيران يفترض أن يكون لديهم كل نقطة، وقد انخفض تلقائياً إذا لم يكن ذلك مناسباً لإحصاء العينة."
+
+msgid "Samples per Welch segment. Longer segments resolve finer frequency detail; shorter ones average away more noise."
+msgstr "&quot; العينات &quot; لكل جزء من الجزء المتعلق بالويلتش: تُحل الأجزاء الأطول درجة تردد دقيق؛ وتُحدَّد الأجزاء الأقصر من الضوضاء أكثر في المتوسط."
+
+msgid "Scales"
+msgstr "Scales"
+
+msgid "Scaling"
+msgstr "Scaling"
+
+msgid "Segment length"
+msgstr "طول الجزء"
+
+msgid "Segment overlap"
+msgstr "التداخل في القطاع"
+
+msgid "Select one or more source series."
+msgstr "اختيار سلسلة مصدر واحدة أو أكثر."
+
+msgid "Series"
+msgstr "سلسلة"
+
+msgid "Signal analysis"
+msgstr "تحليل الإشارات"
+
+msgid "Smoothness. Larger makes the baseline stiffer, so it bends less to follow narrow peaks."
+msgstr "الثمالة، (لاغر) يجعل خط الأساس أكثر ثباتاً، لذا فإنّه يقلّل من تتبع الذروة الضيقة."
+
+msgid "Solver"
+msgstr "سولفر"
+
+msgid "Source"
+msgstr "المصدر"
+
+msgid "Straight line"
+msgstr "خط مستقيم"
+
+msgid "Subtract a spectrum's background (AsLS or rubber band)"
+msgstr "اسحبوا خلفية الطيف (ايس إل إس أو فرقة المطاط)"
+
+msgid "Taper applied to each segment before the FFT."
+msgstr "طابير طُبّقت على كل جزء قبل انعقاد المنتدى."
+
+msgid "The series never crosses this level. Check the level against the data's range - a crossing no two samples straddle cannot be found from these samples."
+msgstr "السلسلة لا تعبر أبداً هذا المستوى تحقق من مستوى البيانات لا يمكن العثور على عينتين من هذه العينات"
+
+msgid "The surface never reaches this level - z stays on one side of it everywhere on the grid."
+msgstr "السطح لا يصل أبداً إلى هذا المستوى - يَبْقى على جانبِ واحد منه في كل مكان على الشبكةِ."
+
+msgid "The y value to solve for. 0 finds the zeros; any other value finds where the series crosses that level, which is the same problem shifted."
+msgstr "وتجد قيمة الحل صفراً؛ وتجد أي قيمة أخرى مكان عبور السلسلة لهذا المستوى، وهو نفس المشكلة التي تحولت."
+
+msgid "This surface's points were not a complete x/y grid, so the peaks below were found on a linearly interpolated one - treat them as approximate."
+msgstr "نقاط السطح هذه لم تكن شبكة كاملة لذا تم العثور على الذروة التي تحتها على واحدة متداخلة بشكل خطي"
+
+msgid "This surface's points were not a complete x/y grid, so this level curve was traced on a linearly interpolated one - treat it as approximate."
+msgstr "نقاط السطح هذه لم تكن شبكة كاملة، لذا هذا المنحنى تم تتبعه على خط متداخل، يعامله كتقريبي"
+
+msgid "Tolerance (digits)"
+msgstr "التسامح (الأرقام)"
+
+msgid "Traced on the surface's own exact x/y grid."
+msgstr "محاصرة على السطح بالضبط × / الشبكة."
+
+msgid "Variance share"
+msgstr "حصة الفرق"
+
+msgid "What the series is assumed to do between two points. Linear claims nothing the samples do not; the two curved options fit a smooth signal better and can overshoot a noisy one into crossings that are not there."
+msgstr "وما يفترض أن تفعله هذه السلسلة بين نقطتين: لا يدّعي الخط أيّ شيء أن العينات لا تفعل ذلك؛ فالخياران الممنوحان يلائمان إشارة سلسة بشكل أفضل ويمكنهما أن يفرّقا على واحد مزعج في المعابر التي ليست موجودة."
+
+msgid "Which turning points to look for."
+msgstr "مما يشير إلى البحث عنه"
+
+msgid "Width"
+msgstr "Width"
+
+msgid "Window"
+msgstr "Window"
+
+msgid "density: power per unit frequency. spectrum: power per segment."
+msgstr "الكثافة: الطاقة لكل تردد للوحدة، الطيف: الطاقة لكل جزء."
+
+msgid "falling"
+msgstr "السقوط"
+
+msgid "level {level}"
+msgstr "المستوى {level}"
+
+msgid "maximum"
+msgstr "الحد الأقصى"
+
+msgid "minimum"
+msgstr "الحد الأدنى"
+
+msgid "p"
+msgstr "p"
+
+msgid "rising"
+msgstr "ارتفاع"
+
+msgid "truncated"
+msgstr "truncated"
+
+msgid "unbiased divides by the overlap at each lag; biased divides by N; none returns the raw sum of products."
+msgstr "(ب) الانقسامات غير المتحيزة بسبب التداخل في كل لاغ؛ والانقسامات المتحيزة من جانب نون؛ ولا يعود أي منها إلى مجموع المنتجات الخام."
+
+msgid "{count} point(s) embedded from {series} series into 2 dimensions."
+msgstr "{count}نقطة (نقطة) مدمجة من سلسلة {series} إلى بعدين."

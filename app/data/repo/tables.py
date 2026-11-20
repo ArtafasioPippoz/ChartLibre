@@ -1936,6 +1936,29 @@ class TablesMixin(_Host):
         )
         self._commit()
 
+    def _blank_row_values(self, table_name: str) -> tuple[list[str], list[Any]]:
+        """Columns and values for an empty row that respects NOT NULL.
+
+        A NOT NULL column with a default is left out (the default applies);
+        one without gets 0 (numeric types) or an empty string; the rest NULL.
+        """
+        names: list[str] = []
+        values: list[Any] = []
+        for row in self.table_info(table_name):
+            name, ctype, notnull, default = str(row[1]), str(row[2] or ""), row[3], row[4]
+            if name == ROW_ID:
+                continue
+            if notnull and default is not None:
+                continue
+            names.append(_quote_ident(name))
+            if not notnull:
+                values.append(None)
+            elif any(t in ctype.upper() for t in ("INT", "REAL", "FLOA", "DOUB", "NUM", "BOOL")):
+                values.append(0)
+            else:
+                values.append("")
+        return names, values
+
     @ensure_connection_wrapper
     def append_table_row(self, table_name: str, *, undo_entry: int | None = None) -> int:
         """Add one empty row at the end, and return its rowid."""
@@ -1944,12 +1967,12 @@ class TablesMixin(_Host):
             [table_name], label=f"Add a row to '{table_name}'", entry_id=undo_entry
         )
         table_sql = _quote_ident(table_name)
-        columns = self.get_columns(table_name)
-        if columns:
-            names = ", ".join(_quote_ident(name) for name in columns)
-            holes = ", ".join("NULL" for _unused in columns)
+        blank_names, blank_values = self._blank_row_values(table_name)
+        if blank_names:
+            names = ", ".join(blank_names)
+            holes = ", ".join("?" for _unused in blank_names)
             cursor = self._con.execute(
-                f"INSERT INTO {table_sql} ({names}) VALUES ({holes})"
+                f"INSERT INTO {table_sql} ({names}) VALUES ({holes})", blank_values
             )
         else:
             cursor = self._con.execute(f"INSERT INTO {table_sql} DEFAULT VALUES")
@@ -1987,13 +2010,13 @@ class TablesMixin(_Host):
         )
         self._con.execute(f"UPDATE {table_sql} SET rowid = -rowid WHERE rowid < 0")
 
-        columns = self.get_columns(table_name)
-        if columns:
-            names = ", ".join(_quote_ident(name) for name in columns)
-            holes = ", ".join("NULL" for _unused in columns)
+        blank_names, blank_values = self._blank_row_values(table_name)
+        if blank_names:
+            names = ", ".join(blank_names)
+            holes = ", ".join("?" for _unused in blank_names)
             self._con.execute(
                 f"INSERT INTO {table_sql} (rowid, {names}) VALUES (?, {holes})",
-                (target,),
+                (target, *blank_values),
             )
         else:
             self._con.execute(f"INSERT INTO {table_sql} (rowid) VALUES (?)", (target,))

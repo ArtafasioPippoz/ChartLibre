@@ -1,0 +1,320 @@
+# Italiano translation for the pack vector_fields.
+# Message ids are the English source strings.
+
+msgid ""
+msgstr "Project-Id-Version: ChartLibre\nLanguage: it\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\n"
+
+msgid "1 leaves x alone; 2 doubles it about the centre below."
+msgstr "1 foglie x da solo; 2 la raddoppia sul centro sottostante."
+
+msgid "1 leaves y alone; 2 doubles it about the centre below."
+msgstr "1 lascia y da solo; 2 raddoppia circa il centro qui sotto."
+
+msgid "1 leaves z alone; 2 doubles it about the centre below."
+msgstr "1 foglie z da solo; 2 lo raddoppia circa il centro sottostante."
+
+msgid "A field in space needs both Z and W; a flat one neither."
+msgstr "Un campo nello spazio ha bisogno sia di Z che di W; uno piatto nemmeno."
+
+msgid "A vector field sampled on a grid: its divergence (where it spreads out or gathers) and its curl (where and how fast it turns), in 2D or 3D."
+msgstr "Un campo vettoriale campione su una griglia: la sua divergenza (dove si diffonde o si riunisce) e il suo riccio (dove e quanto velocemente gira), in 2D o 3D."
+
+msgid "Added to every new x, after the matrix."
+msgstr "Aggiunto ad ogni nuovo x, dopo la matrice."
+
+msgid "Added to every new y, after the matrix."
+msgstr "Aggiunto ad ogni nuovo y, dopo la matrice."
+
+msgid "Added to every new z, after the matrix."
+msgstr "Aggiunto ad ogni nuovo z, dopo la matrice."
+
+msgid "Added to every x, after any rotation. Negative moves left."
+msgstr "Aggiunto ad ogni x, dopo qualsiasi rotazione. Negativo si muove a sinistra."
+
+msgid "Added to every y, after any rotation. Negative moves down."
+msgstr "Aggiunto a ogni y, dopo qualsiasi rotazione. Negativo si muove verso il basso."
+
+msgid "Added to every z, after any rotation."
+msgstr "Aggiunto ad ogni z, dopo qualsiasi rotazione."
+
+msgid "Adds this much x for each unit of y above the centre."
+msgstr "Aggiunge così tanto x per ogni unità di voi sopra il centro."
+
+msgid "Adds this much y for each unit of x right of the centre."
+msgstr "Aggiunge così tanto y per ogni unità di x destra del centro."
+
+msgid "Angle"
+msgstr "Angolo"
+
+msgid "Angle (°)"
+msgstr "Angolo (°)"
+
+msgid "Angles (x, y, z)"
+msgstr "Angolo (x, y, z)"
+
+msgid "Applied first. Positive turns y towards z (right-hand rule)."
+msgstr "Applicato in primo luogo. Positivo gira y verso z (regola destra)."
+
+msgid "Applied last. Positive turns x towards y - the 2D rotation."
+msgstr "Applicato ultimo. Positivo gira x verso y - la rotazione 2D."
+
+msgid "Applied second. Positive turns z towards x."
+msgstr "Applicato secondo. Positivo gira z verso x."
+
+msgid "Central differences on the grid (numpy.gradient); one-sided at its edges, where they are less accurate."
+msgstr "Differenze centrali sulla griglia (numpy.gradient); unilaterali ai suoi bordi, dove sono meno accurati."
+
+msgid "Centre"
+msgstr "Centro"
+
+msgid "Centre on the data"
+msgstr "Centro per i dati"
+
+msgid "Centre x"
+msgstr "Centro di ricerca x"
+
+msgid "Centre y"
+msgstr "Centro"
+
+msgid "Centre z"
+msgstr "Centro di ricerca"
+
+msgid "Choose a series, then press Preview."
+msgstr "Scegli una serie, quindi premi Anteprima."
+
+msgid "Counter-clockwise, about the centre below. The query spells this out as cos(radians(...)) rather than as a decimal, so it can be read and edited afterwards."
+msgstr "In senso antiorario, circa il centro qui sotto. La query scrive questo come cos(radi(...)) piuttosto che come decimale, in modo da poter essere letto e modificato in seguito."
+
+msgid "Curl"
+msgstr "Curl."
+
+msgid "Curves"
+msgstr "Curve"
+
+msgid "Divergence"
+msgstr "Divergenza"
+
+msgid "Draws a square mesh (a box in 3D) over the source's extent and the same mesh after the transform. A rotation turns it, a scale stretches it, a shear leans it over - which is easier to read off the mesh than off the points."
+msgstr "Disegna una maglia quadrata (una scatola in 3D) sulla portata della sorgente e la stessa mesh dopo la trasformazione. Una rotazione lo gira, una scala lo allunga, una cesoia lo appoggia - che è più facile da leggere la maglia che fuori dai punti."
+
+msgid "Each new coordinate is its row of the matrix times x and y (and z, for a 3D series), about the centre below. With offsets adds the last column afterwards. Untick 'Centre on the data' and set the centre to 0 for the matrix exactly as written."
+msgstr "Ogni nuova coordinazione è la sua riga dei tempi di matrice x e y (e z, per una serie 3D), circa il centro sottostante. Con gli offset aggiunge l'ultima colonna in seguito. Untick 'Centro sui dati' e impostare il centro a 0 per la matrice esattamente come scritto."
+
+msgid "Each role needs a column of its own."
+msgstr "Ogni ruolo ha bisogno di una colonna propria."
+
+msgid "Field"
+msgstr "Campo d'azione"
+
+msgid "How much of x goes into the new x."
+msgstr "Quanto di x va nella nuova x."
+
+msgid "How much of x goes into the new y."
+msgstr "Quanto di x va nel nuovo y."
+
+msgid "How much of x goes into the new z."
+msgstr "Quanto di x va nella nuova z."
+
+msgid "How much of y goes into the new x."
+msgstr "Quanti di voi vanno nella nuova x."
+
+msgid "How much of y goes into the new y."
+msgstr "Quanti di voi vanno nel nuovo y."
+
+msgid "How much of y goes into the new z."
+msgstr "Quanti di voi vanno nella nuova z."
+
+msgid "How much of z goes into the new x."
+msgstr "Quanto di z va nella nuova x."
+
+msgid "How much of z goes into the new y."
+msgstr "Quanto di z va nel nuovo y."
+
+msgid "How much of z goes into the new z."
+msgstr "Quanto di z va nella nuova z."
+
+msgid "Its curl, coloured by its size"
+msgstr "Il suo riccio, colorato dalle sue dimensioni"
+
+msgid "Matrix"
+msgstr "Matrice"
+
+msgid "Max"
+msgstr "Max."
+
+msgid "Mean"
+msgstr "Mean."
+
+msgid "Min"
+msgstr "Min."
+
+msgid "Mirror across"
+msgstr "Specchio dall'altra"
+
+msgid "Mirror line"
+msgstr "Linea di specchio"
+
+msgid "Motion"
+msgstr "Motivazione"
+
+msgid "Move x by"
+msgstr "Spostare x per"
+
+msgid "Move y by"
+msgstr "Muovetevi."
+
+msgid "Move z by"
+msgstr "Spostare z da"
+
+msgid "Offset"
+msgstr "Offset"
+
+msgid "Optional: the field's z component, with Z."
+msgstr "Facoltativo: componente z del campo, con Z."
+
+msgid "Optional: the nodes' z, for a field in space."
+msgstr "Opzionale: z nodi, per un campo nello spazio."
+
+msgid "Points"
+msgstr "Punti"
+
+msgid "Press Preview to see where the points move."
+msgstr "Premere Anteprima per vedere dove si muovono i punti."
+
+msgid "Quantity"
+msgstr "Quantità"
+
+msgid "Query"
+msgstr "Query"
+
+msgid "Rotate, move, scale or mirror a series' coordinates"
+msgstr "Ruotare, spostare, scalare o specchiare le coordinate di una serie"
+
+msgid "Rotation x (°)"
+msgstr "Rotazione x (°)"
+
+msgid "Rotation y (°)"
+msgstr "Rotazione y (°)"
+
+msgid "Rotation z (°)"
+msgstr "Rotazione z (°)"
+
+msgid "Scale"
+msgstr "Scala"
+
+msgid "Scale x by"
+msgstr "Scale x by"
+
+msgid "Scale y by"
+msgstr "Bilancia y by"
+
+msgid "Scale z by"
+msgstr "Scale z per"
+
+msgid "Shear"
+msgstr "Shear"
+
+msgid "Shear x per y"
+msgstr "Guarnizione x per te"
+
+msgid "Shear y per x"
+msgstr "Guarnizione per x"
+
+msgid "Show grid"
+msgstr "Mostra la griglia"
+
+msgid "The field's x component."
+msgstr "Il componente x del campo."
+
+msgid "The field's y component."
+msgstr "Il campo e' il componente y."
+
+msgid "The field, coloured by its divergence"
+msgstr "Il campo, colorato dalla sua divergenza"
+
+msgid "The fixed point's z."
+msgstr "Il punto fisso e' z."
+
+msgid "The fixed point. Rotation, scaling, mirroring and shearing all leave this point exactly where it is; a translation ignores it."
+msgstr "Il punto fisso. Rotazione, scaling, mirroring e shearing tutti lasciano questo punto esattamente dove è; una traduzione lo ignora."
+
+msgid "The line to reflect in, through the centre below. In 3D, z is left alone."
+msgstr "La linea per riflettere in, attraverso il centro sottostante. In 3D, z è lasciata sola."
+
+msgid "The nodes' x."
+msgstr "I nodi' x."
+
+msgid "The nodes' y."
+msgstr "I nodi sono voi."
+
+msgid "The other half of the fixed point."
+msgstr "L'altra metà del punto fisso."
+
+msgid "U"
+msgstr "U"
+
+msgid "Use the middle of the series' own extent as the fixed point instead of the values above - which is what is wanted when the intent is 'turn this shape', not 'turn it about the origin'."
+msgstr "Utilizzare la metà della serie nella misura in cui il punto fisso invece dei valori di cui sopra - che è quello che si desidera quando l'intento è 'tornare questa forma', non 'girare sull'origine'."
+
+msgid "V"
+msgstr "V"
+
+msgid "Vector Field"
+msgstr "Campo vettoriale"
+
+msgid "Vector fields - divergence, curl, streamlines - with the Quiver and Quiver 3D charts, and Geometry: rotate, move and scale a series."
+msgstr "Campi vettoriali - divergenza, curl, streamlines - con i grafici Quiver e Quiver 3D, e Geometria: ruotare, spostare e scalare una serie."
+
+msgid "Vector fields and geometry"
+msgstr "Campi vettoriali e geometria"
+
+msgid "W"
+msgstr "#"
+
+msgid "X"
+msgstr "X"
+
+msgid "Y"
+msgstr "Si'."
+
+msgid "Z"
+msgstr "Z."
+
+msgid "b1"
+msgstr "b) b) b)"
+
+msgid "b2"
+msgstr "b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b) b)"
+
+msgid "b3"
+msgstr "b) b) b)"
+
+msgid "m11"
+msgstr "m11"
+
+msgid "m12"
+msgstr "m12"
+
+msgid "m13"
+msgstr "m13"
+
+msgid "m21"
+msgstr "m2"
+
+msgid "m22"
+msgstr "Mi dispiace."
+
+msgid "m23"
+msgstr "m223"
+
+msgid "m31"
+msgstr "m31"
+
+msgid "m32"
+msgstr "m232"
+
+msgid "m33"
+msgstr "M33"
+
+msgid "{n} nodes, {dims}D"
+msgstr ""

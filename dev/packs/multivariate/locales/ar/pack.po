@@ -1,0 +1,428 @@
+# العربية translation for the pack multivariate.
+# Message ids are the English source strings.
+
+msgid ""
+msgstr "Project-Id-Version: ChartLibre\nLanguage: ar\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\n"
+
+msgid "0 chooses them by cross-validation: another component only while it cuts the prediction error by 5% or more."
+msgstr "ولا يختارهم أي منهم بالتخلي عن الآخر: أي عنصر آخر فقط في حين يخفض خطأ التنبؤ بنسبة 5 في المائة أو أكثر."
+
+msgid "0 takes as many as the correlations have eigenvalues above 1 (see the scree plot)."
+msgstr "ولا يأخذ أي من هذه الروابط ما يزيد على 1 قيمة (انظر مؤامرة المكفوفين)."
+
+msgid "A few directions that carry most of the variation of many columns: eigenvalues and their share, loadings, each row's scores; scree, score and loading plots."
+msgstr "عدد قليل من الإتجاهات التي تحمل معظم الاختلاف في العديد من الأعمدة: الأغنياء و حصتهم، التحميلات، درجات كل صف"
+
+msgid "A few hidden factors behind many correlated columns: Maximum Likelihood or Principal Axis, rotated (Varimax, Quartimax, Equamax, Promax); loadings, communalities, each row's scores."
+msgstr "عدد قليل من العوامل الخفية وراء العديد من الأعمدة ذات الصلة: الحد الأقصى للمثليين أو المحور الرئيسي، التناوب (Varimax, Quartimax, Equamax, Promax); loadings, communalities, each row's scores."
+
+msgid "Actual"
+msgstr "الفعلية"
+
+msgid "Actual by predicted"
+msgstr "الرقم الفعلي حسب التوقعات"
+
+msgid "Algorithm"
+msgstr "Algorithm"
+
+msgid "Biplot"
+msgstr "Biplot"
+
+msgid "By"
+msgstr "من قبل"
+
+msgid "Canonical analysis"
+msgstr "التحليل الافتراضي"
+
+msgid "Canonical plot"
+msgstr "مؤامرة كانتونية"
+
+msgid "Canonical scores by {response}"
+msgstr "Canonical scores by {response}"
+
+msgid "Choose k automatically"
+msgstr "Choose k automatically"
+
+msgid "Choose the clustering algorithm family."
+msgstr "اختر عائلة الخوارزمية"
+
+msgid "Choose the exact scipy.cluster function/workflow to use."
+msgstr "اختر الشفرة بالضبط، وظيفة الملهى/تدفق العمل لاستعمالها"
+
+msgid "Choose whether clusters are rendered as one point-colored series or as separate series."
+msgstr "(ب) اختيار ما إذا كانت المجموعات تُعتبر سلسلة واحدة من سلسلة مُحدَّدة أو كسلسلة منفصلة."
+
+msgid "Choose which numeric columns are used as clustering features."
+msgstr "اختيار الأعمدة العددية المستخدمة كخصائص تجميعية."
+
+msgid "Choosing k"
+msgstr "Choosing k"
+
+msgid "Cluster"
+msgstr "المجموعة"
+
+msgid "Cluster means"
+msgstr "المجموعة"
+
+msgid "Cluster profiles"
+msgstr "موجزات المجموعات"
+
+msgid "Clusters"
+msgstr "المجموعات"
+
+msgid "Clusters on two principal components"
+msgstr "مجموعات مكونة من عنصرين رئيسيين"
+
+msgid "Coefficients"
+msgstr "العوامل"
+
+msgid "Columns"
+msgstr "Columns"
+
+msgid "Columns standardized"
+msgstr "الكولونات الموحدة"
+
+msgid "Communalities"
+msgstr "الشيوعية"
+
+msgid "Component"
+msgstr "العنصر"
+
+msgid "Components"
+msgstr "العناصر"
+
+msgid "Confusion matrix"
+msgstr "مصفوفة الاتحاد"
+
+msgid "Correlation"
+msgstr "Correlation"
+
+msgid "Correlations"
+msgstr "المراسلات"
+
+msgid "Correlations weigh every column the same, whatever its unit - the usual choice. Covariances let the columns with the widest spread lead, for columns in one unit."
+msgstr "المراسلات تزن كل العمود نفسه، أياً كانت وحدته، الخيار المعتاد، وتترك المبادلات الأعمدة ذات الرصاص الأوسع، للأعمدة في وحدة واحدة."
+
+msgid "Cross-validation"
+msgstr "معاصرة"
+
+msgid "Cross-validation folds"
+msgstr "طيور التثبيت"
+
+msgid "Cut criterion"
+msgstr "معيار القطع"
+
+msgid "Cut threshold"
+msgstr "الحد الأدنى"
+
+msgid "Cut threshold for distance/inconsistent criteria. Leave at auto for median linkage distance."
+msgstr "الحد الأدنى لمعايير المسافة/غير متناسقة."
+
+msgid "Discriminant"
+msgstr "التمييز"
+
+msgid "Distance metric"
+msgstr "القياس عن بعد"
+
+msgid "Do the clusters differ in {column}?"
+msgstr "هل تختلف المجموعات في {column}؟"
+
+msgid "Each cluster's mean silhouette: near 1 well apart, near 0 on a border, below 0 misplaced."
+msgstr "كُلّ مجموعة لئيمة: قرب 1 بُعداً تماماً، قرب صفر على الحدود، أقل من لا مكان له."
+
+msgid "Each feature divided by its standard deviation, so that each counts the same whatever its unit - leave on unless the features share one unit and scale."
+msgstr "وكل سمة تنقسم إلى انحرافها المعياري، بحيث يحسب كل منها نفس ما تبقى من وحدته - ما لم تتقاسم السمات وحدة واحدة وحجم واحد."
+
+msgid "Each feature's mean in each cluster."
+msgstr "كل سمة تعني في كل مجموعة"
+
+msgid "Each row across the features as a parallel plot, coloured by its cluster."
+msgstr "كل صف عبر الملامح كقطعة موازية ملونة بمجموعتها"
+
+msgid "Eigenvalue"
+msgstr "Eigenvalue"
+
+msgid "Eigenvalues"
+msgstr "Eigenvalues"
+
+msgid "Eigenvectors"
+msgstr "Eigenvectors"
+
+msgid "Factor Analysis"
+msgstr "تحليل العوامل"
+
+msgid "Factor correlations"
+msgstr "العلاقة بين العوامل"
+
+msgid "Factor loading plot"
+msgstr "مؤامرة تحميل العوامل"
+
+msgid "Factors"
+msgstr "العوامل"
+
+msgid "Family"
+msgstr "الأسرة"
+
+msgid "Features"
+msgstr "المعالم"
+
+msgid "For X in different units. Off for a spectrum: scaling gives the wavelengths that carry only noise the weight of the bands."
+msgstr "بالنسبة لـ (إكس) في وحدات مختلفة، إنطلقوا من أجل طيف، فالرفع يعطي الموجات التي تحمل الضجيج فقط وزن الفرق."
+
+msgid "Group means"
+msgstr "المجموعة تعني"
+
+msgid "Group similar rows - k-means, hierarchical (Ward), normal mixtures, DBSCAN and more - with k chosen by the silhouette; each cluster's size and means, its rows on the principal components."
+msgstr "مجموعة من الصفوف المتشابهة، الكميونات، التسلسل الهرمي، الخلائط العادية، DBSCAN و أكثر - مع كي اختارها السيلوويت؛ وحجم كل مجموعة ووسائلها، صفوفها على المكونات الرئيسية."
+
+msgid "How continuous columns move together: the correlation matrix, each pair's correlation with its confidence interval and p-value, and the scatterplot matrix."
+msgstr "كيف أن الأعمدة مستمرة تتحرك معا: مصفوفة الترابط، كل ترابط مع فترة الثقة وقيمتها، ومصفوفة البعث."
+
+msgid "How likely each group is before the measures are seen: its share of the rows, or the same for every group."
+msgstr "How likely each group is before the measures are seen: its share of the rows, or the same for every group."
+
+msgid "How to read this"
+msgstr "كيف تقرأ هذا"
+
+msgid "Into how many parts the rows are split; each part is predicted by a model fitted on the others."
+msgstr "إلى عدد الأجزاء التي تقسمها الصفوف؛ كل جزء يتوقّع بنموذج مهيأ للآخرين."
+
+msgid "K-means convergence threshold."
+msgstr "K-means التقارب."
+
+msgid "K-means iterations"
+msgstr "K-means iterations"
+
+msgid "K-means threshold"
+msgstr "K-means threshold"
+
+msgid "Largest k"
+msgstr "أكبر K"
+
+msgid "Linear: the groups share one covariance, the boundaries are planes. Quadratic: each group has its own, the boundaries curve; it needs more rows."
+msgstr "السطر: تتقاسم المجموعات تزامنا واحدا، والحدود هي الطائرات، والكودراتيك: لكل مجموعة منها، منحنى الحدود؛ وهي بحاجة إلى مزيد من الصفوف."
+
+msgid "Linkage method"
+msgstr "طريقة الربط"
+
+msgid "Loading matrix"
+msgstr "مصفوفة النقل"
+
+msgid "Loading plot"
+msgstr "مؤامرة التعبئة"
+
+msgid "Max runtime"
+msgstr "(ماكس)"
+
+msgid "Maximum Likelihood: JMP's default, for columns roughly normal. Principal Axis: no assumption of normality, steadier with few rows."
+msgstr "(أقصى حدّ لـ (أوليان (إم بي) ، لطوابقٍ طبيعية تقريباً ، المدير (أكسيس) ، لا افتراض للطبيعية"
+
+msgid "Maximum k-means iterations."
+msgstr "الحد الأقصى للكميات"
+
+msgid "Maximum seconds to wait for clustering. Use 0 for no timeout."
+msgstr "أقصى ثواني لإنتظار التجمّع، استخدموا صفراً بدون وقت مستقطع."
+
+msgid "Mean"
+msgstr "Mean"
+
+msgid "Mean silhouette"
+msgstr "Mean silhouette"
+
+msgid "Method"
+msgstr "المنهجية"
+
+msgid "Min samples"
+msgstr "عينات مصغرة"
+
+msgid "Minimum samples for DBSCAN/OPTICS core points."
+msgstr "(ب) عينات دنيا للنقاط الأساسية لـ DBSCAN/OPTICS."
+
+msgid "Multivariate"
+msgstr "التعددية"
+
+msgid "Multivariate Methods"
+msgstr "الطرائق المتعددة الأنواع"
+
+msgid "Multivariate methods"
+msgstr "الطرائق المتعددة الأشكال"
+
+msgid "Neighborhood radius"
+msgstr "منطقة الجيران"
+
+msgid "Neighborhood radius for DBSCAN. 0 uses the default 0.5."
+msgstr "مجارات الجيران لـ (دي بي سيان) 0 تستخدم الـ 0.5"
+
+msgid "Normalize features by standard deviation before k-means."
+msgstr "تطبيع الملامح بالانحراف المعياري قبل الكميونات"
+
+msgid "Number"
+msgstr "العدد"
+
+msgid "Number of clusters to request."
+msgstr "عدد المجموعات التي تطلبها."
+
+msgid "On"
+msgstr "على"
+
+msgid "Optional: a column of groups - species, batch, site; the score plot and the biplot colour the rows by it."
+msgstr "اختياري: عمود من المجموعات - الأنواع، البصل، الموقع؛ مؤامرة النتائج والبيبوت يلوون الصفوف بها."
+
+msgid "Optional: a column of groups - species, batch, site; the score plot colours the rows by it."
+msgstr "اختياري: عمود من المجموعات - الأنواع، البصل، الموقع؛ مؤامرة النتيجة تصبغ الصفوف."
+
+msgid "PLS"
+msgstr "PLS"
+
+msgid "Pairwise correlations, strongest evidence first"
+msgstr "ربطات العنق، أقوى دليل أولا"
+
+msgid "Partial Least Squares"
+msgstr "المساحة الجزئية"
+
+msgid "Pearson measures a straight-line relation; Spearman and Kendall any relation that keeps going one way, and are not swayed by outliers."
+msgstr "(بيرسون) يقيس علاقة مباشرة، (سبيرمان) و(كيندال) أي علاقة تستمر في السير بطريقة واحدة، ولا يُهاجمون من الخارج."
+
+msgid "Principal Components"
+msgstr "العناصر الرئيسية"
+
+msgid "Principal components, factor analysis, clustering, discriminant, partial least squares and correlations, with dendrogram and parallel plot."
+msgstr "العناصر الرئيسية، وتحليل العوامل، والتجميع، والتفرقة، والتفرقة، والأقل مربعات والارتباطات الجزئية، مع الدروغرامات والقطع الموازية."
+
+msgid "Prior probabilities"
+msgstr "الاحتمالات المسبقة"
+
+msgid "RMSECV by number of components"
+msgstr "RMSECV حسب عدد المكونات"
+
+msgid "Render as"
+msgstr "الرنين كما هو"
+
+msgid "Response {name}"
+msgstr "Response {name}"
+
+msgid "Rotated factor loadings"
+msgstr "تحميل العوامل المتناوبة"
+
+msgid "Rotation"
+msgstr "التناوب"
+
+msgid "Rows"
+msgstr "Rows"
+
+msgid "Scale X to unit variance"
+msgstr "الجدول العاشر - وحدة الفرق"
+
+msgid "Scatterplot matrix"
+msgstr "مصفوفة النشرات السريعة"
+
+msgid "Score plot"
+msgstr "مؤامرة كبيرة"
+
+msgid "Scores"
+msgstr "الكشافة"
+
+msgid "Scree plot"
+msgstr "Scree plot"
+
+msgid "Silhouette"
+msgstr "Silhouette"
+
+msgid "Silhouette by cluster"
+msgstr "سيلويت) حسب المجموعة)"
+
+msgid "Standardized canonical coefficients"
+msgstr "المعامِلات الكانتونية الموحدة"
+
+msgid "Summary"
+msgstr "موجز"
+
+msgid "The column whose groups the rows are classified into."
+msgstr "العمود الذي تصنف الصفوف في مجموعاته"
+
+msgid "The continuous columns to correlate, two by two."
+msgstr "الأعمدة المستمرة للربط، اثنان تلو الآخر."
+
+msgid "The continuous columns whose correlations the factors explain."
+msgstr "الأعمدة المستمرة التي توضح العوامل المرتبطة بها."
+
+msgid "The continuous columns whose variation is summed up."
+msgstr "الأعمدة المستمرة التي يلخص تغييرها."
+
+msgid "The continuous measures that tell the groups apart."
+msgstr "التدابير المستمرة التي تفرق بين المجموعات."
+
+msgid "The largest number of clusters tried."
+msgstr "أكبر عدد من المجموعات حاولت."
+
+msgid "The many measures to predict them from: a spectrum's columns."
+msgstr "العديد من التدابير للتنبؤ بها من أعمدة الطيف"
+
+msgid "The rows on the first two principal components of the features, coloured by cluster."
+msgstr "The rows on the first two principal components of the features, coloured by cluster."
+
+msgid "The values to predict: a concentration, a property."
+msgstr "القيم للتنبؤ: التركيز، الممتلكات."
+
+msgid "Try every k from 2 to the largest and keep the one with the best mean silhouette. DBSCAN, OPTICS and MeanShift find their own number of clusters."
+msgstr "جرب كل كيلو متر من 2 إلى أكبر وأبقيه مع أفضل سلوويتات ديبكان و بي تي إس و ميان شيفت يجدون عددهم الخاص من المجموعات"
+
+msgid "Variable (in column order)"
+msgstr "متغيرة (حسب ترتيب العمود)"
+
+msgid "Variable importance (VIP)"
+msgstr "Variable importance (VIP)"
+
+msgid "Variable importance (VIP), highest 15"
+msgstr "Variable importance (VIP), highest 15"
+
+msgid "Variance explained"
+msgstr "الفرق الموضح"
+
+msgid "Varimax: each factor with few large loadings, the usual choice. Quartimax: each column on few factors. Equamax: between the two. Promax: lets the factors correlate, when the traits they stand for do."
+msgstr "&quot; فاريماكس &quot; : كل عامل لديه عدد قليل من التحميلات الكبيرة، الخيار المعتاد، الفصل الرابع: كل عمود على عوامل قليلة."
+
+msgid "Which group a row belongs to, from continuous measures: linear or quadratic discriminant analysis, canonical plot, Wilks' lambda and the misclassified rows."
+msgstr "أي مجموعة تنتمي إلى، من التدابير المستمرة: تحليل تمييزي خطي أو رباعي، مؤامرة كانتونيّة، حمّام (ويلكس) و الصفوف غير المصنّفة."
+
+msgid "Whiten features"
+msgstr "ملامح بيضاء"
+
+msgid "With automatic k: the mean silhouette of each k tried."
+msgstr "مع الـ \"ك\" التلقائيّة، الـ \"سيلهويت\" الـ \"سيلهويت\" من كلّ \"كي\" حاول"
+
+msgid "X"
+msgstr "X"
+
+msgid "X, covariates"
+msgstr "X, covariates"
+
+msgid "Y"
+msgstr "نعم"
+
+msgid "Y from many X that move together - a spectrum's wavelengths: a few latent components, their number chosen by cross-validation; variable importance (VIP), loadings, scores, predictions."
+msgstr "عدد قليل من المكونات المتأخرة، عدد المختارين عن طريق التخلّص من الصمامات، الأهمية المتغيّرة، التحميل، الدرجات، التنبؤات."
+
+msgid "Y, columns"
+msgstr "Y, columns"
+
+msgid "Y, group"
+msgstr "Y, group"
+
+msgid "more factors are needed"
+msgstr "الحاجة تدعو إلى المزيد من العوامل"
+
+msgid "the groups differ on them"
+msgstr "وتختلف المجموعات فيما بينها"
+
+msgid "the groups of {response} had the same means of {covariates}"
+msgstr "The groups of {response} had the same means of {covariates}"
+
+msgid "{count} factor(s) were enough to explain the correlations"
+msgstr "{count}عامل (عاملات) كان كافياً لشرح العلاقة"
+
+msgid "{x} and {y} are correlated"
+msgstr "{x}و {y}"
+
+msgid "{x} and {y} were not correlated"
+msgstr "{x}و {y} لم يكنا مرتبطين"

@@ -70,20 +70,20 @@ msgstr "...और {count} और अधिक, विवरण दिखाए�
 msgid "...and {count} more."
 msgstr "...और {count} और।"
 
+msgid "0 finds it from the dates (12 for months, 7 for days, 4 for quarters); 1 means none."
+msgstr "0 इसे तारीखों से ढूंढता है (महीनों के लिए 12, दिनों के लिए 7, तिमाहियों के लिए 4); 1 का मतलब है कोई नहीं।"
+
 msgid "0 interpolates every point exactly; larger values allow the spline to depart from noisy data."
 msgstr "0 प्रत्येक बिंदु को बिल्कुल इंटरपोलेट करता है; बड़े मान स्पलाइन को शोर वाले डेटा से विदा करने की अनुमति देते हैं।"
+
+msgid "1 for a series that wanders or has a trend; 0 for one that comes back to its mean."
+msgstr "1 एक श्रृंखला के लिए जो भटकती है या एक प्रवृत्ति है; 0 एक के लिए जो अपने औसत पर वापस आती है।"
 
 msgid "1 for the slope, 2 for the curvature."
 msgstr "ढलान के लिए 1, वक्रता के लिए 2।"
 
-msgid "1 leaves x alone; 2 doubles it about the centre below."
-msgstr "1 अकेले x को छोड़ देता है; 2 इसे नीचे के केंद्र के बारे में दोगुना कर देता है।"
-
-msgid "1 leaves y alone; 2 doubles it about the centre below."
-msgstr "1 अकेले छोड़ देता है; 2 इसे नीचे के केंद्र के बारे में दोगुना कर देता है।"
-
-msgid "1 leaves z alone; 2 doubles it about the centre below."
-msgstr "1 अकेले z को छोड़ देता है; 2 इसे नीचे के केंद्र के बारे में दोगुना कर देता है।"
+msgid "1 takes away last season's value: for a season that repeats steadily."
+msgstr "1 पिछले सीज़न का मूल्य छीन लेता है: एक ऐसे सीज़न के लिए जो लगातार दोहराता रहता है।"
 
 msgid "2D (x, y)"
 msgstr "2D (x, y)"
@@ -112,6 +112,9 @@ msgstr "95 % c ऑन - कॉन्फिडेंस बैंड"
 msgid "95% prediction band"
 msgstr "95% प्रिडिक्शन बैंड"
 
+msgid "95% prediction interval"
+msgstr "95% पूर्वानुमान अंतराल"
+
 msgid "A \"How to read this\" box in every report"
 msgstr "हर रिपोर्ट में एक \"कैसे इसे पढ़ने के लिए\" बॉक्स"
 
@@ -126,9 +129,6 @@ msgstr "एक स्तंभ"
 
 msgid "A column cannot be both a response and a factor: {columns}."
 msgstr "एक कॉलम एक प्रतिक्रिया और एक कारक दोनों नहीं हो सकता है: {columns} ।"
-
-msgid "A field in space needs both Z and W; a flat one neither."
-msgstr "अंतरिक्ष में एक क्षेत्र को Z और W दोनों की आवश्यकता होती है; एक सपाट क्षेत्र को न तो।"
 
 msgid "A frame back"
 msgstr "एक फ्रेम वापस"
@@ -151,6 +151,9 @@ msgstr "इस एक्स पर, पूरे अक्षों के प�
 msgid "A line along the whole axes, at this y."
 msgstr "इस y पर, पूरे अक्षों के साथ एक रेखा।"
 
+msgid "A measure in time order: its autocorrelation (ACF, PACF, Ljung-Box), its trend and season (STL), and an ARIMA or exponential-smoothing forecast with its prediction interval."
+msgstr "समय क्रम में एक उपाय: इसका स्वतःसंबंध (ACF, PACF, Ljung - Box), इसकी प्रवृत्ति और मौसम (STL), और इसकी भविष्यवाणी अंतराल के साथ एक ARIMA या घातीय - चिकनाई पूर्वानुमान।"
+
 msgid "A model called {name} exists. Replace it?"
 msgstr "{name} नाम का एक मॉडल मौजूद है। क्या उसे बदला जाए?"
 
@@ -162,9 +165,6 @@ msgstr "Ollama (ollama.com) के माध्यम से इस कंप्
 
 msgid "A new chart of this table"
 msgstr "इस तालिका का एक नया चार्ट"
-
-msgid "A pack switched on or off is applied the next time the app starts."
-msgstr "चालू या बंद किया गया पैक अगली बार ऐप के शुरू होने पर लागू किया जाता है।"
 
 msgid "A pattern: \"-\" a dash, \".\" a dot, a space a longer gap - for example ..--  or  -- . --\nor matplotlib's (offset, (on, off, ...)) in line widths - for example (0, (5, 2, 1, 2))"
 msgstr "एक पैटर्न: \"-\" एक डैश, \".\" एक डॉट, एक अंतरिक्ष एक लंबा अंतराल - उदाहरण के लिए ..-- या --।\nया matplotlib (offset, (on, off, ...)) लाइन चौड़ाई में - उदाहरण के लिए (0, (5, 2, 1, 2))"
@@ -187,6 +187,9 @@ msgstr "शीर्ष (x) या दाएं (y) के साथ एक द�
 msgid "A series drawn from a stored SymPy function is differentiated or integrated as a formula - d/dx (a*x**2) = 2*a*x - rather than from its points; the result is a stored function too. Off: as any series."
 msgstr "एक संग्रहित SymPy समारोह से तैयार की गई एक श्रृंखला को एक सूत्र के रूप में अलग या एकीकृत किया जाता है - डी / डीएक्स (a * x * * 2) = 2 * x - इसके बिंदुओं के बजाय; परिणाम एक संग्रहीत कार्य भी है। बंद: किसी भी श्रृंखला के रूप में।"
 
+msgid "A step lasts from then on; a pulse affects that one time only."
+msgstr "तब से एक कदम चलता है; एक नाड़ी केवल एक बार प्रभावित करती है।"
+
 msgid "A table needs at least one column. Add another column before deleting this one."
 msgstr "एक टेबल को कम से कम एक कॉलम की ज़रूरत होती है। इसे हटाने से पहले एक और कॉलम जोड़ें।"
 
@@ -205,9 +208,6 @@ msgstr "एक शब्द तब महत्वपूर्ण होता �
 msgid "A text note pinned to this point: x = {x}, y = {y}."
 msgstr "इस बिंदु तक पिन किया गया एक टेक्स्ट नोट: x = {x}, y = {y} ।"
 
-msgid "A vector field sampled on a grid: its divergence (where it spreads out or gathers) and its curl (where and how fast it turns), in 2D or 3D."
-msgstr "ग्रिड पर सैंपल किया गया एक वेक्टर फ़ील्ड: इसका डायवर्जेंस (जहाँ यह फैलता है या इकट्ठा होता है) और 2D या 3D में इसका कर्ल (जहाँ और कितनी तेज़ी से मुड़ता है)।"
-
 msgid "A vertical or horizontal line across the whole axes, at a value in data coordinates. Color and style have their own columns; anything else goes in Kwargs JSON, for example: {\"linewidth\": 2, \"label\": \"limit\"}."
 msgstr "डेटा निर्देशांक में मान पर, पूरे अक्षों में एक ऊर्ध्वाधर या क्षैतिज रेखा। रंग और शैली के अपने कॉलम हैं; कुछ भी Kwargs JSON में जाता है, उदाहरण के लिए: {\"linewidth\": 2, \"label\": \"limit\"} ।"
 
@@ -225,6 +225,27 @@ msgstr "AIC {value} {model} के लिए, मॉडल की सबसे �
 
 msgid "API key"
 msgstr "API कुंजी"
+
+msgid "ARIMA d (differences)"
+msgstr "अरिमा घ (अंतर)"
+
+msgid "ARIMA only: a date (or a number of the time column) when something changed - a new process, a policy, a fault. Its estimate is the change it made."
+msgstr "केवल अरिमा: एक तारीख (या कई बार कॉलम) जब कुछ बदल जाता है - एक नई प्रक्रिया, एक नीति, एक गलती। इसका अनुमान उसके द्वारा किए गए परिवर्तन का है।"
+
+msgid "ARIMA only: the input enters the model at the lag where its prewhitened cross-correlation is strongest; its coefficient says how much Y moves per unit of X. Ahead of that lag the forecast uses X's own forecast."
+msgstr "केवल ARIMA: इनपुट उस अंतराल पर मॉडल में प्रवेश करता है जहाँ इसका पूर्व - सफ़ेद क्रॉस - सहसंबंध सबसे मजबूत होता है; इसका गुणांक बताता है कि X की प्रति इकाई Y कितनी गति करता है। उस अंतराल से पहले पूर्वानुमान X के अपने पूर्वानुमान का उपयोग करता है।"
+
+msgid "ARIMA p (autoregressive)"
+msgstr "ARIMA p (autoregressive)"
+
+msgid "ARIMA q (moving average)"
+msgstr "ARIMA q (मूविंग एवरेज)"
+
+msgid "ARIMA with a season: how many past seasons the next value depends on (the ACF's spikes at the season's multiples)."
+msgstr "एक सीज़न के साथ अरिमा: पिछले कितने सीज़न पर अगला वैल्यू निर्भर करता है (सीज़न के मल्टीपल पर ACF की स्पाइक्स)।"
+
+msgid "ARIMA: the next value from the last ones (p), the changes (d) and the last errors (q), with a season (P, D, Q) of its own. ARIMA, order chosen by AIC: the differences from the stationarity tests, then the p, q, P, Q with the lowest AIC. Exponential smoothing: a level, a trend and a season that each follow the newest values most. State space: a level and a slope that wander a little each step (a local linear trend), with a season - estimated by the Kalman filter."
+msgstr "ARIMA: पिछले लोगों (p), परिवर्तनों (d) और अंतिम त्रुटियों (q), अपने स्वयं के एक मौसम (P, D, Q) के साथ से अगले मूल्य। ARIMA, AIC द्वारा चुने गए आदेश: स्थिरता परीक्षण से मतभेद, फिर p, q, P, Q सबसे कम AIC के साथ। एक्सपोनेंशियल स्मूथिंग: एक स्तर, एक प्रवृत्ति और एक मौसम है कि प्रत्येक सबसे नए मूल्यों का पालन करें। राज्य स्थान: एक स्तर और ढलान जो प्रत्येक चरण (एक स्थानीय रैखिक प्रवृत्ति) घूमती है, एक मौसम के साथ - Kalman फिल्टर द्वारा अनुमान लगाया गया।"
 
 msgid "AUC = {value}: of a row that is {level} and one that is not, the model gives the first the higher probability {percent}% of the time. 0.5 is a coin toss, 1 never wrong; above 0.8 is usually called good."
 msgstr "AUC = {value}: एक पंक्ति में से जो {level} है और जो नहीं है, मॉडल पहले समय की उच्च संभावना {percent}% देता है। 0.5 एक सिक्का टॉस है, 1 कभी गलत नहीं है; 0.8 से ऊपर को आमतौर पर अच्छा कहा जाता है।"
@@ -331,32 +352,8 @@ msgstr "X = {value} पर खड़ी पंक्ति जोड़ें"
 msgid "Add {orientation} line"
 msgstr "{orientation} लाइन जोड़ें"
 
-msgid "Added to every new x, after the matrix."
-msgstr "मैट्रिक्स के बाद, हर नए x में जोड़ा गया।"
-
-msgid "Added to every new y, after the matrix."
-msgstr "मैट्रिक्स के बाद, हर नए y में जोड़ा गया।"
-
-msgid "Added to every new z, after the matrix."
-msgstr "मैट्रिक्स के बाद, हर नए z में जोड़ा गया।"
-
-msgid "Added to every x, after any rotation. Negative moves left."
-msgstr "किसी भी रोटेशन के बाद, हर x में जोड़ा जाता है। नेगेटिव चालें बाकी हैं।"
-
-msgid "Added to every y, after any rotation. Negative moves down."
-msgstr "हर y में जोड़ा गया, किसी भी रोटेशन के बाद। नकारात्मक नीचे चला जाता है।"
-
-msgid "Added to every z, after any rotation."
-msgstr "किसी भी रोटेशन के बाद, हर z में जोड़ा जाता है।"
-
 msgid "Additional kwargs editor can be inserted here by the host."
 msgstr "मेज़बान द्वारा अतिरिक्त kwargs संपादक यहाँ डाला जा सकता है।"
-
-msgid "Adds this much x for each unit of y above the centre."
-msgstr "केंद्र के ऊपर y की प्रत्येक इकाई के लिए इतना x जोड़ता है।"
-
-msgid "Adds this much y for each unit of x right of the centre."
-msgstr "केंद्र के दाईं ओर x की प्रत्येक इकाई के लिए इतना y जोड़ता है।"
 
 msgid "Adds: {what}"
 msgstr "जोड़े गए: {what}"
@@ -387,6 +384,9 @@ msgstr "सभी समूह"
 
 msgid "All operations"
 msgstr "सभी ऑपरेशन"
+
+msgid "All rows"
+msgstr "सभी पंक्तियाँ"
 
 msgid "All statistics"
 msgstr "सभी आँकड़े"
@@ -448,15 +448,6 @@ msgstr "एंडरसन पी - वैल्यू: इंटरपोले
 msgid "Anderson-Darling normality"
 msgstr "एंडरसन - डार्लिंग सामान्यता"
 
-msgid "Angle"
-msgstr "कोण"
-
-msgid "Angle (°)"
-msgstr "कोण (°)"
-
-msgid "Angles (x, y, z)"
-msgstr "कोण (x, y, z)"
-
 msgid "Animate this figure"
 msgstr "इस आंकड़े को अंकित करें"
 
@@ -490,23 +481,11 @@ msgstr "ऐप का स्टाइल"
 msgid "Appearance"
 msgstr "दिखावट"
 
-msgid "Apple Foundation Models"
-msgstr "एप्पल फाउंडेशन मॉडल"
-
 msgid "Application Log"
 msgstr "ऐप्लिकेशन लॉग"
 
 msgid "Applied"
 msgstr "लागू किया गया"
-
-msgid "Applied first. Positive turns y towards z (right-hand rule)."
-msgstr "पहले लागू किया गया। सकारात्मक y को z (दाएं हाथ का नियम) की ओर मोड़ता है।"
-
-msgid "Applied last. Positive turns x towards y - the 2D rotation."
-msgstr "अंतिम रूप से लागू किया गया। धनात्मक x y की ओर मुड़ता है - 2D रोटेशन।"
-
-msgid "Applied second. Positive turns z towards x."
-msgstr "एप्लाइड सेकंड। धनात्मक z को x की ओर मोड़ता है।"
 
 msgid "Applied. Undo takes the whole of it back."
 msgstr "लागू किया गया। Undo इसे वापस ले लेता है।"
@@ -573,6 +552,12 @@ msgstr "लेखक"
 
 msgid "Auto"
 msgstr "Auto"
+
+msgid "Autocorrelation (ACF)"
+msgstr "आटोकोरिलेशन (ACF)"
+
+msgid "Autocorrelation, first 12 lags"
+msgstr "ऑटोकोरिलेशन, पहले 12 लैग"
 
 msgid "Automatic"
 msgstr "स्वचालित"
@@ -664,6 +649,9 @@ msgstr "1 और 1.33 के बीच: केवल सक्षम - साम
 msgid "Bins"
 msgstr "डिब्बे"
 
+msgid "Boosted Tree: how much each tree corrects the ones before. Smaller needs more trees."
+msgstr "बूस्टेड ट्री: प्रत्येक पेड़ पहले के पेड़ों को कितना सही करता है। छोटे को अधिक पेड़ों की आवश्यकता होती है।"
+
 msgid "Border"
 msgstr "बॉर्डर"
 
@@ -739,26 +727,8 @@ msgstr "सेंट्रल कंपोजिट, सर्कस्क्र
 msgid "Central composite, face-centered"
 msgstr "सेंट्रल कंपोजिट, फ़ेस - केंद्रित"
 
-msgid "Central differences on the grid (numpy.gradient); one-sided at its edges, where they are less accurate."
-msgstr "ग्रिड पर केंद्रीय अंतर (numpy.gradient); इसके किनारों पर एक तरफा, जहां वे कम सटीक हैं।"
-
-msgid "Centre"
-msgstr "केंद्र"
-
-msgid "Centre on the data"
-msgstr "डेटा पर केंद्र"
-
 msgid "Centre on the median"
 msgstr "मीडिया पर केंद्रित करें"
-
-msgid "Centre x"
-msgstr "केंद्र x"
-
-msgid "Centre y"
-msgstr "केंद्र y"
-
-msgid "Centre z"
-msgstr "केंद्र z"
 
 msgid "Chance"
 msgstr "मौका"
@@ -814,9 +784,6 @@ msgstr "चेक किया जाता है जब कोई क्वे
 msgid "Chi-squared, Yates' correction"
 msgstr "ची - स्क्वायर, येट्स का सुधार"
 
-msgid "Choose a series, then press Preview."
-msgstr "कोई सीरीज़ चुनें, फिर प्रीव्यू दबाएँ।"
-
 msgid "Choose a table and at least one Y column."
 msgstr "एक टेबल और कम से कम एक Y कॉलम चुनें।"
 
@@ -837,6 +804,9 @@ msgstr "फ़ाइल चुनें: CSV या अन्य सीमित
 
 msgid "Choose the fitting/interpolation model."
 msgstr "फिटिंग/इंटरपोलेशन मॉडल चुनें।"
+
+msgid "Choose the kernel."
+msgstr "कर्नेल चुनें।"
 
 msgid "Choose the operation."
 msgstr "ऑपरेशन चुनें।"
@@ -931,6 +901,9 @@ msgstr "कॉलम जानकारी..."
 msgid "Column Info: {column}"
 msgstr "कॉलम की जानकारी: {column}"
 
+msgid "Column contributions"
+msgstr "कॉलम का योगदान"
+
 msgid "Column names must be unique."
 msgstr "कॉलम के नाम अनोखे होने चाहिए।"
 
@@ -966,6 +939,9 @@ msgstr "मेट्रिक्स की गणना करें"
 
 msgid "Confusion matrix"
 msgstr "कन्फ्यूज़न मैट्रिक्स"
+
+msgid "Confusion matrix (training rows)"
+msgstr "कन्फ्यूज़न मैट्रिक्स (प्रशिक्षण पंक्तियाँ)"
 
 msgid "Connect to database"
 msgstr "डेटाबेस से कनेक्ट करें"
@@ -1048,9 +1024,6 @@ msgstr "रिपोर्ट नहीं लिखी जा सकी: {reaso
 msgid "Count"
 msgstr "संख्या"
 
-msgid "Counter-clockwise, about the centre below. The query spells this out as cos(radians(...)) rather than as a decimal, so it can be read and edited afterwards."
-msgstr "घड़ी की विपरीत दिशा में, नीचे दिए गए केंद्र के बारे में। क्वेरी इसे दशमलव के बजाय cos(radians(...)) के रूप में बताती है, इसलिए इसे बाद में पढ़ा और संपादित किया जा सकता है।"
-
 msgid "Create Query Table"
 msgstr "क्वेरी टेबल बनाएँ"
 
@@ -1099,16 +1072,16 @@ msgstr "क्रेडिट"
 msgid "Cross"
 msgstr "क्रॉस"
 
+msgid "Cross-correlation with {input}, prewhitened"
+msgstr "{input} के साथ क्रॉस - संबंध, पहले से सफ़ेद"
+
+msgid "Cross-correlation with {input}, strongest lags"
+msgstr "{input} के साथ क्रॉस - संबंध, सबसे मजबूत अंतराल"
+
 msgid "Crosshair"
 msgstr "क्रॉसहेयर"
 
-msgid "Curl"
-msgstr "कर्ल"
-
 msgid "Curve"
-msgstr "वक्र"
-
-msgid "Curves"
 msgstr "वक्र"
 
 msgid "Custom"
@@ -1156,6 +1129,9 @@ msgstr "डेटासेट"
 msgid "Dates"
 msgstr "तारीखें"
 
+msgid "Decision tree of a continuous or nominal response on many factors: split and prune a step at a time, or automatically on validation rows; leaves, column contributions and each row's leaf and prediction."
+msgstr "कई कारकों पर एक सतत या नाममात्र प्रतिक्रिया का निर्णय ट्री: एक समय में एक कदम को विभाजित और काटें, या स्वचालित रूप से सत्यापन पंक्तियों पर; पत्तियां, स्तंभ योगदान और प्रत्येक पंक्ति के पत्ते और भविष्यवाणी।"
+
 msgid "Decreasing"
 msgstr "घटता जा रहा है"
 
@@ -1185,9 +1161,6 @@ msgstr "हटाएँ"
 
 msgid "Delete '{column}' and everything in it? This can be undone."
 msgstr "'{column}' और उसमें सब कुछ मिटाएँ? इसे पूर्ववत किया जा सकता है।"
-
-msgid "Delete a pack you added. A pack that came with ChartLibre can only be switched off."
-msgstr "आपके द्वारा जोड़ा गया पैक डिलीट करें। ChartLibre के साथ आया पैक सिर्फ़ बंद किया जा सकता है।"
 
 msgid "Delete a template"
 msgstr "टेम्प्लेट हटाएँ"
@@ -1312,9 +1285,6 @@ msgstr "वितरण"
 msgid "Distribution fit"
 msgstr "डिस्ट्रीब्यूशन फ़िट"
 
-msgid "Divergence"
-msgstr "विचलन"
-
 msgid "Divergence: where the field spreads out (above 0) or gathers in (below 0) - a source or a sink. Curl: where it turns, and which way - 0 where it flows without turning."
 msgstr "विचलन: जहां क्षेत्र फैलता है (लगभग 0) या इकट्ठा होता है (नीचे 0) - एक स्रोत या एक सिंक। कर्ल: जहां यह बदल जाता है, और किस तरह - 0 जहां यह मोड़ के बिना बहती है।"
 
@@ -1338,9 +1308,6 @@ msgstr "इस भूमिका से बाहर निकलने के 
 
 msgid "Double-click an effect to remove it."
 msgstr "इसे हटाने के लिए किसी इफ़ेक्ट पर डबल - क्लिक करें।"
-
-msgid "Download and install, into ChartLibre's own Python, the libraries the chosen pack needs. It needs the Internet."
-msgstr "चुने गए पैक को जिन लाइब्रेरी की ज़रूरत है, उन्हें डाउनलोड करें और ChartLibre के अपने Python में इंस्टॉल करें। इसके लिए इंटरनेट की ज़रूरत है।"
 
 msgid "Drag a rectangle over the chart to select points, for hiding or splitting into a new series."
 msgstr "एक नई श्रृंखला में छिपाने या विभाजित करने के लिए, बिंदुओं का चयन करने के लिए चार्ट पर एक आयत खींचें।"
@@ -1369,9 +1336,6 @@ msgstr "हर आकृति को चित्रित करना और 
 msgid "Drawing the frames…"
 msgstr "फ्रेम ड्राइंग ..."
 
-msgid "Draws a square mesh (a box in 3D) over the source's extent and the same mesh after the transform. A rotation turns it, a scale stretches it, a shear leans it over - which is easier to read off the mesh than off the points."
-msgstr "स्रोत की सीमा पर एक वर्गाकार जाल (3D में एक बॉक्स) और रूपांतरण के बाद एक ही जाल खींचता है। एक रोटेशन इसे घुमाता है, एक स्केल इसे फैलाता है, एक कतरनी इसे झुकाती है - जो बिंदुओं से बाहर की तुलना में जाल को पढ़ना आसान है।"
-
 msgid "Drop repeated rows (UNION instead of UNION ALL)"
 msgstr "दोहराई गई पंक्तियाँ गिराएँ (सभी को यूनियन के बजाय यूनियन)"
 
@@ -1390,8 +1354,8 @@ msgstr "प्रत्येक फ्रेम इस स्तंभ के �
 msgid "Each library is used under its own licence, named above and shipped with the package it belongs to. Versions are the ones installed here, not the ones pinned."
 msgstr "प्रत्येक लाइब्रेरी का उपयोग अपने स्वयं के लाइसेंस के तहत किया जाता है, जिसका नाम ऊपर दिया गया है और इसे उस पैकेज के साथ भेज दिया गया है। संस्करण यहां इंस्टॉल किए गए हैं, न कि पिन किए गए।"
 
-msgid "Each new coordinate is its row of the matrix times x and y (and z, for a 3D series), about the centre below. With offsets adds the last column afterwards. Untick 'Centre on the data' and set the centre to 0 for the matrix exactly as written."
-msgstr "प्रत्येक नया निर्देशांक नीचे दिए गए केंद्र के बारे में मैट्रिक्स टाइम्स x और y (और z, एक 3D श्रृंखला के लिए) की इसकी पंक्ति है। ऑफसेट के साथ अंतिम कॉलम बाद में जोड़ता है। 'डेटा पर केंद्र' को अनचेक करें और लिखित रूप में मैट्रिक्स के लिए केंद्र को 0 पर सेट करें।"
+msgid "Each of the last values forecast one step ahead from only the values before it, the model refitted each time; its errors beside those of the naive forecast (the last value). Below 1 relative to naive: the model forecasts better than it."
+msgstr "पिछले मूल्यों में से प्रत्येक केवल पहले ही मूल्यों से पहले एक कदम आगे पूर्वानुमान, मॉडल हर बार refitted; इसकी त्रुटियों नेव पूर्वानुमान (पिछले मूल्य) के उन लोगों के बगल में। 1 के सापेक्ष नेव: मॉडल पूर्वानुमान इसके अलावा बेहतर है।"
 
 msgid "Each of {count} series fitted separately"
 msgstr "{count} श्रृंखलाओं में से प्रत्येक को अलग से फिट किया गया"
@@ -1401,9 +1365,6 @@ msgstr "इसके मूल्य के साथ प्रत्येक �
 
 msgid "Each point is one sample of the {series} series, placed so that samples alike are near each other. Read the groups and the paths the points draw: the axes have no unit, and far-apart distances say little."
 msgstr "प्रत्येक बिंदु {series} श्रृंखला का एक नमूना है, ताकि नमूनों को समान रूप से एक दूसरे के पास रखा जा सके। समूहों और पथों को आकर्षित करें: अक्षों में कोई इकाई नहीं है, और दूर-अलग दूरी थोड़ा कहते हैं।"
-
-msgid "Each role needs a column of its own."
-msgstr "प्रत्येक भूमिका के लिए अपने स्वयं के कॉलम की आवश्यकता होती है।"
 
 msgid "Each row's origin: Both, Left only or Right only."
 msgstr "प्रत्येक पंक्ति का मूल: दोनों, केवल बाएं या केवल दाएं।"
@@ -1642,9 +1603,6 @@ msgstr "गलत पॉज़िटिव दर"
 msgid "Family"
 msgstr "परिवार"
 
-msgid "Field"
-msgstr "फ़ील्ड"
-
 msgid "Figure"
 msgstr "आकृति"
 
@@ -1741,6 +1699,9 @@ msgstr "Y को X से फ़िट करें"
 msgid "Fit all ~100 continuous distributions instead of the 15 common ones. Considerably slower - seconds per refresh - and many of the extra candidates fit no real measurement."
 msgstr "15 सामान्य वितरणों के बजाय सभी ~100 निरंतर वितरणों को फिट करें। काफी धीमा - प्रति रिफ्रेश सेकंड - और कई अतिरिक्त उम्मीदवार कोई वास्तविक माप फिट नहीं होते हैं।"
 
+msgid "Fit by number of trees"
+msgstr "पेड़ों की संख्या के हिसाब से फ़िट करें"
+
 msgid "Fit data models"
 msgstr "फ़िट डेटा मॉडल"
 
@@ -1773,6 +1734,12 @@ msgstr "फ़ॉन्ट का आकार"
 
 msgid "For data copied one series per row: the clipboard is read with rows and columns exchanged."
 msgstr "प्रति पंक्ति एक श्रृंखला कॉपी किए गए डेटा के लिए: क्लिपबोर्ड को पंक्तियों और कॉलम के आदान - प्रदान के साथ पढ़ा जाता है।"
+
+msgid "Forecast"
+msgstr "पूर्वानुमान"
+
+msgid "Forecast periods"
+msgstr "पूर्वानुमान अवधि"
 
 msgid "Forget a saved template"
 msgstr "सेव किए गए टेम्पलेट को भूल जाएँ"
@@ -1843,6 +1810,9 @@ msgstr "साझा कुल्हाड़ियों के बीच क�
 msgid "Gap between shared axes stacked one above the other. 0 draws them flush."
 msgstr "शेयर्ड अक्षों के बीच गैप एक दूसरे के ऊपर एक स्टैक्ड है। 0 उन्हें फ्लश करता है।"
 
+msgid "Gaussian process regression with an uncertainty band"
+msgstr "एक अनिश्चितता बैंड के साथ गॉसियन प्रक्रिया प्रतिगमन"
+
 msgid "Generated data"
 msgstr "जनरेट किया गया डेटा"
 
@@ -1851,12 +1821,6 @@ msgstr "जनरेट किया गया टेबल स्कीमा"
 
 msgid "Generated tables"
 msgstr "उत्पन्न तालिका"
-
-msgid "GitHub Copilot"
-msgstr "GitHub Copilot"
-
-msgid "GitHub Copilot's models through GitHub Models, with a GitHub token - or any OpenAI-compatible chat endpoint."
-msgstr "GitHub मॉडल के माध्यम से GitHub Copilot के मॉडल, एक GitHub टोकन - या किसी भी OpenAI-compatible चैट समापन बिंदु के साथ।"
 
 msgid "Give X, Y and Z this coordinate's grid and ticks."
 msgstr "X, Y और Z को इस निर्देशांक के ग्रिड और टिक दें।"
@@ -1878,6 +1842,9 @@ msgstr "ग्लोबल: सभी चेक की गई सीरीज़
 
 msgid "Goodness of fit"
 msgstr "फिट की अच्छाई"
+
+msgid "Granger causality (VAR)"
+msgstr "ग्रैंजर causality (VAR)"
 
 msgid "Graph"
 msgstr "ग्राफ़"
@@ -1905,6 +1872,9 @@ msgstr "समूह तुलना (एनोवा)"
 
 msgid "Groups"
 msgstr "समूह"
+
+msgid "Grow the tree"
+msgstr "पेड़ उगाएँ"
 
 msgid "Guess starting parameters"
 msgstr "अनुमान लगाएँ कि शुरुआती पैरामीटर"
@@ -1944,6 +1914,9 @@ msgstr "मुझे चुनने में मदद करें"
 
 msgid "Help me choose…"
 msgstr "मुझे चुनने में मदद करें..."
+
+msgid "Here it follows {measure} one step behind: the model predicts little beyond the last value. A model that fits better (ARIMA chosen by AIC, a season) brings it onto the data."
+msgstr "यहाँ यह {measure} एक कदम पीछे है: मॉडल पिछले मूल्य से परे थोड़ा भविष्यवाणी करता है। एक मॉडल जो बेहतर फिट बैठता है (ARIMA AIC द्वारा चुना गया, एक मौसम) इसे डेटा पर लाता है।"
 
 msgid "Hide"
 msgstr "छिपाएँ"
@@ -2029,6 +2002,9 @@ msgstr "एक बड़े अवशिष्ट को कितना भा�
 msgid "How densely to sample."
 msgstr "कैसे घनी नमूना करने के लिए।"
 
+msgid "How far back the autocorrelations look."
+msgstr "स्वतःसंबंध कितने पीछे दिखते हैं।"
+
 msgid "How finely the mapping is estimated. Clipped to the number of points in the series when the series is shorter than this."
 msgstr "मैपिंग का अनुमान कितना बारीक है। जब श्रृंखला इससे छोटी होती है तो श्रृंखला में अंकों की संख्या पर क्लिक किया जाता है।"
 
@@ -2047,6 +2023,15 @@ msgstr "कितने फ्रेम स्क्रीन पर रहत�
 msgid "How many of the analyses opened last the navigation bar lists under Recent; 0 hides the section."
 msgstr "कितने विश्लेषण हाल ही में नेविगेशन बार सूची में अंतिम रूप से खुल गए; 0 खंड को छुपाता है।"
 
+msgid "How many past errors the next value depends on: the lags where the ACF stands out."
+msgstr "अगला मान कितनी पिछली त्रुटियों पर निर्भर करता है: वे अंतराल जहां ACF बाहर खड़ा है।"
+
+msgid "How many past seasons' errors the next value depends on."
+msgstr "अगले मान पिछले सीज़न की कितनी त्रुटियों पर निर्भर करता है।"
+
+msgid "How many past values the next depends on: the lags where the PACF stands out."
+msgstr "अगले कितने पिछले मूल्यों पर निर्भर करता है: वे अंतराल जहां PACF बाहर खड़ा है।"
+
 msgid "How many points the fitted curve is drawn with, evenly spaced; 0 draws it only at the data's x."
 msgstr "फिट किए गए वक्र को कितने बिंदुओं के साथ खींचा गया है, समान रूप से स्थान दिया गया है; 0 इसे केवल डेटा के x पर खींचता है।"
 
@@ -2056,38 +2041,23 @@ msgstr "सबसे अच्छा रखने से पहले RANSAC क
 msgid "How many rows of a table the assistant may send as an example."
 msgstr "एक तालिका की कितनी पंक्तियाँ सहायक उदाहरण के रूप में भेज सकता है।"
 
+msgid "How many times ahead to forecast."
+msgstr "भविष्यवाणी करने के लिए कितनी बार आगे।"
+
+msgid "How many times the rows are split: one fewer than the leaves. For a Boosted Tree, the splits of each tree."
+msgstr "पंक्तियों को कितनी बार विभाजित किया जाता है: पत्तियों से एक कम। बूस्ट किए गए पेड़ के लिए, प्रत्येक पेड़ के टुकड़े।"
+
+msgid "How many trees a Bootstrap Forest or a Boosted Tree grows."
+msgstr "बूटस्ट्रैप वन या बूस्टेड ट्री कितने पेड़ उगाते हैं।"
+
 msgid "How much each boosting stage corrects the previous one."
 msgstr "प्रत्येक बूस्टिंग चरण पिछले चरण को कितना सही करता है।"
 
 msgid "How much each point counts. Relative: each residual divided by its value, for data spanning orders of magnitude. Error bars: each residual divided by the series' yerr column - its points' own errors - so a precise point counts more."
 msgstr "प्रत्येक बिंदु कितना मायने रखता है। सापेक्ष: परिमाण के क्रम में फैले डेटा के लिए, प्रत्येक अवशिष्ट को इसके मूल्य से विभाजित किया जाता है। त्रुटि बार: प्रत्येक अवशिष्ट को श्रृंखला के यर कॉलम से विभाजित किया जाता है - इसके अंक की अपनी त्रुटियां - इसलिए एक सटीक बिंदु अधिक मायने रखता है।"
 
-msgid "How much of x goes into the new x."
-msgstr "कितना एक्स के नए एक्स में चला जाता है।"
-
-msgid "How much of x goes into the new y."
-msgstr "कितना एक्स के नए y में चला जाता है।"
-
-msgid "How much of x goes into the new z."
-msgstr "कितना एक्स के नए z में चला जाता है।"
-
-msgid "How much of y goes into the new x."
-msgstr "कितना y नए एक्स में चला जाता है।"
-
-msgid "How much of y goes into the new y."
-msgstr "कितना y नए y में चला जाता है।"
-
-msgid "How much of y goes into the new z."
-msgstr "Y का कितना भाग नए z में जाता है।"
-
-msgid "How much of z goes into the new x."
-msgstr "कितना z के नए एक्स में चला जाता है।"
-
-msgid "How much of z goes into the new y."
-msgstr "कितना z के नए y में चला जाता है।"
-
-msgid "How much of z goes into the new z."
-msgstr "Z का कितना भाग नए z में जाता है।"
+msgid "How much the {measure} drops when a column is shuffled, on the {rows} rows - for any model, the forest and the boosted tree included."
+msgstr "{rows} पंक्तियों पर - किसी भी मॉडल, जंगल और बढ़े हुए पेड़ के लिए - कॉलम में फेरबदल होने पर {measure} कितना गिरता है।"
 
 msgid "How the analyses take the column: as measurements (continuous), ordered levels (ordinal) or categories (nominal). Forced here, it is the column's type in every analysis."
 msgstr "विश्लेषण कॉलम को कैसे लेते हैं: माप (निरंतर), आदेशित स्तर (क्रमिक) या श्रेणियां (नाममात्र) के रूप में। यहां मजबूर होकर, यह हर विश्लेषण में कॉलम का प्रकार है।"
@@ -2149,6 +2119,9 @@ msgstr "आयात समारोह"
 msgid "Import..."
 msgstr "आयात"
 
+msgid "Importance"
+msgstr "महत्व"
+
 msgid "In"
 msgstr "इसमें"
 
@@ -2182,15 +2155,6 @@ msgstr "प्रारंभिक मान अपडेट किए गए�
 msgid "Inner: matched rows only"
 msgstr "इनर: केवल मेल खाने वाली पंक्तियाँ"
 
-msgid "Install the libraries"
-msgstr "लाइब्रेरी इंस्टॉल करें"
-
-msgid "Installed: {names}."
-msgstr "इंस्टॉल किया गया: {names}।"
-
-msgid "Installing {names}…"
-msgstr "{names} इंस्टॉल किया जा रहा है…"
-
 msgid "Instantaneous frequency"
 msgstr "तत्काल आवृत्ति"
 
@@ -2208,6 +2172,12 @@ msgstr "अन्तर्राष्ट्रीय"
 
 msgid "Intervals [a, b)"
 msgstr "अंतराल [a, b)"
+
+msgid "Intervention"
+msgstr "हस्तक्षेप"
+
+msgid "Intervention at"
+msgstr "इस पर हस्तक्षेप"
 
 msgid "Invert"
 msgstr "उल्टा करें"
@@ -2239,9 +2209,6 @@ msgstr "क्या {measure} सामान्य है?"
 msgid "Its arguments are the parameters only: x and y are given, not passed."
 msgstr "इसके तर्क केवल पैरामीटर हैं: x और y को दिया जाता है, पारित नहीं किया जाता है।"
 
-msgid "Its curl, coloured by its size"
-msgstr "इसका कर्ल, इसके आकार से रंगा हुआ है"
-
 msgid "Its histogram, quantiles and fitted distributions: Distribution of {measure}"
 msgstr "इसका हिस्टोग्राम, क्वांटाइल और फिट वितरण: {measure} का वितरण"
 
@@ -2250,6 +2217,9 @@ msgstr "इसका रुझान, मौसम और पूर्वान�
 
 msgid "Its width at half that height is {width} in x: the span to integrate for its area (Calculus)."
 msgstr "इसकी चौड़ाई आधे पर है कि ऊंचाई x में {width} है: इसके क्षेत्र (कैल्कुलस) के लिए एकीकृत करने के लिए स्पैन।"
+
+msgid "JMP documentation"
+msgstr "जेएमपी प्रलेखन"
 
 msgid "JMP documentation:"
 msgstr "JMP डॉक्यूमेंटेशन:"
@@ -2293,6 +2263,9 @@ msgstr "इस कंप्यूटर पर सिस्टम के की�
 msgid "Kept with the figure in the project, and printed under it in reports."
 msgstr "परियोजना के आंकड़े के साथ रखा गया, और रिपोर्ट में इसके तहत मुद्रित किया गया।"
 
+msgid "Kernel"
+msgstr "कर्नेल"
+
 msgid "Kind"
 msgstr "दयालु"
 
@@ -2335,11 +2308,20 @@ msgstr "लेबल"
 msgid "Lack of fit"
 msgstr "फ़िट का अभाव"
 
+msgid "Lag"
+msgstr "अंतराल"
+
+msgid "Lags"
+msgstr "पिछड़ने की स्थिति"
+
 msgid "Language"
 msgstr "भाषा"
 
 msgid "Lasso drops the terms that do not help, Ridge shrinks them all, Elastic Net mixes the two; the strength is chosen by cross-validation."
 msgstr "लासो उन शब्दों को छोड़ देता है जो मदद नहीं करते हैं, रिज उन सभी को सिकोड़ता है, लोचदार नेट दोनों को मिलाता है; ताकत को क्रॉस - वैलिडेशन द्वारा चुना जाता है।"
+
+msgid "Later"
+msgstr "बाद में"
 
 msgid "Latin hypercube"
 msgstr "लैटिन हाइपरक्यूब"
@@ -2349,6 +2331,15 @@ msgstr "अक्षों को मोज़ेक के रूप में 
 
 msgid "Layout"
 msgstr "लेआउट"
+
+msgid "Leaf"
+msgstr "पत्ता"
+
+msgid "Leaf report"
+msgstr "लीफ रिपोर्ट"
+
+msgid "Leaf {leaf}"
+msgstr "पत्ती {leaf}"
 
 msgid "Learning rate"
 msgstr "सीखने की दर"
@@ -2365,6 +2356,9 @@ msgstr "दो सिरों - 10, 90 के बीच के मानों 
 msgid "Leave the selected rows out of every chart and analysis (Hide = 1); they stay in the table, greyed."
 msgstr "प्रत्येक चार्ट और विश्लेषण (Hide = 1) से चयनित पंक्तियों को छोड़ दें; वे तालिका में रहते हैं, ग्रे।"
 
+msgid "Leaves"
+msgstr "पत्ते"
+
 msgid "Left"
 msgstr "बाएँ"
 
@@ -2376,6 +2370,9 @@ msgstr "महापुरूष"
 
 msgid "Length"
 msgstr "लंबाई"
+
+msgid "Length scale"
+msgstr "लंबाई का पैमाना"
 
 msgid "Less"
 msgstr "कम"
@@ -2551,9 +2548,6 @@ msgstr "Matplotlib स्टाइल एडिटर"
 msgid "Matplotlib default"
 msgstr "Matplotlib डिफ़ॉल्ट"
 
-msgid "Matrix"
-msgstr "मैट्रिक्स"
-
 msgid "Max"
 msgstr "अधिकतम"
 
@@ -2638,17 +2632,14 @@ msgstr "न्यूनतम करें"
 msgid "Minimum"
 msgstr "न्यूनतम"
 
+msgid "Minimum leaf size"
+msgstr "पत्तियों का न्यूनतम आकार"
+
 msgid "Minimum stopband attenuation, in dB (Chebyshev II / Elliptic)."
 msgstr "डीबी (चेबीशेव II / एलिप्टिक) में न्यूनतम स्टॉपबैंड क्षीणन।"
 
 msgid "Minor"
 msgstr "नाबालिग"
-
-msgid "Mirror across"
-msgstr "मिरर भर में"
-
-msgid "Mirror line"
-msgstr "मिरर लाइन"
 
 msgid "Misclassification {percent}%: the model puts {count} of {rows} rows in another group than their own. These are the rows it was fitted to: on new rows it usually does a little worse."
 msgstr "गलत क्लासिफ़िकेशन {percent}%: मॉडल {rows} में से {count} पंक्तियों को उनके अपने समूह के बजाय किसी दूसरे समूह में डाल देता है। ये वे पंक्तियाँ हैं, जिनके लिए इसे फ़िट किया गया था: नई पंक्तियों पर यह आमतौर पर थोड़ा खराब प्रदर्शन करता है।"
@@ -2671,6 +2662,9 @@ msgstr "मॉडल का नाम"
 msgid "Modelling type"
 msgstr "मॉडलिंग का प्रकार"
 
+msgid "Models tried, best AIC first"
+msgstr "मॉडल आज़माए गए, सबसे पहले एआईसी"
+
 msgid "Modify stored function"
 msgstr "संग्रहीत फ़ंक्शन को संशोधित करें"
 
@@ -2692,20 +2686,8 @@ msgstr "और..."
 msgid "Mosaic"
 msgstr "मोज़ेक"
 
-msgid "Motion"
-msgstr "गति"
-
 msgid "Move annotation"
 msgstr "एनोटेशन ले जाएँ"
-
-msgid "Move x by"
-msgstr "X को इसके द्वारा खिसकाएँ"
-
-msgid "Move y by"
-msgstr "Y को इसके द्वारा खिसकाएँ"
-
-msgid "Move z by"
-msgstr "Z को इसके द्वारा खिसकाएँ"
 
 msgid "Multi-peak builder"
 msgstr "मल्टी - पीक बिल्डर"
@@ -2908,6 +2890,9 @@ msgstr "अभी तक कोई टेम्पलेट सेव नही�
 msgid "No template saved yet: save one from a figure first."
 msgstr "अभी तक कोई टेम्पलेट सेव नहीं किया गया है: पहले किसी आकृति से एक को सेव करें।"
 
+msgid "Noise level"
+msgstr "शोर का स्तर"
+
 msgid "None"
 msgstr "कोई नहीं"
 
@@ -3007,9 +2992,6 @@ msgstr "ऑड्स अनुपात"
 msgid "Of"
 msgstr "इनमें से"
 
-msgid "Offset"
-msgstr "ऑफ़सेट"
-
 msgid "Ollama"
 msgstr "ओलमा"
 
@@ -3022,6 +3004,9 @@ msgstr "इस कॉलम का प्रति मान एक अक्ष
 msgid "One character (for example ★ ♣ A), drawn with the font shipped with the app so it looks the same everywhere;\nor matplotlib's mathtext, for example $\\clubsuit$;\nor (sides, style, angle) - style 0 a polygon, 1 a star, 2 an asterisk - for example (5, 1, 0)"
 msgstr "एक चरित्र (उदाहरण के लिए ★ A), जो ऐप के साथ भेजे गए फ़ॉन्ट के साथ खींचा जाता है ताकि यह हर जगह समान दिखता है;\nया matplotlib's mathtext, उदाहरण के लिए $\\clubsuit$;\nया (पक्ष, शैली, कोण) - शैली 0 एक बहुभुज, 1 एक सितारा, 2 एक तारांकन - उदाहरण के लिए (5, 1, 0)"
 
+msgid "One more split: the one that best separates the response."
+msgstr "एक और विभाजन: वह जो प्रतिक्रिया को सबसे अलग करता है।"
+
 msgid "One report per column: continuous, or the groups."
 msgstr "प्रति कॉलम एक रिपोर्ट: निरंतर, या समूह।"
 
@@ -3030,6 +3015,9 @@ msgstr "हर अलग कॉम्बिनेशन के लिए एक 
 
 msgid "One series at a time: the histogram, quantiles, moments and normality tests."
 msgstr "एक समय में एक श्रृंखला: हिस्टोग्राम, मात्रात्मक, क्षण और सामान्यता परीक्षण।"
+
+msgid "One tree you can read; a Bootstrap Forest (many trees on resampled rows, averaged); or a Boosted Tree (many small trees, each correcting the ones before)."
+msgstr "एक पेड़ जिसे आप पढ़ सकते हैं; एक बूटस्ट्रैप वन (पुनर्मूल्यांकन पंक्तियों पर कई पेड़, औसत); या एक बूस्टेड पेड़ (कई छोटे पेड़, प्रत्येक पहले वाले को ठीक करता है)।"
 
 msgid "One value at a time, every value up to the frame's, or the last few"
 msgstr "एक समय में एक मूल्य, फ्रेम के लिए हर मूल्य, या पिछले कुछ"
@@ -3070,9 +3058,6 @@ msgstr "डेटाबेस खोलें"
 msgid "Open documentation for the selected method."
 msgstr "चयनित विधि के लिए दस्तावेज़ खोलें।"
 
-msgid "Open folder"
-msgstr "फ़ोल्डर खोलें"
-
 msgid "Open recent"
 msgstr "हाल ही में खोलें"
 
@@ -3106,11 +3091,14 @@ msgstr "वैकल्पिक विवरण"
 msgid "Optional range as 'start, stop'. Empty = data range plus Extend."
 msgstr "'शुरू करें, रोकें' के रूप में वैकल्पिक सीमा। खाली = डेटा रेंज प्लस एक्सटेंड।"
 
-msgid "Optional: the field's z component, with Z."
-msgstr "वैकल्पिक: फ़ील्ड का z घटक, Z के साथ।"
+msgid "Optional: 1 (or Validation) on the rows kept out of the fit, to judge it."
+msgstr "वैकल्पिक: फिट से बाहर रखी गई पंक्तियों पर 1 (या सत्यापन), इसका आकलन करने के लिए।"
 
-msgid "Optional: the nodes' z, for a field in space."
-msgstr "वैकल्पिक: नोड्स 'z, अंतरिक्ष में एक फ़ील्ड के लिए।"
+msgid "Optional: another series measured at the same times - the cross-correlation says whether it leads or follows Y, and by how much."
+msgstr "वैकल्पिक: एक ही समय में मापी गई एक और श्रृंखला - क्रॉस - सहसंबंध कहता है कि यह Y का नेतृत्व करता है या उसका अनुसरण करता है, और कितना।"
+
+msgid "Optional: dates, times or a run number. Without it, the rows' order."
+msgstr "वैकल्पिक: तारीखें, समय या रन नंबर। इसके बिना, पंक्तियों का क्रम।"
 
 msgid "Order"
 msgstr "ऑर्डर :-"
@@ -3175,6 +3163,18 @@ msgstr "पैरामीटर अनुमान (कोडित इका�
 msgid "Parameters"
 msgstr "पैरामीटर्स"
 
+msgid "Partial autocorrelation (PACF)"
+msgstr "आंशिक स्वतःसंबंध (PACF)"
+
+msgid "Partial dependence on {factor}"
+msgstr "{factor} पर आंशिक निर्भरता"
+
+msgid "Partition"
+msgstr "विभाजन"
+
+msgid "Partition for {response}"
+msgstr "{response} के लिए विभाजन"
+
 msgid "Passband ripple, in dB (Chebyshev I / Elliptic)."
 msgstr "पासबैंड तरंग, dB में (Chebyshev I / Elliptic)।"
 
@@ -3201,6 +3201,9 @@ msgstr "चोटियाँ"
 
 msgid "Pearson chi-squared"
 msgstr "पियर्सन ची - स्क्वायर"
+
+msgid "Permutation importance"
+msgstr "क्रमपरिवर्तन का महत्व"
 
 msgid "Personality"
 msgstr "व्यक्तित्व"
@@ -3283,6 +3286,12 @@ msgstr "सेव किए गए मॉडल के साथ पूर्व
 msgid "Predict with a saved model…"
 msgstr "सेव किए गए मॉडल के साथ पूर्वानुमान लगाएँ…"
 
+msgid "Predicted"
+msgstr "भविष्यवाणी"
+
+msgid "Predicted is each value forecast one step ahead from the ones before it, as JMP's Predicted; the Residual is the value minus it."
+msgstr "भविष्यवाणी प्रत्येक मूल्य पूर्वानुमान एक कदम आगे से पहले, JMP के भविष्यवाणी के रूप में; अवशिष्ट मूल्य minus यह है।"
+
 msgid "Prediction interval ({level}%)"
 msgstr "भविष्यवाणी अंतराल ({level}%)"
 
@@ -3292,11 +3301,11 @@ msgstr "प्रिडिक्शन प्रोफ़ाइल"
 msgid "Prediction profiler"
 msgstr "प्रिडिक्शन प्रोफाइलर"
 
+msgid "Predictive and Specialized Modeling"
+msgstr "प्रेडिक्टिव और स्पेशलाइज्ड मॉडलिंग"
+
 msgid "Preset"
 msgstr "प्रीसेट"
-
-msgid "Press Preview to see where the points move."
-msgstr "पॉइंट कहाँ - कहाँ चलते हैं, यह देखने के लिए पूर्वावलोकन दबाएँ।"
 
 msgid "Preview"
 msgstr "पूर्वावलोकन"
@@ -3324,6 +3333,9 @@ msgstr "पूर्वावलोकन: {count} श्रृंखला क�
 
 msgid "Previous axis"
 msgstr "पिछली एक्सिस"
+
+msgid "Prewhitened CCF"
+msgstr "पहले से सफ़ेद सीसीएफ़ (CCF)"
 
 msgid "Prob > D"
 msgstr "Prob > D"
@@ -3358,6 +3370,12 @@ msgstr "प्रॉपर्टी"
 msgid "Provider"
 msgstr "प्रदाता"
 
+msgid "Prune"
+msgstr "प्रून"
+
+msgid "Pulse (one time)"
+msgstr "नाड़ी (एक बार)"
+
 msgid "Put the result in f_numeric and return it."
 msgstr "परिणाम को f_numeric में रखें और इसे वापस कर दें।"
 
@@ -3369,9 +3387,6 @@ msgstr "Q-Q प्लॉट"
 
 msgid "Quantiles"
 msgstr "क्वांटाइल्स"
-
-msgid "Quantity"
-msgstr "मात्रा"
 
 msgid "Query"
 msgstr "क्वेरी"
@@ -3396,6 +3411,9 @@ msgstr "ROC वक्र"
 
 msgid "Random order"
 msgstr "रैंडम ऑर्डर"
+
+msgid "Random seed"
+msgstr "यादृच्छिक बीज"
 
 msgid "Random within strata"
 msgstr "स्तरीय के भीतर यादृच्छिक"
@@ -3547,6 +3565,9 @@ msgstr "रिपोर्ट लिखी गई: {path}"
 msgid "Reports"
 msgstr "रिपोर्ट"
 
+msgid "Reports the Durbin-Watson diagnostic for lag-one residual correlation. Values near 2 indicate little lag-one correlation; no generic p-value is reported."
+msgstr "लैग - वन अवशिष्ट सहसंबंध के लिए डर्बिन - वाटसन डायग्नोस्टिक की रिपोर्ट करता है। 2 के पास के मान थोड़ा अंतराल - एक सहसंबंध इंगित करते हैं; कोई सामान्य p - मान नहीं बताया गया है।"
+
 msgid "Rescale or reshape a series' distribution"
 msgstr "एक श्रृंखला के वितरण को फिर से आकार दें या आकार दें"
 
@@ -3561,6 +3582,9 @@ msgstr "अनुमानित द्वारा अवशिष्ट"
 
 msgid "Residual diagnostics"
 msgstr "अवशिष्ट निदान"
+
+msgid "Residual randomness and independence"
+msgstr "अवशिष्ट यादृच्छिकता और स्वतंत्रता"
 
 msgid "Residual sum of squares: {cost}"
 msgstr "वर्गों का अवशिष्ट योग: {cost}"
@@ -3594,6 +3618,9 @@ msgstr "जवाब {number} का कोई नाम नहीं है।"
 
 msgid "Responses"
 msgstr "प्रतिक्रियाएँ"
+
+msgid "Restart now"
+msgstr "अभी शुरू करें"
 
 msgid "Restore the table?"
 msgstr "टेबल बहाल करें?"
@@ -3640,20 +3667,14 @@ msgstr "भूमिकाएँ"
 msgid "Rolling window size, in points, used to compute the local median."
 msgstr "रोलिंग विंडो का आकार, अंकों में, स्थानीय औसत की गणना करने के लिए उपयोग किया जाता है।"
 
-msgid "Rotate, move, scale or mirror a series' coordinates"
-msgstr "किसी सीरीज़ के निर्देशांक को घुमाएँ, ले जाएँ, स्केल करें या मिरर करें"
+msgid "Rolling-origin validation"
+msgstr "रोलिंग-origin सत्यापन"
+
+msgid "Rolling-origin validation, one step ahead"
+msgstr "रोलिंग-origin वैधता, एक कदम आगे"
 
 msgid "Rotation"
 msgstr "घूर्णन"
-
-msgid "Rotation x (°)"
-msgstr "घूर्णन x (°)"
-
-msgid "Rotation y (°)"
-msgstr "घूर्णन y (°)"
-
-msgid "Rotation z (°)"
-msgstr "घूर्णन z (°)"
 
 msgid "Row"
 msgstr "पंक्ति"
@@ -3678,6 +3699,9 @@ msgstr "जब तक इसे चेक नहीं किया जाता
 
 msgid "Rows × columns"
 msgstr "पंक्तियाँ × कॉलम"
+
+msgid "Rows, by leaf"
+msgstr "पंक्तियाँ, पत्ते के आधार पर"
 
 msgid "Rows: {ra} added, {rr} removed, {rm} modified  ·  Columns: {ca} added, {cr} removed, {cm} modified"
 msgstr "पंक्तियाँ: {ra} जोड़ी गईं, {rr} हटाई गईं, {rm} संशोधित  ·  कॉलम: {ca} जोड़ी गईं, {cr} हटाई गईं, {cm} संशोधित"
@@ -3862,15 +3886,6 @@ msgstr "स्केल और रेंज"
 msgid "Scale by the IQR"
 msgstr "IQR के आधार पर स्केल"
 
-msgid "Scale x by"
-msgstr "X को इस आधार पर स्केल करें"
-
-msgid "Scale y by"
-msgstr "इस आधार पर स्केल करें"
-
-msgid "Scale z by"
-msgstr "Z को इस आधार पर स्केल करें"
-
 msgid "Scatter Plot"
 msgstr "स्कैटर प्लॉट"
 
@@ -3888,6 +3903,21 @@ msgstr "गुण खोजें..."
 
 msgid "Search…"
 msgstr "खोजें..."
+
+msgid "Season ({n}) and remainder"
+msgstr "सीज़न ({n}) और शेष"
+
+msgid "Season length"
+msgstr "सीज़न की लंबाई"
+
+msgid "Seasonal D"
+msgstr "मौसमी D"
+
+msgid "Seasonal P"
+msgstr "मौसमी P"
+
+msgid "Seasonal Q"
+msgstr "मौसमी प्रश्न"
 
 msgid "Second cutoff"
 msgstr "दूसरा कटऑफ़"
@@ -4006,15 +4036,6 @@ msgstr "{axis} रेंज को साझा करने वाले अन
 msgid "Shared"
 msgstr "शेयर किया गया"
 
-msgid "Shear"
-msgstr "कतरें"
-
-msgid "Shear x per y"
-msgstr "कतरें x प्रति y"
-
-msgid "Shear y per x"
-msgstr "कतरें y प्रति x"
-
 msgid "Sheet"
 msgstr "शीट"
 
@@ -4027,9 +4048,6 @@ msgstr "डेटा टेबल दिखाएँ"
 msgid "Show generated tables"
 msgstr "जेनरेट की गई टेबल दिखाएँ"
 
-msgid "Show grid"
-msgstr "ग्रिड दिखाएँ"
-
 msgid "Show in legend"
 msgstr "लीजेंड में दिखाएँ"
 
@@ -4041,6 +4059,18 @@ msgstr "केवल '{table}' की चयनित पंक्तियो�
 
 msgid "Show only the Selected rows on the charts"
 msgstr "चार्ट पर केवल चयनित पंक्तियों को दिखाएं"
+
+msgid "Show residual Durbin-Watson statistic"
+msgstr "अवशिष्ट Durbin - Watson आँकड़े दिखाएँ"
+
+msgid "Show residual Ljung-Box tests"
+msgstr "अवशिष्ट Ljung - box परीक्षण दिखाएँ"
+
+msgid "Show residual runs test"
+msgstr "अवशिष्ट रन परीक्षण दिखाएं"
+
+msgid "Show residual turning-point test"
+msgstr "अवशिष्ट टर्निंग - पॉइंट टेस्ट दिखाएँ"
 
 msgid "Show selected rows"
 msgstr "चयनित पंक्तियों को दिखाएं"
@@ -4138,11 +4168,23 @@ msgstr "स्पलाइन k"
 msgid "Spline smoothing"
 msgstr "स्पलाइन स्मूथिंग"
 
+msgid "Split"
+msgstr "विभाजित करें"
+
 msgid "Split by"
 msgstr "इसके द्वारा विभाजित करें"
 
+msgid "Split history"
+msgstr "विभाजित इतिहास"
+
 msgid "Split the series into one per value of this column - one per species, per batch, per site - each with its own colour and legend entry. The columns the chart already uses are not offered."
 msgstr "श्रृंखला को इस कॉलम के प्रति मान में एक में विभाजित करें - प्रति प्रजाति एक, प्रति बैच, प्रति साइट - प्रत्येक अपने स्वयं के रंग और किंवदंती प्रविष्टि के साथ। चार्ट में पहले से इस्तेमाल किए गए कॉलम ऑफ़र नहीं किए गए हैं।"
+
+msgid "Split while the validation rows say the tree predicts better."
+msgstr "स्प्लिट करें जबकि सत्यापन पंक्तियां कहती हैं कि पेड़ बेहतर भविष्यवाणी करता है।"
+
+msgid "Splits"
+msgstr "विभाजन"
 
 msgid "Spreadsheets and text"
 msgstr "स्प्रेडशीट और टेक्स्ट"
@@ -4171,6 +4213,15 @@ msgstr "z = f(x, y) के लिए y रेंज का प्रारंभ
 msgid "Start params"
 msgstr "पैराम शुरू करें"
 
+msgid "Starting guess for how quickly the fit can vary with x. Re-optimized automatically while fitting - a starting point, not a fixed choice."
+msgstr "अनुमान लगाना शुरू करें कि फिट x के साथ कितनी जल्दी बदल सकता है। फिटिंग करते समय स्वचालित रूप से फिर से अनुकूलित - एक प्रारंभिक बिंदु, एक निश्चित विकल्प नहीं।"
+
+msgid "Starting guess for the observation noise variance, added to the kernel. Also re-optimized while fitting."
+msgstr "अवलोकन शोर भिन्नता के लिए प्रारंभिक अनुमान, कर्नेल में जोड़ा गया। फिटिंग करते समय भी फिर से अनुकूलित किया गया।"
+
+msgid "Stationarity tests"
+msgstr "स्टेशनरिटी टेस्ट"
+
 msgid "Statistic"
 msgstr "आँकड़े"
 
@@ -4194,6 +4245,9 @@ msgstr "STD. त्रुटि"
 
 msgid "Step"
 msgstr "स्टेप :-"
+
+msgid "Step (lasting)"
+msgstr "चरण (स्थायी)"
 
 msgid "Step size used by integer/fixed-step spacing."
 msgstr "पूर्णांक/निश्चित - चरण अंतरण द्वारा उपयोग किया जाने वाला चरण आकार।"
@@ -4300,6 +4354,12 @@ msgstr "टेस्ट"
 msgid "Test matrix preview"
 msgstr "टेस्ट मैट्रिक्स पूर्वावलोकन"
 
+msgid "Tests whether residual autocorrelations through the selected lags are jointly zero."
+msgstr "यह परीक्षण करता है कि चयनित अंतराल के माध्यम से अवशिष्ट स्वसंबंध संयुक्त रूप से शून्य हैं या नहीं।"
+
+msgid "Tests whether the number of local peaks and troughs in the residuals is consistent with a random sequence."
+msgstr "परीक्षण करता है कि अवशेषों में स्थानीय चोटियों और गर्त की संख्या एक यादृच्छिक अनुक्रम के अनुरूप है या नहीं।"
+
 msgid "That is {share}% of what was measured: the peaks' areas are read from the rest. A baseline that rises into a peak takes part of it too."
 msgstr "यह {share}% है जो मापा गया था: चोटियों के क्षेत्रों को बाकी से पढ़ा जाता है। एक बेसलाइन जो एक चोटी में बढ़ता है, उसका भी हिस्सा लेता है।"
 
@@ -4372,6 +4432,9 @@ msgstr "ऑपरेशन का कॉलम x के रूप में प�
 msgid "The column the others might explain or predict."
 msgstr "अन्य लोग जिस कॉलम की व्याख्या या भविष्यवाणी कर सकते हैं।"
 
+msgid "The column to predict: continuous gives a regression tree, nominal a classification tree."
+msgstr "भविष्यवाणी करने के लिए स्तंभ: निरंतर एक प्रतिगमन ट्री देता है, नाममात्र एक वर्गीकरण ट्री।"
+
 msgid "The column whose values name the groups of rows that may be correlated."
 msgstr "वह कॉलम जिसके मान उन पंक्तियों के समूहों का नाम देते हैं जिन्हें सहसंबद्ध किया जा सकता है।"
 
@@ -4380,6 +4443,9 @@ msgstr "कॉलम को अपने स्वयं के चार्ट 
 
 msgid "The columns that might drive it."
 msgstr "कॉलम जो इसे चला सकते हैं।"
+
+msgid "The columns the tree may split on."
+msgstr "जिन स्तंभों पर पेड़ विभाजित हो सकता है।"
 
 msgid "The columns to model: one model each."
 msgstr "मॉडल के लिए कॉलम: प्रत्येक में एक मॉडल।"
@@ -4411,14 +4477,8 @@ msgstr "रूपांतरित मानों को जिस वित�
 msgid "The factors, most impact first"
 msgstr "कारक, सबसे पहले प्रभावित करते हैं"
 
-msgid "The field's x component."
-msgstr "फ़ील्ड का x घटक।"
-
-msgid "The field's y component."
-msgstr "फ़ील्ड का y अवयव।"
-
-msgid "The field, coloured by its divergence"
-msgstr "खेत, अपने विचलन से रंगा हुआ"
+msgid "The fewest rows a leaf may hold."
+msgstr "पत्ती में सबसे कम पंक्तियां हो सकती हैं।"
 
 msgid "The figure's style - Browse… chooses another"
 msgstr "The image's style - ब्राउजिंग."
@@ -4434,12 +4494,6 @@ msgstr "पहला {count} घटक (s) {percent} {series} श्रृंख
 
 msgid "The first {count} components carry {percent}% of the variation of the {columns} columns: a scatter of them shows most of what the columns hold. An eigenvalue above 1 - more than one column's worth - is the usual line for a component worth keeping: {kept} here."
 msgstr "पहला {count} घटक {percent} {columns} कॉलम के भिन्नता का% ले जाते हैं: उनमें से एक बिखरने से पता चलता है कि स्तंभ क्या पकड़ते हैं। 1 से अधिक स्तंभों के मूल्य से ऊपर एक eigenvalue - एक घटक के लिए सामान्य रेखा है: {kept} यहाँ."
-
-msgid "The fixed point's z."
-msgstr "फिक्स्ड पॉइंट का z।"
-
-msgid "The fixed point. Rotation, scaling, mirroring and shearing all leave this point exactly where it is; a translation ignores it."
-msgstr "निश्चित बिंदु। रोटेशन, स्केलिंग, मिररिंग और शीयरिंग सभी इस बिंदु को वहीं छोड़ देते हैं जहां यह है; एक अनुवाद इसे अनदेखा करता है।"
 
 msgid "The formula for every chart of the function; the values and the range for this series."
 msgstr "कार्य के प्रत्येक चार्ट के लिए सूत्र; मूल्यों और इस श्रृंखला के लिए सीमा।"
@@ -4465,9 +4519,6 @@ msgstr "अंतराल 0 से बाहर निकलता है, इ�
 msgid "The key works: {provider} answered."
 msgstr "मुख्य कार्य: {provider} ने उत्तर दिया।"
 
-msgid "The line to reflect in, through the centre below. In 3D, z is left alone."
-msgstr "नीचे दिए गए केंद्र के माध्यम से प्रतिबिंबित करने के लिए लाइन। 3D में, z को अकेला छोड़ दिया जाता है।"
-
 msgid "The linear region around zero of a symlog scale."
 msgstr "एक सिम्लॉग स्केल के शून्य के आसपास रैखिक क्षेत्र।"
 
@@ -4477,8 +4528,8 @@ msgstr "लॉग फ़ाइल प्रत्येक बार एप्�
 msgid "The log was cleared."
 msgstr "लॉग साफ़ कर दिया गया था।"
 
-msgid "The model built into macOS (Apple Intelligence): no key, and nothing leaves the computer."
-msgstr "मॉडल मैकओएस (ऐप्पल इंटेलिजेंस) में बनाया गया है: कोई कुंजी नहीं है, और कुछ भी कंप्यूटर को छोड़ देता है।"
+msgid "The measure, one value per time."
+msgstr "माप, प्रति समय एक मूल्य।"
 
 msgid "The model has no effects: select columns and press Add."
 msgstr "मॉडल का कोई प्रभाव नहीं है: कॉलम चुनें और जोड़ें दबाएँ।"
@@ -4498,12 +4549,6 @@ msgstr "इसके बाद 2 से भी कम है: दोनों �
 msgid "The next is {gap} above it: a clear choice (more than 2, the usual line)."
 msgstr "अगला है {gap} इसके ऊपर: एक स्पष्ट विकल्प (2 से अधिक, सामान्य रेखा)।"
 
-msgid "The nodes' x."
-msgstr "नोड्स 'एक्स।"
-
-msgid "The nodes' y."
-msgstr "नोड्स 'y."
-
 msgid "The numeric columns to run on, one series each."
 msgstr "चलाने के लिए संख्यात्मक कॉलम, प्रत्येक श्रृंखला।"
 
@@ -4515,9 +4560,6 @@ msgstr "ऑपरेशन उस आंकड़े पर चलता है 
 
 msgid "The operations applied to or from this table"
 msgstr "इस टेबल पर या उससे लागू किए गए ऑपरेशन"
-
-msgid "The other half of the fixed point."
-msgstr "फिक्स्ड पॉइंट का दूसरा आधा हिस्सा।"
 
 msgid "The parameter of the figure's function that changes from frame to frame"
 msgstr "आकृति के कार्य का मापदंड जो फ्रेम से फ्रेम में बदलता है"
@@ -4588,6 +4630,9 @@ msgstr "टेम्पलेट लागू नहीं किया जा �
 msgid "The worksheet, or the part of the file to read: a MATLAB variable, a Prism table, a SPICE plot..."
 msgstr "वर्कशीट, या पढ़ने के लिए फ़ाइल का हिस्सा: एक MATLAB वेरिएबल, एक प्रिज्म टेबल, एक स्पाइस प्लॉट..."
 
+msgid "Theme"
+msgstr "विषय"
+
 msgid "These tests read the values in the order they are in. A small p-value says the order is not random: a trend, a cycle or a memory from one value to the next."
 msgstr "ये परीक्षण उन मानों को उसी क्रम में पढ़ते हैं जिसमें वे हैं। एक छोटा सा p - वैल्यू कहता है कि ऑर्डर यादृच्छिक नहीं है: एक ट्रेंड, एक साइकिल या एक मेमोरी एक वैल्यू से दूसरे वैल्यू तक।"
 
@@ -4654,6 +4699,9 @@ msgstr "टाई की चौड़ाई"
 msgid "Time Series"
 msgstr "समय श्रृंखला"
 
+msgid "Time or order"
+msgstr "समय या ऑर्डर"
+
 msgid "Time series"
 msgstr "समय श्रृंखला"
 
@@ -4678,8 +4726,14 @@ msgstr "ऊपर"
 msgid "Total"
 msgstr "कुल"
 
+msgid "Training"
+msgstr "प्रशिक्षण"
+
 msgid "Transpose"
 msgstr "ट्रांसपोज़ करें"
+
+msgid "Tree"
+msgstr "पेड़"
 
 msgid "Trees"
 msgstr "पेड़"
@@ -4747,9 +4801,6 @@ msgstr "पहले चाबी टाइप करें।"
 msgid "Type what you want to do: \"anova\", \"outliers\", \"peaks\", \"tree\"…"
 msgstr "आप जो करना चाहते हैं उसे टाइप करें: \"anova \",\" outliers \", \"peaks \",\" tree \"..."
 
-msgid "U"
-msgstr "U"
-
 msgid "URL"
 msgstr "URL"
 
@@ -4761,6 +4812,9 @@ msgstr "प्रत्येक रिपोर्ट के मुख्य �
 
 msgid "Undo every change made here and close"
 msgstr "यहाँ किए गए हर बदलाव को पहले जैसा करें और बंद करें"
+
+msgid "Undo the last split."
+msgstr "पिछले बंटवारे को वापस लें।"
 
 msgid "Undo: {what}"
 msgstr "पहले जैसा करें: {what}"
@@ -4807,9 +4861,6 @@ msgstr "मौजूदा अक्ष का उपयोग करें"
 msgid "Use latest fitted parameters"
 msgstr "नवीनतम फिट किए गए पैरामीटर का उपयोग करें"
 
-msgid "Use the middle of the series' own extent as the fixed point instead of the values above - which is what is wanted when the intent is 'turn this shape', not 'turn it about the origin'."
-msgstr "ऊपर दिए गए मानों के बजाय निश्चित बिंदु के रूप में श्रृंखला की अपनी सीमा के बीच का उपयोग करें - जो कि तब वांछित है जब इरादा 'इस आकार को मोड़ना' है, न कि 'इसे मूल के बारे में मोड़ना'।"
-
 msgid "User manual and credits"
 msgstr "यूज़र मैनुअल और क्रेडिट"
 
@@ -4819,11 +4870,14 @@ msgstr "यूज़रनेम"
 msgid "Using y in the body makes it a surface f(x, y)."
 msgstr "शरीर में वाई का उपयोग करके यह एक सतह एफ (x, y) बनाता है।"
 
-msgid "V"
-msgstr "V"
-
 msgid "VIP {value} for {variable}, the most important: how much it weighs in the components, against the average variable's 1. Above 0.8, the usual line, a variable is worth keeping."
 msgstr "{variable} के लिए वीआईपी {value}, सबसे महत्वपूर्ण: यह घटकों में कितना वजन रखता है, औसत चर के 1 से ऊपर, सामान्य रेखा, एक चर रखने लायक है।"
+
+msgid "Validation"
+msgstr "सत्यापन"
+
+msgid "Validation share"
+msgstr "वैलिडेशन शेयर"
 
 msgid "Value"
 msgstr "मान"
@@ -4836,9 +4890,6 @@ msgstr "मान जिनका अर्थ है \"कोई मूल्�
 
 msgid "Values that stand for \"no value\", separated by commas: filled like the empty cells. Text is matched whatever its case (na is NA); a number by its value (-999 is -999.0). Empty cells - NULL and blank text - are always filled."
 msgstr "वे मान जो \"कोई मान नहीं\" के लिए खड़े होते हैं, अल्पविराम से अलग होते हैं: खाली कोशिकाओं की तरह भरा होता है। पाठ का मिलान वहन होता है जो उसका मामला (NA) है; इसके मूल्य से एक संख्या (999 -999.0 है)। खाली कोशिकाएं - NULL और रिक्त पाठ - हमेशा भरा होता है।"
-
-msgid "Vector Field"
-msgstr "सदिश क्षेत्र"
 
 msgid "Version"
 msgstr "संस्करण"
@@ -4855,8 +4906,8 @@ msgstr "वायलिन प्लॉट"
 msgid "Visible"
 msgstr "दिखाई दे रहा है"
 
-msgid "W"
-msgstr "W"
+msgid "Wald-Wolfowitz test of whether positive and negative residuals occur in a random order around zero. Ties at zero are omitted."
+msgstr "Wald - Wolfowitz इस बात का परीक्षण करता है कि क्या सकारात्मक और नकारात्मक अवशेष शून्य के आसपास यादृच्छिक क्रम में होते हैं। शून्य पर संबंधों को छोड़ दिया जाता है।"
 
 msgid "Web"
 msgstr "वेब"
@@ -4957,6 +5008,9 @@ msgstr "एक परिणाम के लिए कई स्तंभों 
 msgid "Which one is the result?"
 msgstr "इसका परिणाम कौन सा है?"
 
+msgid "Which rows the validation share draws."
+msgstr "कौन सी पंक्तियाँ सत्यापन शेयर ड्रॉ करती हैं।"
+
 msgid "Whole table"
 msgstr "पूरी टेबल"
 
@@ -4974,6 +5028,9 @@ msgstr "खिड़की"
 
 msgid "Window size"
 msgstr "विंडो का आकार"
+
+msgid "With no validation column: this share of rows, at random, judges the tree. 0 for none."
+msgstr "बिना किसी सत्यापन कॉलम के: पंक्तियों का यह हिस्सा, यादृच्छिक रूप से, ट्री को जज करता है। 0 किसी के लिए नहीं।"
 
 msgid "Without the keyring package the key is read from the environment (ANTHROPIC_API_KEY for Claude)."
 msgstr "कीरिंग पैकेज के बिना पर्यावरण से कुंजी पढ़ी जाती है (क्लाउड के लिए anthropic_API_key)।"
@@ -5041,6 +5098,12 @@ msgstr "एक्स स्पेसिंग"
 msgid "X to"
 msgstr "X to"
 
+msgid "X, input"
+msgstr "X, इनपुट"
+
+msgid "X, input in the model (transfer function)"
+msgstr "X, मॉडल में इनपुट (ट्रांसफर फ़ंक्शन)"
+
 msgid "Y"
 msgstr "Y"
 
@@ -5059,6 +5122,9 @@ msgstr "वाई अंक"
 msgid "Y to"
 msgstr "Y to"
 
+msgid "Y, time series"
+msgstr "Y, समय श्रृंखला"
+
 msgid "Yeo-Johnson"
 msgstr "यो - जॉनसन"
 
@@ -5076,9 +5142,6 @@ msgstr "आप"
 
 msgid "Your name, or your group's"
 msgstr "आपका नाम, या आपके समूह का नाम"
-
-msgid "Z"
-msgstr "Z"
 
 msgid "Z axis: click to edit it"
 msgstr "Z अक्ष: इसे संपादित करने के लिए क्लिक करें"
@@ -5106,15 +5169,6 @@ msgstr "स्वचालित"
 
 msgid "axis {number}"
 msgstr "धुरी {number}"
-
-msgid "b1"
-msgstr "b1"
-
-msgid "b2"
-msgstr "b2"
-
-msgid "b3"
-msgstr "b3"
 
 msgid "bar"
 msgstr "बार"
@@ -5173,32 +5227,8 @@ msgstr "बड़े प्रभाव"
 msgid "less than once in 1000"
 msgstr "1000 में एक बार से भी कम"
 
-msgid "m11"
-msgstr "m11"
-
-msgid "m12"
-msgstr "m12"
-
-msgid "m13"
-msgstr "m13"
-
-msgid "m21"
-msgstr "m21"
-
-msgid "m22"
-msgstr "m22"
-
-msgid "m23"
-msgstr "m23"
-
-msgid "m31"
-msgstr "m31"
-
-msgid "m32"
-msgstr "m32"
-
-msgid "m33"
-msgstr "m33"
+msgid "look"
+msgstr "देखो"
 
 msgid "measured"
 msgstr "मापा गया"
@@ -5232,6 +5262,9 @@ msgstr "का"
 
 msgid "p-value"
 msgstr "p - मान"
+
+msgid "packs"
+msgstr "पैक"
 
 msgid "pip install keyring to keep it here"
 msgstr "पाइप इंस्टॉल कीरिंग इसे यहाँ रखने के लिए"
@@ -5413,6 +5446,12 @@ msgstr "{factor} {response} को प्रभावित करता है"
 msgid "{factor} had no effect on {response}"
 msgstr "{factor} {response} पर कोई प्रभाव नहीं पड़ा"
 
+msgid "{input}'s past added nothing to forecasting {measure}"
+msgstr "{input}'s अतीत ने भविष्यवाणी करने के लिए कुछ भी नहीं जोड़ा {measure}"
+
+msgid "{input}'s past helps forecast {measure} (Granger)"
+msgstr "{input} का अतीत {measure} (Granger) भविष्यवाणी करने में मदद करता है।"
+
 msgid "{label}: {value}"
 msgstr "{label}: {value}"
 
@@ -5428,8 +5467,20 @@ msgstr "{measures} संख्याएँ, {groups} श्रेणिया�
 msgid "{measure} again, grouped by another column"
 msgstr "{measure} फिर से, दूसरे कॉलम द्वारा समूहीकृत"
 
+msgid "{measure} and its forecast"
+msgstr "{measure} और इसका पूर्वानुमान"
+
+msgid "{measure} by number of splits"
+msgstr "स्प्लिट की संख्या से {measure}"
+
+msgid "{measure} by number of trees"
+msgstr "पेड़ों की संख्या से {measure}"
+
 msgid "{measure} by {group}"
 msgstr "{group} द्वारा {measure}"
+
+msgid "{measure} comes back to a stable level"
+msgstr "{measure} एक स्थिर स्तर पर वापस आता है"
 
 msgid "{measure} depends on {group}"
 msgstr "{measure} {group} पर निर्भर करता है"
@@ -5455,6 +5506,9 @@ msgstr "समय के साथ {measure}"
 msgid "{measure} shifted at one point"
 msgstr "{measure} एक बिंदु पर स्थानांतरित हो गया"
 
+msgid "{measure} wandered with no level to come back to"
+msgstr "{measure} वापस आने के लिए कोई स्तर के साथ भटकना"
+
 msgid "{measure}: control chart"
 msgstr "{measure}: कंट्रोल चार्ट"
 
@@ -5469,9 +5523,6 @@ msgstr "{model} · {tokens_in} टोकन, {tokens_out} बाहर"
 
 msgid "{model}: the values are changed, not the rows. Statistics on the new column describe the transformed scale - a mean of logarithms is a geometric mean, not the arithmetic one."
 msgstr "{model}: मूल्यों को बदल दिया जाता है, पंक्तियों नहीं। नए स्तंभ पर सांख्यिकी परिवर्तित पैमाने का वर्णन करते हैं - logarithms का मतलब एक ज्यामितीय अर्थ है, न कि अंकगणित एक।"
-
-msgid "{names} could not be installed. {why}"
-msgstr "{names} इंस्टॉल नहीं किया जा सका। {why}"
 
 msgid "{names}: needs a value."
 msgstr "{names}: एक मान की जरूरत है।"
@@ -5512,9 +5563,6 @@ msgstr "{name}: '{number}' एक नंबर नहीं है।"
 msgid "{ndc} distinct categories: the system tells that many groups of parts apart - 5 or more is the usual minimum."
 msgstr "{ndc} विशिष्ट श्रेणियां: सिस्टम बताता है कि भागों के कई समूह अलग-अलग हैं - 5 या अधिक सामान्य न्यूनतम है।"
 
-msgid "{n} nodes, {dims}D"
-msgstr "{n} नोड्स, {dims} D"
-
 msgid "{personality} needs a continuous Y; {columns} is nominal - choose Nominal or Ordinal Logistic."
 msgstr "{personality} को एक निरंतर Y की आवश्यकता है; {columns} नाममात्र है - नाममात्र या सामान्य लॉजिस्टिक चुनें।"
 
@@ -5535,6 +5583,9 @@ msgstr "{p}: यदि {null}, तो कम से कम यह मजबू�
 
 msgid "{response} at {cutoff} (cycles per unit of x): changes on the other side of it are taken out, those on this side pass. Near the cut-off both are only partly kept - a peak there loses some of its height."
 msgstr "{cutoff} पर {response} (x की प्रति इकाई चक्र): इसके दूसरे पक्ष में परिवर्तन किए जाते हैं, जो इस तरफ होते हैं। कट-ऑफ के पास केवल आंशिक रूप से रखा जाता है - एक चोटी इसकी कुछ ऊंचाई खो देती है।"
+
+msgid "{response} by leaf"
+msgstr "पत्ते से {response}"
 
 msgid "{role} takes {kinds} columns only: {columns}."
 msgstr "{role} केवल {kinds} कॉलम लेता है: {columns} ।"
@@ -5599,11 +5650,329 @@ msgstr "{y} ने {x} पर निर्भर नहीं किया"
 msgid "▲ number · ● category · ◐ ordered category · ◷ date"
 msgstr "▲ संख्या · ● श्रेणी · ◐ ऑर्डर की गई श्रेणी · ◷ तारीख"
 
+msgid "1 leaves x alone; 2 doubles it about the centre below."
+msgstr "1 अकेले x को छोड़ देता है; 2 इसे नीचे के केंद्र के बारे में दोगुना कर देता है।"
+
+msgid "1 leaves y alone; 2 doubles it about the centre below."
+msgstr "1 अकेले छोड़ देता है; 2 इसे नीचे के केंद्र के बारे में दोगुना कर देता है।"
+
+msgid "1 leaves z alone; 2 doubles it about the centre below."
+msgstr "1 अकेले z को छोड़ देता है; 2 इसे नीचे के केंद्र के बारे में दोगुना कर देता है।"
+
+msgid "A field in space needs both Z and W; a flat one neither."
+msgstr "अंतरिक्ष में एक क्षेत्र को Z और W दोनों की आवश्यकता होती है; एक सपाट क्षेत्र को न तो।"
+
+msgid "A pack switched on or off is applied the next time the app starts."
+msgstr "चालू या बंद किया गया पैक अगली बार ऐप के शुरू होने पर लागू किया जाता है।"
+
+msgid "A vector field sampled on a grid: its divergence (where it spreads out or gathers) and its curl (where and how fast it turns), in 2D or 3D."
+msgstr "ग्रिड पर सैंपल किया गया एक वेक्टर फ़ील्ड: इसका डायवर्जेंस (जहाँ यह फैलता है या इकट्ठा होता है) और 2D या 3D में इसका कर्ल (जहाँ और कितनी तेज़ी से मुड़ता है)।"
+
+msgid "Added to every new x, after the matrix."
+msgstr "मैट्रिक्स के बाद, हर नए x में जोड़ा गया।"
+
+msgid "Added to every new y, after the matrix."
+msgstr "मैट्रिक्स के बाद, हर नए y में जोड़ा गया।"
+
+msgid "Added to every new z, after the matrix."
+msgstr "मैट्रिक्स के बाद, हर नए z में जोड़ा गया।"
+
+msgid "Added to every x, after any rotation. Negative moves left."
+msgstr "किसी भी रोटेशन के बाद, हर x में जोड़ा जाता है। नेगेटिव चालें बाकी हैं।"
+
+msgid "Added to every y, after any rotation. Negative moves down."
+msgstr "हर y में जोड़ा गया, किसी भी रोटेशन के बाद। नकारात्मक नीचे चला जाता है।"
+
+msgid "Added to every z, after any rotation."
+msgstr "किसी भी रोटेशन के बाद, हर z में जोड़ा जाता है।"
+
+msgid "Adds this much x for each unit of y above the centre."
+msgstr "केंद्र के ऊपर y की प्रत्येक इकाई के लिए इतना x जोड़ता है।"
+
+msgid "Adds this much y for each unit of x right of the centre."
+msgstr "केंद्र के दाईं ओर x की प्रत्येक इकाई के लिए इतना y जोड़ता है।"
+
+msgid "Angle"
+msgstr "कोण"
+
+msgid "Angle (°)"
+msgstr "कोण (°)"
+
+msgid "Angles (x, y, z)"
+msgstr "कोण (x, y, z)"
+
+msgid "Apple Foundation Models"
+msgstr "एप्पल फाउंडेशन मॉडल"
+
+msgid "Applied first. Positive turns y towards z (right-hand rule)."
+msgstr "पहले लागू किया गया। सकारात्मक y को z (दाएं हाथ का नियम) की ओर मोड़ता है।"
+
+msgid "Applied last. Positive turns x towards y - the 2D rotation."
+msgstr "अंतिम रूप से लागू किया गया। धनात्मक x y की ओर मुड़ता है - 2D रोटेशन।"
+
+msgid "Applied second. Positive turns z towards x."
+msgstr "एप्लाइड सेकंड। धनात्मक z को x की ओर मोड़ता है।"
+
+msgid "Central differences on the grid (numpy.gradient); one-sided at its edges, where they are less accurate."
+msgstr "ग्रिड पर केंद्रीय अंतर (numpy.gradient); इसके किनारों पर एक तरफा, जहां वे कम सटीक हैं।"
+
+msgid "Centre"
+msgstr "केंद्र"
+
+msgid "Centre on the data"
+msgstr "डेटा पर केंद्र"
+
+msgid "Centre x"
+msgstr "केंद्र x"
+
+msgid "Centre y"
+msgstr "केंद्र y"
+
+msgid "Centre z"
+msgstr "केंद्र z"
+
+msgid "Choose a series, then press Preview."
+msgstr "कोई सीरीज़ चुनें, फिर प्रीव्यू दबाएँ।"
+
+msgid "Counter-clockwise, about the centre below. The query spells this out as cos(radians(...)) rather than as a decimal, so it can be read and edited afterwards."
+msgstr "घड़ी की विपरीत दिशा में, नीचे दिए गए केंद्र के बारे में। क्वेरी इसे दशमलव के बजाय cos(radians(...)) के रूप में बताती है, इसलिए इसे बाद में पढ़ा और संपादित किया जा सकता है।"
+
+msgid "Curl"
+msgstr "कर्ल"
+
+msgid "Curves"
+msgstr "वक्र"
+
+msgid "Delete a pack you added. A pack that came with ChartLibre can only be switched off."
+msgstr "आपके द्वारा जोड़ा गया पैक डिलीट करें। ChartLibre के साथ आया पैक सिर्फ़ बंद किया जा सकता है।"
+
+msgid "Divergence"
+msgstr "विचलन"
+
+msgid "Download and install, into ChartLibre's own Python, the libraries the chosen pack needs. It needs the Internet."
+msgstr "चुने गए पैक को जिन लाइब्रेरी की ज़रूरत है, उन्हें डाउनलोड करें और ChartLibre के अपने Python में इंस्टॉल करें। इसके लिए इंटरनेट की ज़रूरत है।"
+
+msgid "Draws a square mesh (a box in 3D) over the source's extent and the same mesh after the transform. A rotation turns it, a scale stretches it, a shear leans it over - which is easier to read off the mesh than off the points."
+msgstr "स्रोत की सीमा पर एक वर्गाकार जाल (3D में एक बॉक्स) और रूपांतरण के बाद एक ही जाल खींचता है। एक रोटेशन इसे घुमाता है, एक स्केल इसे फैलाता है, एक कतरनी इसे झुकाती है - जो बिंदुओं से बाहर की तुलना में जाल को पढ़ना आसान है।"
+
+msgid "Each new coordinate is its row of the matrix times x and y (and z, for a 3D series), about the centre below. With offsets adds the last column afterwards. Untick 'Centre on the data' and set the centre to 0 for the matrix exactly as written."
+msgstr "प्रत्येक नया निर्देशांक नीचे दिए गए केंद्र के बारे में मैट्रिक्स टाइम्स x और y (और z, एक 3D श्रृंखला के लिए) की इसकी पंक्ति है। ऑफसेट के साथ अंतिम कॉलम बाद में जोड़ता है। 'डेटा पर केंद्र' को अनचेक करें और लिखित रूप में मैट्रिक्स के लिए केंद्र को 0 पर सेट करें।"
+
+msgid "Each role needs a column of its own."
+msgstr "प्रत्येक भूमिका के लिए अपने स्वयं के कॉलम की आवश्यकता होती है।"
+
+msgid "Field"
+msgstr "फ़ील्ड"
+
+msgid "GitHub Copilot"
+msgstr "GitHub Copilot"
+
+msgid "GitHub Copilot's models through GitHub Models, with a GitHub token - or any OpenAI-compatible chat endpoint."
+msgstr "GitHub मॉडल के माध्यम से GitHub Copilot के मॉडल, एक GitHub टोकन - या किसी भी OpenAI-compatible चैट समापन बिंदु के साथ।"
+
+msgid "How much of x goes into the new x."
+msgstr "कितना एक्स के नए एक्स में चला जाता है।"
+
+msgid "How much of x goes into the new y."
+msgstr "कितना एक्स के नए y में चला जाता है।"
+
+msgid "How much of x goes into the new z."
+msgstr "कितना एक्स के नए z में चला जाता है।"
+
+msgid "How much of y goes into the new x."
+msgstr "कितना y नए एक्स में चला जाता है।"
+
+msgid "How much of y goes into the new y."
+msgstr "कितना y नए y में चला जाता है।"
+
+msgid "How much of y goes into the new z."
+msgstr "Y का कितना भाग नए z में जाता है।"
+
+msgid "How much of z goes into the new x."
+msgstr "कितना z के नए एक्स में चला जाता है।"
+
+msgid "How much of z goes into the new y."
+msgstr "कितना z के नए y में चला जाता है।"
+
+msgid "How much of z goes into the new z."
+msgstr "Z का कितना भाग नए z में जाता है।"
+
+msgid "Install the libraries"
+msgstr "लाइब्रेरी इंस्टॉल करें"
+
+msgid "Installed: {names}."
+msgstr "इंस्टॉल किया गया: {names}।"
+
+msgid "Installing {names}…"
+msgstr "{names} इंस्टॉल किया जा रहा है…"
+
+msgid "Its curl, coloured by its size"
+msgstr "इसका कर्ल, इसके आकार से रंगा हुआ है"
+
+msgid "Matrix"
+msgstr "मैट्रिक्स"
+
+msgid "Mirror across"
+msgstr "मिरर भर में"
+
+msgid "Mirror line"
+msgstr "मिरर लाइन"
+
+msgid "Motion"
+msgstr "गति"
+
+msgid "Move x by"
+msgstr "X को इसके द्वारा खिसकाएँ"
+
+msgid "Move y by"
+msgstr "Y को इसके द्वारा खिसकाएँ"
+
+msgid "Move z by"
+msgstr "Z को इसके द्वारा खिसकाएँ"
+
+msgid "Offset"
+msgstr "ऑफ़सेट"
+
+msgid "Open folder"
+msgstr "फ़ोल्डर खोलें"
+
+msgid "Optional: the field's z component, with Z."
+msgstr "वैकल्पिक: फ़ील्ड का z घटक, Z के साथ।"
+
+msgid "Optional: the nodes' z, for a field in space."
+msgstr "वैकल्पिक: नोड्स 'z, अंतरिक्ष में एक फ़ील्ड के लिए।"
+
+msgid "Press Preview to see where the points move."
+msgstr "पॉइंट कहाँ - कहाँ चलते हैं, यह देखने के लिए पूर्वावलोकन दबाएँ।"
+
+msgid "Quantity"
+msgstr "मात्रा"
+
+msgid "Rotate, move, scale or mirror a series' coordinates"
+msgstr "किसी सीरीज़ के निर्देशांक को घुमाएँ, ले जाएँ, स्केल करें या मिरर करें"
+
+msgid "Rotation x (°)"
+msgstr "घूर्णन x (°)"
+
+msgid "Rotation y (°)"
+msgstr "घूर्णन y (°)"
+
+msgid "Rotation z (°)"
+msgstr "घूर्णन z (°)"
+
+msgid "Scale x by"
+msgstr "X को इस आधार पर स्केल करें"
+
+msgid "Scale y by"
+msgstr "इस आधार पर स्केल करें"
+
+msgid "Scale z by"
+msgstr "Z को इस आधार पर स्केल करें"
+
+msgid "Shear"
+msgstr "कतरें"
+
+msgid "Shear x per y"
+msgstr "कतरें x प्रति y"
+
+msgid "Shear y per x"
+msgstr "कतरें y प्रति x"
+
+msgid "Show grid"
+msgstr "ग्रिड दिखाएँ"
+
+msgid "The field's x component."
+msgstr "फ़ील्ड का x घटक।"
+
+msgid "The field's y component."
+msgstr "फ़ील्ड का y अवयव।"
+
+msgid "The field, coloured by its divergence"
+msgstr "खेत, अपने विचलन से रंगा हुआ"
+
+msgid "The fixed point's z."
+msgstr "फिक्स्ड पॉइंट का z।"
+
+msgid "The fixed point. Rotation, scaling, mirroring and shearing all leave this point exactly where it is; a translation ignores it."
+msgstr "निश्चित बिंदु। रोटेशन, स्केलिंग, मिररिंग और शीयरिंग सभी इस बिंदु को वहीं छोड़ देते हैं जहां यह है; एक अनुवाद इसे अनदेखा करता है।"
+
+msgid "The line to reflect in, through the centre below. In 3D, z is left alone."
+msgstr "नीचे दिए गए केंद्र के माध्यम से प्रतिबिंबित करने के लिए लाइन। 3D में, z को अकेला छोड़ दिया जाता है।"
+
+msgid "The model built into macOS (Apple Intelligence): no key, and nothing leaves the computer."
+msgstr "मॉडल मैकओएस (ऐप्पल इंटेलिजेंस) में बनाया गया है: कोई कुंजी नहीं है, और कुछ भी कंप्यूटर को छोड़ देता है।"
+
+msgid "The nodes' x."
+msgstr "नोड्स 'एक्स।"
+
+msgid "The nodes' y."
+msgstr "नोड्स 'y."
+
+msgid "The other half of the fixed point."
+msgstr "फिक्स्ड पॉइंट का दूसरा आधा हिस्सा।"
+
+msgid "U"
+msgstr "U"
+
+msgid "Use the middle of the series' own extent as the fixed point instead of the values above - which is what is wanted when the intent is 'turn this shape', not 'turn it about the origin'."
+msgstr "ऊपर दिए गए मानों के बजाय निश्चित बिंदु के रूप में श्रृंखला की अपनी सीमा के बीच का उपयोग करें - जो कि तब वांछित है जब इरादा 'इस आकार को मोड़ना' है, न कि 'इसे मूल के बारे में मोड़ना'।"
+
+msgid "V"
+msgstr "V"
+
+msgid "Vector Field"
+msgstr "सदिश क्षेत्र"
+
+msgid "W"
+msgstr "W"
+
+msgid "Z"
+msgstr "Z"
+
+msgid "b1"
+msgstr "b1"
+
+msgid "b2"
+msgstr "b2"
+
+msgid "b3"
+msgstr "b3"
+
+msgid "m11"
+msgstr "m11"
+
+msgid "m12"
+msgstr "m12"
+
+msgid "m13"
+msgstr "m13"
+
+msgid "m21"
+msgstr "m21"
+
+msgid "m22"
+msgstr "m22"
+
+msgid "m23"
+msgstr "m23"
+
+msgid "m31"
+msgstr "m31"
+
+msgid "m32"
+msgstr "m32"
+
+msgid "m33"
+msgstr "m33"
+
+msgid "{names} could not be installed. {why}"
+msgstr "{names} इंस्टॉल नहीं किया जा सका। {why}"
+
+msgid "{n} nodes, {dims}D"
+msgstr "{n} नोड्स, {dims} D"
+
 msgid "0 chooses them by cross-validation: another component only while it cuts the prediction error by 5% or more."
 msgstr "0 उन्हें क्रॉस - वैलिडेशन द्वारा चुनता है: एक और घटक केवल तभी जबकि यह भविष्यवाणी त्रुटि को 5% या अधिक से काटता है।"
-
-msgid "0 finds it from the dates (12 for months, 7 for days, 4 for quarters); 1 means none."
-msgstr "0 इसे तारीखों से ढूंढता है (महीनों के लिए 12, दिनों के लिए 7, तिमाहियों के लिए 4); 1 का मतलब है कोई नहीं।"
 
 msgid "0 takes as many as the correlations have eigenvalues above 1 (see the scree plot)."
 msgstr "0 उतना ही लेता है जितना सहसंबंधों का आइजनवैल्यू 1 से ऊपर होता है (स्क्र्री प्लॉट देखें)।"
@@ -5611,17 +5980,8 @@ msgstr "0 उतना ही लेता है जितना सहसं�
 msgid "1 and 2 sigma lines"
 msgstr "1 और 2 सिग्मा लाइनें"
 
-msgid "1 for a series that wanders or has a trend; 0 for one that comes back to its mean."
-msgstr "1 एक श्रृंखला के लिए जो भटकती है या एक प्रवृत्ति है; 0 एक के लिए जो अपने औसत पर वापस आती है।"
-
-msgid "1 takes away last season's value: for a season that repeats steadily."
-msgstr "1 पिछले सीज़न का मूल्य छीन लेता है: एक ऐसे सीज़न के लिए जो लगातार दोहराता रहता है।"
-
 msgid "3 is the Shewhart convention: on a stable normal process it gives about one false alarm per 370 points, which balances missed signals against chasing noise."
 msgstr "3 शेवर्ट कन्वेंशन है: एक स्थिर सामान्य प्रक्रिया पर यह प्रति 370 बिंदुओं पर लगभग एक गलत अलार्म देता है, जो शोर का पीछा करने के खिलाफ मिस सिग्नल को संतुलित करता है।"
-
-msgid "95% prediction interval"
-msgstr "95% पूर्वानुमान अंतराल"
 
 msgid "A GPX file's track, route and waypoints: latitude, longitude, elevation, time."
 msgstr "एक GPX फ़ाइल का ट्रैक, मार्ग और वेपॉइंट: अक्षांश, देशांतर, ऊंचाई, समय।"
@@ -5659,9 +6019,6 @@ msgstr "कई सहसंबद्ध कॉलम के पीछे कु�
 msgid "A logic analyser's or a digital simulation's signals: a row per change, every signal's value."
 msgstr "एक तर्क विश्लेषक या एक डिजिटल सिमुलेशन के सिग्नल: प्रति परिवर्तन एक पंक्ति, प्रत्येक सिग्नल का मान।"
 
-msgid "A measure in time order: its autocorrelation (ACF, PACF, Ljung-Box), its trend and season (STL), and an ARIMA or exponential-smoothing forecast with its prediction interval."
-msgstr "समय क्रम में एक उपाय: इसका स्वतःसंबंध (ACF, PACF, Ljung - Box), इसकी प्रवृत्ति और मौसम (STL), और इसकी भविष्यवाणी अंतराल के साथ एक ARIMA या घातीय - चिकनाई पूर्वानुमान।"
-
 msgid "A measured die above it is binned High; empty: no upper limit."
 msgstr "इसके ऊपर एक मापा मरना उच्चतर है; खाली: कोई ऊपरी सीमा नहीं।"
 
@@ -5674,35 +6031,8 @@ msgstr "200 मिमी वेफर और ऊपर पर एक पाय�
 msgid "A spectrum (IR, UV-Vis, Raman, NMR, MS) in JCAMP-DX: x and y with their units; each block a dataset."
 msgstr "जेसीएएमपी - डीएक्स: एक्स और वाई में एक स्पेक्ट्रम (आईआर, यूवी - वीआईएस, रमन, एनएमआर, एमएस) उनकी इकाइयों के साथ; प्रत्येक एक डेटासेट को ब्लॉक करता है।"
 
-msgid "A step lasts from then on; a pulse affects that one time only."
-msgstr "तब से एक कदम चलता है; एक नाड़ी केवल एक बार प्रभावित करती है।"
-
 msgid "A wafer's measurements or defects on the wafer and per die: contour map, die bins and yield, defect density - notch or flat, any diameter, rotation."
 msgstr "वेफर पर एक वेफर का माप या दोष और मरने के प्रति: समोच्च मानचित्र, मरने वाले डिब्बे और उपज, दोष घनत्व - पायदान या फ्लैट, किसी भी व्यास, रोटेशन।"
-
-msgid "ARIMA d (differences)"
-msgstr "अरिमा घ (अंतर)"
-
-msgid "ARIMA only: a date (or a number of the time column) when something changed - a new process, a policy, a fault. Its estimate is the change it made."
-msgstr "केवल अरिमा: एक तारीख (या कई बार कॉलम) जब कुछ बदल जाता है - एक नई प्रक्रिया, एक नीति, एक गलती। इसका अनुमान उसके द्वारा किए गए परिवर्तन का है।"
-
-msgid "ARIMA only: the input enters the model at the lag where its prewhitened cross-correlation is strongest; its coefficient says how much Y moves per unit of X. Ahead of that lag the forecast uses X's own forecast."
-msgstr "केवल ARIMA: इनपुट उस अंतराल पर मॉडल में प्रवेश करता है जहाँ इसका पूर्व - सफ़ेद क्रॉस - सहसंबंध सबसे मजबूत होता है; इसका गुणांक बताता है कि X की प्रति इकाई Y कितनी गति करता है। उस अंतराल से पहले पूर्वानुमान X के अपने पूर्वानुमान का उपयोग करता है।"
-
-msgid "ARIMA p (autoregressive)"
-msgstr "ARIMA p (autoregressive)"
-
-msgid "ARIMA q (moving average)"
-msgstr "ARIMA q (मूविंग एवरेज)"
-
-msgid "ARIMA with a season: how many past seasons the next value depends on (the ACF's spikes at the season's multiples)."
-msgstr "एक सीज़न के साथ अरिमा: पिछले कितने सीज़न पर अगला वैल्यू निर्भर करता है (सीज़न के मल्टीपल पर ACF की स्पाइक्स)।"
-
-msgid "ARIMA: the next value from the last ones (p), the changes (d) and the last errors (q), with a season (P, D, Q) of its own. ARIMA, order chosen by AIC: the differences from the stationarity tests, then the p, q, P, Q with the lowest AIC. Exponential smoothing: a level, a trend and a season that each follow the newest values most. State space: a level and a slope that wander a little each step (a local linear trend), with a season - estimated by the Kalman filter."
-msgstr "ARIMA: पिछले लोगों (p), परिवर्तनों (d) और अंतिम त्रुटियों (q), अपने स्वयं के एक मौसम (P, D, Q) के साथ से अगले मूल्य। ARIMA, AIC द्वारा चुने गए आदेश: स्थिरता परीक्षण से मतभेद, फिर p, q, P, Q सबसे कम AIC के साथ। एक्सपोनेंशियल स्मूथिंग: एक स्तर, एक प्रवृत्ति और एक मौसम है कि प्रत्येक सबसे नए मूल्यों का पालन करें। राज्य स्थान: एक स्तर और ढलान जो प्रत्येक चरण (एक स्थानीय रैखिक प्रवृत्ति) घूमती है, एक मौसम के साथ - Kalman फिल्टर द्वारा अनुमान लगाया गया।"
-
-msgid "All rows"
-msgstr "सभी पंक्तियाँ"
 
 msgid "An Apache Arrow IPC file (Feather)."
 msgstr "एक अपाचे तीर आईपीसी फ़ाइल (पंख)।"
@@ -5728,12 +6058,6 @@ msgstr "सिग्नल की पूरी रेंज के एक अं
 msgid "Asymmetry. Smaller pushes the baseline further below the peaks; it should stay well under 0.5."
 msgstr "विषमता। छोटा आधार रेखा को चोटियों के नीचे और नीचे धकेलता है; यह 0.5 से नीचे अच्छी तरह से रहना चाहिए।"
 
-msgid "Autocorrelation (ACF)"
-msgstr "आटोकोरिलेशन (ACF)"
-
-msgid "Autocorrelation, first 12 lags"
-msgstr "ऑटोकोरिलेशन, पहले 12 लैग"
-
 msgid "Between samples"
 msgstr "नमूनों के बीच"
 
@@ -5751,9 +6075,6 @@ msgstr "Bland-Altman"
 
 msgid "Bland-Altman agreement"
 msgstr "Bland-Altman समझौते"
-
-msgid "Boosted Tree: how much each tree corrects the ones before. Smaller needs more trees."
-msgstr "बूस्टेड ट्री: प्रत्येक पेड़ पहले के पेड़ों को कितना सही करता है। छोटे को अधिक पेड़ों की आवश्यकता होती है।"
 
 msgid "By"
 msgstr "द्वारा"
@@ -5794,9 +6115,6 @@ msgstr "क्लस्टरिंग एल्गोरिथ्म परि�
 msgid "Choose the exact scipy.cluster function/workflow to use."
 msgstr "उपयोग करने के लिए सटीक scipy.cluster फ़ंक्शन/वर्कफ़्लो चुनें।"
 
-msgid "Choose the kernel."
-msgstr "कर्नेल चुनें।"
-
 msgid "Choose the spectral or correlation estimator."
 msgstr "वर्णक्रमीय या सहसंबंध अनुमानक चुनें।"
 
@@ -5833,9 +6151,6 @@ msgstr "दो प्रमुख घटकों पर क्लस्टर"
 msgid "Coefficients"
 msgstr "गुणांक"
 
-msgid "Column contributions"
-msgstr "कॉलम का योगदान"
-
 msgid "Columnar and scientific"
 msgstr "स्तंभकार और वैज्ञानिक"
 
@@ -5859,9 +6174,6 @@ msgstr "अवयव"
 
 msgid "Confidence"
 msgstr "विश्वास"
-
-msgid "Confusion matrix (training rows)"
-msgstr "कन्फ्यूज़न मैट्रिक्स (प्रशिक्षण पंक्तियाँ)"
 
 msgid "Consecutive points averaged into each plotted subgroup. Rational subgrouping: choose it so variation within a subgroup is only common-cause noise."
 msgstr "प्रत्येक प्लॉट किए गए उपसमूह में लगातार बिंदुओं का औसत। तर्कसंगत उपसमूह: इसे चुनें ताकि एक उपसमूह के भीतर भिन्नता केवल सामान्य कारण शोर हो।"
@@ -5887,12 +6199,6 @@ msgstr "सहसंबंध"
 msgid "Correlations weigh every column the same, whatever its unit - the usual choice. Covariances let the columns with the widest spread lead, for columns in one unit."
 msgstr "सहसंबंध हर कॉलम को समान रूप से तौलते हैं, चाहे इसकी इकाई कुछ भी हो - सामान्य विकल्प। एक इकाई में कॉलम के लिए, कोवेरियन्स कॉलम को सबसे चौड़े स्प्रेड लीड वाले कॉलम की अनुमति देते हैं।"
 
-msgid "Cross-correlation with {input}, prewhitened"
-msgstr "{input} के साथ क्रॉस - संबंध, पहले से सफ़ेद"
-
-msgid "Cross-correlation with {input}, strongest lags"
-msgstr "{input} के साथ क्रॉस - संबंध, सबसे मजबूत अंतराल"
-
 msgid "Cross-validation"
 msgstr "क्रॉस - वैलिडेशन"
 
@@ -5916,9 +6222,6 @@ msgstr "डैम्पिंग (सिग्मा)"
 
 msgid "Damping sigma of the Laplace variable s = sigma + i*omega. Zero reduces the transform to the Fourier transform; increasing it weights early samples more and suppresses late ones, which is what makes a decaying or unstable signal integrable."
 msgstr "लैप्लेस वेरिएबल s = सिग्मा + i*ओमेगा का डैम्पिंग सिग्मा। शून्य फूरियर ट्रांसफॉर्म में ट्रांसफॉर्म को कम करता है; इसे बढ़ाकर शुरुआती नमूनों को अधिक वजन देता है और देर से वाले को दबा देता है, जो एक क्षय या अस्थिर सिग्नल को एकीकृत बनाता है।"
-
-msgid "Decision tree of a continuous or nominal response on many factors: split and prune a step at a time, or automatically on validation rows; leaves, column contributions and each row's leaf and prediction."
-msgstr "कई कारकों पर एक सतत या नाममात्र प्रतिक्रिया का निर्णय ट्री: एक समय में एक कदम को विभाजित और काटें, या स्वचालित रूप से सत्यापन पंक्तियों पर; पत्तियां, स्तंभ योगदान और प्रत्येक पंक्ति के पत्ते और भविष्यवाणी।"
 
 msgid "Decompose or embed several series together (PCA, ICA, NMF, t-SNE, ...)"
 msgstr "कई श्रृंखलाओं को एक साथ विघटित या एम्बेड करें (पीसीए, आईसीए, एनएमएफ, टी - एसएनई, ...)"
@@ -5995,9 +6298,6 @@ msgstr "प्रत्येक विशेषता को अपने म�
 msgid "Each feature's mean in each cluster."
 msgstr "प्रत्येक विशेषता का मतलब प्रत्येक क्लस्टर में होता है।"
 
-msgid "Each of the last values forecast one step ahead from only the values before it, the model refitted each time; its errors beside those of the naive forecast (the last value). Below 1 relative to naive: the model forecasts better than it."
-msgstr "पिछले मूल्यों में से प्रत्येक केवल पहले ही मूल्यों से पहले एक कदम आगे पूर्वानुमान, मॉडल हर बार refitted; इसकी त्रुटियों नेव पूर्वानुमान (पिछले मूल्य) के उन लोगों के बगल में। 1 के सापेक्ष नेव: मॉडल पूर्वानुमान इसके अलावा बेहतर है।"
-
 msgid "Each row across the features as a parallel plot, coloured by its cluster."
 msgstr "प्रत्येक पंक्ति में एक समानांतर साजिश के रूप में, इसके क्लस्टर द्वारा रंग दिया गया है।"
 
@@ -6064,9 +6364,6 @@ msgstr "चोटियों का पता लगाएँ और माप�
 msgid "Find where a series crosses a level"
 msgstr "ढूँढें कि एक सीरीज़ एक लेवल को कहाँ पार करती है"
 
-msgid "Fit by number of trees"
-msgstr "पेड़ों की संख्या के हिसाब से फ़िट करें"
-
 msgid "Flags runs, trends and other patterns that stay inside the limits - the signals a limits-only chart misses. The zone rules switch themselves off on a chart whose limits move."
 msgstr "फ़्लैग रन, रुझान और अन्य पैटर्न जो सीमाओं के अंदर रहते हैं - सिग्नल केवल - सीमा चार्ट छूट जाता है। ज़ोन के नियम एक चार्ट पर खुद को बंद कर देते हैं, जिसकी सीमाएँ हिलती रहती हैं।"
 
@@ -6081,12 +6378,6 @@ msgstr "सीपीएम के लिए; दोनों सीमाओं 
 
 msgid "For X in different units. Off for a spectrum: scaling gives the wavelengths that carry only noise the weight of the bands."
 msgstr "विभिन्न इकाइयों में X के लिए। एक स्पेक्ट्रम के लिए बंद: स्केलिंग तरंग दैर्ध्य देता है जो केवल बैंड के वजन को शोर देता है।"
-
-msgid "Forecast"
-msgstr "पूर्वानुमान"
-
-msgid "Forecast periods"
-msgstr "पूर्वानुमान अवधि"
 
 msgid "Found on the surface's own exact x/y grid."
 msgstr "सतह के अपने सटीक x/y ग्रिड पर पाया गया।"
@@ -6103,12 +6394,6 @@ msgstr "गैज आर एंड आर"
 msgid "Gamma"
 msgstr "गामा"
 
-msgid "Gaussian process regression with an uncertainty band"
-msgstr "एक अनिश्चितता बैंड के साथ गॉसियन प्रक्रिया प्रतिगमन"
-
-msgid "Granger causality (VAR)"
-msgstr "ग्रैंजर causality (VAR)"
-
 msgid "GraphPad Prism (.pzfx)"
 msgstr "ग्राफ़पैड प्रिज्म (.pzfx)"
 
@@ -6121,9 +6406,6 @@ msgstr "समूह का मतलब है"
 msgid "Group similar rows - k-means, hierarchical (Ward), normal mixtures, DBSCAN and more - with k chosen by the silhouette; each cluster's size and means, its rows on the principal components."
 msgstr "समूह समान पंक्तियाँ - k-means, hierarchical (Ward), सामान्य मिश्रण, DBSCAN और अधिक - K सिल्हूट द्वारा चुना के साथ; प्रत्येक क्लस्टर का आकार और अर्थ, प्रमुख घटकों पर इसकी पंक्तियां।"
 
-msgid "Grow the tree"
-msgstr "पेड़ उगाएँ"
-
 msgid "Half the shift to detect, in sigmas: 0.5 for a shift of one sigma."
 msgstr "आधे बदलाव का पता लगाने के लिए, सिग्मा में: एक सिग्मा की एक बदलाव के लिए 0.5।"
 
@@ -6133,9 +6415,6 @@ msgstr "हाफ - प्रधानता सीमाएं"
 msgid "Height (absolute)"
 msgstr "ऊँचाई (निरपेक्ष)"
 
-msgid "Here it follows {measure} one step behind: the model predicts little beyond the last value. A model that fits better (ARIMA chosen by AIC, a season) brings it onto the data."
-msgstr "यहाँ यह {measure} एक कदम पीछे है: मॉडल पिछले मूल्य से परे थोड़ा भविष्यवाणी करता है। एक मॉडल जो बेहतर फिट बैठता है (ARIMA AIC द्वारा चुना गया, एक मौसम) इसे डेटा पर लाता है।"
-
 msgid "Highlight flagged"
 msgstr "फ़्लैग किया गया हाइलाइट करें"
 
@@ -6144,9 +6423,6 @@ msgstr "निरंतर कॉलम एक साथ कैसे चलत�
 
 msgid "How each bracketed crossing is refined. The three bracketing solvers cannot leave the interval they were given; Newton can, and is checked afterwards."
 msgstr "प्रत्येक ब्रैकेट क्रॉसिंग को कैसे परिष्कृत किया जाता है। तीन ब्रैकेटिंग सॉल्वर दिए गए अंतराल को नहीं छोड़ सकते; न्यूटन कर सकता है, और बाद में चेक किया जाता है।"
-
-msgid "How far back the autocorrelations look."
-msgstr "स्वतःसंबंध कितने पीछे दिखते हैं।"
 
 msgid "How likely each group is before the measures are seen: its share of the rows, or the same for every group."
 msgstr "उपायों को देखने से पहले प्रत्येक समूह की कितनी संभावना है: पंक्तियों में उसका हिस्सा, या प्रत्येक समूह के लिए समान।"
@@ -6160,47 +6436,17 @@ msgstr "सोल्वर को रुकने से पहले x के �
 msgid "How many nearby points each one is connected to. Lowered automatically if it does not fit the sample count."
 msgstr "प्रत्येक कितने आस - पास के बिंदुओं से जुड़ा हुआ है। अगर यह सैंपल काउंट में फिट नहीं बैठता है, तो इसे अपने आप कम कर दिया जाएगा।"
 
-msgid "How many past errors the next value depends on: the lags where the ACF stands out."
-msgstr "अगला मान कितनी पिछली त्रुटियों पर निर्भर करता है: वे अंतराल जहां ACF बाहर खड़ा है।"
-
-msgid "How many past seasons' errors the next value depends on."
-msgstr "अगले मान पिछले सीज़न की कितनी त्रुटियों पर निर्भर करता है।"
-
-msgid "How many past values the next depends on: the lags where the PACF stands out."
-msgstr "अगले कितने पिछले मूल्यों पर निर्भर करता है: वे अंतराल जहां PACF बाहर खड़ा है।"
-
 msgid "How many scales to evaluate between the longest period the record supports and the Nyquist frequency, spaced logarithmically."
 msgstr "रिकॉर्ड का समर्थन करने वाली सबसे लंबी अवधि और Nyquist आवृत्ति के बीच कितने स्केल का मूल्यांकन करना है, लॉगरिदमिक रूप से स्पेस किया गया है।"
-
-msgid "How many times ahead to forecast."
-msgstr "भविष्यवाणी करने के लिए कितनी बार आगे।"
-
-msgid "How many times the rows are split: one fewer than the leaves. For a Boosted Tree, the splits of each tree."
-msgstr "पंक्तियों को कितनी बार विभाजित किया जाता है: पत्तियों से एक कम। बूस्ट किए गए पेड़ के लिए, प्रत्येक पेड़ के टुकड़े।"
-
-msgid "How many trees a Bootstrap Forest or a Boosted Tree grows."
-msgstr "बूटस्ट्रैप वन या बूस्टेड ट्री कितने पेड़ उगाते हैं।"
 
 msgid "How much of the variation the measuring system adds: repeatability and reproducibility by the ANOVA method, % of the study variation and of the tolerance, distinct categories."
 msgstr "मापने की प्रणाली कितनी भिन्नता जोड़ती है: एनोवा विधि द्वारा पुनरावृत्ति और पुनरुत्पादन क्षमता, अध्ययन भिन्नता का % और सहिष्णुता, अलग - अलग श्रेणियां।"
 
-msgid "How much the {measure} drops when a column is shuffled, on the {rows} rows - for any model, the forest and the boosted tree included."
-msgstr "{rows} पंक्तियों पर - किसी भी मॉडल, जंगल और बढ़े हुए पेड़ के लिए - कॉलम में फेरबदल होने पर {measure} कितना गिरता है।"
-
 msgid "Identity"
 msgstr "पहचान"
 
-msgid "Importance"
-msgstr "महत्व"
-
 msgid "Input"
 msgstr "इनपुट"
-
-msgid "Intervention at"
-msgstr "इस पर हस्तक्षेप"
-
-msgid "Intervention"
-msgstr "हस्तक्षेप"
 
 msgid "Into how many parts the rows are split; each part is predicted by a model fitted on the others."
 msgstr "पंक्तियों को कितने भागों में विभाजित किया गया है; प्रत्येक भाग की भविष्यवाणी एक मॉडल द्वारा की जाती है जो दूसरों पर फिट होता है।"
@@ -6210,9 +6456,6 @@ msgstr "पुनरावृत्ति"
 
 msgid "JCAMP-DX spectrum"
 msgstr "JCAMP - DX स्पेक्ट्रम"
-
-msgid "JMP documentation"
-msgstr "जेएमपी प्रलेखन"
 
 msgid "K-means convergence threshold."
 msgstr "K - का अर्थ है अभिसरण सीमा।"
@@ -6229,20 +6472,11 @@ msgstr "जब शोर वाली श्रृंखला सैकड़�
 msgid "Keeps the most prominent peaks when many are found."
 msgstr "कई पाए जाने पर सबसे प्रमुख चोटियों को बनाए रखता है।"
 
-msgid "Kernel"
-msgstr "कर्नेल"
-
 msgid "Lab instruments"
 msgstr "लैब इंस्ट्रूमेंट्स"
 
 msgid "LabVIEW measurement (.lvm)"
 msgstr "LabVIEW माप (.lvm)"
-
-msgid "Lag"
-msgstr "अंतराल"
-
-msgid "Lags"
-msgstr "पिछड़ने की स्थिति"
 
 msgid "Lambda"
 msgstr "लैम्ब्डा"
@@ -6252,21 +6486,6 @@ msgstr "सबसे बड़ा k"
 
 msgid "Largest lag to keep. 0 keeps every lag."
 msgstr "सबसे बड़ा अंतराल रखने के लिए। 0 हर अंतराल को बनाए रखता है।"
-
-msgid "Leaf"
-msgstr "पत्ता"
-
-msgid "Leaf report"
-msgstr "लीफ रिपोर्ट"
-
-msgid "Leaf {leaf}"
-msgstr "पत्ती {leaf}"
-
-msgid "Leaves"
-msgstr "पत्ते"
-
-msgid "Length scale"
-msgstr "लंबाई का पैमाना"
 
 msgid "Level"
 msgstr "स्तर"
@@ -6358,9 +6577,6 @@ msgstr "विधि तुलना"
 msgid "Min samples"
 msgstr "न्यूनतम नमूने"
 
-msgid "Minimum leaf size"
-msgstr "पत्तियों का न्यूनतम आकार"
-
 msgid "Minimum samples for DBSCAN/OPTICS core points."
 msgstr "DBSCAN/ऑप्टिक्स कोर पॉइंट्स के लिए न्यूनतम नमूने।"
 
@@ -6369,9 +6585,6 @@ msgstr "न्यूनतम अलगाव"
 
 msgid "Minimum width"
 msgstr "न्यूनतम चौड़ाई"
-
-msgid "Models tried, best AIC first"
-msgstr "मॉडल आज़माए गए, सबसे पहले एआईसी"
 
 msgid "Monitor process stability (I-MR, X-bar, p, np, c, u)"
 msgstr "प्रक्रिया स्थिरता की निगरानी करें (I - MR, X - bar, p, np, c, u)"
@@ -6409,9 +6622,6 @@ msgstr "कोई भी चोटियाँ फ़िल्टर से न�
 msgid "No points signal. The process is in statistical control - which says it is stable, not that it meets any specification."
 msgstr "कोई पॉइंट सिग्नल नहीं। प्रक्रिया सांख्यिकीय नियंत्रण में है - जो कहता है कि यह स्थिर है, ऐसा नहीं है कि यह किसी भी विनिर्देश को पूरा करता है।"
 
-msgid "Noise level"
-msgstr "शोर का स्तर"
-
 msgid "Normalisation"
 msgstr "सामान्यीकरण"
 
@@ -6430,12 +6640,6 @@ msgstr "अनुरोध करने के लिए समूहों क�
 msgid "On"
 msgstr "चालू"
 
-msgid "One more split: the one that best separates the response."
-msgstr "एक और विभाजन: वह जो प्रतिक्रिया को सबसे अलग करता है।"
-
-msgid "One tree you can read; a Bootstrap Forest (many trees on resampled rows, averaged); or a Boosted Tree (many small trees, each correcting the ones before)."
-msgstr "एक पेड़ जिसे आप पढ़ सकते हैं; एक बूटस्ट्रैप वन (पुनर्मूल्यांकन पंक्तियों पर कई पेड़, औसत); या एक बूस्टेड पेड़ (कई छोटे पेड़, प्रत्येक पहले वाले को ठीक करता है)।"
-
 msgid "One-sided spectrum"
 msgstr "एकतरफा स्पेक्ट्रम"
 
@@ -6445,20 +6649,11 @@ msgstr "ऑपरेटर"
 msgid "Operators"
 msgstr "ऑपरेटर"
 
-msgid "Optional: 1 (or Validation) on the rows kept out of the fit, to judge it."
-msgstr "वैकल्पिक: फिट से बाहर रखी गई पंक्तियों पर 1 (या सत्यापन), इसका आकलन करने के लिए।"
-
 msgid "Optional: a column of groups - species, batch, site; the score plot and the biplot colour the rows by it."
 msgstr "वैकल्पिक: समूहों का एक कॉलम - प्रजाति, बैच, साइट; स्कोर प्लॉट और इसके द्वारा पंक्तियों को द्विभाजित रंग।"
 
 msgid "Optional: a column of groups - species, batch, site; the score plot colours the rows by it."
 msgstr "वैकल्पिक: समूहों का एक कॉलम - प्रजाति, बैच, साइट; स्कोर प्लॉट इसके द्वारा पंक्तियों को रंग देता है।"
-
-msgid "Optional: another series measured at the same times - the cross-correlation says whether it leads or follows Y, and by how much."
-msgstr "वैकल्पिक: एक ही समय में मापी गई एक और श्रृंखला - क्रॉस - सहसंबंध कहता है कि यह Y का नेतृत्व करता है या उसका अनुसरण करता है, और कितना।"
-
-msgid "Optional: dates, times or a run number. Without it, the rows' order."
-msgstr "वैकल्पिक: तारीखें, समय या रन नंबर। इसके बिना, पंक्तियों का क्रम।"
 
 msgid "Optional: who measured. Without it, repeatability alone."
 msgstr "वैकल्पिक: किसने मापा। इसके बिना, दोहराव अकेले।"
@@ -6493,18 +6688,6 @@ msgstr "भाग"
 msgid "Partial Least Squares"
 msgstr "आंशिक सबसे कम वर्ग"
 
-msgid "Partial autocorrelation (PACF)"
-msgstr "आंशिक स्वतःसंबंध (PACF)"
-
-msgid "Partial dependence on {factor}"
-msgstr "{factor} पर आंशिक निर्भरता"
-
-msgid "Partition"
-msgstr "विभाजन"
-
-msgid "Partition for {response}"
-msgstr "{response} के लिए विभाजन"
-
 msgid "Parts"
 msgstr "पार्ट्स"
 
@@ -6519,9 +6702,6 @@ msgstr "प्रति क्रॉसिंग। ब्रेंट और �
 
 msgid "Percentile method (ISO 22514-4): the fitted distribution's 0.135% and 99.865% points stand for -/+3 sigma, its median for the mean."
 msgstr "पर्सेंटाइल विधि (ISO 22514 -4): फिट वितरण का 0.135% और 99.865% अंक - /+3 सिग्मा के लिए खड़ा है, जो औसत के लिए इसका औसत है।"
-
-msgid "Permutation importance"
-msgstr "क्रमपरिवर्तन का महत्व"
 
 msgid "Perplexity"
 msgstr "उलझन"
@@ -6541,18 +6721,6 @@ msgstr "प्लॉट किए गए पॉइंट"
 msgid "Points. Of any two peaks closer than this, the more prominent is kept - which is how a single noisy peak stops being reported as several."
 msgstr "पॉइंट्स। इससे करीब आने वाली किसी भी दो चोटियों में से, अधिक प्रमुख को रखा जाता है - इस तरह एक शोर वाली चोटी को कई के रूप में रिपोर्ट किया जाना बंद हो जाता है।"
 
-msgid "Predicted"
-msgstr "भविष्यवाणी"
-
-msgid "Predicted is each value forecast one step ahead from the ones before it, as JMP's Predicted; the Residual is the value minus it."
-msgstr "भविष्यवाणी प्रत्येक मूल्य पूर्वानुमान एक कदम आगे से पहले, JMP के भविष्यवाणी के रूप में; अवशिष्ट मूल्य minus यह है।"
-
-msgid "Predictive and Specialized Modeling"
-msgstr "प्रेडिक्टिव और स्पेशलाइज्ड मॉडलिंग"
-
-msgid "Prewhitened CCF"
-msgstr "पहले से सफ़ेद सीसीएफ़ (CCF)"
-
 msgid "Principal Components"
 msgstr "प्रमुख घटक"
 
@@ -6571,12 +6739,6 @@ msgstr "प्रमुखता (रिश्तेदार)"
 msgid "Prominence measures a peak against its own surroundings and survives a sloping baseline. Height compares it to zero, which only means something when the baseline is at zero."
 msgstr "प्रमुखता अपने स्वयं के परिवेश के खिलाफ एक चोटी को मापती है और एक ढलान वाली आधार रेखा से बच जाती है। ऊंचाई इसकी तुलना शून्य से करती है, जिसका मतलब केवल तब होता है जब बेसलाइन शून्य पर होती है।"
 
-msgid "Prune"
-msgstr "प्रून"
-
-msgid "Pulse (one time)"
-msgstr "नाड़ी (एक बार)"
-
 msgid "Quality and Process"
 msgstr "गुणवत्ता और प्रक्रिया"
 
@@ -6588,9 +6750,6 @@ msgstr "RF"
 
 msgid "RMSECV by number of components"
 msgstr "घटकों की संख्या के आधार पर RMSECV"
-
-msgid "Random seed"
-msgstr "यादृच्छिक बीज"
 
 msgid "Re-weighting passes."
 msgstr "री - वेटिंग पास।"
@@ -6610,29 +6769,14 @@ msgstr "इस रूप में रेंडर करें"
 msgid "Report at most"
 msgstr "ज़्यादा से ज़्यादा रिपोर्ट करें"
 
-msgid "Reports the Durbin-Watson diagnostic for lag-one residual correlation. Values near 2 indicate little lag-one correlation; no generic p-value is reported."
-msgstr "लैग - वन अवशिष्ट सहसंबंध के लिए डर्बिन - वाटसन डायग्नोस्टिक की रिपोर्ट करता है। 2 के पास के मान थोड़ा अंतराल - एक सहसंबंध इंगित करते हैं; कोई सामान्य p - मान नहीं बताया गया है।"
-
 msgid "Residual"
 msgstr "अवशिष्ट"
-
-msgid "Residual randomness and independence"
-msgstr "अवशिष्ट यादृच्छिकता और स्वतंत्रता"
-
-msgid "Rolling-origin validation"
-msgstr "रोलिंग-origin सत्यापन"
-
-msgid "Rolling-origin validation, one step ahead"
-msgstr "रोलिंग-origin वैधता, एक कदम आगे"
 
 msgid "Rotated factor loadings"
 msgstr "घुमावदार कारक लोडिंग"
 
 msgid "Roughly, how many neighbours each point is assumed to have. Lowered automatically if it does not fit the sample count."
 msgstr "मोटे तौर पर, प्रत्येक बिंदु पर कितने पड़ोसियों का होना माना जाता है। अगर यह सैंपल काउंट में फिट नहीं बैठता है, तो इसे अपने आप कम कर दिया जाएगा।"
-
-msgid "Rows, by leaf"
-msgstr "पंक्तियाँ, पत्ते के आधार पर"
 
 msgid "Rule"
 msgstr "नियम"
@@ -6679,21 +6823,6 @@ msgstr "स्कोर"
 msgid "Scree plot"
 msgstr "स्क्री प्लॉट"
 
-msgid "Season ({n}) and remainder"
-msgstr "सीज़न ({n}) और शेष"
-
-msgid "Season length"
-msgstr "सीज़न की लंबाई"
-
-msgid "Seasonal D"
-msgstr "मौसमी D"
-
-msgid "Seasonal P"
-msgstr "मौसमी P"
-
-msgid "Seasonal Q"
-msgstr "मौसमी प्रश्न"
-
 msgid "Segment length"
 msgstr "सेगमेंट की लंबाई"
 
@@ -6702,18 +6831,6 @@ msgstr "सेगमेंट ओवरलैप"
 
 msgid "Select one or more source series."
 msgstr "एक या अधिक स्रोत श्रृंखला का चयन करें।"
-
-msgid "Show residual Durbin-Watson statistic"
-msgstr "अवशिष्ट Durbin - Watson आँकड़े दिखाएँ"
-
-msgid "Show residual Ljung-Box tests"
-msgstr "अवशिष्ट Ljung - box परीक्षण दिखाएँ"
-
-msgid "Show residual runs test"
-msgstr "अवशिष्ट रन परीक्षण दिखाएं"
-
-msgid "Show residual turning-point test"
-msgstr "अवशिष्ट टर्निंग - पॉइंट टेस्ट दिखाएँ"
 
 msgid "Sigma (overall)"
 msgstr "सिग्मा (कुल मिलाकर)"
@@ -6745,38 +6862,14 @@ msgstr "सॉल्वर"
 msgid "Spectroscopy and XRD"
 msgstr "स्पेक्ट्रोस्कोपी और एक्सआरडी"
 
-msgid "Split"
-msgstr "विभाजित करें"
-
-msgid "Split history"
-msgstr "विभाजित इतिहास"
-
-msgid "Split while the validation rows say the tree predicts better."
-msgstr "स्प्लिट करें जबकि सत्यापन पंक्तियां कहती हैं कि पेड़ बेहतर भविष्यवाणी करता है।"
-
-msgid "Splits"
-msgstr "विभाजन"
-
 msgid "Standardized canonical coefficients"
 msgstr "मानकीकृत कैनोनिकल गुणांक"
-
-msgid "Starting guess for how quickly the fit can vary with x. Re-optimized automatically while fitting - a starting point, not a fixed choice."
-msgstr "अनुमान लगाना शुरू करें कि फिट x के साथ कितनी जल्दी बदल सकता है। फिटिंग करते समय स्वचालित रूप से फिर से अनुकूलित - एक प्रारंभिक बिंदु, एक निश्चित विकल्प नहीं।"
-
-msgid "Starting guess for the observation noise variance, added to the kernel. Also re-optimized while fitting."
-msgstr "अवलोकन शोर भिन्नता के लिए प्रारंभिक अनुमान, कर्नेल में जोड़ा गया। फिटिंग करते समय भी फिर से अनुकूलित किया गया।"
 
 msgid "Stata"
 msgstr "STATA"
 
-msgid "Stationarity tests"
-msgstr "स्टेशनरिटी टेस्ट"
-
 msgid "Statistics software"
 msgstr "सांख्यिकी सॉफ्टवेयर"
-
-msgid "Step (lasting)"
-msgstr "चरण (स्थायी)"
 
 msgid "Straight line"
 msgstr "सीधी रेखा"
@@ -6793,26 +6886,14 @@ msgstr "स्पेक्ट्रम की पृष्ठभूमि घट
 msgid "Taper applied to each segment before the FFT."
 msgstr "FFT से पहले प्रत्येक सेगमेंट पर टेपर लगाया जाता है।"
 
-msgid "Tests whether residual autocorrelations through the selected lags are jointly zero."
-msgstr "यह परीक्षण करता है कि चयनित अंतराल के माध्यम से अवशिष्ट स्वसंबंध संयुक्त रूप से शून्य हैं या नहीं।"
-
-msgid "Tests whether the number of local peaks and troughs in the residuals is consistent with a random sequence."
-msgstr "परीक्षण करता है कि अवशेषों में स्थानीय चोटियों और गर्त की संख्या एक यादृच्छिक अनुक्रम के अनुरूप है या नहीं।"
-
 msgid "The A/B/C zones the run rules are phrased in: \"two of three beyond two sigma\" is a statement about a line worth seeing."
 msgstr "रन नियम जिन A/B/C ज़ोन में दिए गए हैं: \"दो सिग्मा से परे तीन में से दो\" देखने लायक एक रेखा के बारे में एक कथन है।"
 
 msgid "The column holding the sample size (units inspected) at each point."
 msgstr "प्रत्येक बिंदु पर नमूना आकार (निरीक्षण की गई इकाइयां) रखने वाला कॉलम।"
 
-msgid "The column to predict: continuous gives a regression tree, nominal a classification tree."
-msgstr "भविष्यवाणी करने के लिए स्तंभ: निरंतर एक प्रतिगमन ट्री देता है, नाममात्र एक वर्गीकरण ट्री।"
-
 msgid "The column whose groups the rows are classified into."
 msgstr "वह कॉलम जिसके समूहों में पंक्तियों को वर्गीकृत किया गया है।"
-
-msgid "The columns the tree may split on."
-msgstr "जिन स्तंभों पर पेड़ विभाजित हो सकता है।"
 
 msgid "The continuous columns to correlate, two by two."
 msgstr "सहसंबंधित करने के लिए निरंतर कॉलम, दो - दो करके।"
@@ -6829,9 +6910,6 @@ msgstr "निरंतर उपाय जो समूहों को अल�
 msgid "The decision interval: 4 or 5 sigmas, with k = 0.5."
 msgstr "निर्णय अंतराल: 4 या 5 सिग्मा, K = 0.5 के साथ।"
 
-msgid "The fewest rows a leaf may hold."
-msgstr "पत्ती में सबसे कम पंक्तियां हो सकती हैं।"
-
 msgid "The grid's shift from the centre, mm: half a die puts a die corner on the centre."
 msgstr "ग्रिड के केंद्र से बदलाव, मिमी: आधा मरना केंद्र पर एक मरना कोने डालता है।"
 
@@ -6846,9 +6924,6 @@ msgstr "सीमाएँ नमूने के आकार के साथ 
 
 msgid "The many measures to predict them from: a spectrum's columns."
 msgstr "उनकी भविष्यवाणी करने के लिए कई उपाय: एक स्पेक्ट्रम के कॉलम।"
-
-msgid "The measure, one value per time."
-msgstr "माप, प्रति समय एक मूल्य।"
 
 msgid "The measured values."
 msgstr "मापा गया मान।"
@@ -6904,9 +6979,6 @@ msgstr "इस सतह के बिंदु पूर्ण x/y ग्रि
 msgid "This surface's points were not a complete x/y grid, so this level curve was traced on a linearly interpolated one - treat it as approximate."
 msgstr "इस सतह के बिंदु पूर्ण x/y ग्रिड नहीं थे, इसलिए इस स्तर वक्र को रैखिक रूप से इंटरपोलेटेड एक पर ट्रेस किया गया था - इसे अनुमानित मानें।"
 
-msgid "Time or order"
-msgstr "समय या ऑर्डर"
-
 msgid "Tolerance (USL - LSL)"
 msgstr "सहिष्णुता (यूएसएल - एलएसएल)"
 
@@ -6919,20 +6991,11 @@ msgstr "टचस्टोन एस - पैरामीटर्स"
 msgid "Traced on the surface's own exact x/y grid."
 msgstr "सतह के अपने सटीक x/y ग्रिड पर ट्रेस किया गया।"
 
-msgid "Training"
-msgstr "प्रशिक्षण"
-
-msgid "Tree"
-msgstr "पेड़"
-
 msgid "Try every k from 2 to the largest and keep the one with the best mean silhouette. DBSCAN, OPTICS and MeanShift find their own number of clusters."
 msgstr "प्रत्येक k को 2 से सबसे बड़ा करने के लिए प्रयास करें और एक को सबसे अच्छा मतलब सिल्हूट के साथ रखें। DBSCAN, OPTICS और MeanShift अपनी संख्या में क्लस्टर पाते हैं।"
 
 msgid "Turns the data counterclockwise about the centre, degrees: a map read with the notch elsewhere brought to the mark."
 msgstr "केंद्र के बारे में डेटा को दक्षिणावर्त बदल देता है, डिग्री: एक मानचित्र जिसे कहीं और निशान में लाया गया था।"
-
-msgid "Undo the last split."
-msgstr "पिछले बंटवारे को वापस लें।"
 
 msgid "Upper control limit"
 msgstr "ऊपरी नियंत्रण सीमा"
@@ -6948,12 +7011,6 @@ msgstr "ऊपरी स्पेक (यूएसएल)"
 
 msgid "VCD (value change dump)"
 msgstr "वीसीडी (मूल्य परिवर्तन डंप)"
-
-msgid "Validation"
-msgstr "सत्यापन"
-
-msgid "Validation share"
-msgstr "वैलिडेशन शेयर"
 
 msgid "Variable (in column order)"
 msgstr "वेरिएबल (कॉलम क्रम में)"
@@ -6985,9 +7042,6 @@ msgstr "वेफर"
 msgid "Wafer Map"
 msgstr "वेफर नक्शा"
 
-msgid "Wald-Wolfowitz test of whether positive and negative residuals occur in a random order around zero. Ties at zero are omitted."
-msgstr "Wald - Wolfowitz इस बात का परीक्षण करता है कि क्या सकारात्मक और नकारात्मक अवशेष शून्य के आसपास यादृच्छिक क्रम में होते हैं। शून्य पर संबंधों को छोड़ दिया जाता है।"
-
 msgid "Weibull"
 msgstr "वीबुल"
 
@@ -7003,9 +7057,6 @@ msgstr "निरंतर उपायों से एक पंक्ति �
 msgid "Which part each measurement is of."
 msgstr "प्रत्येक माप किस भाग का है।"
 
-msgid "Which rows the validation share draws."
-msgstr "कौन सी पंक्तियाँ सत्यापन शेयर ड्रॉ करती हैं।"
-
 msgid "Which turning points to look for."
 msgstr "कौन से टर्निंग पॉइंट तलाशने हैं।"
 
@@ -7018,17 +7069,8 @@ msgstr "विनिर्देशन सीमा के साथ रिप�
 msgid "With automatic k: the mean silhouette of each k tried."
 msgstr "स्वत: कश्मीर के साथ: प्रत्येक कश्मीर का मतलब सिल्हूट की कोशिश की।"
 
-msgid "With no validation column: this share of rows, at random, judges the tree. 0 for none."
-msgstr "बिना किसी सत्यापन कॉलम के: पंक्तियों का यह हिस्सा, यादृच्छिक रूप से, ट्री को जज करता है। 0 किसी के लिए नहीं।"
-
 msgid "X, covariates"
 msgstr "X, covariates"
-
-msgid "X, input"
-msgstr "X, इनपुट"
-
-msgid "X, input in the model (transfer function)"
-msgstr "X, मॉडल में इनपुट (ट्रांसफर फ़ंक्शन)"
 
 msgid "X, reference"
 msgstr "X, संदर्भ"
@@ -7044,9 +7086,6 @@ msgstr "हाँ, समूह"
 
 msgid "Y, method tested"
 msgstr "Y, विधि परीक्षण"
-
-msgid "Y, time series"
-msgstr "Y, समय श्रृंखला"
 
 msgid "density: power per unit frequency. spectrum: power per segment."
 msgstr "घनत्व: पावर प्रति यूनिट आवृत्ति। स्पेक्ट्रम: पावर प्रति सेगमेंट।"
@@ -7105,29 +7144,8 @@ msgstr "{total} पॉइंट्स सिग्नल में से {count
 msgid "{count} point(s) embedded from {series} series into 2 dimensions."
 msgstr "{count} बिंदु(ओं) को {series} श्रृंखला से 2 आयामों में एम्बेडेड किया गया है।"
 
-msgid "{input}'s past added nothing to forecasting {measure}"
-msgstr "{input}'s अतीत ने भविष्यवाणी करने के लिए कुछ भी नहीं जोड़ा {measure}"
-
-msgid "{input}'s past helps forecast {measure} (Granger)"
-msgstr "{input} का अतीत {measure} (Granger) भविष्यवाणी करने में मदद करता है।"
-
-msgid "{measure} and its forecast"
-msgstr "{measure} और इसका पूर्वानुमान"
-
-msgid "{measure} by number of splits"
-msgstr "स्प्लिट की संख्या से {measure}"
-
-msgid "{measure} by number of trees"
-msgstr "पेड़ों की संख्या से {measure}"
-
 msgid "{measure} by part and operator"
 msgstr "पार्ट और ऑपरेटर द्वारा {measure}"
-
-msgid "{measure} comes back to a stable level"
-msgstr "{measure} एक स्थिर स्तर पर वापस आता है"
-
-msgid "{measure} wandered with no level to come back to"
-msgstr "{measure} वापस आने के लिए कोई स्तर के साथ भटकना"
 
 msgid "{name}: defects"
 msgstr "{name}: दोष"
@@ -7143,9 +7161,6 @@ msgstr "{name}: मरने का मतलब"
 
 msgid "{name}: map"
 msgstr "{name}: नक्शा"
-
-msgid "{response} by leaf"
-msgstr "पत्ते से {response}"
 
 msgid "{x} and {y} are correlated"
 msgstr "{x} और {y} सहसंबंधित हैं"

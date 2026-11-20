@@ -1,0 +1,428 @@
+# Français translation for the pack multivariate.
+# Message ids are the English source strings.
+
+msgid ""
+msgstr "Project-Id-Version: ChartLibre\nLanguage: fr\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\n"
+
+msgid "0 chooses them by cross-validation: another component only while it cuts the prediction error by 5% or more."
+msgstr "0 les▁choisit par validation▁croisée : un▁autre▁composant▁seulement▁alors▁qu'il▁coupe l'erreur de▁prédiction de 5% ou plus."
+
+msgid "0 takes as many as the correlations have eigenvalues above 1 (see the scree plot)."
+msgstr "0▁prend▁autant que les▁corrélations▁ont des▁valeurs▁propres au-dessus de 1 (voir la▁courbe de scree)."
+
+msgid "A few directions that carry most of the variation of many columns: eigenvalues and their share, loadings, each row's scores; scree, score and loading plots."
+msgstr "▁Quelques directions qui▁portent la plus▁grande▁partie de la variation de▁nombreuses▁colonnes :▁valeurs▁propres et▁leur part,▁chargements, scores de▁chaque▁rangée ; scrue, score et placements de▁chargement."
+
+msgid "A few hidden factors behind many correlated columns: Maximum Likelihood or Principal Axis, rotated (Varimax, Quartimax, Equamax, Promax); loadings, communalities, each row's scores."
+msgstr "▁Quelques▁facteurs▁cachés▁derrière de▁nombreuses▁colonnes corrélées : Probabilité▁maximale ou▁axe principal, rotation (Varimax, Quartimax, Equamax, Promax); charges,▁communalités, scores de▁chaque▁rangée."
+
+msgid "Actual"
+msgstr "▁Nombre▁effectif"
+
+msgid "Actual by predicted"
+msgstr "Réel▁selon les▁prévisions"
+
+msgid "Algorithm"
+msgstr "Algorithme"
+
+msgid "Biplot"
+msgstr "Biplote"
+
+msgid "By"
+msgstr "Par"
+
+msgid "Canonical analysis"
+msgstr "Analyse▁canonique"
+
+msgid "Canonical plot"
+msgstr "▁Emplacement▁canonique"
+
+msgid "Canonical scores by {response}"
+msgstr "Les scores▁canoniques par {response}"
+
+msgid "Choose k automatically"
+msgstr "▁Choisir k▁automatiquement"
+
+msgid "Choose the clustering algorithm family."
+msgstr "▁Choisissez la▁famille d'algorithmes de▁regroupement."
+
+msgid "Choose the exact scipy.cluster function/workflow to use."
+msgstr "▁Choisissez la▁fonction/le flux exact scipy.cluster à▁utiliser."
+
+msgid "Choose whether clusters are rendered as one point-colored series or as separate series."
+msgstr "▁Choisissez si les clusters▁sont▁rendus▁comme une▁série pointée ou▁comme une▁série▁séparée."
+
+msgid "Choose which numeric columns are used as clustering features."
+msgstr "▁Choisissez▁quelles▁colonnes▁numériques▁sont▁utilisées▁comme▁fonctions de▁regroupement."
+
+msgid "Choosing k"
+msgstr "▁Choisir k"
+
+msgid "Cluster"
+msgstr "Groupe"
+
+msgid "Cluster means"
+msgstr "▁Moyens de▁regroupement"
+
+msgid "Cluster profiles"
+msgstr "▁Profils des▁groupes"
+
+msgid "Clusters"
+msgstr "Groupes"
+
+msgid "Clusters on two principal components"
+msgstr "Groupes sur▁deux▁composantes▁principales"
+
+msgid "Coefficients"
+msgstr "Coefficients"
+
+msgid "Columns"
+msgstr "▁Colonnes"
+
+msgid "Columns standardized"
+msgstr "▁Colonnes▁normalisées"
+
+msgid "Communalities"
+msgstr "▁Communautés"
+
+msgid "Component"
+msgstr "▁Composante"
+
+msgid "Components"
+msgstr "▁Composantes"
+
+msgid "Confusion matrix"
+msgstr "Matrice de confusion"
+
+msgid "Correlation"
+msgstr "Corrélation"
+
+msgid "Correlations"
+msgstr "Corrélations"
+
+msgid "Correlations weigh every column the same, whatever its unit - the usual choice. Covariances let the columns with the widest spread lead, for columns in one unit."
+msgstr "Les▁corrélations▁pèsent▁chaque▁colonne de la▁même▁façon,▁quelle que▁soit son▁unité - le▁choix▁habituel. Les covariances▁laissent les▁colonnes avec le▁plomb le plus large, pour les▁colonnes en une▁unité."
+
+msgid "Cross-validation"
+msgstr "Validation▁croisée"
+
+msgid "Cross-validation folds"
+msgstr "Plis de validation▁croisée"
+
+msgid "Cut criterion"
+msgstr "▁Critère de▁coupe"
+
+msgid "Cut threshold"
+msgstr "Seuil de▁réduction"
+
+msgid "Cut threshold for distance/inconsistent criteria. Leave at auto for median linkage distance."
+msgstr "▁Couper le▁seuil pour la distance/critères▁incompatibles.▁Laisser à l'auto pour la distance▁médiane de liaison."
+
+msgid "Discriminant"
+msgstr "Discriminant"
+
+msgid "Distance metric"
+msgstr "Distance métrique"
+
+msgid "Do the clusters differ in {column}?"
+msgstr "Les clusters▁diffèrent-ils dans {column} ?"
+
+msgid "Each cluster's mean silhouette: near 1 well apart, near 0 on a border, below 0 misplaced."
+msgstr "La silhouette▁moyenne de▁chaque amas :▁près de 1 bien▁séparé,▁près de 0 sur une▁bordure, en▁dessous de 0▁déplacé."
+
+msgid "Each feature divided by its standard deviation, so that each counts the same whatever its unit - leave on unless the features share one unit and scale."
+msgstr "▁Chaque▁caractéristique▁divisée par son▁écart type, de▁sorte que▁chacun▁compte la▁même chose▁quelle que▁soit son▁unité -▁laisser sur à▁moins que les▁caractéristiques▁partagent une▁unité et une▁échelle."
+
+msgid "Each feature's mean in each cluster."
+msgstr "▁Chaque▁fonction est▁moyenne dans▁chaque cluster."
+
+msgid "Each row across the features as a parallel plot, coloured by its cluster."
+msgstr "▁Chaque▁rangée à travers les▁caractéristiques▁comme un▁tracé▁parallèle,▁coloré par son cluster."
+
+msgid "Eigenvalue"
+msgstr "▁Valeur▁propre"
+
+msgid "Eigenvalues"
+msgstr "▁Valeurs▁propres"
+
+msgid "Eigenvectors"
+msgstr "Vétérinaires"
+
+msgid "Factor Analysis"
+msgstr "Analyse des▁facteurs"
+
+msgid "Factor correlations"
+msgstr "Corrélations des▁facteurs"
+
+msgid "Factor loading plot"
+msgstr "▁Emplacement de▁chargement des▁facteurs"
+
+msgid "Factors"
+msgstr "▁Facteurs"
+
+msgid "Family"
+msgstr "▁Famille"
+
+msgid "Features"
+msgstr "▁Caractéristiques"
+
+msgid "For X in different units. Off for a spectrum: scaling gives the wavelengths that carry only noise the weight of the bands."
+msgstr "Pour X dans▁différentes▁unités. Off pour un▁spectre: l'échelle▁donne les▁longueurs d'onde qui ne▁portent que le▁bruit du▁poids des▁bandes."
+
+msgid "Group means"
+msgstr "▁Moyens de▁groupe"
+
+msgid "Group similar rows - k-means, hierarchical (Ward), normal mixtures, DBSCAN and more - with k chosen by the silhouette; each cluster's size and means, its rows on the principal components."
+msgstr "Grouper des▁lignes▁similaires - k-moyens,▁hiérarchiques (Ward), des▁mélanges▁normaux, DBSCAN et plus - avec k▁choisi par la silhouette; la▁taille et les▁moyens de▁chaque cluster,▁ses▁lignes sur les▁composants▁principaux."
+
+msgid "How continuous columns move together: the correlation matrix, each pair's correlation with its confidence interval and p-value, and the scatterplot matrix."
+msgstr "Comment les▁colonnes continues se▁déplacent ensemble : la▁matrice de▁corrélation, la▁corrélation de▁chaque▁paire avec son▁intervalle de▁confiance et sa▁valeur p, et la▁matrice de spreadplot."
+
+msgid "How likely each group is before the measures are seen: its share of the rows, or the same for every group."
+msgstr "Il est probable que▁chaque▁groupe▁soit▁avant les▁mesures : sa part des▁lignes, ou la▁même pour▁chaque▁groupe."
+
+msgid "How to read this"
+msgstr "Comment▁lire▁ceci"
+
+msgid "Into how many parts the rows are split; each part is predicted by a model fitted on the others."
+msgstr "▁Dans▁combien de parties les▁lignes▁sont▁divisées;▁chaque▁partie est▁prédite par un▁modèle▁monté sur les▁autres."
+
+msgid "K-means convergence threshold."
+msgstr "K▁signifie le▁seuil de convergence."
+
+msgid "K-means iterations"
+msgstr "K▁signifie itérations"
+
+msgid "K-means threshold"
+msgstr "Seuil de▁moyenne K"
+
+msgid "Largest k"
+msgstr "Plus▁grande k"
+
+msgid "Linear: the groups share one covariance, the boundaries are planes. Quadratic: each group has its own, the boundaries curve; it needs more rows."
+msgstr "Linéaire: les▁groupes▁partagent une covariance, les▁limites▁sont des plans. Quadratique:▁chaque▁groupe a sa▁propre▁courbe, les▁limites; il a▁besoin de plus de▁lignes."
+
+msgid "Linkage method"
+msgstr "▁Méthode de liaison"
+
+msgid "Loading matrix"
+msgstr "Matrice de▁chargement"
+
+msgid "Loading plot"
+msgstr "▁Emplacement de▁chargement"
+
+msgid "Max runtime"
+msgstr "▁Durée▁maximale"
+
+msgid "Maximum Likelihood: JMP's default, for columns roughly normal. Principal Axis: no assumption of normality, steadier with few rows."
+msgstr "Probabilité▁maximale : la▁valeur par▁défaut de JMP, pour les▁colonnes à▁peu▁près▁normales.▁Axe principal :▁aucune▁hypothèse de normalité, plus stable avec▁quelques▁lignes."
+
+msgid "Maximum k-means iterations."
+msgstr "Des itérations k▁maximales."
+
+msgid "Maximum seconds to wait for clustering. Use 0 for no timeout."
+msgstr "Maximum de▁secondes à▁attendre pour le cluster.▁Utilisez 0 pour▁aucun timeout."
+
+msgid "Mean"
+msgstr "▁Moyenne"
+
+msgid "Mean silhouette"
+msgstr "Silhouette▁moyenne"
+
+msgid "Method"
+msgstr "▁Méthode"
+
+msgid "Min samples"
+msgstr "▁Échantillons▁mineurs"
+
+msgid "Minimum samples for DBSCAN/OPTICS core points."
+msgstr "▁Échantillons▁minimaux pour les points de base DBSCAN/OPTICS."
+
+msgid "Multivariate"
+msgstr "▁Variables▁multiples"
+
+msgid "Multivariate Methods"
+msgstr "▁Méthodes multivariées"
+
+msgid "Multivariate methods"
+msgstr "▁Méthodes multivariées"
+
+msgid "Neighborhood radius"
+msgstr "Rayon de▁voisinage"
+
+msgid "Neighborhood radius for DBSCAN. 0 uses the default 0.5."
+msgstr "Rayon de▁voisinage pour DBSCAN. 0▁utilise la▁valeur par▁défaut 0.5."
+
+msgid "Normalize features by standard deviation before k-means."
+msgstr "Normaliser les▁caractéristiques par▁écart type▁avant les▁moyennes en k."
+
+msgid "Number"
+msgstr "▁Numéro"
+
+msgid "Number of clusters to request."
+msgstr "▁Nombre de▁groupes à▁demander."
+
+msgid "On"
+msgstr "▁À"
+
+msgid "Optional: a column of groups - species, batch, site; the score plot and the biplot colour the rows by it."
+msgstr "Optionnel: une▁colonne de▁groupes -▁espèces, lot, site; la▁courbe de score et la▁couleur biplot les▁rangées par▁elle."
+
+msgid "Optional: a column of groups - species, batch, site; the score plot colours the rows by it."
+msgstr "Optionnel: une▁colonne de▁groupes -▁espèce, lot, site; le▁graphique de score colore les▁rangées par▁elle."
+
+msgid "PLS"
+msgstr "PLS"
+
+msgid "Pairwise correlations, strongest evidence first"
+msgstr "Corrélations par▁paire,▁preuves les plus▁fortes d'abord"
+
+msgid "Partial Least Squares"
+msgstr "Les▁moindres▁carrés▁partiels"
+
+msgid "Pearson measures a straight-line relation; Spearman and Kendall any relation that keeps going one way, and are not swayed by outliers."
+msgstr "Pearson▁mesure une relation▁droite; Spearman et Kendall▁toute relation qui continue à▁aller d'un▁seul▁côté, et qui ne▁sont▁pas▁influencés par des▁valeurs aberrantes."
+
+msgid "Principal Components"
+msgstr "▁Composantes▁principales"
+
+msgid "Principal components, factor analysis, clustering, discriminant, partial least squares and correlations, with dendrogram and parallel plot."
+msgstr "▁Principales▁composantes, analyse des▁facteurs,▁regroupement, discriminant,▁partiel des▁moindres▁carrés et▁corrélations, avec dendrogramme et▁tracé▁parallèle."
+
+msgid "Prior probabilities"
+msgstr "Probabilités▁antérieures"
+
+msgid "RMSECV by number of components"
+msgstr "RMSECV par nombre de▁composants"
+
+msgid "Render as"
+msgstr "Rendu▁comme"
+
+msgid "Response {name}"
+msgstr "▁Réponse {name}"
+
+msgid "Rotated factor loadings"
+msgstr "Charges de▁facteurs▁rotatifs"
+
+msgid "Rotation"
+msgstr "Rotation"
+
+msgid "Rows"
+msgstr "▁Lignes"
+
+msgid "Scale X to unit variance"
+msgstr "▁Écart entre l'échelle X et l'unité"
+
+msgid "Scatterplot matrix"
+msgstr "Matrice Scatterplot"
+
+msgid "Score plot"
+msgstr "▁Graphique de▁notation"
+
+msgid "Scores"
+msgstr "▁Taux"
+
+msgid "Scree plot"
+msgstr "Parcelle de scree"
+
+msgid "Silhouette"
+msgstr "Silhouette"
+
+msgid "Silhouette by cluster"
+msgstr "Silhouette par▁groupe"
+
+msgid "Standardized canonical coefficients"
+msgstr "Coefficients▁canoniques▁normalisés"
+
+msgid "Summary"
+msgstr "▁Résumé"
+
+msgid "The column whose groups the rows are classified into."
+msgstr "La▁colonne dans▁laquelle les▁rangées▁sont▁classées."
+
+msgid "The continuous columns to correlate, two by two."
+msgstr "Les▁colonnes continues à corréler,▁deux par▁deux."
+
+msgid "The continuous columns whose correlations the factors explain."
+msgstr "Les▁colonnes continues▁dont les▁corrélations▁expliquent les▁facteurs."
+
+msgid "The continuous columns whose variation is summed up."
+msgstr "Les▁colonnes continues▁dont la variation est▁résumée."
+
+msgid "The continuous measures that tell the groups apart."
+msgstr "Les▁mesures continues qui▁séparent les▁groupes."
+
+msgid "The largest number of clusters tried."
+msgstr "Le plus grand nombre de▁grappes a▁essayé."
+
+msgid "The many measures to predict them from: a spectrum's columns."
+msgstr "Les▁nombreuses▁mesures pour les▁prédire à▁partir : des▁colonnes d'un▁spectre."
+
+msgid "The rows on the first two principal components of the features, coloured by cluster."
+msgstr "Les▁lignes sur les▁deux▁premières▁composantes▁principales des▁caractéristiques,▁colorées par cluster."
+
+msgid "The values to predict: a concentration, a property."
+msgstr "Les▁valeurs à▁prévoir : une concentration, une▁propriété."
+
+msgid "Try every k from 2 to the largest and keep the one with the best mean silhouette. DBSCAN, OPTICS and MeanShift find their own number of clusters."
+msgstr "▁Essayez▁chaque k de 2 à la plus▁grande et▁gardez▁celui avec la▁meilleure silhouette▁moyenne. DBSCAN, OPTICS et MeanShift▁trouvent▁leur▁propre nombre de clusters."
+
+msgid "Variable (in column order)"
+msgstr "▁Variable (en▁ordre de▁colonne)"
+
+msgid "Variable importance (VIP)"
+msgstr "Importance variable (VIP)"
+
+msgid "Variable importance (VIP), highest 15"
+msgstr "Importance variable (VIP), plus▁élevé 15"
+
+msgid "Variance explained"
+msgstr "▁Variation▁expliquée"
+
+msgid "Varimax: each factor with few large loadings, the usual choice. Quartimax: each column on few factors. Equamax: between the two. Promax: lets the factors correlate, when the traits they stand for do."
+msgstr "▁Varimax:▁chaque▁facteur avec▁peu de charges▁importantes, le▁choix▁habituel. Quartimax:▁chaque▁colonne sur▁peu de▁facteurs. Equamax: entre les▁deux. Promax:▁permet aux▁facteurs de corréler,▁lorsque les traits▁qu'ils▁représentent font."
+
+msgid "Which group a row belongs to, from continuous measures: linear or quadratic discriminant analysis, canonical plot, Wilks' lambda and the misclassified rows."
+msgstr "▁À▁quel▁groupe▁appartient une▁rangée, à▁partir de▁mesures continues: analyse discriminante▁linéaire ou▁quadratique,▁tracé▁canonique, lambda de Wilks et les▁rangées mal▁classées."
+
+msgid "Whiten features"
+msgstr "▁Caractéristiques de Whiten"
+
+msgid "With automatic k: the mean silhouette of each k tried."
+msgstr "▁Avec k▁automatique: la silhouette▁moyenne de▁chaque k▁essayé."
+
+msgid "X"
+msgstr "X"
+
+msgid "X, covariates"
+msgstr "X, covariables"
+
+msgid "Y"
+msgstr "Y"
+
+msgid "Y from many X that move together - a spectrum's wavelengths: a few latent components, their number chosen by cross-validation; variable importance (VIP), loadings, scores, predictions."
+msgstr "Y de▁plusieurs X qui se▁déplacent ensemble - les▁longueurs d'onde d'un▁spectre:▁quelques▁composants latents,▁leur nombre▁choisi par validation▁croisée; l'importance variable (VIP),▁chargements, scores,▁prédictions."
+
+msgid "Y, columns"
+msgstr "Y,▁colonnes"
+
+msgid "Y, group"
+msgstr "Y,▁groupe"
+
+msgid "more factors are needed"
+msgstr "▁davantage de▁facteurs▁sont▁nécessaires"
+
+msgid "the groups differ on them"
+msgstr "les▁groupes▁diffèrent sur▁eux"
+
+msgid "the groups of {response} had the same means of {covariates}"
+msgstr "les▁groupes de {response}▁avaient les▁mêmes▁moyens de {covariates}"
+
+msgid "{count} factor(s) were enough to explain the correlations"
+msgstr "{count}▁facteur(s)▁suffisant pour▁expliquer les▁corrélations"
+
+msgid "{x} and {y} are correlated"
+msgstr "{x} et {y}▁sont▁corrélés"
+
+msgid "{x} and {y} were not correlated"
+msgstr "{x} et {y} n'étaient▁pas▁corrélés"

@@ -1,0 +1,134 @@
+# Italiano translation for the pack semiconductors.
+# Message ids are the English source strings.
+
+msgid ""
+msgstr "Project-Id-Version: ChartLibre\nLanguage: it\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\n"
+
+msgid "A measured die above it is binned High; empty: no upper limit."
+msgstr "Un die misurato sopra di esso è binned High; vuoto: nessun limite superiore."
+
+msgid "A measured die below it is binned Low; empty: no lower limit."
+msgstr "Un die misurato sotto è binned Low; vuoto: nessun limite inferiore."
+
+msgid "A notch on 200 mm wafers and up, a flat on smaller ones."
+msgstr "Una tacca su wafer da 200 mm e su, un piatto su quelli più piccoli."
+
+msgid "A wafer's measurements or defects on the wafer and per die: contour map, die bins and yield, defect density - notch or flat, any diameter, rotation."
+msgstr "Misure o difetti di un wafer sulla wafer e per die: mappa del contorno, die bins e resa, densità di difetto - tacca o piatta, qualsiasi diametro, rotazione."
+
+msgid "Centre to edge"
+msgstr "Centro a bordo"
+
+msgid "Contour grid"
+msgstr "Griglia di deviazione"
+
+msgid "Diameter"
+msgstr "Diametro del diametro"
+
+msgid "Die bins"
+msgstr "Die bins"
+
+msgid "Die bins (with limits)"
+msgstr "Die bins (con limiti)"
+
+msgid "Die grid shift x"
+msgstr "Diffusione della griglia x"
+
+msgid "Die grid shift y"
+msgstr "Mutamento della griglia"
+
+msgid "Die height"
+msgstr "Altezza del piede"
+
+msgid "Die width"
+msgstr "Larghezza dei piedi"
+
+msgid "Dies (means, or defects per die)"
+msgstr "Muore (mesti, o difetti per morire)"
+
+msgid "Edge exclusion"
+msgstr "Esclusione dei bordi"
+
+msgid "Flat"
+msgstr "Appartamento"
+
+msgid "Lower limit"
+msgstr "Limite più basso"
+
+msgid "Map (contour, or the defects)"
+msgstr "Mappa (contour, o i difetti)"
+
+msgid "Mark at"
+msgstr "Mark a"
+
+msgid "None"
+msgstr "Nessuno"
+
+msgid "Notch"
+msgstr "No!"
+
+msgid "Orientation mark"
+msgstr "Orientamento"
+
+msgid "Points across the wafer the measurements are interpolated on."
+msgstr "I punti attraverso il wafer le misurazioni sono interpolate."
+
+msgid "Quality and Process"
+msgstr "Qualità e processo"
+
+msgid "Rotation"
+msgstr "Rotazione"
+
+msgid "Semiconductor analysis"
+msgstr "Analisi dei semiconduttori"
+
+msgid "Summary"
+msgstr "Sintesi"
+
+msgid "The grid's shift from the centre, mm: half a die puts a die corner on the centre."
+msgstr "Il cambio della griglia dal centro, mm: mezzo centimetro mette un angolo da morire al centro."
+
+msgid "The ring at the edge left out, mm: its points count nowhere."
+msgstr "L'anello al bordo sinistro, mm: i suoi punti non contano da nessuna parte."
+
+msgid "The wafer's diameter."
+msgstr "Il diametro del wafer."
+
+msgid "Turns the data counterclockwise about the centre, degrees: a map read with the notch elsewhere brought to the mark."
+msgstr "Gira i dati in senso antiorario sul centro, gradi: una mappa letta con la tacca altrove portata al segno."
+
+msgid "Upper limit"
+msgstr "Limite superiore"
+
+msgid "Wafer"
+msgstr "Wafer"
+
+msgid "Wafer Map"
+msgstr "Mappa di Wafer"
+
+msgid "Wafer maps: sites, dies and defects on a wafer, die bins against limits and yield."
+msgstr "Cartine Wafer: siti, die e difetti su un wafer, die bins contro i limiti e la resa."
+
+msgid "Where the notch or flat is drawn: the data is in the wafer's own frame, the mark where the map shows it."
+msgstr "Dove si estrae la tacca o la piatta: i dati si trovano nella cornice del wafer, il segno in cui la mappa lo mostra."
+
+msgid "mm."
+msgstr "mm."
+
+msgid "mm. The dies are the whole ones on the usable wafer."
+msgstr "Gli stampi sono tutti sulla wafer utilizzabile."
+
+msgid "{name}: defects"
+msgstr "{name}: difetti"
+
+msgid "{name}: defects per die"
+msgstr "{name}: difetti per morire"
+
+msgid "{name}: die bins"
+msgstr "{name}: die bins"
+
+msgid "{name}: die means"
+msgstr "{name}: morire significa"
+
+msgid "{name}: map"
+msgstr "{name}: mappa"

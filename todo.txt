@@ -16,15 +16,11 @@ The order is a single recommended backlog. Related items have been merged, and c
 
 | ID | Priority | Complexity | Initiative | Simplified scope | Main gap / user need |
 |---|---:|---:|---|---|---|
-| ID01 | 1 | 3 | **Save and apply prediction models** (G-02) | Save any fitted model with its preprocessing; score new rows or another table. | **JMP / scikit-learn**; turns analysis into a reusable workflow. |
 | ID03 | 3 | 4 | **Graph Builder** (G-01) | Build charts by dragging columns onto visual roles; change marks and grouping live. | **JMP**; a major discoverability and chart-authoring gap. |
 | ID04 | 4 | 2 | **Local data filtering** (G-04) | A filter by column values for every chart and report of a table (selecting rows on a chart and Show only Selected are done). | **JMP**; fundamental exploratory-analysis workflow. |
-| ID05 | 5 | 3 | **Templates and batch reporting** (H-03, I-08) | Apply a figure design and operations to new files; run a folder batch. | **JMP / Origin**; repeated lab workflows. |
-| ID06 | 6 | 2 | **Publication-ready export** (H-05) | Presets for journal sizes, embedded fonts, PDF/SVG, and Word/LaTex result tables. | **Origin / Matplotlib**; high-value final-mile workflow. |
 | ID07 | 7 | 3 | **Units and uncertainty propagation** (H-02) | Assign units to columns; carry them through axes, fits, and error calculations. | **Engineering/science tools**; critical for physical-science work. |
 | ID08 | 8 | 3 | **Model comparison and validation** (G-03, AN-12) | Compare models on shared validation data with R², RMSE, AUC, bootstrap, permutation, and cross-validation options. | **JMP / scikit-learn**; safer model choice. |
 | ID09 | 9 | 2 | **Plain-language errors and onboarding** (H-11, H-08) | Actionable import/SQL errors, a demo dataset, guided first-run flow, and product tour. | **Core**; improves activation and support load. |
-| ID11 | 11 | 3 | **More instrument and scientific imports** (I-01) | Add priority formats: HDF5/NetCDF, TDMS, compressed JCAMP, and common instrument exports. | **Origin / lab software**; unlocks adoption, subject to sample files. |
 | ID12 | 12 | 2 | **Quality and measurement tools** (G-06) | Add process screening (EWMA, CUSUM, Levey–Jennings with Westgard, g and t charts, Bland–Altman, Deming and Passing–Bablok are done). | **JMP / Minitab**; strong engineering and QA gap. |
 | ID13 | 13 | 2 | **Robust regression diagnostics** (R-04, G-25) | Add VIF, leverage, AIC comparison, WLS/GLS, and remaining ANOVA diagnostics. | **statsmodels / JMP**; makes existing modelling more trustworthy. |
 | ID14 | 14 | 2 | **Missing-data and model preprocessing** (G-22, G-24) | Table-level imputation plus saved scaling, encoding, and feature generation. | **scikit-learn**; prerequisite for reusable models. |

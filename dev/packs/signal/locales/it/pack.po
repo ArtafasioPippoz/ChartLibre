@@ -1,0 +1,347 @@
+# Italiano translation for the pack signal.
+# Message ids are the English source strings.
+
+msgid ""
+msgstr "Project-Id-Version: ChartLibre\nLanguage: it\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\n"
+
+msgid "Analyse frequencies"
+msgstr "Analizzare le frequenze"
+
+msgid "As a fraction of the signal's full range. 0.1 keeps peaks standing at least a tenth of the range above their surroundings."
+msgstr "Come una frazione della gamma completa del segnale, 0.1 mantiene i picchi in piedi almeno un decimo della gamma sopra il loro ambiente."
+
+msgid "Asymmetry. Smaller pushes the baseline further below the peaks; it should stay well under 0.5."
+msgstr "Asimmetria. Più piccolo spinge la linea di base più avanti sotto le vette; dovrebbe rimanere bene sotto 0.5."
+
+msgid "Baseline"
+msgstr "Linea di base"
+
+msgid "Between samples"
+msgstr "Tra i campioni"
+
+msgid "Choose a decomposition (a curve per component) or a manifold embedding (a 2D scatter)."
+msgstr "Scegliere una decomposizione (una curva per componente) o un embedding collettore (una dispersione 2D)."
+
+msgid "Choose the baseline estimator."
+msgstr "Scegli l'estimatore della linea di base."
+
+msgid "Choose the spectral or correlation estimator."
+msgstr "Scegliere lo stimatore spettrale o di correlazione."
+
+msgid "Component"
+msgstr "Componenti"
+
+msgid "Component 1"
+msgstr "Componente 1"
+
+msgid "Component 2"
+msgstr "Componente 2"
+
+msgid "Components"
+msgstr "Componenti"
+
+msgid "Convert to decibels"
+msgstr "Convertire in decibels"
+
+msgid "Cubic spline"
+msgstr "Spruzzo cubico"
+
+msgid "Curve"
+msgstr "Curva"
+
+msgid "Damping (sigma)"
+msgstr "Damping (sigma)"
+
+msgid "Damping sigma of the Laplace variable s = sigma + i*omega. Zero reduces the transform to the Fourier transform; increasing it weights early samples more and suppresses late ones, which is what makes a decaying or unstable signal integrable."
+msgstr "Samping sigma della variabile Laplace s = sigma + i*omega. Zero riduce la trasformazione alla trasformazione di Fourier; aumentando il peso dei campioni iniziali più e sopprime quelli tardi, che è ciò che rende un segnale decadimento o instabile integrabile."
+
+msgid "Decompose or embed several series together (PCA, ICA, NMF, t-SNE, ...)"
+msgstr "Decomporre o incorporare diverse serie insieme (PCA, ICA, NMF, t-SNE, ...)"
+
+msgid "Detrend"
+msgstr "Detrend"
+
+msgid "Direction"
+msgstr "Direzione"
+
+msgid "Draw the estimated baseline itself."
+msgstr "Disegnare la linea di base stimata stessa."
+
+msgid "Estimates"
+msgstr "Stime"
+
+msgid "Every selected series is linearly resampled onto this many evenly spaced points across their shared x range, before decomposing or embedding them together."
+msgstr "Ogni serie selezionata viene rivenduta in modo lineare su questo molti punti uniformemente distanziati attraverso la loro gamma x condivisa, prima di decomporsi o incorporarli insieme."
+
+msgid "Explained variance"
+msgstr "Varianza spiegata"
+
+msgid "Express the result as 10*log10 of the value."
+msgstr "Esprimere il risultato come 10*log10 del valore."
+
+msgid "Filter by"
+msgstr "Filtra per"
+
+msgid "Find"
+msgstr "Trova"
+
+msgid "Find and measure peaks"
+msgstr "Trovare e misurare i picchi"
+
+msgid "Find where a series crosses a level"
+msgstr "Trova dove una serie attraversa un livello"
+
+msgid "Fold the negative frequencies onto the positive ones. Correct for real-valued signals."
+msgstr "Piegare le frequenze negative su quelle positive. Corretto per segnali di valore reale."
+
+msgid "Found on the surface's own exact x/y grid."
+msgstr "Trovato sulla propria griglia x/y della superficie."
+
+msgid "Fraction of each segment shared with the next."
+msgstr "Frazione di ogni segmento condiviso con il successivo."
+
+msgid "Grid points"
+msgstr "Punti di macinazione"
+
+msgid "Half-prominence bounds"
+msgstr "Limiti di semi-prominenza"
+
+msgid "Height (absolute)"
+msgstr "Altezza (assoluta)"
+
+msgid "How each bracketed crossing is refined. The three bracketing solvers cannot leave the interval they were given; Newton can, and is checked afterwards."
+msgstr "I tre solutori di staffa non possono lasciare l'intervallo in cui sono stati dati; Newton può, e viene controllato in seguito."
+
+msgid "How many components to extract. Clamped to the number of selected series."
+msgstr "Quanti componenti da estrarre. Morsetto al numero di serie selezionata."
+
+msgid "How many decimal places of x the solver has to settle before it stops. Nine is far below the precision of any measured x; the cost of raising it is a few iterations."
+msgstr "Quanti punti decimali di x il risolutore deve stabilirsi prima che si fermi. Nove è ben al di sotto della precisione di qualsiasi misura x; il costo di sollevarlo è un paio di iterazioni."
+
+msgid "How many nearby points each one is connected to. Lowered automatically if it does not fit the sample count."
+msgstr "Quanti punti vicini ognuno è collegato. Abbassato automaticamente se non si adatta al conteggio del campione."
+
+msgid "How many scales to evaluate between the longest period the record supports and the Nyquist frequency, spaced logarithmically."
+msgstr "Quante scale per valutare tra il periodo più lungo il record supporta e la frequenza di Nyquist, logaritmo distanziato."
+
+msgid "Input"
+msgstr "Input"
+
+msgid "Iterations"
+msgstr "Iterazioni"
+
+msgid "Keeps the first crossings in x order when a noisy series crosses the level hundreds of times."
+msgstr "Mantiene i primi incroci in x ordine quando una serie rumorosa attraversa il livello centinaia di volte."
+
+msgid "Keeps the most prominent peaks when many are found."
+msgstr "Mantiene le vette più importanti quando molti si trovano."
+
+msgid "Kind"
+msgstr "Tipo..."
+
+msgid "Lambda"
+msgstr "Lambda"
+
+msgid "Largest lag to keep. 0 keeps every lag."
+msgstr "Lag più grande da tenere. 0 mantiene ogni ritardo."
+
+msgid "Level"
+msgstr "Livello"
+
+msgid "Max lags"
+msgstr "Max Lags"
+
+msgid "Maximum iterations"
+msgstr "Massime iterazioni"
+
+msgid "Method"
+msgstr "Metodo"
+
+msgid "Minimum"
+msgstr "Minimo"
+
+msgid "Minimum separation"
+msgstr "Separazione minima"
+
+msgid "Minimum width"
+msgstr "Larghezza minima"
+
+msgid "Model"
+msgstr "Modello"
+
+msgid "Monotone cubic (PCHIP)"
+msgstr "Cabina monotone (PCHIP)"
+
+msgid "Morlet central frequency w0. Higher values resolve frequency more finely at the cost of time resolution; 6 is the usual compromise and the value at which the wavelet is near-admissible."
+msgstr "Frequenza centrale lett. w0. I valori più elevati risolvono la frequenza più finemente al costo della risoluzione del tempo; 6 è il solito compromesso e il valore in cui l'ondata è quasi ammissibile."
+
+msgid "Morlet w0"
+msgstr "Morlet w0"
+
+msgid "Neighbors"
+msgstr "Quartieri"
+
+msgid "No peaks passed the filter. Lower the minimum, or switch from height to prominence if the baseline is not at zero."
+msgstr "Abbassare il minimo, o passare dall'altezza alla prominenza se la linea di base non è a zero."
+
+msgid "No results."
+msgstr "Nessun risultato."
+
+msgid "Normalisation"
+msgstr "Normalizzazione"
+
+msgid "One-sided spectrum"
+msgstr "Spettro unilaterale"
+
+msgid "Peak ({x} &rarr; {y})"
+msgstr "({x} &rarr; {y})"
+
+msgid "Peaks, baseline correction, spectral analysis, decomposition and roots, with the spectrogram chart."
+msgstr "Picchi, correzione della linea di base, analisi spettrale, decomposizione e radici, con il grafico dello spettrogramma."
+
+msgid "Per crossing. Brent and TOMS 748 rarely need ten; the limit is what stops a pathological bracket from hanging the dialog."
+msgstr "Brent e TOMS 748 hanno raramente bisogno di dieci; il limite è quello che ferma una parentesi patologica da appendere la finestra di dialogo."
+
+msgid "Perplexity"
+msgstr "Perplessità"
+
+msgid "Points"
+msgstr "Punti"
+
+msgid "Points at half prominence. Raise it to reject single-sample spikes, which are usually instrument artefacts rather than features."
+msgstr "Punti a mezza prominenza. Alzalo per rifiutare punte a singolo campione, che di solito sono artefatti di strumento piuttosto che caratteristiche."
+
+msgid "Points. Of any two peaks closer than this, the more prominent is kept - which is how a single noisy peak stops being reported as several."
+msgstr "Punti. Di qualsiasi due picchi più vicini a questo, più prominente è tenuto - che è come un singolo picco rumoroso smette di essere segnalato come diversi."
+
+msgid "Prominence"
+msgstr "Prominenza"
+
+msgid "Prominence (relative)"
+msgstr "Prominenza (relativa)"
+
+msgid "Prominence measures a peak against its own surroundings and survives a sloping baseline. Height compares it to zero, which only means something when the baseline is at zero."
+msgstr "Prominenza misura un picco contro il proprio ambiente e sopravvive a una linea di base sloping. L'altezza lo paragona a zero, il che significa solo qualcosa quando la linea di base è a zero."
+
+msgid "Re-weighting passes."
+msgstr "Passi di ri-peso."
+
+msgid "Remove a constant or linear trend from each segment first. A trend leaks into the lowest frequency bins and hides everything near it."
+msgstr "Rimuovere una tendenza costante o lineare da ogni segmento prima. Una tendenza perde nei contenitori di frequenza più bassi e nasconde tutto vicino a esso."
+
+msgid "Report at most"
+msgstr "Rapporto al massimo"
+
+msgid "Residual"
+msgstr "Residuo"
+
+msgid "Roughly, how many neighbours each point is assumed to have. Lowered automatically if it does not fit the sample count."
+msgstr "Abbassati automaticamente se non si adatta al conteggio del campione."
+
+msgid "Samples per Welch segment. Longer segments resolve finer frequency detail; shorter ones average away more noise."
+msgstr "Campioni per segmento Welch. I segmenti più lunghi risolvono i dettagli di frequenza più sottili; quelli più corti mediano via più rumore."
+
+msgid "Scales"
+msgstr "Scale"
+
+msgid "Scaling"
+msgstr "Scalatura"
+
+msgid "Segment length"
+msgstr "Lunghezza del segmento"
+
+msgid "Segment overlap"
+msgstr "Segment sovrapposizione"
+
+msgid "Select one or more source series."
+msgstr "Selezionare una o più serie di sorgenti."
+
+msgid "Series"
+msgstr "Serie"
+
+msgid "Signal analysis"
+msgstr "Analisi dei segnali"
+
+msgid "Smoothness. Larger makes the baseline stiffer, so it bends less to follow narrow peaks."
+msgstr "Più grande rende la linea di base più rigida, quindi si piega meno per seguire picchi stretti."
+
+msgid "Solver"
+msgstr "Sollevatore"
+
+msgid "Source"
+msgstr "Fonte"
+
+msgid "Straight line"
+msgstr "Linea retta"
+
+msgid "Subtract a spectrum's background (AsLS or rubber band)"
+msgstr "Sottrarre lo sfondo di uno spettro (AsLS o gruppo di gomma)"
+
+msgid "Taper applied to each segment before the FFT."
+msgstr "Taper applicato a ogni segmento prima della FFT."
+
+msgid "The series never crosses this level. Check the level against the data's range - a crossing no two samples straddle cannot be found from these samples."
+msgstr "La serie non attraversa mai questo livello. Controllare il livello contro la gamma dei dati - un passaggio senza due campioni straddle non può essere trovato da questi campioni."
+
+msgid "The surface never reaches this level - z stays on one side of it everywhere on the grid."
+msgstr "La superficie non raggiunge mai questo livello - z rimane su un lato di esso ovunque sulla griglia."
+
+msgid "The y value to solve for. 0 finds the zeros; any other value finds where the series crosses that level, which is the same problem shifted."
+msgstr "Il valore y da risolvere per. 0 trova gli zero; qualsiasi altro valore trova dove la serie attraversa quel livello, che è lo stesso problema spostato."
+
+msgid "This surface's points were not a complete x/y grid, so the peaks below were found on a linearly interpolated one - treat them as approximate."
+msgstr "I punti di questa superficie non erano una griglia completa x/y, quindi i picchi sottostanti sono stati trovati su uno linearemente interpolato - li trattano come approssimativi."
+
+msgid "This surface's points were not a complete x/y grid, so this level curve was traced on a linearly interpolated one - treat it as approximate."
+msgstr "I punti di questa superficie non erano una griglia completa x/y, quindi questa curva di livello è stata tracciata su una linearemente interpolata - trattarla come approssimativa."
+
+msgid "Tolerance (digits)"
+msgstr "Tolleranza (digiti)"
+
+msgid "Traced on the surface's own exact x/y grid."
+msgstr "Tracciato sulla griglia x/y della superficie."
+
+msgid "Variance share"
+msgstr "Quota di variazione"
+
+msgid "What the series is assumed to do between two points. Linear claims nothing the samples do not; the two curved options fit a smooth signal better and can overshoot a noisy one into crossings that are not there."
+msgstr "Ciò che si presume che la serie faccia tra due punti. Linear non sostiene nulla che i campioni non lo facciano; le due opzioni curve si adattano meglio ad un segnale liscio e possono superare un rumoroso in attraversamenti che non ci sono."
+
+msgid "Which turning points to look for."
+msgstr "Quali punti di svolta per cercare."
+
+msgid "Width"
+msgstr "Larghezza"
+
+msgid "Window"
+msgstr "Finestra"
+
+msgid "density: power per unit frequency. spectrum: power per segment."
+msgstr "densità: potenza per unità di frequenza. spettro: potenza per segmento."
+
+msgid "falling"
+msgstr "cadendo"
+
+msgid "level {level}"
+msgstr "Livello {level}"
+
+msgid "maximum"
+msgstr "massimo"
+
+msgid "minimum"
+msgstr "minimo"
+
+msgid "p"
+msgstr "p."
+
+msgid "rising"
+msgstr "aumento"
+
+msgid "truncated"
+msgstr "troncato"
+
+msgid "unbiased divides by the overlap at each lag; biased divides by N; none returns the raw sum of products."
+msgstr "divide imparziali per la sovrapposizione ad ogni ritardo; divide biased di N; nessuno restituisce la somma grezza dei prodotti."
+
+msgid "{count} point(s) embedded from {series} series into 2 dimensions."
+msgstr "{count} punto(i) incorporato da {series} serie in 2 dimensioni."
