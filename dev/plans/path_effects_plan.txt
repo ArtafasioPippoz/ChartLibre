@@ -1,0 +1,93 @@
+Path effects: halos, outlines, shadows and glows on lines, bars and text (2026-11-20)
+=====================================================================================
+
+What it is
+----------
+matplotlib's path effects (matplotlib.patheffects) drawn from the chart's own settings: a white halo that keeps a
+label readable over a dense plot or a map, a dark outline around a light line, a drop shadow under bars and titles,
+a soft glow, the ticked stroke that marks the forbidden side of a constraint. Today "path_effects" is only listed in
+the dictionary editor's Advanced group (app/widgets/dictionary_editor.py, _ADVANCED_KEYS), where nothing can type a
+matplotlib object, so it cannot be used at all.
+
+The model to follow is the custom dashes (app/plugin_api/charts/dashes.py): kept in the project as text, turned into
+what matplotlib draws only when the chart is drawn (kwarg_spec.resolve), chosen in a combo with a "Custom..." entry.
+
+A. The text form - a new module app/plugin_api/charts/path_effects.py
+   One string, saved as it is; effects joined by "+", drawn in that order, the artist itself last:
+
+       ""  /  "none"                     no effect (the default: the key is left out)
+       "outline(3, white)"               withStroke(linewidth=3, foreground="white") - the halo
+       "stroke(2, black)"                Stroke under the artist, then Normal - a dark edge
+       "shadow"  /  "shadow(2, -2, 0.3)" offset in points, alpha; colour optional as a 4th argument
+       "glow(8, #ffcc00)"                a few Strokes of growing width and falling alpha (matplotlib has none)
+       "ticked(45, 6, 3)"                TickedStroke(angle, length, spacing) - constraints, contour sides
+       "shadow + outline(2, white)"      combined
+
+   Functions as in dashes.py: to_matplotlib(text, artist) -> list of AbstractPathEffect, or None when the text does
+   not parse; is_custom(text); a describe(text) for tooltips. *artist* is "line", "patch" or "text": a shadow is
+   SimpleLineShadow for a line and SimplePatchShadow for a patch or text (a patch shadow on a line fills its path).
+   Lengths in points, colours as the colour fields take them (names, #hex, the theme's "C0".."C9").
+   No eval: a small parser (name, numbers, colours), so a project file cannot run code.
+
+B. Resolving - app/plugin_api/charts/kwarg_spec.py
+   A kind "path_effects" beside "linestyle", with "artist" in its meta; resolve() converts it as it converts dash
+   patterns, and drops it into *dropped* when it does not parse (a typo costs the effect, not the chart).
+   A shared spec entry PATH_EFFECTS_SPEC that renderers merge in, like the line-style entries.
+
+C. Where it is offered (each a combo of presets + "Custom...", see D)
+   1. Text first - the most useful and the cheapest:
+      chart title, figure title (suptitle), axis labels, tick labels, legend text, annotations, data labels
+      (bar values, pie percentages, contour labels), panel labels (panel_labels.py), text_lines.
+      Axis properties > Text, Figure properties > Title, Overlay text.
+   2. Series: lines, markers, bars, areas, pie wedges, box elements, error bars - Series properties > Style
+      (series_style_editors.py), one "Effect" row next to Line style. The renderer passes artist="line" or "patch".
+   3. Overlay and reference lines (overlay_properties.py), the same row.
+   4. Dictionary editor: "path_effects" leaves the Advanced group and gets the combo, so every renderer's kwargs can
+      take it, plugins included, without their own code.
+   Not offered for image, heatmap/pcolormesh and hexbin cells (one effect per cell is slow and looks wrong) - the
+   kwarg_spec entry simply is not merged there.
+
+D. The combo - app/widgets/drop_down_controls/path_effect_combo.py
+   Presets with a drawn preview icon (a short line or an "Aa" with the effect, as line_combo.py draws its icons):
+   None, Halo (white outline), Dark outline, Shadow, Glow, Halo + shadow, Ticked, Custom... (a line edit with the
+   syntax of A in its tooltip, checked as it is typed). The halo takes the figure's background colour by default,
+   so it works on a dark theme too ("outline(3, background)").
+
+E. Copy call / script / settings
+   The copied Python call and script (the "entries=" carried by the window's own choices, commit f4263872) write
+   "import matplotlib.patheffects as pe" and path_effects=[pe.withStroke(linewidth=3, foreground="white")] - real
+   matplotlib, not our text form, so the script runs without ChartLibre. Settings copy/paste keeps the text form.
+
+F. Legend, animation, export
+   - Legend handles take the series' effect (Artist.update_from copies it; checked by a test, set by hand if not).
+   - Animated charts and blitting: effects drawn every frame; no special case expected, one test frame.
+   - SVG and PDF keep the effects as vector paths; PNG at the export dpi. The SVG export of a text with a halo
+     keeps the text as text when the svg.fonttype setting says so (the stroke is a second path).
+
+G. Cost
+   Each effect draws the path again: a scatter of 100,000 points with a shadow draws 200,000. Above a threshold
+   (say 20,000 points in one collection) the effect is left out of the interactive view and kept for export, with
+   a note in the status bar, as other heavy options already do - or simply a warning; to be decided at C2.
+
+H. Themes (later, optional)
+   A theme could carry a default text halo (useful on maps and dark styles). rcParams "path.effects" cannot be
+   written in an .mplstyle, so it would be a theme setting of ours, applied through the same spec. Not in the first
+   steps.
+
+I. Tests (offscreen, the touched files only)
+   - path_effects.py: every form parses to the expected classes and values; bad text -> None; no eval reachable;
+     line vs patch shadow; "background" colour.
+   - kwarg_spec.resolve: the kind converts, a typo goes to dropped.
+   - A line chart with a halo title, an outlined series and a shadowed bar series: drawn, exported to SVG and PNG,
+     the SVG holds the extra stroke paths; the legend handle has the effect.
+   - The combo: preset -> text -> preset round trip; Custom accepts and rejects.
+   - The copied script runs in a plain matplotlib and draws the same effects.
+
+Order
+-----
+1. A + B with tests (no UI).                                  small
+2. C1 text + D the combo.                                     the visible gain: readable labels
+3. C2 series + C3 overlay lines + F legend.
+4. C4 dictionary editor + E copy call/script.
+5. G cost rule, then H themes if wanted.
+Each step a commit of its own on main; strings in English only (the user translates them).

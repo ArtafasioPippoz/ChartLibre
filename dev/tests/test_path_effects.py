@@ -1,0 +1,88 @@
+"""Path effects written as text (app/plugin_api/charts/path_effects.py) and resolved through kwarg_spec."""
+from __future__ import annotations
+
+import io
+
+import matplotlib
+
+matplotlib.use("Agg")
+
+import matplotlib.pyplot as plt
+import pytest
+from matplotlib import patheffects as pe
+from matplotlib import rc_context
+
+from app.plugin_api.charts import kwarg_spec
+from app.plugin_api.charts.path_effects import GLOW_STEPS, parse, to_matplotlib
+
+
+def _kinds(effects: list) -> list[str]:
+    return [type(effect).__name__ for effect in effects]
+
+
+@pytest.mark.parametrize("text", ["", "none", "None", "  "])
+def test_no_effect(text: str) -> None:
+    assert to_matplotlib(text) == []
+
+
+def test_defaults_fill_what_is_left_out() -> None:
+    assert parse("shadow") == [("shadow", {"dx": 2.0, "dy": -2.0, "alpha": 0.3, "color": "black"})]
+    assert parse("shadow(4)") == [("shadow", {"dx": 4.0, "dy": -2.0, "alpha": 0.3, "color": "black"})]
+    assert parse("Outline( 5 , red )") == [("outline", {"width": 5.0, "color": "red"})]
+
+
+def test_each_effect_draws_under_the_artist() -> None:
+    assert _kinds(to_matplotlib("outline(3, white)")) == ["Stroke", "Normal"]
+    assert _kinds(to_matplotlib("shadow + outline(2, white)")) == ["SimpleLineShadow", "Stroke", "Normal"]
+    assert _kinds(to_matplotlib("glow(8, gold)")) == ["Stroke"] * GLOW_STEPS + ["Normal"]
+    assert _kinds(to_matplotlib("ticked(30, 1, 6)")) == ["TickedStroke", "Normal"]
+
+
+def test_a_shadow_fills_under_a_patch_or_a_text_and_follows_a_line() -> None:
+    assert isinstance(to_matplotlib("shadow", "line")[0], pe.SimpleLineShadow)
+    assert isinstance(to_matplotlib("shadow", "patch")[0], pe.SimplePatchShadow)
+    assert isinstance(to_matplotlib("shadow", "text")[0], pe.SimplePatchShadow)
+
+
+def test_background_is_the_axes_colour_of_the_style() -> None:
+    with rc_context({"axes.facecolor": "#202020"}):
+        stroke = to_matplotlib("outline")[0]
+    assert stroke._gc["foreground"] == "#202020"
+
+
+@pytest.mark.parametrize("text", [
+    "blur(3)",                      # no such effect
+    "outline(thick, white)",        # a word where a number goes
+    "outline(3, notacolour)",       # a colour matplotlib does not know
+    "shadow(1, 2, 0.5, red, 9)",    # too many arguments
+    "shadow(1, 2, 1.5)",            # alpha above 1
+    "outline(-1)",                  # a negative width
+    "__import__('os').system('x')",  # code is never run, only refused
+    "outline(3, white) +",          # an empty effect
+])
+def test_what_does_not_parse_is_refused(text: str) -> None:
+    assert to_matplotlib(text) is None
+
+
+def test_resolve_converts_and_drops_a_typo() -> None:
+    spec = kwarg_spec.path_effects_spec("patch")
+    assert _kinds(kwarg_spec.resolve(spec, [{"path_effects": "shadow"}])["path_effects"]) == [
+        "SimplePatchShadow", "Normal"]
+    dropped: list = []
+    assert kwarg_spec.resolve(spec, [{"path_effects": "shaddow"}], dropped) == {}
+    assert dropped == [("path_effects", "shaddow", str)]
+    assert kwarg_spec.resolve(spec, [{"path_effects": "none"}]) == {}
+
+
+def test_a_chart_with_effects_draws_and_exports() -> None:
+    figure, axes = plt.subplots()
+    try:
+        axes.plot([0, 1, 2], [0, 1, 0], path_effects=to_matplotlib("glow(6) + outline(4, white)", "line"))
+        axes.bar([0, 1], [1, 2], path_effects=to_matplotlib("shadow", "patch"))
+        axes.set_title("Title", path_effects=to_matplotlib("outline(3, background)", "text"))
+        for fmt in ("png", "svg"):
+            buffer = io.BytesIO()
+            figure.savefig(buffer, format=fmt)
+            assert buffer.getvalue()
+    finally:
+        plt.close(figure)

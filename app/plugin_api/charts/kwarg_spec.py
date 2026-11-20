@@ -213,6 +213,15 @@ def resolve(
             coerced = to_matplotlib(coerced)
             if coerced is None:
                 coerced = UNCONVERTIBLE
+        if coerced is not UNCONVERTIBLE and meta.get("kind") == "path_effects":
+            # "outline(3, white) + shadow" -> the list of path effects matplotlib draws (charts.path_effects).
+            from app.plugin_api.charts.path_effects import to_matplotlib as effects
+
+            coerced = effects(str(coerced), str(meta.get("artist") or "line"))
+            if coerced is None:
+                coerced = UNCONVERTIBLE
+            elif not coerced:
+                continue  # "none": left out, as an empty value is
         if coerced is UNCONVERTIBLE:
             if dropped is not None:
                 dropped.append((name, value, meta.get("type")))
@@ -407,6 +416,22 @@ LINE_KWARGS: dict[str, dict[str, Any]] = {
         "description": "Solid, dashed, dotted or dash-dot.",
     },
 }
+
+def path_effects_spec(artist: str = "line") -> dict[str, dict[str, Any]]:
+    """The "path_effects" entry a renderer merges into its spec: kept as text ("outline(3, white)"), drawn as
+    matplotlib.patheffects on a "line", a "patch" or a "text" (charts.path_effects)."""
+    return {
+        "path_effects": {
+            "default": None,
+            "type": str,
+            "kind": "path_effects",
+            "artist": artist,
+            "group": "Advanced",
+            "description": "Outline, shadow or glow drawn under the line, shape or text, e.g. outline(3, white) "
+                           "or shadow + outline(2, white).",
+        }
+    }
+
 
 #: Patch keywords, for renderers drawing bars, bands, wedges and boxes.
 PATCH_KWARGS: dict[str, dict[str, Any]] = {
