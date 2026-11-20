@@ -110,3 +110,40 @@ def test_typing_a_pattern_leaves_the_standard_list_as_it_was(qapp):
     assert combo.current_linestyle() == "..--" and chooser._shown.currentData() == "--"
     chooser._buttons["standard"].setChecked(True)
     assert combo.current_linestyle() == "--"
+
+
+def _bars(repo, chart: str, style: dict):
+    repo.import_dataframe(pd.DataFrame({"c": ["a", "b", "c"], "v": [2500.0, 1000.0, 0.0]}), table_name="d",
+                          normalize_columns=False)
+    figure_id = int(repo.create_figure_descriptor(name="F"))
+    axis_id = int(repo.create_axis_descriptor(figure_id=figure_id, axis_index=0, chart_type=chart, title="t",
+                                              x_label="x", y_label="y", options={}))
+    repo.create_series_descriptor(axis_id=axis_id, series_index=0, name="people",
+                                  sql_query="SELECT c AS X, v AS Y FROM d", roles={"X": "X", "Y": "Y"},
+                                  style={"color": "#1f77b4", **style})
+    figure = Figure()
+    render_figure_from_descriptor(figure=figure, descriptor=repo.load_figure_descriptor(figure_id), repo=repo)
+    return figure
+
+
+@pytest.mark.parametrize("chart", ["Bar Chart", "Horizontal Bar Chart"])
+def test_bars_drawn_as_a_pictogram_with_the_last_picture_cut(qapp, repo, chart):
+    repo.add_image("dot", SVG)
+    figure = _bars(repo, chart, {"bar_picture": "dot", "picture_unit": 1000})
+    ax = figure.axes[0]
+    assert len(ax.images) == 3 + 1  # 2.5 pictures and 1, the zero bar nothing
+    assert [getattr(image, "_chartlibre_cut", 1.0) for image in ax.images].count(0.5) == 1  # only the half one is cut
+    assert not any(patch.get_visible() for patch in ax.patches)  # the plain bars are gone, only their limits stay
+    value_limit = ax.get_xlim()[1] if chart.startswith("Horizontal") else ax.get_ylim()[1]
+    assert value_limit >= 2500
+    assert "1 = 1000" in [text.get_text() for text in ax.get_legend().get_texts()][0]
+    figure.savefig(__import__("io").BytesIO(), format="svg")
+    figure.savefig(__import__("io").BytesIO(), format="png")
+
+
+def test_bars_stretched_and_a_missing_picture_leaves_plain_bars(qapp, repo):
+    repo.add_image("dot", SVG)
+    stretched = _bars(repo, "Bar Chart", {"bar_picture": "dot"}).axes[0]
+    assert len(stretched.images) == 2 and stretched.get_aspect() == "auto"
+    plain = _bars(repo, "Bar Chart", {"bar_picture": "nothing"}).axes[0]
+    assert len(plain.images) == 0 and all(patch.get_visible() for patch in plain.patches)

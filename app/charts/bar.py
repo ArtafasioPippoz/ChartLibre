@@ -173,6 +173,22 @@ class BarAxisRenderer(BaseAxisRenderer):
                 "group": "Error bars",
                 "description": "Scalar vertical error bar, when no YError role column is present.",
             },
+            "bar_picture": {
+                "default": "",
+                "type": str,
+                "group": "Picture",
+                "description": "The name of a picture of the project (Project > Pictures) drawn instead of the "
+                               "plain bars: stretched over each bar, or as a pictogram with the unit below.",
+            },
+            "picture_unit": {
+                "default": 0.0,
+                "type": float,
+                "min": 0.0,
+                "decimals": 4,
+                "group": "Picture",
+                "description": "0 stretches one picture over each bar. A number N draws a pictogram: one picture "
+                               "stands for N, the last one cut to the fraction.",
+            },
             "label": {
                 "default": None,
                 "type": str,
@@ -302,6 +318,10 @@ class BarAxisRenderer(BaseAxisRenderer):
         ) + offset
         values = to_numbers(column_of(df, "Y")).to_numpy(dtype=float)
 
+        picture = str(self.opt("bar_picture", merged_options) or "").strip()
+        if picture:
+            kwargs["visible"] = False  # the bars stay, unseen: they keep the axis limits; the pictures replace them
+            label_for_legend, label = label, "_nolegend_"
         if self.Orientation == "horizontal":
             left = df["Left"].to_numpy(dtype=float) if "Left" in df.columns else self.opt("left", merged_options)
             xerr = df["XError"].to_numpy(dtype=float) if "XError" in df.columns else self.opt("xerr", merged_options)
@@ -310,7 +330,29 @@ class BarAxisRenderer(BaseAxisRenderer):
             bottom = df["Bottom"].to_numpy(dtype=float) if "Bottom" in df.columns else self.opt("bottom", merged_options)
             yerr = df["YError"].to_numpy(dtype=float) if "YError" in df.columns else self.opt("yerr", merged_options)
             ax.bar(positions, values, width=bar_thickness, bottom=bottom, yerr=yerr, label=label, **kwargs)
+        if picture:
+            self._draw_pictures(ax, picture, positions, values, bar_thickness, merged_options, kwargs,
+                                label_for_legend if show_in_legend else "",
+                                left if self.Orientation == "horizontal" else bottom)
 
+
+    def _draw_pictures(self, ax: Any, name: str, positions: np.ndarray, values: np.ndarray, thickness: float,
+                       options: dict[str, Any], kwargs: dict[str, Any], label: str, baseline: Any) -> None:
+        """The bars as the project's picture; plain bars are shown when there is no such picture."""
+        from app.plugin_api.charts import picture_markers
+
+        unit = float(str(self.opt("picture_unit", options) or 0))
+        colour = kwargs.get("color")
+        if not isinstance(colour, str):
+            colour = None  # one colour per bar (a colour role): the picture keeps its own
+        if unit > 0 and label:
+            label = f"{label} (1 = {unit:g})"
+        base = 0.0 if baseline is None else baseline
+        if not picture_markers.draw_bars(ax, positions, values, thickness, name=name, unit=unit,
+                                         horizontal=self.Orientation == "horizontal", baseline=base, colour=colour,
+                                         label=label):
+            for patch in ax.patches:
+                patch.set_visible(True)
 
     def _series_label(
         self,

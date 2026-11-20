@@ -136,3 +136,57 @@ def draw(ax, xs: Any, ys: Any, marker: str, *, size_points: float | None, colour
     if label:  # the legend shows the series' colour as a square: a picture has no legend handle of its own
         ax.add_line(Line2D([], [], linestyle="", marker="s", color=colour or "0.4", label=label))
     return True
+
+
+def draw_bars(ax, positions: Any, values: Any, thickness: float, *, name: str, unit: float = 0.0,
+              horizontal: bool = False, baseline: Any = 0.0, colour: Any = None, zorder: float = 2.0,
+              label: str = "") -> bool:
+    """Bars drawn as the picture *name*: False when the project has no such picture.
+
+    *unit* 0 stretches one picture over each bar. *unit* N > 0 makes a pictogram: one picture stands for N, as many
+    as the value holds, the last one cut to the fraction - 2.5 pictures of 1000 for 2,500. The bars themselves
+    (invisible, they keep the axis limits) are the caller's.
+    """
+    from matplotlib.image import AxesImage
+    from matplotlib.lines import Line2D
+    from matplotlib.patches import Rectangle
+
+    from app.logs.logger import applogger
+
+    marker = PREFIX + name
+    array = picture(marker, 48.0, ax.figure.dpi, colour)
+    if array is None:
+        applogger.warning("Bar picture %r: no such picture in the project; plain bars are drawn.", name)
+        return False
+    positions, values = np.asarray(positions, dtype=float), np.asarray(values, dtype=float)
+    bases = np.broadcast_to(np.asarray(baseline, dtype=float), values.shape)
+    for centre, value, base in zip(positions, values, bases, strict=True):
+        if not (np.isfinite(centre) and np.isfinite(value) and value != 0):
+            continue
+        low, high = centre - thickness / 2.0, centre + thickness / 2.0
+        sign = 1.0 if value > 0 else -1.0
+        if unit > 0:
+            slots = abs(value) / unit
+            pieces = [(base + sign * k * unit, base + sign * (k + 1) * unit, min(1.0, slots - k))
+                      for k in range(int(np.ceil(slots - 1e-9)))]
+        else:
+            pieces = [(base, base + value, 1.0)]
+        for start, end, shown in pieces:
+            extent = (start, end, low, high) if horizontal else (low, high, start, end)
+            image = AxesImage(ax, origin="upper", interpolation="antialiased", zorder=zorder)
+            image.set_data(array[:, ::-1] if (horizontal and end < start) else array)
+            ax.add_image(image)
+            image.set_extent(extent)
+            if shown < 1.0:  # the last picture, cut to the fraction of a unit
+                span = (end - start) * shown
+                cut = (Rectangle((start, low), span, thickness) if horizontal
+                       else Rectangle((low, start), thickness, span))
+                cut.set_transform(ax.transData)
+                image.set_clip_path(cut)
+                image._chartlibre_cut = shown
+    ax.set_aspect("auto")  # an image asks for equal aspect and its own limits: back to the bars'
+    ax.relim()
+    ax.autoscale_view()
+    if label:
+        ax.add_line(Line2D([], [], linestyle="", marker="s", color=colour or "0.4", label=label))
+    return True

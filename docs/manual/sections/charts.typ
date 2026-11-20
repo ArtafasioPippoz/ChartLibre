@@ -110,6 +110,8 @@ One bar per row, of height `Y`, at category `X` (or at the row number when there
 #mpl("Axes.bar", "Axes.barh")
 #example("chart_bar_chart", "chart_horizontal_bar_chart")
 #use[Comparing a quantity across categories: sales per region, counts per class, means per group.]
+*Pictures as bars.* *Bar picture* names a picture of the project (see *Pictures*): it is stretched over each bar. *Picture unit* N makes a pictogram instead - one picture stands for N, as many as the value holds, the last one cut to the fraction (2,500 people at 1,000 a picture: two and a half), and the legend says what one picture stands for. A single-colour icon takes the series' colour; a multicolour one keeps its own. A name the project does not have leaves the plain bars.
+
 Key settings: *width* (or *height*) of each group, *align*, *hatch*, *log* value axis, and three settings for crowded category axes: *max tick labels*, *tick label rotation*, *tick label font size* (each with an automatic mode).
 
 === Broken Bar and Broken Bar (Vertical)
