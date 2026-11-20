@@ -270,3 +270,56 @@ def test_a_series_with_too_many_points_is_drawn_without_its_effect(monkeypatch) 
         assert _kinds(line.get_path_effects()) == ["SimpleLineShadow", "Normal"]
     finally:
         plt.close(figure)
+
+
+# ----------------------------------------------------------------------
+# Step 5 (H): the style's own text effect
+# ----------------------------------------------------------------------
+def test_a_style_keeps_its_text_effect_in_a_comment_line() -> None:
+    from app.plugin_api.charts.path_effects import style_line, style_text_effect
+
+    text = "axes.facecolor: 202020\n#  chartlibre.text_effect :  outline(3, background)\nlines.linewidth: 2\n"
+    assert style_text_effect(text) == "outline(3, background)"
+    assert style_text_effect("# chartlibre.text_effect: blur\n") == ""  # one that does not parse
+    assert style_text_effect("axes.grid: True\n") == ""
+    assert style_line("shadow") == "# chartlibre.text_effect: shadow\n"
+    assert style_line("") == style_line("none") == ""
+    assert style_text_effect(style_line("glow(4, gold)")) == "glow(4, gold)"
+
+
+def test_a_figure_takes_its_styles_effect_unless_it_says_none() -> None:
+    from types import SimpleNamespace
+
+    from app.plugin_api.charts.render_figure import _apply_text_effects
+
+    style = "# chartlibre.text_effect: shadow\naxes.grid: True\n"
+    for own, expected in (("", ["SimplePatchShadow", "Normal"]), ("none", []),
+                          ("outline(2, white)", ["Stroke", "Normal"])):
+        figure, ax = plt.subplots()
+        try:
+            ax.set_title("t")
+            descriptor = SimpleNamespace(options={"mpl_style": style, "text_effect": own})
+            _apply_text_effects(figure, descriptor, [SimpleNamespace(id=1, options={})], {1: ax})
+            assert _kinds(ax.title.get_path_effects()) == expected, own
+        finally:
+            plt.close(figure)
+
+
+def test_the_style_editor_reads_and_writes_the_effect(qapp) -> None:
+    from pathlib import Path
+
+    from app.dialogs.edit_mpl_styles_dialog import TEXT_EFFECT_KEY, MplStyleEditorDialog
+
+    dialog = MplStyleEditorDialog(None, initial_style_text="axes.grid: True\n# chartlibre.text_effect: shadow\n")
+    try:
+        assert dialog._text_effect() == "shadow"
+        assert dialog._param_schema[TEXT_EFFECT_KEY]["kind"] == "path_effects"
+        overrides, invalid = dialog._collect_overrides()
+        assert TEXT_EFFECT_KEY not in overrides and not invalid  # not an rcParam, never validated as one
+        path = Path(dialog._write_temp_style_file(dialog._current_merged_style()))
+        try:
+            assert "# chartlibre.text_effect: shadow\n" in path.read_text(encoding="utf-8")
+        finally:
+            path.unlink(missing_ok=True)
+    finally:
+        dialog.close()

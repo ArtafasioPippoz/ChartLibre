@@ -89,7 +89,9 @@ Done
 1. A + B (ecc09d88). 2. C1 text + D combo (c1386755). 3. C2 series (lines, points, areas, surfaces, bars, pie
 wedges) + C3 reference lines + F legend (515abdee). 4. C4 dictionary editor (kind "path_effects", group
 Appearance); E needs nothing. 5. G: a series drawing more than path_effect_max_points (50,000) points
-is drawn without its effect, with a log line - downsampling keeps series far below it. Left: H themes; series effects for renderers that do not tag their artists
+is drawn without its effect, with a log line - downsampling keeps series far below it. H: a style carries
+a text effect as the comment line "# chartlibre.text_effect: ...", edited in the style editor's text group;
+a figure's Text effect starts on "Style's", and "None" takes it away. Left: series effects for renderers that do not tag their artists
 (histogram, box...).
 
 Order

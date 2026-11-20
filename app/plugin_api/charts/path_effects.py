@@ -127,3 +127,23 @@ def to_matplotlib(text: str, artist: str = "line") -> list[Any] | None:
                                          spacing=arguments["spacing"]))
     drawn.append(pe.Normal())
     return drawn
+
+
+#: The style sheet's own text effect (dev/plans/path_effects_plan.txt, H). An .mplstyle holds rcParams only, and
+#: path effects are not one, so it is kept as a comment matplotlib skips: "# chartlibre.text_effect: outline(3)".
+STYLE_KEY = "chartlibre.text_effect"
+
+_STYLE_LINE = re.compile(r"^[ \t]*#[ \t]*chartlibre\.text_effect[ \t]*:[ \t]*(.*?)[ \t]*$", re.MULTILINE)
+
+
+def style_text_effect(style_text: str) -> str:
+    """The text effect a style's text carries ("" for none, or one that does not parse)."""
+    match = _STYLE_LINE.search(style_text or "") if isinstance(style_text, str) else None
+    effect = match.group(1) if match else ""
+    return effect if effect and is_valid(effect) else ""
+
+
+def style_line(effect: str) -> str:
+    """The line a style file keeps *effect* in ("" for none)."""
+    effect = (effect or "").strip()
+    return f"# {STYLE_KEY}: {effect}\n" if effect and effect.lower() not in NONE else ""

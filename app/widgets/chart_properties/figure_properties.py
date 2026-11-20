@@ -602,8 +602,9 @@ class FigurePropertiesWidget(BaseProperties):
         self._font_scale = FontScaleControl(opts_section)
         fit_spin_width(self._font_scale)
         self._font_scale.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        # The halo, outline or shadow of every text of the figure; an axis can have its own.
-        self._text_effect = PathEffectCombo(opts_section)
+        # The halo, outline or shadow of every text of the figure; an axis can have its own. "Style's" takes the
+        # one the style carries (none, for most), "None" none even then.
+        self._text_effect = PathEffectCombo(opts_section, inherit=_("Style's"))
 
         # How the panel shows this figure - it used to be three checkable
         # entries in ChartPanel's own context menu, kept in sync by comparing

@@ -63,13 +63,8 @@ def _figure_style_context(
     LaTeX-dependent entries are stripped when no TeX installation is available,
     otherwise every text draw in the figure would raise.
     """
-    options = fig_desc.options if isinstance(fig_desc.options, dict) else {}
-    style_text = options.get("mpl_style")
-    if not isinstance(style_text, str) or not style_text.strip():
-        # A figure with no style of its own takes the one chosen in Settings.
-        style_text = default_style_text()
-
-    if not isinstance(style_text, str) or not style_text.strip():
+    style_text = _figure_style_text(fig_desc)
+    if not style_text.strip():
         yield
         return
 
@@ -91,6 +86,16 @@ def _figure_style_context(
     finally:
         if temp_path is not None:
             temp_path.unlink(missing_ok=True)
+
+
+def _figure_style_text(fig_desc: FigureDescriptor) -> str:
+    """The .mplstyle text a figure is drawn with: its own, or the one chosen in Settings."""
+    options = fig_desc.options if isinstance(fig_desc.options, dict) else {}
+    style_text = options.get("mpl_style")
+    if not isinstance(style_text, str) or not style_text.strip():
+        # A figure with no style of its own takes the one chosen in Settings.
+        style_text = default_style_text()
+    return style_text if isinstance(style_text, str) else ""
 
 
 def default_style_text() -> str:
@@ -405,13 +410,14 @@ def _apply_text_effects(
     """The halo, outline, shadow or glow of the texts (dev/plans/path_effects_plan.txt, C1).
 
     The figure's "text_effect" is every text's - its title's, its legends', and each axis' that has none of its
-    own -; an axis' "text_effect" replaces it there ("none" takes it away). A tick label made later, when the view
+    own -; an axis' "text_effect" replaces it there ("none" takes it away). A figure with none of its own takes its
+    style's ("# chartlibre.text_effect: ..." in the .mplstyle text, H); "none" takes that away too. A tick label made later, when the view
     is zoomed, copies the first tick's effect (matplotlib's Axis._copy_tick_props), so zooming keeps it.
     """
-    from app.plugin_api.charts.path_effects import to_matplotlib
+    from app.plugin_api.charts.path_effects import style_text_effect, to_matplotlib
 
     options = descriptor.options if isinstance(descriptor.options, dict) else {}
-    figure_text = str(options.get("text_effect") or "").strip()
+    figure_text = str(options.get("text_effect") or "").strip() or style_text_effect(_figure_style_text(descriptor))
     figure_effects = to_matplotlib(figure_text, "text") if figure_text else []
     if figure_effects is None:
         applogger.warning("Text effect %r of the figure is not one that can be drawn: left out.", figure_text)
