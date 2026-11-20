@@ -213,3 +213,33 @@ def test_a_reference_line_draws_its_effect() -> None:
         assert refused.get_path_effects() == []  # drawn, without the effect
     finally:
         plt.close(figure)
+
+
+# ----------------------------------------------------------------------
+# Step 4: the dictionary editor
+# ----------------------------------------------------------------------
+def test_the_dictionary_editor_offers_the_effect_combo(qapp) -> None:
+    from PySide6.QtCore import Qt
+    from PySide6.QtWidgets import QStyleOptionViewItem
+
+    from app.widgets.dictionary_editor import DictEditorPanel, DictValueDelegate, _group_for_key, _kind_for_key
+    from app.widgets.drop_down_controls.path_effect_combo import PathEffectCombo
+
+    spec = kwarg_spec.path_effects_spec("patch")
+    assert _kind_for_key("path_effects", {}) == "path_effects"  # a plugin's key, with no spec of its own
+    assert _group_for_key("path_effects", spec["path_effects"], "path_effects") == "Appearance"
+
+    panel = DictEditorPanel()
+    panel.set_config(spec)
+    panel.set_values({"path_effects": "shadow + outline(2, white)"})
+    index = panel.tree.indexFromItem(panel._key_items["path_effects"], 1)
+    delegate = DictValueDelegate(panel)
+    editor = delegate.createEditor(panel.tree.viewport(), QStyleOptionViewItem(), index)
+    assert isinstance(editor, PathEffectCombo)
+    delegate.setEditorData(editor, index)
+    assert editor.current_effect() == "shadow + outline(2, white)"
+    editor.set_current_effect("glow(6)")
+    delegate.setModelData(editor, panel.tree.model(), index)
+    assert panel.value_for_key("path_effects") == "glow(6)"
+    assert not panel._key_items["path_effects"].icon(1).isNull()  # its preview
+    assert index.data(Qt.ItemDataRole.DisplayRole)

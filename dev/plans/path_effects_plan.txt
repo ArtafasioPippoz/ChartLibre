@@ -53,10 +53,11 @@ D. The combo - app/widgets/drop_down_controls/path_effect_combo.py
    syntax of A in its tooltip, checked as it is typed). The halo takes the figure's background colour by default,
    so it works on a dark theme too ("outline(3, background)").
 
-E. Copy call / script / settings
-   The copied Python call and script (the "entries=" carried by the window's own choices, commit f4263872) write
-   "import matplotlib.patheffects as pe" and path_effects=[pe.withStroke(linewidth=3, foreground="white")] - real
-   matplotlib, not our text form, so the script runs without ChartLibre. Settings copy/paste keeps the text form.
+E. Copy call / script / settings - nothing to do (found at step 4, 2026-11-21)
+   The copied call and script (commit f4263872) are the analysis operations', not the charts': no chart is written
+   out as a matplotlib script. A chart is drawn again from the project, which keeps the effect as text, and
+   settings copy/paste carry the text too. Should a chart script ever be written, it writes
+   "import matplotlib.patheffects as pe" and the real classes, not the text form.
 
 F. Legend, animation, export
    - Legend handles take the series' effect (Artist.update_from copies it; checked by a test, set by hand if not).
@@ -82,6 +83,13 @@ I. Tests (offscreen, the touched files only)
      the SVG holds the extra stroke paths; the legend handle has the effect.
    - The combo: preset -> text -> preset round trip; Custom accepts and rejects.
    - The copied script runs in a plain matplotlib and draws the same effects.
+
+Done
+----
+1. A + B (ecc09d88). 2. C1 text + D combo (c1386755). 3. C2 series (lines, points, areas, surfaces, bars, pie
+wedges) + C3 reference lines + F legend (515abdee). 4. C4 dictionary editor (kind "path_effects", group
+Appearance); E needs nothing. Left: G cost, H themes; series effects for renderers that do not tag their artists
+(histogram, box...).
 
 Order
 -----

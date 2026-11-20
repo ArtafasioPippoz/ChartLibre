@@ -426,7 +426,7 @@ def path_effects_spec(artist: str = "line") -> dict[str, dict[str, Any]]:
             "type": str,
             "kind": "path_effects",
             "artist": artist,
-            "group": "Advanced",
+            "group": "Appearance",
             "description": "Outline, shadow or glow drawn under the line, shape or text, e.g. outline(3, white) "
                            "or shadow + outline(2, white).",
         }

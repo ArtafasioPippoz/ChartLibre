@@ -52,6 +52,7 @@ from app.widgets.drop_down_controls.hatch_combo import (
     HatchStyleCombo,
     hatch_preview_icon,
 )
+from app.widgets.drop_down_controls.path_effect_combo import PathEffectCombo, path_effect_preview_icon
 from app.widgets.drop_down_controls.line_combo import (
     LineStyleCombo,
     line_style_preview_icon,
@@ -71,6 +72,8 @@ _KIND_BY_EXACT_KEY: dict[str, str] = {
     # Line and marker helpers.
     "linestyle": "linestyle", "ls": "linestyle", "marker": "marker",
     "hatch": "hatch",
+    # An outline, a shadow or a glow, kept as text (charts.path_effects).
+    "path_effects": "path_effects",
     # Matplotlib's boxplot flier symbol: a marker under another name.
     "sym": "marker",
     # A colormap: a renderer's cmap, and the style sheet's default one.
@@ -151,7 +154,7 @@ _GROUP_ORDER = [
 #: A renderer can send its own there with "advanced": True in the key's spec.
 _ADVANCED_GROUP = "Advanced"
 _ADVANCED_KEYS = frozenset({"animated", "clip_on", "in_layout", "snap", "gid", "url", "rasterized", "picker",
-                            "sketch_params", "path_effects", "agg_filter", "transform", "clip_path", "clip_box"})
+                            "sketch_params", "agg_filter", "transform", "clip_path", "clip_box"})
 _MIN_ROW_HEIGHT = 30
 _EDITOR_MIN_HEIGHT = 26
 _DEFAULT_PROPERTY_COLUMN_WIDTH = 200
@@ -281,6 +284,8 @@ class DictValueDelegate(QStyledItemDelegate):
             )
         elif kind == "linestyle":
             editor = LineStyleCombo(parent)
+        elif kind == "path_effects":
+            editor = PathEffectCombo(parent)
         elif kind == "marker":
             editor = MarkerStyleCombo(parent)
         elif kind == "hatch":
@@ -362,6 +367,10 @@ class DictValueDelegate(QStyledItemDelegate):
         if isinstance(editor, LineStyleCombo):
             editor.set_current_linestyle(text)
             return
+        if isinstance(editor, PathEffectCombo):
+            if not editor.set_current_effect(text):
+                editor.set_current_effect("")
+            return
         if isinstance(editor, MarkerStyleCombo):
             editor.set_current_marker(text)
             return
@@ -420,6 +429,8 @@ class DictValueDelegate(QStyledItemDelegate):
             )
         elif isinstance(editor, LineStyleCombo):
             value = editor.current_linestyle()
+        elif isinstance(editor, PathEffectCombo):
+            value = editor.current_effect() or None
         elif isinstance(editor, MarkerStyleCombo):
             value = editor.current_marker()
         elif isinstance(editor, HatchStyleCombo):
@@ -675,6 +686,8 @@ class DictEditorPanel(QWidget):
             return color_preview_icon(text)
         if kind == "linestyle":
             return line_style_preview_icon(text)
+        if kind == "path_effects":
+            return path_effect_preview_icon(text)
         if kind == "marker":
             return marker_style_preview_icon(text)
         if kind == "colormap":
@@ -721,7 +734,7 @@ class DictEditorPanel(QWidget):
         kind = self.kind_for_key(key_str)
         if kind in {
             "fontlist", "linestyle", "marker", "hatch",
-            "enum", "joinstyle", "capstyle", "loc",
+            "enum", "joinstyle", "capstyle", "loc", "path_effects",
         }:
             QTimer.singleShot(0, lambda current=item: self._open_combo_editor(current))
         elif kind == "color":
