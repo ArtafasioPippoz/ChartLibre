@@ -177,3 +177,24 @@ def test_a_bar_series_offers_the_projects_pictures(qapp, repo):
     assert editor.values() == {"bar_picture": None, "picture_unit": None} and not editor.unit.isEnabled()
     widget._load_series_descriptor(SimpleNamespace(id=axes["Scatter Plot"], options={}, sql_query=""))
     assert widget._groups[3].isHidden()  # a scatter's series are drawn as markers, not bars
+
+
+def test_a_column_names_the_picture_of_each_point(qapp, repo):
+    repo.add_image("dot", SVG)
+    repo.add_image("ring", SVG.replace(b"fill=", b'stroke="#000" stroke-width="1" fill-opacity="0" fill='))
+    repo.import_dataframe(pd.DataFrame({"a": np.arange(6.0), "b": np.arange(6.0),
+                                        "kind": ["dot", "ring", "dot", "ring", "dot", "nothing"]}),
+                          table_name="d", normalize_columns=False)
+    figure_id = int(repo.create_figure_descriptor(name="F"))
+    axis_id = int(repo.create_axis_descriptor(figure_id=figure_id, axis_index=0, chart_type="Scatter Plot", title="t",
+                                              x_label="x", y_label="y", options={}))
+    repo.create_series_descriptor(axis_id=axis_id, series_index=0, name="s",
+                                  sql_query="SELECT a AS x, b AS y, kind AS picture FROM d",
+                                  roles={"x": "x", "y": "y", "picture": "picture"}, style={"color": "#d62728"})
+    figure = Figure()
+    render_figure_from_descriptor(figure=figure, descriptor=repo.load_figure_descriptor(figure_id), repo=repo)
+    ax = figure.axes[0]
+    boxes = [a for a in ax.get_children() if isinstance(a, AnnotationBbox)]
+    assert sorted(box._chartlibre_picture for box in boxes) == ["image:dot"] * 3 + ["image:ring"] * 2
+    assert len(ax.collections) == 1  # the point whose picture the project lacks is an ordinary marker
+    figure.savefig(__import__("io").BytesIO(), format="svg")

@@ -65,6 +65,8 @@ class ScatterAxisRenderer(BaseAxisRenderer):
     OptionalRoles = [
         "color",
         "size",
+        # A column naming, for each point, a picture of the project to draw it as (Project > Pictures).
+        "picture",
         # Error bars: one column for a symmetric half-width, or a low/high pair
         # for an asymmetric interval.  See BaseAxisRenderer.error_values.
         "xerr",
@@ -319,6 +321,8 @@ class ScatterAxisRenderer(BaseAxisRenderer):
             color_values, color_is_discrete = self._point_colors(sd, style, series_index, mask)
             size_values = to_numbers(column_of(sd.df, 'size'))[mask].to_numpy(dtype=float) if 'size' in sd.df.columns else None
 
+            picture_values = (sd.df["picture"][mask].astype(str).to_numpy() if "picture" in sd.df.columns else None)
+
             # Optional sort by X ascending.
             order = np.arange(x_values.size)
             if bool(style.get("sort_x", False)):
@@ -329,6 +333,8 @@ class ScatterAxisRenderer(BaseAxisRenderer):
                     color_values = color_values[order]
                 if size_values is not None:
                     size_values = size_values[order]
+                if picture_values is not None:
+                    picture_values = picture_values[order]
 
             show_in_legend = bool(style.get("show_in_legend", True))
             series_label = self._series_label(sd, style, options)
@@ -360,7 +366,7 @@ class ScatterAxisRenderer(BaseAxisRenderer):
                 label = series_label if show_in_legend and series_label and not has_line else None
                 legend_handles_found |= self._draw_markers(
                     ax, sd, style, options, base_kwargs, draw_kwargs, x_values, y_values,
-                    marker_style, color_values, color_is_discrete, size_values, flat_color, label)
+                    marker_style, color_values, color_is_discrete, size_values, flat_color, label, picture_values)
 
             if has_line:
                 label = series_label if show_in_legend and series_label else None
@@ -481,10 +487,34 @@ class ScatterAxisRenderer(BaseAxisRenderer):
     def _draw_markers(self, ax, sd: SeriesData, style: dict, options: dict, base_kwargs: dict, draw_kwargs: dict,
                       x_values: np.ndarray, y_values: np.ndarray, marker_style: Any,
                       color_values: np.ndarray | None, color_is_discrete: bool, size_values: np.ndarray | None,
-                      flat_color: str, label: str | None) -> bool:
+                      flat_color: str, label: str | None, picture_values: np.ndarray | None = None) -> bool:
         """The series' markers; True when they are in the legend."""
         flat_color = str(style.get("markercolor") or "").strip() or flat_color  # the markers' own colour
         from app.plugin_api.charts import picture_markers
+
+        if picture_values is not None:
+            # A column names the picture of each point: every name drawn in one go, the points whose name the
+            # project does not have keep the series' own marker.
+            from app.charts.time_series import _marker_every
+
+            size = style.get("markersize") or base_kwargs.get("markersize")
+            every = _marker_every(style.get("markevery"))
+            drawn = np.zeros(len(picture_values), dtype=bool)
+            in_legend = False
+            for name in dict.fromkeys(picture_values.tolist()):
+                at = np.flatnonzero(picture_values == name)[::every]
+                if name and picture_markers.draw(ax, x_values[at], y_values[at], picture_markers.PREFIX + name,
+                                                 size_points=size, colour=flat_color,
+                                                 zorder=float(style.get("zorder") or 2.5),
+                                                 label=(label or "") if not in_legend else ""):
+                    drawn[picture_values == name] = True
+                    in_legend = in_legend or bool(label)
+            if drawn.all():
+                return in_legend
+            keep = ~drawn
+            x_values, y_values = x_values[keep], y_values[keep]
+            color_values = color_values[keep] if color_values is not None else None
+            size_values = size_values[keep] if size_values is not None else None
 
         if picture_markers.is_picture(marker_style):
             from app.charts.time_series import _marker_every

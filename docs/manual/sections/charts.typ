@@ -90,10 +90,11 @@ Charts of one quantity against another: the everyday x/y family.
 
 === Scatter Plot
 One mark per row at (x, y). Optional columns colour each point (`color`: numbers through a colormap, integers as categories) and size it (`size`). The basic chart for two measured quantities, and the one most data operations add their results to.
-#roles[`x`, `y`][`color`, `size`, `xerr`, `yerr`, `xerr_low`, `xerr_high`, `yerr_low`, `yerr_high`]
+#roles[`x`, `y`][`color`, `size`, `picture`, `xerr`, `yerr`, `xerr_low`, `xerr_high`, `yerr_low`, `yerr_high`]
 #mpl("Axes.scatter", "Axes.errorbar")
 #example("chart_scatter_plot")
 #use[Looking for a relationship between two measurements, spotting clusters and outliers, comparing data with a fitted curve.]
+A `picture` column names, for each point, a picture of the project (see *Pictures*) to draw it as - a flag per country, an icon per species; a point whose name the project does not have keeps the ordinary marker. The marker size sets their size; *Marker > Picture* draws all the points with one picture.
 Key settings: marker shape and size, the shared *trend line*, *confidence ellipse* and *error bar* settings described above.
 
 === Time Series
