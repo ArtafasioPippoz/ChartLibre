@@ -1,0 +1,147 @@
+Random data: generate samples with numpy.random, draw them, test them (2026-11-21)
+===================================================================================
+
+What it is
+----------
+A data operation that writes a table of random numbers drawn from a chosen distribution (numpy.random.Generator),
+in the five layouts below, then draws the right chart and reports whether the numbers behave as they should:
+random? normal? the distribution that was asked for? independent from one column to another?
+Useful to teach, to build a test table, and to see what "random" looks like before judging real data.
+
+What already exists (nothing of this is rewritten)
+--------------------------------------------------
+- app/analysis/statistics.py: normality_tests (Shapiro, D'Agostino, Jarque-Bera, KS, Anderson), randomness_tests
+  (runs, turning points, Durbin-Watson, Ljung-Box).
+- app/analysis/normality.py ("Is it normal?"), distribution.py (quantiles, moments), diagnostics.py (Q-Q, P-P).
+- Charts: histogram, ecdf, probability, box, scatter, hist2d, joint, pair_plot, surface, contour, heatmap.
+- app/analysis/function_plot.py: build_range (linspace/logspace) and evaluate_surface (the square grid) - the
+  linspace layouts reuse them.
+- The pattern to follow: a Function-like data operation (app/data_operations/function_dialog.py: Name, Description,
+  Keywords, Goals, writes a table through TableResult) with its engine kept free of Qt (R-01).
+So the new work is the generator, one dialog, one combined report, and the few tests that are missing.
+
+A. Engine - app/analysis/random_data.py (no Qt, no logging)
+   - A registry of distributions: key, label, parameters (name, default, valid range), numpy call, scipy.stats twin
+     for the theory (pdf, cdf, mean, variance, skewness, kurtosis).
+       continuous: normal, uniform, exponential, lognormal, gamma, beta, chi-square, Student t, Weibull, Laplace,
+                   logistic, triangular, Cauchy (no mean - the moments test says so, not a crash)
+       discrete:   integers (uniform), binomial, Poisson, geometric
+   - generate(layout, spec, n, seed) -> DataFrame. One np.random.default_rng(seed) for the whole table, columns drawn
+     in order, so the same seed gives the same table. Seed empty = fresh entropy, and the seed used is written to the
+     report so any run can be repeated.
+   - Layouts (the five asked for):
+       1. "X"          random X
+       2. "X, Y"       random X, random Y; independent by default, optional correlation r (multivariate normal)
+       3. "X, Y, Z"    three random columns; optional correlation matrix (collapsed behind "Correlated...")
+       4. "grid X, Y; random Z"   X and Y are linspace (nx by ny, meshgrid, as evaluate_surface), Z is random;
+                       optional "+ f(x, y)" taken from the Library/Expression of the Function dialog, so Z = f + noise
+       5. "linspace X; random Y"  X is linspace (From, To, N), Y is random; optional trend a + b X, so Y = trend + noise
+   - Each column has its own distribution, so X can be normal and Y exponential.
+   - Limits: N up to 1,000,000 (the grid: nx * ny up to the same); a refusal in words above that.
+
+B. Checks - app/analysis/random_check.py (builds on statistics.py, adds what is missing)
+   Per column
+     1. Fit to the distribution asked for: KS and Anderson against the generating parameters (known, so no
+        Lilliefors correction), plus a chi-square on equal-probability bins for discrete ones.
+     2. Moments against theory: mean, sd, skewness, kurtosis with the sample value, the theoretical one and a
+        z-score (standard errors from the sample size); Cauchy and others with no moment are marked "undefined".
+     3. Normality - the existing normality_tests, shown whether or not normal was asked for (a quick way to see a
+        skewed sample fail).
+     4. Randomness of the order - the existing randomness_tests, plus an autocorrelation (ACF) table to 20 lags
+        with the 95% band, and a serial-pairs chi-square (u[i], u[i+1] in a k by k grid of the probability
+        integral transform) which catches what the runs test misses.
+     5. Uniformity of the probability integral transform F(x): flat histogram + KS. One number that says "these
+        really come from F".
+   Between columns (layouts 2, 3)
+     6. Pearson, Spearman and Kendall with p-values; the 2-D chi-square on equal-probability bins; the distance
+        correlation (detects a dependence a correlation of 0 hides). Expected: correlation near the requested r.
+   On a grid or a line (layouts 4, 5)
+     7. Z (or Y) minus its trend / function: the residual goes through checks 1-5. Moran's I on the grid for spatial
+        independence; Durbin-Watson on the line.
+   A verdict in words, in the style of normality.py: "Nothing here argues against random" / "Autocorrelation at lag 1
+   (p = 0.003)". With the standing caution: at alpha = 0.05, one test in twenty fails on perfectly good data, so the
+   report lists how many tests were run and how many failed.
+
+C. Repeat the experiment (the teaching part)
+   "Repeat" spinner: draw the sample K times (default 1, up to 1000) with seeds seed, seed+1, ...; the report adds the
+   histogram of each test's p-values (flat when the generator is right) and the rejection rate (near 5%). This is
+   what shows the user that a single p = 0.03 means little.
+
+D. Chart per layout (the figure OK draws, one figure with panels; the standard series/figure machinery)
+     1. X          histogram with the true density curve over it, Q-Q plot, ECDF against the true CDF, box
+     2. X, Y       scatter, joint (marginal histograms), hist2d
+     3. X, Y, Z    pair plot (matrix of scatters, histograms on the diagonal); a 3-D scatter as an option
+     4. grid       surface and contour of Z, histogram of Z
+     5. linspace   line/scatter of Y against X with the trend, histogram of the residual, ACF bars
+   Each chart is the existing chart type, filled with the table; nothing new to draw except the density curve and the
+   true-CDF overlay, which are Overlay series computed from the registry (scipy.stats pdf/cdf).
+
+E. Dialog - app/data_operations/random_data_dialog.py
+   Name "Random data"; Keywords "random casuale numeri casuali distribuzione distribution simulate simula numpy
+   generate genera sample campione histogram istogramma"; Goals: "prepare" and "describe".
+   Top: Layout combo (the five) - below it, one row per column: name, Distribution combo, its parameter fields
+   (shown only the ones that distribution has, with the valid range in the tooltip). Below: N, Seed (with a "New
+   seed" button), Repeat, Charts (checkboxes), Checks (checkboxes by group: fit, randomness, normality, between
+   columns). Output table name; "Add to the project" writes it through TableResult, as Function does.
+   Must fit 1280x720: the column rows live in a scroll area, the preview is a small histogram under the layout.
+   Live preview: a 500-point histogram redrawn on every change, so a wrong parameter is seen at once.
+   Strings go through _() ; the Italian .po files are left to the user.
+
+F. Also reachable as code (app/analysis_api.py: run_analysis("Random data", ...)), so the assistant, the workpad and
+   scripts can generate and check a sample without the dialog. The dialog stays the single implementation.
+
+G. Add noise: a dedicated analysis (2026-11-21)
+   An analysis of its own (app/analysis/ + a dialog in app/data_operations/, like Fit Y by X), not a series
+   operation: noise needs the table (the X column for noise that grows with X, one shared noise term across
+   columns, empty rows), and its result is a report with checks and charts, which is what analyses give. It is then
+   in the catalog under "Analysis" (goal "Prepare the data"), and run_analysis / the assistant can call it.
+   Name: "Add noise" (not "Noise analysis", which would read as analysing the noise already in the data).
+   Roles: Y = one or more columns to add noise to; X = optional column (for noise that depends on X, and as the
+   x axis of the chart). The originals stay as they are.
+   - Noise kinds (random_data.add_noise(values, kind, params, rng, x=None) -> values, one engine shared with A):
+       additive         y + e, e from any distribution of the registry (normal by default, centred on 0; skewed ones
+                        are re-centred so the mean of the signal does not drift, with a "keep the offset" tick)
+       proportional     y * (1 + e): the noise grows with the value (multiplicative / heteroscedastic)
+       growing with X   e scaled by a function of X (linear or power), for heteroscedastic tests
+       outliers         a fraction p of the points replaced or shifted by a large value (k sd), for testing the
+                        outlier and robust-fit analyses
+       random walk      y + cumulative sum of e: a drifting baseline
+       missing values   a fraction p of the points set to empty (NaN), to test the missing-value handling
+   - The amount, three ways (a combo): absolute (sd in the units of the column), relative to the column's own sd or
+     range (a percentage), or a target signal-to-noise ratio in dB. The report gives the SNR actually obtained.
+   - Several columns: independent noise per column by default, or one shared noise term (same e on all) for
+     testing correlated errors. Rows with an empty value stay empty. One seed, written to the report.
+   - Output: a new column "<name> (noisy)" (name editable) in a new table, or added to the source table; or
+     "Replace the original" (one Undo step, history row, as every analysis).
+   - Checks: the added term (noisy - original) goes through checks 1-5 of B, so the report says whether the noise
+     really is the distribution and the size asked for; plus the SNR, the correlation original / noisy, and the
+     change in the standard deviation and in the normality tests of the column.
+   - Chart (a new figure): original and noisy overlaid (line or scatter, as the source is drawn), the noise
+     histogram with its true density, and the Q-Q plot.
+   - The Random data dialog (layouts 4 and 5, "function + noise") calls the same add_noise(); no second version.
+   - Strings through _(); Italian left to the user.
+
+Steps (each one commit, with code lines and file count in todo.txt)
+-------------------------------------------------------------------
+1. random_data.py: registry + generate() for the five layouts + tests (same seed same table, shapes, correlation
+   close to r, moments close to theory at N = 100,000, refusals).
+2. random_check.py checks 1-5 (single column) + tests: a normal sample passes the normality tests, a uniform one
+   fails them, a sorted sample fails the runs test, a sample from an LCG with a bad modulus fails the serial test.
+3. random_check.py checks 6-7 (between columns, grid, line) + tests; the verdict sentences and the failed-count note.
+4. The dialog, layouts 1 and 5 first (the simplest), the live preview, writing the table, the history row.
+5. Layouts 2, 3, 4 in the dialog, with the correlation and the function-plus-noise options.
+6. Charts: the density and true-CDF overlays, the panel set per layout, the report HTML.
+7. Repeat (C) with the p-value histograms.
+8. Add noise (G): add_noise() in the engine with tests (the SNR obtained is the one asked, the proportional noise
+   scales with the value, a fraction p of outliers, NaN rows kept, same seed same result), then the analysis
+   (app/analysis/ module, dialog, report, chart, run_analysis).
+9. Catalog entries (Random data, Add noise) and the guided analysis, run_analysis support, manual page
+   (dev/manual), the demo project.
+
+Questions to settle before step 1
+---------------------------------
+- One dialog with the five layouts (proposed), or five operations? One: the checks and the charts are shared.
+- Is the grid of layout 4 square (one range, as the Function surface) or nx by ny? Proposed nx by ny with the same
+  range controls as the Function dialog when a square is wanted.
+- Include the Monte Carlo repeat (step 7) in the first release, or after? It is independent of the rest.
+- Is Cauchy (no mean) wanted? It is the classic counter-example for "random but not normal and no mean", kept.
