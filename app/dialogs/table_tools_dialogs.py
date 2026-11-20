@@ -156,7 +156,7 @@ class GroupAggregateDialog(SettingsTableDialog):
 
         full_schema = repo._schema(self._table)
         schema = [(name, kind) for name, kind in full_schema if name != "Hide"]
-        self._columns = [name for name, _kind in schema]
+        self._table_columns = [name for name, _kind in schema]
         self._numeric = {
             name for name, kind in schema
             if any(word in kind.upper() for word in ("INT", "REAL", "FLOA", "DOUB", "NUM"))
@@ -169,7 +169,7 @@ class GroupAggregateDialog(SettingsTableDialog):
         # Fusion draws the check boxes; the native macOS style drew the
         # unchecked ones as nothing at all, and the checked ones barely.
         apply_fusion_for_item_view_styling(self.groups)
-        for column in self._columns:
+        for column in self._table_columns:
             item = QListWidgetItem(column, self.groups)
             item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
             item.setCheckState(
@@ -235,12 +235,12 @@ class GroupAggregateDialog(SettingsTableDialog):
 
     # -- measures -----------------------------------------------------------
     def _add_measure(self, func: str | None = None, column: str | None = None) -> None:
-        row = _MeasureRow(self._columns, self._numeric, self)
+        row = _MeasureRow(self._table_columns, self._numeric, self)
         if func is None:
             # A second measure is usually a number summarised: the mean of
             # the first numeric column that is not a grouping column.
             groups = set(self.chosen_groups())
-            first = next((c for c in self._columns if c in self._numeric and c not in groups), None)
+            first = next((c for c in self._table_columns if c in self._numeric and c not in groups), None)
             func, column = ("AVG", first) if first else ("COUNT", None)
         row.set_measure(func, column)
         row.changed.connect(self._schedule)
