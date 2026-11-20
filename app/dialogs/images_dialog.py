@@ -103,7 +103,8 @@ class ImagesDialog(PanelDialog):
 
         buttons = QHBoxLayout()
         stdSizeAndlayout(buttons)
-        for text, slot in ((_("Add from file…"), self._add_files), (_("Paste"), self._paste),
+        for text, slot in ((_("Add from file…"), self._add_files), (_("Library…"), self._library),
+                           (_("Paste"), self._paste),
                            (_("Rename…"), self._rename), (_("Remove"), self._remove)):
             button = QPushButton(text, card)
             button.clicked.connect(slot)
@@ -147,6 +148,15 @@ class ImagesDialog(PanelDialog):
         self._license.setText(stored.license)
 
     # ------------------------------------------------------------------ actions
+    def _library(self) -> None:
+        """The icons that come with the application: search, pick, add with their licence."""
+        from app.dialogs.icon_library_dialog import IconLibraryDialog
+
+        dialog = IconLibraryDialog(self._repo, self)
+        dialog.exec()
+        if dialog.added:
+            self._fill(select=dialog.added[-1])
+
     def _save_details(self) -> None:
         stored = self._current()
         if stored is None:

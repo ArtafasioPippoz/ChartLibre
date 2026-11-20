@@ -198,3 +198,29 @@ def test_a_column_names_the_picture_of_each_point(qapp, repo):
     assert sorted(box._chartlibre_picture for box in boxes) == ["image:dot"] * 3 + ["image:ring"] * 2
     assert len(ax.collections) == 1  # the point whose picture the project lacks is an ordinary marker
     figure.savefig(__import__("io").BytesIO(), format="svg")
+
+
+def test_the_icon_library_searches_and_adds_icons_with_their_licence(qapp, repo):
+    from app.dialogs.icon_library_dialog import IconLibraryDialog
+    from app.utils import icon_library
+
+    assert {"lucide", "flags"} <= set(icon_library.set_keys())
+    assert icon_library.search("flags", "italy")[0] == ("it", "Italy")
+    assert ("rome", "Rome") not in icon_library.search("flags", "italy")
+    assert ("it", "Italy") in icon_library.search("flags", "rome")  # a capital finds its country
+    assert icon_library.search("lucide", "heart")[0][0] == "heart"
+    assert b"<svg" in icon_library.svg("lucide", "heart")
+    with pytest.raises(KeyError):
+        icon_library.svg("lucide", "../index")
+    dialog = IconLibraryDialog(repo)
+    try:
+        dialog.sets.setCurrentIndex(dialog.sets.findData("flags"))
+        dialog.search.setText("italy")
+        assert dialog.list.count() == 1
+        dialog.list.selectAll()
+        dialog._add()
+    finally:
+        dialog.close()
+    assert repo.image_names() == ["flag-it"]
+    stored = repo.get_image("flag-it")
+    assert stored.kind == "svg" and stored.license == "MIT" and "flag-icons" in stored.source

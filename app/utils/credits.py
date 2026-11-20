@@ -74,6 +74,22 @@ BUNDLED: tuple[Work, ...] = (
         "MIT",
         "https://github.com/garrettj403/SciencePlots",
     ),
+    Work(
+        "Lucide",
+        "The Lucide Contributors",
+        "The icons of the library for pictures in charts (app/data/icon_library/lucide.zip); the licence text is "
+        "in the zip.",
+        "ISC",
+        "https://lucide.dev",
+    ),
+    Work(
+        "flag-icons",
+        "Panayiotis Lipiridis and contributors",
+        "The flags of the library for pictures in charts (app/data/icon_library/flags.zip); the licence text is "
+        "in the zip.",
+        "MIT",
+        "https://github.com/lipis/flag-icons",
+    ),
 )
 
 #: Drawn by name from the system at run time; nothing is copied.

@@ -434,3 +434,15 @@ A bar at each (x, y) rising to height `z`.
 #example("chart_3d_bar_chart")
 #use[A small table of values read both ways at once — a value per pair of categories — where a heatmap's colour alone is not enough to compare heights.]
 Key settings: bar *width* and *depth*, *bottom*, *shade*.
+
+= Pictures in charts <pictures>
+
+A chart can draw its marks as pictures: a flag per country, an icon per species, a person standing for a thousand people. The pictures are kept *in the project* (a table of its own), so it travels whole and exports the same everywhere. *Project > Pictures* lists them, with the source and the licence of each, which you can edit, and a chart that uses one can credit it.
+
+#defs(
+  [*Add from file…*, *Paste*], [An SVG, PNG or JPEG from a file or the clipboard (larger bitmaps are scaled to 1024 pixels a side). SVG stays sharp at any size.],
+  [*Library…*], [The icons that come with ChartLibre: *Lucide* (about 2,400 line icons: people, buildings, weather, transport, data) and the *flags of the world* (270). Search by name or by what it is about — "factory", "Europe", "Rome" finds Italy — select one or more and *Add*: each goes into the project named `lucide-heart` or `flag-it`, with its set, version, source and licence (ISC for Lucide, MIT for the flags). The SF Symbols of macOS are not offered: Apple's licence does not allow them in charts you share.],
+  [*Rename…*, *Remove*], [Series that use a renamed picture follow it. Undo takes back an addition or a removal.],
+)
+
+Where a picture is used: *Marker > Picture* in the Series properties draws all the points with one picture; the Scatter Plot's `picture` column names one per point; *Bar picture* in the Series properties of a bar chart stretches a picture over the bars or makes a pictogram (see *Bar Chart*). A single-colour icon — Lucide's — takes the series' colour; a flag or a photograph keeps its own. Drawing thousands of pictures is slow: past 2,000 points an even sample is drawn, and the log says so.
