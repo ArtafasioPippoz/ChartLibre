@@ -16,7 +16,7 @@ from typing import Any
 
 from matplotlib import rcParams
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import QCheckBox, QDoubleSpinBox, QFormLayout, QSizePolicy, QSpinBox, QWidget
+from PySide6.QtWidgets import QCheckBox, QComboBox, QDoubleSpinBox, QFormLayout, QSizePolicy, QSpinBox, QWidget
 
 from app.plugin_api.charts import dashes, markers
 from app.plugin_api.charts.kwarg_spec import DEFAULT
@@ -285,3 +285,70 @@ class MarkerStyleEditor(_StyleEditor):
             "markercolor": None if self.same_colour_check.isChecked()
             else (self.colour_combo.current_hex().strip() or None),
         }
+
+
+class BarPictureEditor(QWidget):
+    """A bar series drawn as a picture of the project: which one, and the unit of a pictogram.
+
+    "None" keeps the plain bars. With a picture and a unit of 0 it is stretched over each bar; a unit N makes a
+    pictogram, one picture standing for N. Stored as the series' bar_picture and picture_unit (picture_markers.draw_bars).
+    """
+
+    value_changed = Signal()
+
+    def __init__(self, parent: QWidget | None = None, *, repo: Callable[[], Any] | None = None) -> None:
+        super().__init__(parent)
+        self._repo = repo or (lambda: None)
+        self._loading = False
+        form = QFormLayout(self)
+        form.setContentsMargins(0, 4, 0, 4)
+        form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
+        self.picture = QComboBox(self)
+        self.picture.setToolTip(_("A picture of the project (Project > Pictures) drawn instead of the plain bars."))
+        self.unit = QDoubleSpinBox(self)
+        self.unit.setRange(0.0, 1e12)
+        self.unit.setDecimals(4)
+        self.unit.setSpecialValueText(_("Stretched"))
+        self.unit.setToolTip(_("Stretched: one picture over each bar. A number N: a pictogram, one picture "
+                               "stands for N and the last is cut to the fraction."))
+        form.addRow(_("Picture"), self.picture)
+        form.addRow(_("One picture ="), self.unit)
+        self.picture.currentIndexChanged.connect(self._changed)
+        self.unit.valueChanged.connect(self._changed)
+
+    def _changed(self, *_args: Any) -> None:
+        if not self._loading:
+            self.unit.setEnabled(bool(self.picture.currentData()))
+            self.value_changed.emit()
+
+    def load(self, style: Mapping[str, Any]) -> None:
+        self._loading = True
+        try:
+            names = []
+            repo = self._repo()
+            if repo is not None and hasattr(repo, "image_names"):
+                names = list(repo.image_names())
+            chosen = str(style.get("bar_picture", "") or "")
+            if chosen and chosen not in names:
+                names.append(chosen)  # a name the project no longer has stays shown, so it is not lost silently
+            self.picture.clear()
+            self.picture.addItem(_("None"), "")
+            for name in names:
+                self.picture.addItem(name, name)
+            self.picture.setCurrentIndex(max(0, self.picture.findData(chosen)))
+            try:
+                self.unit.setValue(float(style.get("picture_unit", 0.0) or 0.0))
+            except (TypeError, ValueError):
+                self.unit.setValue(0.0)
+            self.unit.setEnabled(bool(chosen))
+        finally:
+            self._loading = False
+
+    def clear(self) -> None:
+        self.load({})
+
+    def values(self) -> dict[str, Any]:
+        """The keys to store; None removes one."""
+        chosen = str(self.picture.currentData() or "")
+        return {"bar_picture": chosen or None,
+                "picture_unit": float(self.unit.value()) if chosen and self.unit.value() > 0 else None}

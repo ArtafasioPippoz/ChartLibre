@@ -147,3 +147,33 @@ def test_bars_stretched_and_a_missing_picture_leaves_plain_bars(qapp, repo):
     assert len(stretched.images) == 2 and stretched.get_aspect() == "auto"
     plain = _bars(repo, "Bar Chart", {"bar_picture": "nothing"}).axes[0]
     assert len(plain.images) == 0 and all(patch.get_visible() for patch in plain.patches)
+
+
+def test_a_bar_series_offers_the_projects_pictures(qapp, repo):
+    from types import SimpleNamespace
+
+    from app.widgets.chart_properties.series_properties import SeriesPropertiesWidget
+
+    repo.add_image("dot", SVG)
+    repo.import_dataframe(pd.DataFrame({"c": ["a", "b"], "v": [1.0, 2.0]}), table_name="d", normalize_columns=False)
+    figure_id = int(repo.create_figure_descriptor(name="F"))
+    axes = {}
+    for index, chart in enumerate(("Bar Chart", "Scatter Plot")):
+        axis_id = int(repo.create_axis_descriptor(figure_id=figure_id, axis_index=index, chart_type=chart, title="t",
+                                                  x_label="x", y_label="y", options={}))
+        axes[chart] = int(repo.create_series_descriptor(
+            axis_id=axis_id, series_index=0, name=chart, sql_query="SELECT c AS X, v AS Y FROM d",
+            roles={"X": "X", "Y": "Y"}, style={"bar_picture": "dot", "picture_unit": 500}))
+    widget = SeriesPropertiesWidget()
+    widget._repo, widget._figure_id = repo, figure_id
+    widget._load_series_descriptor(SimpleNamespace(id=axes["Bar Chart"], options={"bar_picture": "dot",
+                                                                                 "picture_unit": 500}, sql_query=""))
+    editor = widget._bar_picture_editor
+    assert not widget._groups[3].isHidden()
+    assert [editor.picture.itemData(i) for i in range(editor.picture.count())] == ["", "dot"]
+    assert editor.picture.currentData() == "dot" and editor.unit.value() == 500
+    assert editor.values() == {"bar_picture": "dot", "picture_unit": 500.0}
+    editor.picture.setCurrentIndex(0)
+    assert editor.values() == {"bar_picture": None, "picture_unit": None} and not editor.unit.isEnabled()
+    widget._load_series_descriptor(SimpleNamespace(id=axes["Scatter Plot"], options={}, sql_query=""))
+    assert widget._groups[3].isHidden()  # a scatter's series are drawn as markers, not bars

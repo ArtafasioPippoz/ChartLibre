@@ -45,6 +45,7 @@ from app.widgets.chart_properties.base_properties import BaseProperties
 from app.widgets.chart_jump_bar import AxisStepper
 from app.widgets.inspector import InspectorCard, InspectorForm, InspectorSection
 from app.widgets.chart_properties.series_style_editors import (
+    BarPictureEditor,
     LineStyleEditor,
     MarkerStyleEditor,
 )
@@ -169,6 +170,7 @@ class SeriesPropertiesWidget(BaseProperties):
             self._sort_x_check,
             self._line_editor,
             self._marker_editor,
+            self._bar_picture_editor,
         )
 
     def _build_ui(self) -> None:
@@ -445,6 +447,7 @@ class SeriesPropertiesWidget(BaseProperties):
         self._line_editor = LineStyleEditor(section)
         self._marker_editor = MarkerStyleEditor(section, repo=lambda: self._repo,
                                                 line_colour=lambda: self._line_editor.colour())
+        self._bar_picture_editor = BarPictureEditor(section, repo=lambda: self._repo)
         self._sort_x_check.toggled.connect(self._sort_toggled)
 
         self._group_forms: dict[str, InspectorForm] = {}
@@ -467,6 +470,7 @@ class SeriesPropertiesWidget(BaseProperties):
             group(_("Legend"), "legend", [(_("Label"), self._legend_label_edit), ("", flags_row)]),
             group(_("Line"), "line", [("", self._line_editor)]),
             group(_("Marker"), "marker", [("", self._marker_editor)]),
+            group(_("Bar picture"), "bar_picture", [("", self._bar_picture_editor)]),
             group(_("Query"), "query", [("", self._sql_query_edit), ("", self._sort_x_check)], collapsed=True,
               foldable=True),
         ]
@@ -765,6 +769,22 @@ class SeriesPropertiesWidget(BaseProperties):
 
             self._line_editor.load(style)
             self._marker_editor.load(style)
+            self._bar_picture_editor.load(style)
+            # Only a bar chart's series can be drawn as pictures.
+            self._groups[3].setVisible(self._is_bar_series(int(series_desc.id)))
+
+    def _is_bar_series(self, series_id: int) -> bool:
+        """Whether the series is on a Bar Chart or Horizontal Bar Chart axis."""
+        if self._repo is None or self._figure_id is None:
+            return False
+        try:
+            figure = self._repo.load_figure_descriptor(int(self._figure_id))
+        except Exception:
+            return False
+        for axis in getattr(figure, "axes", ()) or ():
+            if any(int(getattr(series, "id", -1)) == series_id for series in getattr(axis, "series", ()) or ()):
+                return str(getattr(axis, "name", "")) in ("Bar Chart", "Horizontal Bar Chart")
+        return False
 
     def _clear_series_fields(self) -> None:
         """Clear form fields for the no-selection state."""
@@ -779,6 +799,8 @@ class SeriesPropertiesWidget(BaseProperties):
             self._sort_x_check.setChecked(False)
             self._line_editor.clear()
             self._marker_editor.clear()
+            self._bar_picture_editor.clear()
+            self._groups[3].setVisible(False)
 
     # ------------------------------------------------------------------
     # Events and actions
@@ -804,6 +826,7 @@ class SeriesPropertiesWidget(BaseProperties):
             self._sort_x_check,
             self._line_editor,
             self._marker_editor,
+            self._bar_picture_editor,
         ):
             widget.setEnabled(enabled)
 
@@ -910,5 +933,6 @@ class SeriesPropertiesWidget(BaseProperties):
                 # The line's and the markers' keys; None removes one (series_style_editors).
                 **self._line_editor.values(),
                 **self._marker_editor.values(),
+                **self._bar_picture_editor.values(),
             }
         )
