@@ -24,6 +24,8 @@ exactly the Pearson correlation; for the others it is the correlation of the cop
 """
 from __future__ import annotations
 
+import ast
+import operator
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
@@ -261,6 +263,79 @@ def theoretical_moments(key: str, values: Mapping[str, float] | None = None) -> 
 
 
 # ----------------------------------------------------------------------
+# A function of x and y, typed as text
+# ----------------------------------------------------------------------
+#: What an expression may call and name. Nothing else: the text is read as a syntax tree and walked, never run
+#: (a project file or a history row can carry it), so there is no attribute, import, subscript or lambda.
+EXPRESSION_FUNCTIONS: dict[str, Callable[..., Any]] = {
+    name: getattr(np, name) for name in (
+        "sin", "cos", "tan", "arcsin", "arccos", "arctan", "arctan2", "sinh", "cosh", "tanh", "exp", "log",
+        "log10", "log2", "sqrt", "abs", "sign", "floor", "ceil", "hypot", "minimum", "maximum")
+}
+EXPRESSION_CONSTANTS: dict[str, float] = {"pi": float(np.pi), "e": float(np.e)}
+EXPRESSION_VARIABLES = ("x", "y")
+MAX_EXPRESSION_LENGTH = 500
+_BINARY = {ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul, ast.Div: operator.truediv,
+           ast.Pow: operator.pow, ast.Mod: operator.mod}
+_UNARY = {ast.USub: operator.neg, ast.UAdd: operator.pos}
+
+
+def _evaluate(node: ast.AST, variables: Mapping[str, np.ndarray]) -> Any:
+    if isinstance(node, ast.Expression):
+        return _evaluate(node.body, variables)
+    if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)) and not isinstance(node.value, bool):
+        return float(node.value)
+    if isinstance(node, ast.Name):
+        if node.id in variables:
+            return variables[node.id]
+        if node.id in EXPRESSION_CONSTANTS:
+            return EXPRESSION_CONSTANTS[node.id]
+        raise ValueError(_("'{name}' is not known: use x, y, pi, e and the functions {functions}").format(
+            name=node.id, functions=", ".join(EXPRESSION_FUNCTIONS)))
+    if isinstance(node, ast.BinOp) and type(node.op) in _BINARY:
+        return _BINARY[type(node.op)](_evaluate(node.left, variables), _evaluate(node.right, variables))
+    if isinstance(node, ast.UnaryOp) and type(node.op) in _UNARY:
+        return _UNARY[type(node.op)](_evaluate(node.operand, variables))
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and not node.keywords:
+        function = EXPRESSION_FUNCTIONS.get(node.func.id)
+        if function is None:
+            raise ValueError(_("'{name}' is not a function this window knows: {functions}").format(
+                name=node.func.id, functions=", ".join(EXPRESSION_FUNCTIONS)))
+        return function(*(_evaluate(argument, variables) for argument in node.args))
+    raise ValueError(_("This expression uses something that is not allowed: only numbers, x, y, pi, e, "
+                       "+ - * / ** % and the functions {functions}").format(functions=", ".join(EXPRESSION_FUNCTIONS)))
+
+
+def expression_function(text: str) -> Callable[[np.ndarray, np.ndarray], np.ndarray]:
+    """f(x, y) from the text of an expression such as ``sin(x) * cos(y) + 0.1 * x ** 2`` (``^`` is a power).
+
+    The text is checked at once, so a mistake is reported when the function is made, not when it is drawn.
+    """
+    source = text.strip().replace("^", "**")
+    if not source:
+        raise ValueError(_("The expression is empty"))
+    if len(source) > MAX_EXPRESSION_LENGTH:
+        raise ValueError(_("The expression is longer than {limit} characters").format(limit=MAX_EXPRESSION_LENGTH))
+    try:
+        tree = ast.parse(source, mode="eval")
+    except SyntaxError as exc:
+        raise ValueError(_("The expression cannot be read: {problem}").format(problem=exc.msg)) from exc
+
+    def check(x: np.ndarray, y: np.ndarray) -> np.ndarray:
+        try:
+            with np.errstate(all="ignore"):
+                value = np.asarray(_evaluate(tree, {"x": x, "y": y}), dtype=float)
+        except RecursionError as exc:
+            raise ValueError(_("The expression is too deeply nested")) from exc
+        except TypeError as exc:
+            raise ValueError(_("A function was called with the wrong number of arguments")) from exc
+        return np.broadcast_to(value, x.shape).astype(float, copy=True)
+
+    check(np.zeros(2), np.zeros(2))
+    return check
+
+
+# ----------------------------------------------------------------------
 # The request
 # ----------------------------------------------------------------------
 @dataclass(frozen=True, slots=True)
@@ -296,7 +371,7 @@ class Generated:
     columns: tuple[ColumnSpec, ...]
 
 
-def _correlation_matrix(correlation: float | Sequence[Sequence[float]] | None, size: int) -> np.ndarray | None:
+def correlation_matrix(correlation: float | Sequence[Sequence[float]] | None, size: int) -> np.ndarray | None:
     """The correlation matrix asked for, or None for independent columns. A number is the one correlation
     between every pair."""
     if correlation is None:
@@ -392,7 +467,7 @@ def generate(
 
     if layout in (LAYOUT_X, LAYOUT_XY, LAYOUT_XYZ):
         rows = _check_rows(n)
-        matrix = _correlation_matrix(correlation, len(named)) if len(named) > 1 else None
+        matrix = correlation_matrix(correlation, len(named)) if len(named) > 1 else None
         arrays = _draw_columns(rng, named, rows, matrix)
         table = pd.DataFrame({c.name: a for c, a in zip(named, arrays)})
     elif layout == LAYOUT_LINE:
@@ -420,3 +495,142 @@ def generate(
             raise ValueError(_("The columns must have different names"))
         table = pd.DataFrame({x_name: x_flat, y_name: y_flat, named[0].name: z})
     return Generated(table, seed, layout, named)
+
+
+# ----------------------------------------------------------------------
+# Adding noise to a column
+# ----------------------------------------------------------------------
+NOISE_ADDITIVE = "additive"
+NOISE_PROPORTIONAL = "proportional"
+NOISE_GROWING = "growing"
+NOISE_OUTLIERS = "outliers"
+NOISE_WALK = "walk"
+NOISE_MISSING = "missing"
+NOISE_KINDS = (NOISE_ADDITIVE, NOISE_PROPORTIONAL, NOISE_GROWING, NOISE_OUTLIERS, NOISE_WALK, NOISE_MISSING)
+
+#: How the amount of an additive, growing or walking noise is given: its standard deviation in the units of the
+#: column, a fraction of the column's own standard deviation or of its range, or the signal-to-noise ratio in dB.
+AMOUNT_ABSOLUTE = "absolute"
+AMOUNT_RELATIVE_SD = "relative_sd"
+AMOUNT_RELATIVE_RANGE = "relative_range"
+AMOUNT_SNR = "snr"
+AMOUNT_MODES = (AMOUNT_ABSOLUTE, AMOUNT_RELATIVE_SD, AMOUNT_RELATIVE_RANGE, AMOUNT_SNR)
+
+
+@dataclass(frozen=True, slots=True)
+class Noisy:
+    """A column with noise added: the new values, the term added (NaN where a value is empty or was emptied), the
+    standard deviation of the noise asked for and the signal-to-noise ratio obtained (dB, NaN without noise)."""
+
+    values: np.ndarray
+    noise: np.ndarray
+    sigma: float
+    snr_db: float
+
+
+def _standard_noise(key: str, parameters: Mapping[str, float] | None, size: int, rng: np.random.Generator,
+                    keep_offset: bool) -> np.ndarray:
+    """*size* draws of *key*, centred on 0 and scaled to a standard deviation of 1 (the distribution's own, from
+    its moments), so that "the amount" means the same for every distribution. A distribution with no mean or
+    variance (Cauchy) is left as drawn; "keep the offset" leaves the mean where the distribution has it."""
+    dist = distribution(key)
+    draws = dist.draw(rng, size, clean_parameters(key, parameters)).astype(float)
+    moments = theoretical_moments(key, parameters)
+    mean, sd = moments["mean"], np.sqrt(moments["variance"]) if np.isfinite(moments["variance"]) else float("nan")
+    if np.isfinite(sd) and sd > 0:
+        return (draws - (0.0 if keep_offset else mean)) / sd
+    return draws
+
+
+def noise_sigma(values: np.ndarray, amount: float, mode: str) -> float:
+    """The standard deviation of the noise for an *amount* given as *mode*, from the column's own values."""
+    if mode not in AMOUNT_MODES:
+        raise ValueError(_("Unknown way to give the amount of noise: {mode}").format(mode=mode))
+    finite = values[np.isfinite(values)]
+    if mode == AMOUNT_ABSOLUTE:
+        return float(amount)
+    if finite.size < 2:
+        raise ValueError(_("The column needs at least two values to give the noise relative to them."))
+    if mode == AMOUNT_RELATIVE_SD:
+        return float(amount) * float(np.std(finite))
+    if mode == AMOUNT_RELATIVE_RANGE:
+        return float(amount) * float(np.ptp(finite))
+    return float(np.std(finite)) / 10.0 ** (float(amount) / 20.0)
+
+
+def add_noise(
+    values: Any,
+    kind: str,
+    *,
+    amount: float = 1.0,
+    mode: str = AMOUNT_ABSOLUTE,
+    distribution_key: str = "normal",
+    parameters: Mapping[str, float] | None = None,
+    keep_offset: bool = False,
+    x: Any = None,
+    power: float = 1.0,
+    fraction: float = 0.05,
+    rng: np.random.Generator | None = None,
+    seed: int = 0,
+) -> Noisy:
+    """*values* with noise added; the same seed gives the same noise, and an empty value stays empty.
+
+    additive      y + s e, e the distribution chosen with mean 0 and standard deviation 1, s the amount (see
+                  :func:`noise_sigma`).
+    proportional  y (1 + a e): the noise grows with the value; *amount* is the fraction a (0.1: 10%).
+    growing       y + s e (x / x_max) ** power, x measured from its smallest value: zero at the start of x, s at
+                  the end. x is the index when not given.
+    outliers      a fraction *fraction* of the points moved by *amount* standard deviations of the column, up or
+                  down at random.
+    walk          y + s cumsum(e): a drifting baseline.
+    missing       a fraction *fraction* of the points emptied (NaN).
+    """
+    if kind not in NOISE_KINDS:
+        raise ValueError(_("Unknown kind of noise: {kind}").format(kind=kind))
+    y = np.asarray(values, dtype=float)
+    if y.ndim != 1:
+        raise ValueError(_("The noise is added to one column at a time."))
+    if not 0.0 <= fraction <= 1.0:
+        raise ValueError(_("The fraction of points must be between 0 and 1."))
+    generator = rng if rng is not None else np.random.default_rng(seed)
+    present = np.isfinite(y)
+    size = y.size
+    noise = np.zeros(size)
+    sigma = float("nan")
+
+    if kind in (NOISE_ADDITIVE, NOISE_GROWING, NOISE_WALK):
+        sigma = noise_sigma(y, amount, mode)
+        if sigma < 0:
+            raise ValueError(_("The amount of noise cannot be negative."))
+        e = _standard_noise(distribution_key, parameters, size, generator, keep_offset)
+        if kind == NOISE_WALK:
+            noise = sigma * np.cumsum(np.where(present, e, 0.0))
+        elif kind == NOISE_GROWING:
+            xs = np.arange(size, dtype=float) if x is None else np.asarray(x, dtype=float)
+            if xs.shape != y.shape:
+                raise ValueError(_("X and the column must have the same length."))
+            span = np.nanmax(xs) - np.nanmin(xs) if np.isfinite(xs).any() else 0.0
+            ratio = (xs - np.nanmin(xs)) / span if span > 0 else np.ones(size)
+            noise = sigma * e * np.clip(np.nan_to_num(ratio, nan=0.0), 0.0, None) ** power
+        else:
+            noise = sigma * e
+    elif kind == NOISE_PROPORTIONAL:
+        e = _standard_noise(distribution_key, parameters, size, generator, keep_offset)
+        sigma = abs(float(amount))
+        noise = y * sigma * e
+    elif kind == NOISE_OUTLIERS:
+        chosen = generator.random(size) < fraction
+        sd = float(np.std(y[present])) if present.sum() > 1 else 0.0
+        noise = np.where(chosen, generator.choice([-1.0, 1.0], size) * float(amount) * sd, 0.0)
+        sigma = float(amount) * sd
+    else:  # missing
+        chosen = generator.random(size) < fraction
+        out = np.where(chosen & present, np.nan, y)
+        return Noisy(out, np.where(present, np.where(chosen, np.nan, 0.0), np.nan), 0.0, float("nan"))
+
+    noisy = np.where(present, y + noise, np.nan)
+    added = np.where(present, noise, np.nan)
+    power_signal = float(np.var(y[present])) if present.sum() > 1 else float("nan")
+    power_noise = float(np.mean(added[present] ** 2)) if present.any() else float("nan")
+    snr = 10.0 * np.log10(power_signal / power_noise) if power_noise > 0 and power_signal > 0 else float("nan")
+    return Noisy(noisy, added, sigma, float(snr))

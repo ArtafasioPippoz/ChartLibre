@@ -313,6 +313,19 @@ DEMO_PROJECTS: tuple[DemoProject, ...] = (
         category="Quality and Process",
     ),
     DemoProject(
+        "Random data - numbers drawn, checked and drawn, and noise added to a signal",
+        "Random numbers from numpy.random, with seeds so every number can be drawn again: 2,000 normal numbers with "
+        "their histogram, fitted curve, Q-Q plot and ECDF; a normal and an exponential correlated at 0.7; a grid of "
+        "sin(x) cos(y) with normal noise as a surface; and 100 repetitions of the checks, whose p-values are flat "
+        "when the numbers are as drawn. The report of each says how many tests were run, how many rejected, and "
+        "whether anything argues against the numbers being as asked. Last, Add noise: a clean sine with a trend, "
+        "noise added to a signal-to-noise ratio of 15 dB and drawn beside the original.",
+        (),
+        builder="dev.demo.demo_random:build_random_demo",
+        preview="Random X",
+        category="Basic Analysis",
+    ),
+    DemoProject(
         "Time series - real data, the Nile and the airline passengers",
         "Two classic real series, their dates stored as text: the annual flow of the Nile 1871-1970, with "
         "the drop of about 1898 a time series model has to absorb, and the monthly airline passengers "

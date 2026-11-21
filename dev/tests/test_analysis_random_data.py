@@ -181,3 +181,111 @@ def test_too_many_rows_or_too_few_points_are_refused_in_words() -> None:
         rd.generate(rd.LAYOUT_LINE, [ColumnSpec()], x_axis=Axis(0, 1, 1))
     with pytest.raises(ValueError, match="empty"):
         rd.generate(rd.LAYOUT_LINE, [ColumnSpec()], x_axis=Axis(1, 1, 10))
+
+
+def test_an_expression_is_read_as_a_function_of_x_and_y() -> None:
+    f = rd.expression_function("sin(x) * cos(y) + 0.5 * x ^ 2 - pi")
+    x, y = np.array([0.0, 1.0, 2.0]), np.array([0.5, 0.0, 1.0])
+    assert f(x, y) == pytest.approx(np.sin(x) * np.cos(y) + 0.5 * x ** 2 - np.pi)
+    assert rd.expression_function("3")(x, y) == pytest.approx([3.0, 3.0, 3.0])  # a constant fills the shape
+    assert rd.expression_function("-x + max(0, 1)" .replace("max", "maximum"))(x, y) == pytest.approx([1, 0, -1])
+
+
+@pytest.mark.parametrize("text", [
+    "__import__('os').system('x')", "x.real", "x[0]", "(lambda: 1)()", "open('f')", "eval('1')",
+    "sin(x, y, z)", "foo(x)", "z + 1", "'a'", "[1, 2]", "x if y else 1", "sin(x=1)", "True", "x and y",
+])
+def test_an_expression_that_is_not_plain_arithmetic_is_refused(text: str) -> None:
+    with pytest.raises(ValueError):
+        rd.expression_function(text)
+
+
+def test_an_empty_too_long_or_unreadable_expression_is_refused_in_words() -> None:
+    with pytest.raises(ValueError, match="empty"):
+        rd.expression_function("  ")
+    with pytest.raises(ValueError, match="longer"):
+        rd.expression_function("x+" * 400 + "1")
+    with pytest.raises(ValueError, match="cannot be read"):
+        rd.expression_function("x +* y")
+    with pytest.raises(ValueError, match="too deeply|cannot be read"):
+        rd.expression_function("(" * 240 + "x" + ")" * 240)
+
+
+def test_a_grid_takes_an_expression_for_its_function() -> None:
+    result = rd.generate(rd.LAYOUT_GRID, [ColumnSpec("uniform", {"low": 0, "high": 0.001})],
+                         x_axis=Axis(0, 1, 5), y_axis=Axis(0, 1, 5), function=rd.expression_function("x * y"), seed=1)
+    table = result.table
+    assert np.allclose(table["Z"], table["X"] * table["Y"], atol=0.002)
+
+
+# ---------------------------------------------------------------- add_noise
+def _signal(n: int = 20_000) -> np.ndarray:
+    return 10.0 + 3.0 * np.sin(np.linspace(0, 40, n))
+
+
+def test_additive_noise_has_the_standard_deviation_asked_and_the_same_seed_the_same_noise() -> None:
+    y = _signal()
+    one = rd.add_noise(y, rd.NOISE_ADDITIVE, amount=0.5, seed=4)
+    assert one.noise.std() == pytest.approx(0.5, rel=0.03) and abs(one.noise.mean()) < 0.02
+    assert np.array_equal(one.values, rd.add_noise(y, rd.NOISE_ADDITIVE, amount=0.5, seed=4).values)
+    assert not np.array_equal(one.values, rd.add_noise(y, rd.NOISE_ADDITIVE, amount=0.5, seed=5).values)
+
+
+@pytest.mark.parametrize("key", ["exponential", "lognormal", "uniform", "gamma"])
+def test_a_skewed_noise_is_centred_so_the_signal_does_not_drift_unless_the_offset_is_kept(key: str) -> None:
+    y = _signal()
+    centred = rd.add_noise(y, rd.NOISE_ADDITIVE, amount=1.0, distribution_key=key, seed=1)
+    assert abs(centred.noise.mean()) < 0.05 and centred.noise.std() == pytest.approx(1.0, rel=0.1)
+    kept = rd.add_noise(y, rd.NOISE_ADDITIVE, amount=1.0, distribution_key=key, keep_offset=True, seed=1)
+    assert kept.noise.mean() > 0.3 if key in ("exponential", "lognormal", "gamma") else True
+
+
+def test_the_amount_can_be_a_fraction_of_the_sd_of_the_range_or_a_signal_to_noise_ratio() -> None:
+    y = _signal()
+    assert rd.noise_sigma(y, 0.1, rd.AMOUNT_RELATIVE_SD) == pytest.approx(0.1 * y.std())
+    assert rd.noise_sigma(y, 0.1, rd.AMOUNT_RELATIVE_RANGE) == pytest.approx(0.1 * np.ptp(y))
+    got = rd.add_noise(y, rd.NOISE_ADDITIVE, amount=20.0, mode=rd.AMOUNT_SNR, seed=2)
+    assert got.snr_db == pytest.approx(20.0, abs=0.5)
+
+
+def test_proportional_noise_grows_with_the_value() -> None:
+    y = np.repeat([1.0, 100.0], 10_000)
+    got = rd.add_noise(y, rd.NOISE_PROPORTIONAL, amount=0.1, seed=3)
+    assert got.noise[:10_000].std() == pytest.approx(0.1, rel=0.05)
+    assert got.noise[10_000:].std() == pytest.approx(10.0, rel=0.05)
+
+
+def test_noise_growing_with_x_is_zero_at_the_start_and_full_at_the_end() -> None:
+    x = np.linspace(0, 10, 20_001)
+    got = rd.add_noise(np.zeros_like(x), rd.NOISE_GROWING, amount=2.0, x=x, seed=1)
+    assert np.abs(got.noise[:200]).max() < 0.2
+    assert got.noise[-2000:].std() == pytest.approx(2.0, rel=0.15)
+
+
+def test_outliers_move_a_fraction_of_the_points_by_k_standard_deviations() -> None:
+    y = _signal()
+    got = rd.add_noise(y, rd.NOISE_OUTLIERS, amount=6.0, fraction=0.05, seed=1)
+    moved = got.noise != 0
+    assert moved.mean() == pytest.approx(0.05, abs=0.01)
+    assert np.allclose(np.abs(got.noise[moved]), 6.0 * y.std())
+
+
+def test_a_random_walk_drifts_and_missing_values_empty_a_fraction() -> None:
+    y = np.zeros(5000)
+    walk = rd.add_noise(y, rd.NOISE_WALK, amount=1.0, seed=1)
+    assert np.array_equal(walk.noise, walk.values) and np.abs(walk.values).max() > 5
+    gone = rd.add_noise(_signal(), rd.NOISE_MISSING, fraction=0.1, seed=1)
+    assert np.isnan(gone.values).mean() == pytest.approx(0.1, abs=0.01)
+
+
+def test_an_empty_value_stays_empty_and_the_refusals_are_in_words() -> None:
+    y = _signal(100)
+    y[[3, 50]] = np.nan
+    got = rd.add_noise(y, rd.NOISE_ADDITIVE, amount=1.0, seed=1)
+    assert np.isnan(got.values[[3, 50]]).all() and np.isfinite(got.values).sum() == 98
+    with pytest.raises(ValueError, match="Unknown kind"):
+        rd.add_noise(y, "sparkle")
+    with pytest.raises(ValueError, match="fraction"):
+        rd.add_noise(y, rd.NOISE_MISSING, fraction=2.0)
+    with pytest.raises(ValueError, match="negative"):
+        rd.add_noise(y, rd.NOISE_ADDITIVE, amount=-1.0)

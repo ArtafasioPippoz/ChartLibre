@@ -235,6 +235,12 @@ PRINCIPAL_COMPONENTS: str = """
 <path d="M4 20L20 4"/><path d="M8 6l8 12" stroke-dasharray="2 2"/>
 """
 
+RANDOM_DATA: str = """
+<rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="8.5" cy="8.5" r="1.1"/>
+<circle cx="15.5" cy="8.5" r="1.1"/><circle cx="12" cy="12" r="1.1"/><circle cx="8.5" cy="15.5" r="1.1"/>
+<circle cx="15.5" cy="15.5" r="1.1"/>
+"""
+
 REGRESSION: str = """
 <path d="M4 18c3-1 4-8 6-8s2 6 4 6 3-9 6-9"/>
 <circle cx="6" cy="15" r="1"/>
