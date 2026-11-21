@@ -70,6 +70,24 @@ def _surface_kwargs(renderer: BaseAxisRenderer, options: dict[str, Any]) -> dict
     return kwargs
 
 
+
+def _drawable_marker(kwargs: dict[str, Any]) -> None:
+    """Turn kwargs' marker into what matplotlib takes, or drop it.
+
+    A character ("☺"), "$...$" or "(5, 1, 0)" is kept as typed; not drawable
+    (or a picture, which 3D axes do not draw) leaves matplotlib's default.
+    """
+    if "marker" not in kwargs:
+        return
+    from app.plugin_api.charts.markers import to_matplotlib
+
+    text = str(kwargs["marker"]).strip()
+    marker = None if text.startswith("image:") else to_matplotlib(text)
+    if marker is None:
+        kwargs.pop("marker")
+    else:
+        kwargs["marker"] = marker
+
 class SurfaceAxisRenderer(BaseAxisRenderer):
     """Surface plot over a regular x/y grid.
 
@@ -424,6 +442,8 @@ class Scatter3DAxisRenderer(BaseAxisRenderer):
             }
             kwargs.setdefault("label", style.get("label") or sd.name)
 
+            _drawable_marker(kwargs)
+
             colors = self._aligned_column(sd, "color", x.size)
             if colors is not None:
                 # c, not color: one is an array mapped through the colormap,
@@ -571,6 +591,7 @@ class Line3DAxisRenderer(BaseAxisRenderer):
             }
             kwargs.setdefault("label", style.get("label") or sd.name)
             kwargs.setdefault("color", self.series_color(style, index))
+            _drawable_marker(kwargs)
 
             try:
                 ax.plot(x, y, z, **kwargs)
