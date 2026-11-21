@@ -36,6 +36,7 @@ from PySide6.QtWidgets import (
 
 from app.styles.style import configure_combo_width
 from app.utils.config import get_constant
+from app.widgets.drop_down_controls.path_effect_combo import PathEffectCombo
 
 #: How long the editor waits after the last control change before it applies
 #: the edit on its own. Long enough that a slider drag or a burst of
@@ -115,7 +116,7 @@ class BaseProperties(QWidget):
                 self._apply_on_commit(widget)
             elif isinstance(widget, QCheckBox):
                 widget.toggled.connect(self._queue_auto_apply)
-            elif isinstance(widget, QComboBox):
+            elif isinstance(widget, (QComboBox, PathEffectCombo)):
                 widget.currentIndexChanged.connect(self._queue_auto_apply)
             elif isinstance(widget, QAbstractSpinBox):
                 widget.valueChanged.connect(self._queue_auto_apply)  # type: ignore[attr-defined]

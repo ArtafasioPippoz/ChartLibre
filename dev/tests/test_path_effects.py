@@ -145,23 +145,41 @@ def test_a_bad_axis_effect_falls_back_to_the_figure_one() -> None:
         plt.close(figure)
 
 
-def test_the_combo_keeps_presets_and_effects_of_its_own(qapp) -> None:
-    from app.widgets.drop_down_controls.path_effect_combo import CUSTOM, PathEffectCombo
+def test_the_effect_widget_is_a_preview_and_the_helper_button(qapp) -> None:
+    from app.widgets.drop_down_controls.path_effect_combo import PathEffectCombo
 
+    changes: list[int] = []
     figure_combo = PathEffectCombo()
+    figure_combo.currentIndexChanged.connect(changes.append)
     assert figure_combo.current_effect() == ""
-    assert figure_combo.set_current_effect("shadow")
-    assert figure_combo.current_effect() == "shadow"
-    count = figure_combo.count()
     assert figure_combo.set_current_effect("glow(4, red) + shadow")
-    assert figure_combo.count() == count + 1 and figure_combo.current_effect() == "glow(4, red) + shadow"
-    assert figure_combo.itemData(figure_combo.count() - 1) == CUSTOM
+    assert figure_combo.current_effect() == "glow(4, red) + shadow"
+    assert not figure_combo._preview.pixmap().isNull()  # the effect drawn
     assert not figure_combo.set_current_effect("blur")
     assert figure_combo.set_current_effect("none") and figure_combo.current_effect() == ""  # None is ""
+    figure_combo._change("outline(6, background)")
+    assert figure_combo.current_effect() == "outline(6, background)" and changes == [0]
 
     axis_combo = PathEffectCombo(inherit="Figure's")
     assert axis_combo.current_effect() == ""
     assert axis_combo.set_current_effect("none") and axis_combo.current_effect() == "none"
+    axis_combo._on_reset()
+    assert axis_combo.current_effect() == ""  # back to the figure's
+
+
+def test_the_helper_colour_reaches_halo_and_dark_outline(qapp) -> None:
+    from app.widgets.drop_down_controls.path_effect_dialog import PathEffectDialog
+
+    dialog = PathEffectDialog("outline(6, background) + stroke(2, black)")
+    rows = {row.name: row for row in dialog._rows}
+    rows["outline"].colour.set_color("#ff0000")
+    rows["outline"].colour.colorChanged.emit("#ff0000")
+    rows["stroke"].colour.set_color("#00ff00")
+    rows["stroke"].colour.colorChanged.emit("#00ff00")
+    assert dialog.effect() == "outline(6, #ff0000) + stroke(2, #00ff00)"
+    # The colour picker of an effect never hands back a transparent colour (it would draw nothing).
+    assert rows["outline"].colour._alpha is False
+    assert not dialog.preview.pixmap().isNull()
 
 
 # ----------------------------------------------------------------------

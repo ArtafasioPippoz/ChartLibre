@@ -1,40 +1,30 @@
-"""PathEffectCombo: halos, outlines, shadows and glows for text, each with a preview drawn by matplotlib.
+"""PathEffectCombo: the effect of a text or a series - a preview drawn by matplotlib and the Helper button.
 
-The value is the effect as text (app.plugin_api.charts.path_effects), the way it is saved in the project; Custom...
-opens a builder for one of the user's own (path_effect_dialog) (dev/plans/path_effects_plan.txt, D).
+The value is the effect as text (app.plugin_api.charts.path_effects), the way it is saved in the project; the
+Helper (path_effect_dialog) builds it from its parts (dev/plans/path_effects_plan.txt, D). There are no ready-made
+effects to choose from: the Helper is the one way, and its colours work on every effect.
 """
 from __future__ import annotations
 
 from functools import cache
 
-from PySide6.QtCore import QSize
+import shiboken6
+from PySide6.QtCore import Signal
 from PySide6.QtGui import QIcon, QImage, QPixmap
-from PySide6.QtWidgets import QSizePolicy, QWidget
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QToolButton, QWidget
 
 from app.plugin_api.charts.path_effects import is_valid, parse
 from app.utils.i18n import _
-from app.widgets.drop_down_controls.icon_combo import IconComboBox
 
-_ICON_W, _ICON_H = 28, 16
+_ICON_W, _ICON_H = 28, 16  # the size the effect is drawn at; a larger preview grows from it
 
-#: The entry that asks for an effect of the user's own.
-CUSTOM = "__custom__"
-
-#: (label, value): the effects most charts want. "background" is the axes' colour of the style being drawn, so a
-#: halo works on a dark theme as on a light one.
-PRESETS: tuple[tuple[str, str], ...] = (
-    ("Halo", "outline(6, background)"),
-    ("Dark outline", "stroke(2, black)"),
-    ("Shadow", "shadow"),
-    ("Glow", "glow(6)"),
-    ("Halo and shadow", "shadow + outline(6, background)"),
-)
+_PREVIEW_SIZE = (64, 24)
 
 
 @cache
 def _effect_icon(value: str, size: tuple[int, int] = (_ICON_W, _ICON_H)) -> QIcon:
     """An "Aa" drawn with the effect, over a dark diagonal line so a halo shows where it cuts it."""
-    if value == CUSTOM or not is_valid(value) or not parse(value):
+    if not is_valid(value) or not parse(value):
         return QIcon()
     from matplotlib import rc_context
     from matplotlib.backends.backend_agg import FigureCanvasAgg
@@ -68,60 +58,80 @@ def path_effect_preview_icon(value: str, size: tuple[int, int] = (_ICON_W, _ICON
     return _effect_icon((value or "").strip(), size)
 
 
-class PathEffectCombo(IconComboBox):
-    """The effect of a text, as text: the presets, None, and Custom...
+class PathEffectCombo(QWidget):
+    """The effect of a text, as text: its preview and the Helper button that builds it.
 
-    *inherit* names a first entry whose value is "" - the figure's effect, for an axis -; the explicit
-    "none" then means no effect even where the figure has one. Without it, None is "".
+    *inherit* names the first state, whose value is "" - the figure's effect, for an axis -; the explicit "none"
+    then means no effect even where the figure has one, and a small button goes back to the inherited one.
+    Without it, no effect is "". (The name is the one of the combo box it replaced.)
     """
 
+    #: Emitted when the effect changes (the index is only there for the combo boxes' own signal's sake).
+    currentIndexChanged = Signal(int)
+
     def __init__(self, parent: QWidget | None = None, *, inherit: str = "") -> None:
-        entries = [(inherit, ""), (_("None"), "none")] if inherit else [(_("None"), "")]
-        entries += [(_(label), value) for label, value in PRESETS]
-        entries.append((_("Custom…"), CUSTOM))
-        super().__init__(parent, entries=entries, icon_for=path_effect_preview_icon,
-                         icon_size=QSize(_ICON_W, _ICON_H))
+        super().__init__(parent)
+        self._inherit = inherit
+        self._effect = ""
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self._preview = QLabel(self)
+        self._preview.setMinimumHeight(_PREVIEW_SIZE[1] + 4)
+        self._preview.setToolTip(_("The effect on a piece of text, over a dark line"))
+        layout.addWidget(self._preview, 1)
+        self._reset = QToolButton(self)
+        self._reset.setText("×")
+        self._reset.setToolTip(_("Back to %s") % inherit if inherit else _("Remove the effect"))
+        self._reset.clicked.connect(self._on_reset)
+        layout.addWidget(self._reset)
+        self._helper = QPushButton(_("Helper…"), self)
+        self._helper.setToolTip(_("An outline, a shadow or a glow drawn under the text, so it stays readable over "
+                                  "the data: build it from its parts"))
+        self._helper.clicked.connect(self.open_helper)
+        layout.addWidget(self._helper)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        self.setToolTip(_("An outline, a shadow or a glow drawn under the text, so it stays readable over the data"))
-        self._previous = self.current_value()
-        self.activated.connect(self._on_activated)
+        self._refresh()
 
     def current_effect(self) -> str:
         """The effect chosen, as text ("" for none, or the figure's)."""
-        value = self.current_value()
-        return self._previous if value == CUSTOM else value
+        return self._effect
 
     def set_current_effect(self, effect: str) -> bool:
-        """Select *effect*; one of the user's own gets an entry of its own. False when it does not parse."""
+        """Show *effect*. False when it does not parse."""
         text = (effect or "").strip()
-        if text.lower() == "none" and self.findData("none", self.ROLE_VALUE) < 0:
+        if text.lower() == "none" and not self._inherit:
             text = ""
-        if self.findData(text, self.ROLE_VALUE) < 0:
-            if not is_valid(text):
-                return False
-            self._add_custom(text)
-        found = self.set_current_value(text)
-        if found:
-            self._previous = text
-        return found
+        if text and not is_valid(text):
+            return False
+        self._effect = text
+        self._refresh()
+        return True
 
-    def _add_custom(self, text: str) -> None:
-        """An entry for the effect *text*, just above Custom…."""
-        self.blockSignals(True)
-        at = self.findData(CUSTOM, self.ROLE_VALUE)
-        self.insertItem(at if at >= 0 else self.count(), path_effect_preview_icon(text), text, text)
-        self.blockSignals(False)
-
-    def _on_activated(self, index: int) -> None:
-        """Custom… opens the effect builder; an effect it makes is added and chosen, Cancel goes back."""
-        if self.itemData(index, self.ROLE_VALUE) != CUSTOM:
-            self._previous = self.current_value()
-            return
+    def open_helper(self) -> None:
+        """Open the Helper on the effect; Apply keeps what it built, Close goes back."""
         from app.widgets.drop_down_controls.path_effect_dialog import PathEffectDialog
 
-        dialog = PathEffectDialog(self._previous, self)
-        if dialog.exec() and dialog.effect() and is_valid(dialog.effect()):
-            self.set_current_effect(dialog.effect())
+        dialog = PathEffectDialog("" if self._effect == "none" else self._effect, self)
+        accepted = dialog.exec()
+        if not shiboken6.isValid(self) or not shiboken6.isValid(dialog):
+            return  # the editor went while the Helper was open
+        if accepted and is_valid(dialog.effect()):
+            self._change(dialog.effect() or ("none" if self._inherit else ""))
+
+    def _on_reset(self) -> None:
+        self._change("")
+
+    def _change(self, effect: str) -> None:
+        if effect != self._effect:
+            self.set_current_effect(effect)
+            self.currentIndexChanged.emit(0)
+
+    def _refresh(self) -> None:
+        icon = path_effect_preview_icon(self._effect, _PREVIEW_SIZE)
+        if icon.isNull():
+            self._preview.setPixmap(QPixmap())
+            self._preview.setText(self._inherit if (self._inherit and not self._effect) else _("None"))
         else:
-            self.set_current_value(self._previous)
-        self.currentIndexChanged.emit(self.currentIndex())
+            self._preview.setText("")
+            self._preview.setPixmap(icon.pixmap(*_PREVIEW_SIZE))
+        self._reset.setVisible(bool(self._effect))

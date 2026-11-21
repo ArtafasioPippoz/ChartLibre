@@ -747,6 +747,8 @@ class DictEditorPanel(QWidget):
         if isinstance(editor, QComboBox):
             editor.setFocus(Qt.FocusReason.MouseFocusReason)
             editor.showPopup()
+        elif isinstance(editor, PathEffectCombo):
+            editor.open_helper()
 
     def _click_button_editor(self, item: QTreeWidgetItem) -> None:
         """Open a button-based delegate editor, currently the colour dialog."""

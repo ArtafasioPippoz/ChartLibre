@@ -36,6 +36,14 @@ _RANGES = {"alpha": (0.0, 1.0, 0.05), "angle": (-180.0, 180.0, 5.0), "dy": (-50.
 _PREVIEW_W, _PREVIEW_H = 140, 56
 
 
+def _background() -> str:
+    """The axes' colour, which \"background\" stands for."""
+    from matplotlib import rcParams
+
+    face = str(rcParams.get("axes.facecolor", "white"))
+    return "white" if face.lower() in ("none", "") else face
+
+
 def _number_text(value: float) -> str:
     return f"{value:g}"
 
@@ -53,7 +61,7 @@ class _EffectRow:
         column = 1
         for key, default in _ARGUMENTS[name]:
             if key == "color":
-                self.colour = ColorPickerButton(parent)
+                self.colour = ColorPickerButton(parent, alpha=False, stand_in={"background": _background()})
                 self.colour.set_color(default if default is not None else "")
                 self.colour.setToolTip(_("Colour: Background is the axes' colour"))
                 self.colour.colorChanged.connect(lambda *_args: self.use.setChecked(True))

@@ -33,8 +33,12 @@ def matplotlib_hex(color: QColor) -> str:
 class ColorPickerButton(QPushButton):
     colorChanged = Signal(str)
 
-    def __init__(self, parent: QWidget | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None, *, alpha: bool = True,
+                 stand_in: dict[str, str] | None = None) -> None:
+        """*alpha* False for a colour that has an opacity of its own elsewhere (a path effect): always opaque."""
         super().__init__(parent)
+        self._alpha = alpha
+        self._stand_in = stand_in or {}  # a word that is no colour, and the colour that shows it (and starts the dialog)
         self._color = ""
         self.clicked.connect(self._choose_color)
         self._refresh()
@@ -48,14 +52,16 @@ class ColorPickerButton(QPushButton):
         self._refresh()
 
     def _refresh(self) -> None:
-        self.setIcon(color_preview_icon(self._color))
+        self.setIcon(color_preview_icon(self._stand_in.get(self._color, self._color)))
         self.setText(self._color or "Default")
         self.setToolTip("Choose colour" if self._color else "Choose colour (currently default)")
 
     def _choose_color(self) -> None:
-        initial = (qcolor_from_matplotlib(self._color) if self._color else None) or QColor("#1f77b4")
+        initial = (qcolor_from_matplotlib(self._stand_in.get(self._color, self._color)) if self._color else None) or QColor("#1f77b4")
+        if not self._alpha:
+            initial.setAlpha(255)
         dialog = QColorDialog(initial, self)
-        dialog.setOption(QColorDialog.ColorDialogOption.ShowAlphaChannel, True)
+        dialog.setOption(QColorDialog.ColorDialogOption.ShowAlphaChannel, self._alpha)
         # Qt's own dialog, not macOS' colour panel: as a property editor's cell editor, this button lost the
         # focus to the native panel, the editor was closed and deleted - and the dialog, its child, with it,
         # inside exec(): the application crashed when exec() returned. Qt's dialog keeps the focus within.
@@ -64,6 +70,9 @@ class ColorPickerButton(QPushButton):
         if not shiboken6.isValid(self) or not shiboken6.isValid(dialog):
             return  # the editor went while the dialog was open: nothing left to set
         if accepted:
-            self.set_color(matplotlib_hex(dialog.selectedColor()))
+            chosen = dialog.selectedColor()
+            if not self._alpha:
+                chosen.setAlpha(255)  # the dialog may hand back a transparent one: an effect must show
+            self.set_color(matplotlib_hex(chosen))
             self.colorChanged.emit(self._color)
         dialog.deleteLater()
