@@ -50,7 +50,8 @@ def test_a_plain_frame_gives_the_table_to_sql_gave(repo: SqliteRepo) -> None:
     schema, rows = _table(repo, "direct")
     # The row id first (R-07), numbered from 1.
     assert schema[0] == ("_id", "INTEGER") and [row[0] for row in rows] == [1, 2, 3, 4]
-    assert dict(schema[1:]) == {"x": "REAL", "n": "INTEGER", "flag": "INTEGER", "label": "TEXT", "mixed": "TEXT"}
+    assert dict(schema[1:]) == {"x": "REAL", "n": "INTEGER", "flag": "INTEGER", "label": "TEXT", "mixed": "TEXT",
+                                  "Selected": "INTEGER"}
     assert rows[2][1] is None and rows[1][4] is None  # NaN and None are NULL
 
 
@@ -66,7 +67,7 @@ def test_an_empty_frame_and_a_replaced_table(repo: SqliteRepo) -> None:
     repo.import_dataframe(pd.DataFrame({"a": pd.Series([], dtype=float), "b": pd.Series([], dtype=object)}),
                           table_name="t", normalize_columns=False)
     schema, rows = _table(repo, "t")
-    assert [name for name, _kind in schema] == ["_id", "a", "b"] and rows == []
+    assert [name for name, _kind in schema] == ["_id", "a", "b", "Selected"] and rows == []
 
 
 def test_values_that_are_not_plain_fall_back_and_still_import(repo: SqliteRepo) -> None:

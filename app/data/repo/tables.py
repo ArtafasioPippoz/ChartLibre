@@ -319,6 +319,12 @@ class TablesMixin(_Host):
 
     @ensure_connection_wrapper
     def ensure_row_id(self, table: str) -> None:
+        """Give *table* its row id column (ROW_ID) and its Selected flag - unless it has them (see _ensure_row_id)."""
+        self._ensure_row_id(table)
+        if self.table_info(table):
+            self.ensure_column(table_name=table, col_name="Selected", col_type="INTEGER")
+
+    def _ensure_row_id(self, table: str) -> None:
         """Give *table* its row id column (ROW_ID), numbered in row order - unless it has one.
 
         A rebuild of the table: SQLite cannot add a primary key to a table.
@@ -363,7 +369,7 @@ class TablesMixin(_Host):
         self._commit()
 
     def ensure_row_ids(self) -> None:
-        """Every user table with its row id: a project made before R-07, the first time it opens."""
+        """Every user table with its row id and Selected flag: a project made before them, when it opens."""
         for table in self.list_user_tables()["Table"]:
             try:
                 self.ensure_row_id(str(table))
@@ -1547,7 +1553,7 @@ class TablesMixin(_Host):
         table = self.row_table(sql)
         if not table or not self.selected_only(table):
             return sql
-        if not self.has_column(table, "Selected"):
+        if not self.has_column(table, "Selected"):  # every table has it from its creation or the project's opening
             return f"SELECT * FROM ({sql}) WHERE 0"
         if not has_projection_alias(sql, ROW_ID):
             # A grouping or an aggregate names no row id: the rows it reads are filtered instead. Filtering

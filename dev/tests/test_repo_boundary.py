@@ -47,7 +47,7 @@ def numbers(repo: SqliteRepo) -> SqliteRepo:
 def test_rows_are_read_in_blocks_after_the_last_rowid(numbers: SqliteRepo) -> None:
     first = numbers.read_rows_after_rowid("numbers", 0, 3)
     assert [row[0] for row in first] == [1, 2, 3]
-    assert first[0] == (1, 1, 10)  # rowid, then the columns
+    assert first[0] == (1, 1, 10, 0)  # rowid, then the columns, the Selected flag last
 
     second = numbers.read_rows_after_rowid("numbers", first[-1][0], 3)
     assert [row[0] for row in second] == [4, 5, 6]

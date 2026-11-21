@@ -473,6 +473,16 @@ class TablePreviewPanel(QWidget):
 
     def _set_selected_only(self, table: str, on: bool) -> None:
         if self._repo is not None:
+            if on and not self._repo.selected_row_ids(table):
+                # Nothing is marked Selected yet - only highlighted here: those rows are what the user means,
+                # otherwise every chart would draw nothing.
+                model = self._model()
+                ids = ([row_id for row in self._selected_block()[0] if (row_id := model.row_id(row)) is not None]
+                       if model is not None else [])
+                if ids:
+                    self._repo.select_rows(table, ids)
+                    self.selected_rows_changed.emit([table])
+                    self._reload_model()
             self._repo.set_selected_only(table, bool(on))
             self.selected_only_changed.emit([table])
 

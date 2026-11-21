@@ -208,3 +208,28 @@ def test_show_only_selected_keeps_a_grouped_chart_and_its_order(tmp_path):
     ordered = repo.sql_selected_only(repo.sql_with_row_id('SELECT "x" FROM "T" ORDER BY "x" DESC'))
     assert repo.query_df(ordered)["x"].tolist() == [3.0, 2.0, 1.0]
     repo.close()
+
+
+def test_show_only_selected_from_the_preview_marks_the_highlighted_rows_when_none_is(qapp, tmp_path: Path) -> None:
+    """Rows only highlighted in the preview are what Show only Selected means: otherwise every chart drew nothing."""
+    from PySide6.QtCore import QItemSelectionModel
+
+    from app.widgets.table_preview import TablePreviewPanel
+
+    repo = SqliteRepo(db_path=tmp_path / "o.dhub")
+    x = np.arange(10, dtype=float)
+    repo.import_dataframe(pd.DataFrame({"a": x, "b": x * 2.0}), table_name="t", normalize_columns=False)
+    panel = TablePreviewPanel(None, repo)
+    try:
+        panel.set_context(repo, "t")
+        model = panel.view.model()
+        for row in (2, 3):
+            panel.view.selectionModel().select(model.index(row, 0), QItemSelectionModel.SelectionFlag.Select)
+        panel._set_selected_only("t", True)
+        assert repo.selected_only("t") and repo.selected_row_ids("t") == [3, 4]
+        panel._set_selected_only("t", False)
+        panel._set_selected_only("t", True)  # already marked: left as they are
+        assert repo.selected_row_ids("t") == [3, 4]
+    finally:
+        panel.close()
+        repo.close()

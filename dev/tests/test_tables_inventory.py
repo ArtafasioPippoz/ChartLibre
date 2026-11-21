@@ -17,6 +17,6 @@ def test_lists_the_tables_and_previews_the_selected_one(qapp, tmp_path) -> None:
     names = [dialog.tables.item(row, 0).text() for row in range(dialog.tables.rowCount())]
     assert "data" in names
     dialog.tables.selectRow(names.index("data"))
-    assert dialog.preview.rowCount() == 3 and dialog.preview.columnCount() == 2
+    assert dialog.preview.rowCount() == 3 and dialog.preview.columnCount() == 3  # and the Selected flag
     assert "3 of 3" in dialog.caption.text()
     dialog.done(0)

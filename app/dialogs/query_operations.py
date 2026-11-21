@@ -87,7 +87,7 @@ class OperationForm(QWidget):
         return list(self._repo.list_table_names())
 
     def columns(self, table: str) -> list[str]:
-        return [c for c in self._repo.get_columns(table) if c != "Hide"] if table else []
+        return [c for c in self._repo.get_columns(table) if c not in ("Hide", "Selected")] if table else []
 
     def numeric_columns(self, table: str) -> list[str]:
         numeric = []

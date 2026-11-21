@@ -91,7 +91,7 @@ def test_find_replace_inside_text_and_whole_cells(repo) -> None:
 def test_group_aggregate_writes_a_new_table(repo) -> None:
     repo.import_dataframe(pd.DataFrame({"k": ["a", "b", "a"], "v": [1, 2, 3]}), table_name="g")
     name = repo.group_aggregate("g", ["k"], "SUM", "v")
-    assert repo.query_df(f'SELECT * FROM "{name}"').values.tolist() == [["a", 4], ["b", 2]]
+    assert repo.query_df(f'SELECT * FROM "{name}"').values.tolist() == [["a", 4, 0], ["b", 2, 0]]  # and the Selected flag
 
 
 def _con(repo: SqliteRepo):

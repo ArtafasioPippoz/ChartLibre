@@ -80,14 +80,14 @@ def test_a_table_with_a_space_in_its_name_has_its_hide_preview_undone(tmp_path) 
 
     repo = SqliteRepo(db_path=tmp_path / "space.dhub")
     repo.import_dataframe(pd.DataFrame({"x": [1, 2, 3]}), table_name="CO2 per capita", normalize_columns=False)
-    assert repo.get_columns("CO2 per capita") == ["x"]
+    assert repo.get_columns("CO2 per capita") == ["x", "Selected"]
     repo.ensure_preview_state_columns("CO2 per capita")
     repo.mark_hide_rowids(table_name="CO2 per capita", rowids=[1, 3])
     assert repo.count_hidden_rows("CO2 per capita") == 2
     repo.restore_preview_state_columns("CO2 per capita")
     repo.drop_preview_state_columns("CO2 per capita")
     assert repo.count_hidden_rows("CO2 per capita") == 0
-    assert repo.get_columns("CO2 per capita") == ["x", "Hide"]
+    assert repo.get_columns("CO2 per capita") == ["x", "Selected", "Hide"]
     repo.close()
 
 

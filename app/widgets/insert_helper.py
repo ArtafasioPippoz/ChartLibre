@@ -78,7 +78,8 @@ class InsertHelper(QWidget):
         return [str(name) for name in self._repo().list_user_tables()["Table"]][:MAX_TABLES]
 
     def column_names(self, table: str) -> list[str]:
-        return [str(name) for name in self._repo().get_columns(table) if not str(name).startswith("_")][:MAX_COLUMNS]
+        return [str(name) for name in self._repo().get_columns(table)
+                if not str(name).startswith("_") and str(name) not in ("Hide", "Selected")][:MAX_COLUMNS]
 
     def _add(self, menu: QMenu, label: str, text: str, tooltip: str = "", icon: str = "") -> None:
         action = menu.addAction(label)

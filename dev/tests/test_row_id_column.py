@@ -24,9 +24,9 @@ def test_an_import_gives_the_table_its_row_id_hidden_from_columns_and_frames(tmp
         repo.import_dataframe(pd.DataFrame({"x": [3.0, 1.0, 2.0]}), table_name="t", normalize_columns=False)
         assert _schema(repo, "t")[0] == ("_id", "INTEGER", 1)
         assert repo.row_id_column("t") == "_id" and repo.has_column("t", "_id")
-        assert repo.get_columns("t") == ["x"] and repo.get_columns("t", with_id=True) == ["_id", "x"]
-        assert list(repo.query_df('SELECT * FROM "t"').columns) == ["x"]
-        assert list(repo.query_df('SELECT * FROM "t"', row_id=True).columns) == ["_id", "x"]
+        assert repo.get_columns("t") == ["x", "Selected"] and repo.get_columns("t", with_id=True) == ["_id", "x", "Selected"]
+        assert list(repo.query_df('SELECT * FROM "t"').columns) == ["x", "Selected"]
+        assert list(repo.query_df('SELECT * FROM "t"', row_id=True).columns) == ["_id", "x", "Selected"]
         assert not repo.has_integer_primary_key("t")  # ours: rows may be renumbered
     finally:
         repo.close()
@@ -53,7 +53,7 @@ def test_a_project_from_before_gets_row_ids_once_when_it_opens(tmp_path: Path) -
         # A key of its own is its row id already: left alone.
         assert repo.row_id_column("own_key") == "id" and not repo.has_column("own_key", "_id")
         # Someone's own "_id" is kept, under another name.
-        assert repo.get_columns("mongo") == ["_id_2", "v"]
+        assert repo.get_columns("mongo") == ["_id_2", "v", "Selected"]
         assert repo.query_df('SELECT "_id_2" FROM "mongo"')["_id_2"].tolist() == ["5f1a", "5f1b"]
     finally:
         repo.close()
@@ -69,7 +69,7 @@ def test_copies_keep_the_row_ids_and_a_sort_numbers_the_rows_anew(tmp_path: Path
         repo.cast_column("t", "n", "INTEGER")
         assert _schema(repo, "t")[0] == ("_id", "INTEGER", 1) and _ids(repo, "t", "n") == [(1, 3), (2, 1), (3, 2)]
         repo.insert_table_column("t", "z", before="x")
-        assert repo.get_columns("t", with_id=True) == ["_id", "z", "x", "n"]
+        assert repo.get_columns("t", with_id=True) == ["_id", "z", "x", "n", "Selected"]
         assert _schema(repo, "t")[0] == ("_id", "INTEGER", 1) and _ids(repo, "t", "x")[0] == (1, 3.0)
         repo.sort_table("t", "x")
         assert _ids(repo, "t", "x") == [(1, 1.0), (2, 2.0), (3, 3.0)]
@@ -87,7 +87,7 @@ def test_a_table_saved_from_a_query_or_a_grouping_has_its_row_ids(tmp_path: Path
         saved = repo.create_table_from_query("picked", 'SELECT * FROM "t" WHERE g = \'a\'')
         assert _schema(repo, saved)[0] == ("_id", "INTEGER", 1) and _ids(repo, saved, "v") == [(1, 1.0), (3, 3.0)]
         grouped = repo.group_aggregate("t", ["g"], measures=[("SUM", "v")], new_name="sums")
-        assert repo.row_id_column(grouped) == "_id" and repo.get_columns(grouped) == ["g", "sum_v"]
+        assert repo.row_id_column(grouped) == "_id" and repo.get_columns(grouped) == ["g", "sum_v", "Selected"]
     finally:
         repo.close()
 
