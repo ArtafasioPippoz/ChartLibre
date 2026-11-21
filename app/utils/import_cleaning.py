@@ -16,6 +16,7 @@ No Qt: app.utils.import_runner refreshes a link with the same rules.
 from __future__ import annotations
 
 import re
+import unicodedata
 from collections.abc import Iterable
 from typing import Any
 
@@ -36,6 +37,88 @@ DEFAULT_MISSING: tuple[str, ...] = (
 _DATE_LIKE = re.compile(r"^\s*(\d{1,4})[./\-](\d{1,2})[./\-](\d{1,4})(?:[ T]\d{1,2}:\d{2}(?::\d{2}(?:\.\d+)?)?)?\s*$")
 _MONTH_NAME = re.compile(r"\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|gen|mag|giu|lug|ago|set|ott|dic)",
                          re.IGNORECASE)
+
+
+_ENGLISH_MONTHS = ("january", "february", "march", "april", "may", "june", "july", "august",
+                   "september", "october", "november", "december")
+_ENGLISH_DAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
+#: The notation people write a date format in, and the strftime code each stands for. Longest first.
+_FORMAT_TOKENS = re.compile(r"YYYY|YY|MMMM|MMM|MM|M|DD|D|dddd|ddd|HH|H|hh|h|mm|m|ss|s|A|a")
+_FORMAT_CODES = {
+    "YYYY": "%Y", "YY": "%y", "MMMM": "%B", "MMM": "%b", "MM": "%m", "M": "%m", "DD": "%d", "D": "%d",
+    "dddd": "%A", "ddd": "%a", "HH": "%H", "H": "%H", "hh": "%I", "h": "%I", "mm": "%M", "m": "%M",
+    "ss": "%S", "s": "%S", "A": "%p", "a": "%p",
+}
+
+
+def date_format_to_strftime(text: str) -> str:
+    """A date format as strftime codes: "DD/MM/YYYY HH:mm" becomes "%d/%m/%Y %H:%M".
+
+    Text with a "%" in it is strftime already and is left as it is.
+    """
+    text = str(text or "").strip()
+    if "%" in text:
+        return text
+    return _FORMAT_TOKENS.sub(lambda match: _FORMAT_CODES[match.group(0)], text)
+
+
+def _fold(word: str) -> str:
+    """Lower case, accents and the dot of an abbreviation gone: "Févr." and "fevr" are one word."""
+    plain = unicodedata.normalize("NFD", word.lower().strip().rstrip("."))
+    return "".join(char for char in plain if not unicodedata.combining(char))
+
+
+_local_names_cache: dict[str, tuple[re.Pattern[str], dict[str, str]]] = {}
+
+
+def _local_names(locale_name: str | None = None) -> tuple[re.Pattern[str], dict[str, str]] | None:
+    """This computer's month and day names (long and short), as a pattern and the English each stands for.
+
+    English is always read; these are the names of the system's own language, from Qt's locale data. A name
+    that is also an English one is left out: it already means what English says.
+    """
+    from PySide6.QtCore import QLocale
+
+    locale = QLocale(locale_name) if locale_name else QLocale.system()
+    key = locale.name()
+    if key not in _local_names_cache:
+        english = set(_ENGLISH_MONTHS) | set(_ENGLISH_DAYS) | {name[:3] for name in _ENGLISH_MONTHS + _ENGLISH_DAYS}
+        mapping: dict[str, str] = {}
+        written: set[str] = set()  # the names as the locale writes them, accents kept, beside the folded ones
+        for index in range(1, 13):
+            for form in (QLocale.FormatType.LongFormat, QLocale.FormatType.ShortFormat):
+                name = locale.monthName(index, form)
+                mapping[_fold(name)] = _ENGLISH_MONTHS[index - 1][:3]
+                written.add(name.lower().rstrip("."))
+        for index in range(1, 8):
+            for form in (QLocale.FormatType.LongFormat, QLocale.FormatType.ShortFormat):
+                name = locale.dayName(index, form)
+                mapping[_fold(name)] = _ENGLISH_DAYS[index - 1][:3]
+                written.add(name.lower().rstrip("."))
+        mapping = {name: eng for name, eng in mapping.items() if name and name not in english and name.isalpha()}
+        words = sorted(set(mapping) | {w for w in written if _fold(w) in mapping}, key=len, reverse=True)
+        pattern = re.compile(r"\b(" + "|".join(map(re.escape, words)) + r")\b\.?", re.IGNORECASE) if words else None
+        _local_names_cache[key] = (pattern, mapping)  # type: ignore[assignment]
+    pattern, mapping = _local_names_cache[key]
+    return (pattern, mapping) if pattern is not None else None
+
+
+def english_names(text: pd.Series, locale_name: str | None = None) -> pd.Series:
+    """*text* with the month and day names of this computer's language written in English, for the parser.
+
+    Accents are tolerated ("févr", "fevr") and so is the dot of an abbreviation ("janv.").
+    """
+    found = _local_names(locale_name)
+    if found is None:
+        return text
+    pattern, mapping = found
+
+    def swap(value: Any) -> Any:
+        if not isinstance(value, str):
+            return value
+        return pattern.sub(lambda match: mapping.get(_fold(match.group(1)), match.group(0)), value)
+
+    return text.map(swap).astype("string")
 
 
 def parse_missing(text: str) -> list[str]:
@@ -103,8 +186,10 @@ def parse_dates(series: pd.Series, order: str = AUTO, date_format: str = "", *,
                 default: str = MONTH_FIRST) -> pd.Series:
     """*series* as datetimes (NaT where a value is no date), in the *order* or *date_format* given."""
     text = series.astype("string")
+    if not pd.api.types.is_datetime64_any_dtype(series):
+        text = english_names(text)
     if order == FORMAT and date_format.strip():
-        return pd.to_datetime(text, format=date_format.strip(), errors="coerce")
+        return pd.to_datetime(text, format=date_format_to_strftime(date_format), errors="coerce")
     if order == AUTO:
         order = guess_date_order(text.dropna().head(500), default)
     if pd.api.types.is_datetime64_any_dtype(series):
@@ -123,7 +208,7 @@ def looks_like_dates(series: pd.Series, order: str = AUTO, date_format: str = ""
     sample = series.dropna().astype(str).head(200)
     if sample.empty or to_numbers(sample).notna().all():
         return False
-    shaped = sample.map(lambda v: bool(_DATE_LIKE.match(v) or _MONTH_NAME.search(v)))
+    shaped = english_names(sample).map(lambda v: bool(_DATE_LIKE.match(v) or _MONTH_NAME.search(v)))
     if shaped.mean() < 0.9:
         return False
     return bool(parse_dates(sample, order, date_format, default=default).notna().mean() >= 0.9)

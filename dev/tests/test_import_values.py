@@ -65,3 +65,27 @@ def test_the_dialog_types_and_imports_them(qapp, tmp_path: Path, csv_file: Path)
         assert repo.table_frame("log")["day"].tolist()[-1] == "2025-04-02"
     finally:
         repo.close()
+
+
+def test_local_month_names_read_as_english() -> None:
+    from app.utils import import_cleaning as ic
+
+    cases = {
+        "it_IT": (["12 gennaio 2024", "3 Mag 2024", "15 dic. 2023"], ["12 jan 2024", "3 may 2024", "15 dec 2023"]),
+        "fr_FR": (["3 févr. 2024", "1 FEVR 2024"], ["3 feb 2024", "1 feb 2024"]),
+        "de_DE": (["5 März 2024", "3 Dez 2023"], ["5 mar 2024", "3 dec 2023"]),
+    }
+    for name, (given, wanted) in cases.items():
+        assert ic.english_names(pd.Series(given), name).tolist() == wanted
+    # English is left alone, whatever the computer's language.
+    assert ic.english_names(pd.Series(["12 March 2024", "Mar 5"]), "it_IT").tolist() == ["12 March 2024", "Mar 5"]
+
+
+def test_free_date_format_notation() -> None:
+    from app.utils import import_cleaning as ic
+
+    assert ic.date_format_to_strftime("DD/MM/YYYY HH:mm") == "%d/%m/%Y %H:%M"
+    assert ic.date_format_to_strftime("D MMMM YYYY") == "%d %B %Y"
+    assert ic.date_format_to_strftime("%d.%m.%Y") == "%d.%m.%Y"
+    parsed = ic.parse_dates(pd.Series(["31/12/2024 13:05"]), ic.FORMAT, "DD/MM/YYYY HH:mm")
+    assert parsed.tolist() == [pd.Timestamp("2024-12-31 13:05")]

@@ -518,9 +518,9 @@ class ImportDataDialog(SettingsTableDialog):
         stdSizeAndlayout(self._date_order)
         values_form.addRow(field_label(_("Dates")), self._date_order)
         self._date_format = QLineEdit(str(cfg.get("date_format") or ""), values.card)
-        self._date_format.setPlaceholderText("%d.%m.%Y %H:%M")
-        self._date_format.setToolTip(_("The dates' format, in strftime codes: %d day, %m month, %Y year, "
-                                       "%H:%M:%S time, %b month name."))
+        self._date_format.setPlaceholderText("DD.MM.YYYY HH:mm")
+        self._date_format.setToolTip(_("The dates' format: YYYY year, MM month, DD day, HH:mm:ss time, MMM month name "
+                                       "(or strftime codes: %Y, %m, %d, %H:%M:%S, %b)."))
         values_form.addRow(field_label(_("Format")), self._date_format)
         self._missing_codes = QLineEdit(", ".join(cfg.get("missing", import_cleaning.DEFAULT_MISSING)), values.card)
         self._missing_codes.setToolTip(_("Values that mean \"no value\", separated by commas: they are imported "
