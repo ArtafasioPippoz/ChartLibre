@@ -209,18 +209,24 @@ def _filled_dialog(repo: Any, analysis: str, table: str, roles: Mapping[str, Any
     cls = import_class_from_file(entry)
     if cls is None:  # its file went, or did not load: the log says why
         raise AnalysisError(f"The analysis '{name}' could not be loaded; the log says why.")
+    generates = bool(getattr(cls, "GENERATES", False))  # reads no data (Random data): a figure to open on, no source
     on_series = not reads_roles(entry)
     scratch: int | None = None
-    if on_series:
+    if on_series or generates:
         # An analysis of a chart's series: its table's columns drawn as the chart it reads (what its Table source does).
         scratch = int(repo.create_figure_descriptor(name=f"{name} (script)"))
+        if generates:  # the window opens on an axis, and puts its figure beside it
+            repo.create_axis_descriptor(figure_id=scratch, axis_index=0, chart_type="Scatter Plot", title=name,
+                                        x_label="", y_label="", options={})
         dialog = cls(repo=repo, figure_id=scratch)
     else:
         dialog = cls(repo=repo, table=table)
     dialog._analysis_scratch = scratch
     try:
         dialog.revert_entries()  # from its defaults, not from how the window was last left (a 2D smoothing, say)
-        if on_series:
+        if generates:
+            pass
+        elif on_series:
             dialog.source_table_radio.setChecked(True)
             x = casting.get("x") or [""]
             if not casting.get("y"):

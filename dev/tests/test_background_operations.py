@@ -24,6 +24,7 @@ from app.plugin_api.data_operations.dialog_base import DataOperationDialogBase
 
 #: module, class: every operation that computes in the background.
 BACKGROUND_OPERATIONS = [
+    ("add_noise_dialog", "AddNoiseDialog"),
     ("baseline_dialog", "SeriesBaselineDialog"),
     ("calculus_dialog", "SeriesCalculusDialog"),
     ("cluster_dialog", "SeriesClusterDialog"),

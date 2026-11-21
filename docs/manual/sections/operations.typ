@@ -460,6 +460,22 @@ Replaces y with a transformed version of itself, point for point (same x, same n
 #example("op_transform")
 #use[Preparing data for a method that assumes normality or comparable scales — a test, a control chart, a clustering on several variables.]
 
+=== Add noise — noise, outliers or missing values on a series
+Adds a known amount of randomness to a series, to test what comes after: a fit, an outlier rule, a filter, a robust method. The originals stay; the noisy copy is drawn beside them. The same *seed* adds the same noise; left at Random it is chosen once and written in the report.
+
+#defs(
+  [*Additive*], [$y + s e$, with $e$ from the *shape* you pick (normal, uniform, Laplace, logistic, Student t, exponential, lognormal, gamma), centred on 0 and scaled to a standard deviation of 1, so that the amount means the same for every shape. *Keep the offset* leaves a skewed noise's mean where it is.],
+  [*Proportional*], [$y (1 + a e)$: the noise grows with the value; the amount is the fraction $a$ (0.1 is 10%).],
+  [*Growing with X*], [Additive noise that is zero at the smallest x and the full amount at the largest, as x to a power: for testing methods that assume the same spread everywhere.],
+  [*Outliers*], [A fraction of the points moved by so many standard deviations of the series, up or down at random.],
+  [*Random walk*], [The cumulative sum of the noise: a drifting baseline.],
+  [*Missing values*], [A fraction of the points emptied, to test how a method treats gaps.],
+)
+
+The amount of an additive, growing or walking noise is given as a standard deviation, a fraction of the series' own standard deviation or of its range, or a *signal-to-noise ratio in dB*. The report gives, for each series, the standard deviation of the noise obtained, the ratio obtained and the correlation with the original. Several series get independent noise, or one noise term shared by all of them (they need the same number of points) to test correlated errors. An empty value stays empty.
+
+#use[Checking that a fit recovers known parameters, that an outlier rule finds the outliers you put there, or how much noise a filter or a baseline can take.]
+
 === Geometry — move a series' coordinates <geometry>
 Rotates, translates, scales, mirrors or shears a series, or applies any matrix you type. It answers "put this where that is": rotate a scan onto a reference frame, shift a profile, flip it, scale a model onto measured units.
 
