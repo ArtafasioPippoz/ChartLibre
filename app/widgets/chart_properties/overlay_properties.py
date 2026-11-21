@@ -425,7 +425,7 @@ class OverlayPropertiesWidget(BaseProperties):
                 kwargs[col.key] = stored
             return combo
         if col.kind == _EFFECT:
-            combo = self._table_combo(PathEffectCombo(table))
+            combo = self._table_combo(PathEffectCombo(table, artist="series"))
             if text and not combo.set_current_effect(text):
                 kwargs[col.key] = stored
             return combo

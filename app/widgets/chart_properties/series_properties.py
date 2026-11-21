@@ -452,7 +452,7 @@ class SeriesPropertiesWidget(BaseProperties):
                                                 line_colour=lambda: self._line_editor.colour())
         self._bar_picture_editor = BarPictureEditor(section, repo=lambda: self._repo)
         # An outline, a shadow or a glow under what the series draws, and its legend entry (charts.path_effects).
-        self._effect_combo = PathEffectCombo(section)
+        self._effect_combo = PathEffectCombo(section, artist="series")
         self._effect_combo.setToolTip(_("An outline, a shadow or a glow drawn under the series' lines, points, bars "
                                         "or wedges, and under its legend entry"))
         self._sort_x_check.toggled.connect(self._sort_toggled)

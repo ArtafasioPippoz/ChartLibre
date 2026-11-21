@@ -103,8 +103,9 @@ class _EffectRow:
 class PathEffectDialog(PanelDialog):
     """The effect of a text or a series, built from its parts; ``effect()`` is its text when accepted."""
 
-    def __init__(self, current: str = "", parent: QWidget | None = None) -> None:
+    def __init__(self, current: str = "", parent: QWidget | None = None, *, artist: str = "text") -> None:
         super().__init__(parent, title=_("Text effect"), size=None)
+        self._artist = artist
         grid = QGridLayout()
         stdSizeAndlayout(grid)
         self.add_card(_("Effects, drawn in this order"), "pathEffectCard").layout().addLayout(grid)
@@ -167,7 +168,7 @@ class PathEffectDialog(PanelDialog):
         from app.widgets.drop_down_controls.path_effect_combo import path_effect_preview_icon
 
         value = self.effect()
-        icon = path_effect_preview_icon(value, (_PREVIEW_W, _PREVIEW_H))
+        icon = path_effect_preview_icon(value, (_PREVIEW_W, _PREVIEW_H), self._artist)
         if icon.isNull():
             self.preview.setPixmap(QPixmap())
             self.preview.setText(_("No effect"))

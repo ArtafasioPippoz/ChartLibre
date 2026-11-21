@@ -22,8 +22,9 @@ _PREVIEW_SIZE = (64, 24)
 
 
 @cache
-def _effect_icon(value: str, size: tuple[int, int] = (_ICON_W, _ICON_H)) -> QIcon:
-    """An "Aa" drawn with the effect, over a dark diagonal line so a halo shows where it cuts it."""
+def _effect_icon(value: str, size: tuple[int, int] = (_ICON_W, _ICON_H), artist: str = "text") -> QIcon:
+    """An "Aa" - or, for a series, a line with points - drawn with the effect, over a dark diagonal line so a halo
+    shows where it cuts it."""
     if not is_valid(value) or not parse(value):
         return QIcon()
     from matplotlib import rc_context
@@ -41,8 +42,14 @@ def _effect_icon(value: str, size: tuple[int, int] = (_ICON_W, _ICON_H)) -> QIco
         figure.patch.set_alpha(0)
         figure.add_artist(Line2D([0.05, 0.95], [0.1, 0.9], color="#555555", linewidth=1.2 * grow,
                                  transform=figure.transFigure))
-        figure.text(0.5, 0.45, "Aa", ha="center", va="center", fontsize=10 * grow, fontweight="bold", color="#3a3a3a",
-                    path_effects=to_matplotlib(value, "text"))
+        if artist == "series":
+            series = Line2D([0.15, 0.35, 0.55, 0.75, 0.9], [0.3, 0.7, 0.4, 0.75, 0.5], color="#1f77b4",
+                            linewidth=1.8 * grow, marker="o", markersize=3.5 * grow, transform=figure.transFigure)
+            series.set_path_effects(to_matplotlib(value, "line"))
+            figure.add_artist(series)
+        else:
+            figure.text(0.5, 0.45, "Aa", ha="center", va="center", fontsize=10 * grow, fontweight="bold",
+                        color="#3a3a3a", path_effects=to_matplotlib(value, "text"))
         canvas = FigureCanvasAgg(figure)
         canvas.draw()
         buffer = canvas.buffer_rgba()
@@ -53,13 +60,14 @@ def _effect_icon(value: str, size: tuple[int, int] = (_ICON_W, _ICON_H)) -> QIco
     return QIcon(pixmap)
 
 
-def path_effect_preview_icon(value: str, size: tuple[int, int] = (_ICON_W, _ICON_H)) -> QIcon:
-    """The preview of an effect written as text; an empty icon for no effect or one that does not parse."""
-    return _effect_icon((value or "").strip(), size)
+def path_effect_preview_icon(value: str, size: tuple[int, int] = (_ICON_W, _ICON_H), artist: str = "text") -> QIcon:
+    """The preview of an effect written as text, on a text or ("series") on a line with points; an empty icon for
+    no effect or one that does not parse."""
+    return _effect_icon((value or "").strip(), size, artist)
 
 
 class PathEffectCombo(QWidget):
-    """The effect of a text, as text: its preview and the Helper button that builds it.
+    """The effect of a text or a series, as text: its preview and the Helper button that builds it.
 
     *inherit* names the first state, whose value is "" - the figure's effect, for an axis -; the explicit "none"
     then means no effect even where the figure has one, and a small button goes back to the inherited one.
@@ -69,8 +77,9 @@ class PathEffectCombo(QWidget):
     #: Emitted when the effect changes (the index is only there for the combo boxes' own signal's sake).
     currentIndexChanged = Signal(int)
 
-    def __init__(self, parent: QWidget | None = None, *, inherit: str = "") -> None:
+    def __init__(self, parent: QWidget | None = None, *, inherit: str = "", artist: str = "text") -> None:
         super().__init__(parent)
+        self._artist = artist  # "text", or "series": what the preview and the Helper draw the effect on
         self._inherit = inherit
         self._effect = ""
         layout = QHBoxLayout(self)
@@ -114,7 +123,7 @@ class PathEffectCombo(QWidget):
         """Open the Helper on the effect; Apply keeps what it built, Close goes back."""
         from app.widgets.drop_down_controls.path_effect_dialog import PathEffectDialog
 
-        dialog = PathEffectDialog("" if self._effect == "none" else self._effect, self)
+        dialog = PathEffectDialog("" if self._effect == "none" else self._effect, self, artist=self._artist)
         accepted = dialog.exec()
         if not shiboken6.isValid(self) or not shiboken6.isValid(dialog):
             return  # the editor went while the Helper was open
@@ -130,7 +139,7 @@ class PathEffectCombo(QWidget):
             self.currentIndexChanged.emit(0)
 
     def _refresh(self) -> None:
-        icon = path_effect_preview_icon(self._effect, _PREVIEW_SIZE)
+        icon = path_effect_preview_icon(self._effect, _PREVIEW_SIZE, self._artist)
         if icon.isNull():
             self._preview.setPixmap(QPixmap())
             self._preview.setText(self._inherit if (self._inherit and not self._effect) else _("None"))
