@@ -123,7 +123,9 @@ class ColumnInfoDialog(ColumnsDialog):
         format_layout.addWidget(self.decimals)
         form.addRow(field_label(_("Format")), format_row)
         self.pattern = QLineEdit(self)
-        self.pattern.setToolTip(_("strftime codes: %d day, %m month, %Y year, %H:%M:%S time, %b month name."))
+        self.pattern.setToolTip(_("The date as written: YYYY year, MM month, DD day, HH:mm:ss time, MMM month name "
+                                  "(or strftime codes: %Y, %m, %d, %H:%M:%S, %b). Shown in the table and on "
+                                  "the ticks of a chart's date axis."))
         form.addRow(field_label(_("Pattern")), self.pattern)
         self._pattern_label = form.labelForField(self.pattern)
         self.example = QLabel("", self)

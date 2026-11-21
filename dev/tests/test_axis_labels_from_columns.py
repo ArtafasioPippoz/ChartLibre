@@ -76,3 +76,35 @@ def test_a_query_that_is_not_a_plain_select_gives_no_name(repo: SqliteRepo) -> N
     cm.set_column_info(repo, "t", "x", cm.ColumnInfo(label="Time", unit="s"))
     axes = _render(repo, sql="SELECT x, y FROM (SELECT x, y FROM t)")
     assert axes.get_xlabel() == ""
+
+
+def test_a_date_pattern_is_read_in_the_two_notations() -> None:
+    from datetime import datetime
+
+    from app.utils.date_format import is_valid_pattern, localized_strftime
+
+    moment = datetime(2024, 12, 31, 13, 5, 9)
+    assert localized_strftime(moment, "DD/MM/YYYY HH:mm") == "31/12/2024 13:05"
+    assert localized_strftime(moment, "%Y-%m-%d") == "2024-12-31"
+    assert is_valid_pattern("YYYY")
+    assert cm.axis_date_pattern(cm.ColumnInfo(format="datetime", pattern="YYYY")) == "YYYY"
+    assert cm.axis_date_pattern(cm.ColumnInfo(format="fixed")) == ""  # only the date format sets one
+    assert cm.axis_date_pattern(None) == ""
+
+
+def test_a_date_axis_shows_its_columns_pattern(tmp_path: Path) -> None:
+    database = SqliteRepo(db_path=tmp_path / "dates.dhub")
+    try:
+        database.import_dataframe(
+            pd.DataFrame({"x": pd.date_range("2024-01-01", periods=60, freq="D").strftime("%Y-%m-%d"),
+                          "y": np.arange(60.0)}),
+            table_name="t", normalize_columns=False)
+        axes = _render(database)
+        assert axes.xaxis.get_major_formatter().__class__.__name__ != "FuncFormatter"  # matplotlib's own, adaptive
+        cm.set_column_info(database, "t", "x", cm.ColumnInfo(format="datetime", pattern="DD/MM/YYYY"))
+        axes = _render(database)
+        axes.figure.canvas.draw()
+        labels = [text.get_text() for text in axes.get_xticklabels() if text.get_text()]
+        assert labels and all(len(label) == 10 and label[2] == "/" and label[5] == "/" for label in labels), labels
+    finally:
+        database.close()

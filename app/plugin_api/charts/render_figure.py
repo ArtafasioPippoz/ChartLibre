@@ -283,6 +283,7 @@ def _render_figure_from_descriptor(
 
             _apply_axis_runtime_options(ax=ax, axis_desc=axis_desc)
             _apply_column_labels(ax=ax, axis_desc=axis_desc, repo=repo)
+            _apply_column_date_patterns(ax=ax, axis_desc=axis_desc, repo=repo)
             _keep_dates_in_range(ax, axis_desc)
             _apply_series_effects(ax, series_list)
 
@@ -1270,6 +1271,48 @@ def _apply_column_labels(ax: Any, axis_desc: AxisDescriptor, repo: SqliteRepo) -
         ax.set_xlabel(display_text(wanted["x"]))
     if wanted.get("y"):
         ax.set_ylabel(display_text(wanted["y"]))
+
+
+def _apply_column_date_patterns(ax: Any, axis_desc: AxisDescriptor, repo: SqliteRepo) -> None:
+    """The ticks of a date axis written in the pattern of its column's Column Info (Date / time format).
+
+    Only an axis that is a date axis - the renderer put matplotlib's date formatter on it - and whose first
+    described column sets a pattern; an axis without one keeps matplotlib's own, which adapts to the zoom.
+    """
+    from matplotlib import dates as mdates
+    from matplotlib.ticker import FuncFormatter
+
+    from app.data import column_metadata
+    from app.data.data_source import parse_roles
+    from app.utils.date_format import is_valid_pattern, localized_strftime
+
+    date_formatters = (mdates.DateFormatter, mdates.ConciseDateFormatter, mdates.AutoDateFormatter)
+    wanted = {role: axis for role, axis in (("x", ax.xaxis), ("y", ax.yaxis))
+              if isinstance(axis.get_major_formatter(), date_formatters)}
+    if not wanted:
+        return
+    try:
+        infos: dict[str, dict[str, Any]] = {}
+        patterns: dict[str, str] = {}
+        for series_desc in list(axis_desc.series or []):
+            roles = parse_roles(series_desc.roles)
+            table = column_metadata.source_table_of(str(series_desc.sql_query or ""))
+            if table is None:
+                continue
+            if table not in infos:
+                infos[table] = column_metadata.column_info(repo, table)
+            for role in wanted:
+                column = str(roles.get(role) or "")
+                pattern = column_metadata.axis_date_pattern(infos[table].get(column)) if column else ""
+                if pattern and role not in patterns and is_valid_pattern(pattern):
+                    patterns[role] = pattern
+    except Exception:
+        applogger.exception("Could not read the date patterns of axis id=%r", axis_desc.id)
+        return
+    for role, pattern in patterns.items():
+        wanted[role].set_major_formatter(
+            FuncFormatter(lambda value, _position, pattern=pattern: localized_strftime(mdates.num2date(value), pattern))
+        )
 
 
 def _apply_axis_runtime_options(ax: Any, axis_desc: AxisDescriptor) -> None:

@@ -10,8 +10,8 @@ undoes with it. What it changes:
   or blank string, as in JMP. Codes standing for one (-999, "NA") are made
   empty cells in the data itself, by the table editor's Fill missing values;
 * format - how its values are shown (Best, Fixed, Percent, Scientific,
-  thousands separator, a date/time pattern): the table preview's text only,
-  never the values themselves;
+  thousands separator, a date/time pattern): the table preview's text, and
+  the ticks of a chart's date axis for the pattern; never the values themselves;
 * label, unit, notes - said where the column is described.
 
 No Qt: the Column Info dialog and the table analyses both read it here.
@@ -131,7 +131,9 @@ def format_value(value: Any, info: ColumnInfo) -> str:
         if pd.isna(moment):
             return str(value)
         try:
-            return moment.strftime(info.pattern or DEFAULT_DATE_PATTERN)
+            from app.utils.date_format import localized_strftime
+
+            return localized_strftime(moment, info.pattern or DEFAULT_DATE_PATTERN)
         except ValueError:
             return str(value)
     if kind in ("fixed", "percent", "scientific", "thousands"):
@@ -188,6 +190,13 @@ def source_table_of(sql: str) -> str | None:
     if name[0] in '"`[':
         name = name[1:-1].replace('""', '"')
     return name or None
+
+
+def axis_date_pattern(info: ColumnInfo | None) -> str:
+    """The pattern a chart's date axis shows this column's dates in; "" when the column does not set one."""
+    if info is None or info.format != "datetime":
+        return ""
+    return info.pattern or DEFAULT_DATE_PATTERN
 
 
 def axis_label_of(column: str, info: ColumnInfo | None) -> str:
