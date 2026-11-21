@@ -26,8 +26,8 @@ def test_no_effect(text: str) -> None:
 
 
 def test_defaults_fill_what_is_left_out() -> None:
-    assert parse("shadow") == [("shadow", {"dx": 2.0, "dy": -2.0, "alpha": 0.3, "color": "black"})]
-    assert parse("shadow(4)") == [("shadow", {"dx": 4.0, "dy": -2.0, "alpha": 0.3, "color": "black"})]
+    assert parse("shadow") == [("shadow", {"dx": 1.5, "dy": -1.5, "alpha": 0.35, "color": "black"})]
+    assert parse("shadow(4)") == [("shadow", {"dx": 4.0, "dy": -1.5, "alpha": 0.35, "color": "black"})]
     assert parse("Outline( 5 , red )") == [("outline", {"width": 5.0, "color": "red"})]
 
 
@@ -323,3 +323,20 @@ def test_the_style_editor_reads_and_writes_the_effect(qapp) -> None:
             path.unlink(missing_ok=True)
     finally:
         dialog.close()
+
+
+def test_effect_builder_writes_and_reads_the_text(qapp) -> None:
+    from app.plugin_api.charts.path_effects import is_valid
+    from app.widgets.drop_down_controls.path_effect_dialog import PathEffectDialog
+
+    dialog = PathEffectDialog("shadow + outline(3, background)")
+    assert [row.use.isChecked() for row in dialog._rows] == [True, False, True, False, False]
+    dialog._rows[1].use.setChecked(True)
+    assert dialog.effect() == "shadow(1.5, -1.5, 0.35, black) + glow(8) + outline(3, background)"
+    assert is_valid(dialog.effect())
+    dialog.text.setText("glow(6)")
+    dialog.text.textEdited.emit("glow(6)")
+    assert [row.use.isChecked() for row in dialog._rows] == [False, True, False, False, False]
+    for row in dialog._rows:
+        row.use.setChecked(False)
+    assert dialog.effect() == ""

@@ -5,9 +5,9 @@ AbstractPathEffect matplotlib draws only when the chart is drawn (kwarg_spec.res
 styles. Effects are joined by "+" and drawn in that order, under the artist itself:
 
     ""  or  "none"                    no effect
-    "outline(3, white)"               a halo: a stroke of width 3 points under the artist ("background" = the axes')
+    "outline(6, white)"               a halo: a stroke of width 6 points (half of it shows outside) under the artist ("background" = the axes')
     "stroke(2, black)"                the same, dark by default: an edge
-    "shadow(2, -2, 0.3, black)"       an offset copy, in points, with its alpha and colour
+    "shadow(1.5, -1.5, 0.35, black)"       an offset copy, in points, with its alpha and colour
     "glow(8, gold)"                   a few wider and fainter strokes; the artist's own colour when none is given
     "ticked(45, 1.4, 10)"             ticks along the path: angle, length (in spacings), spacing in points
     "shadow + outline(2, white)"      both
@@ -25,9 +25,9 @@ NONE = frozenset({"", "none"})
 
 #: Each effect's arguments, in order, with their defaults: a float, or a colour (None = the artist's own).
 _ARGUMENTS: dict[str, tuple[tuple[str, Any], ...]] = {
-    "outline": (("width", 3.0), ("color", "background")),
+    "outline": (("width", 6.0), ("color", "background")),
     "stroke": (("width", 2.0), ("color", "black")),
-    "shadow": (("dx", 2.0), ("dy", -2.0), ("alpha", 0.3), ("color", "black")),
+    "shadow": (("dx", 1.5), ("dy", -1.5), ("alpha", 0.35), ("color", "black")),
     "glow": (("width", 8.0), ("color", None)),
     "ticked": (("angle", 45.0), ("length", 1.4), ("spacing", 10.0)),
 }
@@ -93,6 +93,45 @@ def _colour(value: Any) -> Any:
     return value
 
 
+def _marker_aware_effects() -> tuple[type, type]:
+    """(shadow, halo) effects that treat a marker as a shape, not as a line.
+
+    matplotlib's SimpleLineShadow draws only a path's edge, so a marker (drawn with a face) gets a hollow grey
+    ring beside it - "a grey copy, far". Here a path with a face is shadowed with that face filled, and a halo
+    around a marker is a filled disc, not only a ring over its own edge.
+    """
+    from matplotlib import colors as mcolors
+    from matplotlib import patheffects as pe
+
+    class MarkerShadow(pe.SimpleLineShadow):
+        def draw_path(self, renderer, gc, tpath, affine, rgbFace):
+            gc0 = renderer.new_gc()
+            gc0.copy_properties(gc)
+            colour = mcolors.to_rgba(self._shadow_color if self._shadow_color is not None else "black")
+            gc0.set_foreground(colour, isRGBA=True)
+            gc0.set_alpha(self._alpha)
+            if rgbFace is not None:
+                gc0.set_linewidth(0)  # a filled shape: the fill only, or the edge would darken it twice
+            gc0 = self._update_gc(gc0, self._gc)
+            renderer.draw_path(gc0, tpath, affine + self._offset_transform(renderer),
+                               colour if rgbFace is not None else None)
+            gc0.restore()
+
+    class MarkerHalo(pe.Stroke):
+        def draw_path(self, renderer, gc, tpath, affine, rgbFace):
+            gc0 = renderer.new_gc()
+            gc0.copy_properties(gc)
+            gc0 = self._update_gc(gc0, self._gc)
+            face = gc0.get_rgb() if rgbFace is not None else None
+            renderer.draw_path(gc0, tpath, affine + self._offset_transform(renderer), face)
+            gc0.restore()
+
+    # Named as the matplotlib effects they refine, which is what a saved figure and the tests look for.
+    MarkerShadow.__name__ = MarkerShadow.__qualname__ = "SimpleLineShadow"
+    MarkerHalo.__name__ = MarkerHalo.__qualname__ = "Stroke"
+    return MarkerShadow, MarkerHalo
+
+
 def to_matplotlib(text: str, artist: str = "line") -> list[Any] | None:
     """The path effects matplotlib draws for *text* on an *artist* - "line", "patch" or "text" - ending with the
     artist itself; [] for no effect; None when the text does not parse (the option is then left out).
@@ -108,14 +147,15 @@ def to_matplotlib(text: str, artist: str = "line") -> list[Any] | None:
     if not effects:
         return []
     drawn: list[Any] = []
+    shadow_class, halo_class = _marker_aware_effects()
     for name, arguments in effects:
         if name in ("outline", "stroke"):
-            drawn.append(pe.Stroke(linewidth=arguments["width"], foreground=_colour(arguments["color"])))
+            drawn.append(halo_class(linewidth=arguments["width"], foreground=_colour(arguments["color"])))
         elif name == "shadow":
             offset = (arguments["dx"], arguments["dy"])
             colour = _colour(arguments["color"])
             if artist == "line":
-                drawn.append(pe.SimpleLineShadow(offset=offset, shadow_color=colour, alpha=arguments["alpha"]))
+                drawn.append(shadow_class(offset=offset, shadow_color=colour, alpha=arguments["alpha"]))
             else:
                 drawn.append(pe.SimplePatchShadow(offset=offset, shadow_rgbFace=colour, alpha=arguments["alpha"]))
         elif name == "glow":
