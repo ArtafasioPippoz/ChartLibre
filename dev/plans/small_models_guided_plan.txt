@@ -68,5 +68,13 @@ Measured (2026-11-07, llama3.2, dev/tools/assistant_eval.py, 20 penguin requests
  B  text calls, mended arguments  10 of 20 (8 with half of B: within the noise of one run)
  C  one form                      13 of 20 - charts 4 of 4; queries without their SQL, analyses unnamed
  D  7 examples in the form        10 of 20 - taken out: the model fills the chart fields for every action
+    E  qwen2.5:3b with the form      8 of 20 (2026-11-21) - worse than llama3.2's 13: it fails on queries (SQL with an
+                                     error) and analyses (compare_groups for a straight-line fit). Not the default.
+    F  Apple, no form yet           5 of 20 (2026-11-21) - the model answers now (no CriticalMemoryPressure, no
+                                     SensitiveContent error, 1.9 GB free): questions 5 of 5 (tables, describe, counts,
+                                     mean, heaviest), analyses and charts 0 of 15 - it only runs queries; four runs end
+                                     in "the conversation no longer fits" / "transcript exceeded the context size" (4096
+                                     tokens), one in the safety guardrails. The provider has SMALL_MODEL but no fill(),
+                                     so the form is not used: next is fill() with guided generation.
 Next idea, not in the plan: the form in two steps - the action alone, then a form of that action's own
 fields, all required - so the chart fields are never there to fill.
