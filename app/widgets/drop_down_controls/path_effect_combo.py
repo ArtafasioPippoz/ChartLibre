@@ -9,9 +9,9 @@ from __future__ import annotations
 from functools import cache
 
 import shiboken6
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QIcon, QImage, QPixmap
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QToolButton, QWidget
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QWidget
 
 from app.plugin_api.charts.path_effects import is_valid, parse
 from app.utils.i18n import _
@@ -75,12 +75,15 @@ class PathEffectCombo(QWidget):
         self._effect = ""
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         self._preview = QLabel(self)
         self._preview.setMinimumHeight(_PREVIEW_SIZE[1] + 4)
+        self._preview.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)  # level with the row's label
         self._preview.setToolTip(_("The effect on a piece of text, over a dark line"))
         layout.addWidget(self._preview, 1)
-        self._reset = QToolButton(self)
+        self._reset = QPushButton(self)  # a button of the app's theme, as Helper is
         self._reset.setText("×")
+        self._reset.setFixedWidth(32)
         self._reset.setToolTip(_("Back to %s") % inherit if inherit else _("Remove the effect"))
         self._reset.clicked.connect(self._on_reset)
         layout.addWidget(self._reset)
