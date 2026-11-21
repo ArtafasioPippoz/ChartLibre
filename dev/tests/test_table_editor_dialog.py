@@ -326,3 +326,26 @@ def test_date_tool_dialog_previews(qapp) -> None:
     dialog = DateToolDialog("when", ["31/12/2024", "01/02/2025"])
     assert "2024-12-31" in dialog.preview.text()
     assert not dialog.format.isEnabled()
+
+
+def test_stored_dates_are_iso_whatever_the_computers_language(repo: SqliteRepo, monkeypatch) -> None:
+    """The column holds the same text under any locale: only the reading of month names depends on it."""
+    import pandas as pd
+    from PySide6.QtCore import QLocale
+
+    from app.utils import import_cleaning
+
+    stored: dict[str, list[str]] = {}
+    for name in ("en_US", "it_IT", "de_DE", "fr_FR"):
+        monkeypatch.setattr(QLocale, "system", staticmethod(lambda name=name: QLocale(name)))
+        import_cleaning._local_names_cache.clear()
+        table = f"d_{name}"
+        repo.import_dataframe(
+            pd.DataFrame({"when": ["2024-01-12", "2024-03-05 14:30:00", "12 March 2024"]}),
+            table_name=table, normalize_columns=False,
+        )
+        repo.read_dates(table, "when", "yearfirst")
+        stored[name] = [row[0] for row in _con(repo).execute(f'SELECT "when" FROM "{table}" ORDER BY rowid')]
+    import_cleaning._local_names_cache.clear()
+    assert len({tuple(values) for values in stored.values()}) == 1
+    assert stored["it_IT"] == ["2024-01-12 00:00:00", "2024-03-05 14:30:00", "2024-03-12 00:00:00"]
