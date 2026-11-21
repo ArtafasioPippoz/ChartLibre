@@ -846,6 +846,13 @@
       "SegoeFluent": "E70F",
       "ThemeIcon": "document-edit"
     },
+    "table_dates": {
+      "text": "Read as dates...",
+      "description": "Read the selected column's text as dates, in the order or format you give, and write them as ISO text that reads the same in any language",
+      "SFSymbol": "calendar",
+      "SegoeFluent": "E787",
+      "ThemeIcon": "appointment-new"
+    },
     "table_find_replace": {
       "text": "Find and replace...",
       "description": "Replace text in the selected column or in the whole table",

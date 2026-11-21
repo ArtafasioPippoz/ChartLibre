@@ -47,6 +47,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app.data.repo._common import _quote_ident
 from app.data.repo.project import CAST_TYPES
 from app.data.sqlite_repo import SqliteRepo
 from app.dialogs.two_panels_dialog_base import SettingsTableDialog
@@ -190,7 +191,7 @@ class TableEditorDialog(SettingsTableDialog):
         )),
         ("Data", (
             "table_sort_ascending", "table_sort_descending", "table_fill_missing",
-            "table_find_replace", "table_group_aggregate",
+            "table_dates", "table_find_replace", "table_group_aggregate",
         )),
     )
 
@@ -310,6 +311,7 @@ class TableEditorDialog(SettingsTableDialog):
             "table_sort_ascending": lambda: self._sort(descending=False),
             "table_sort_descending": lambda: self._sort(descending=True),
             "table_fill_missing": self._fill_missing,
+            "table_dates": self._read_dates,
             "table_find_replace": self._find_replace,
             "table_group_aggregate": self._group_aggregate,
         }
@@ -739,6 +741,36 @@ class TableEditorDialog(SettingsTableDialog):
             self._cells_bulk += count
             if count:
                 self._columns_modified.add(column)
+
+        self._guarded(run)
+
+    def _read_dates(self) -> None:
+        column = self._need_column()
+        if column is None:
+            return
+        from app.dialogs.table_tools_dialogs import DateToolDialog
+
+        samples = [
+            row[0] for row in self._repo.query_df(
+                f"SELECT {_quote_ident(column)} AS v FROM {_quote_ident(self._table)} "
+                f"WHERE {_quote_ident(column)} IS NOT NULL LIMIT 200"
+            ).itertuples(index=False)
+        ]
+        dialog = DateToolDialog(column, samples, self)
+        if not dialog.exec():
+            return
+        order, date_format = dialog.date_order(), dialog.date_format()
+
+        def run() -> None:
+            converted, unread = self._repo.read_dates(
+                self._table, column, order, date_format, undo_entry=self._ensure_undo_entry()
+            )
+            self._cells_bulk += converted
+            if converted:
+                self._columns_modified.add(column)
+            if unread:
+                self._say(_("{count} value(s) could not be read as dates and were left as they were.").format(
+                    count=unread))
 
         self._guarded(run)
 

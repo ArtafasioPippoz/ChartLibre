@@ -39,6 +39,7 @@ ACTIONS: dict[str, str] = {
     "table_group_aggregate": '<path d="M17.5 4.5h-11l6 7.5-6 7.5h11"/>',
     "table_add_row": '<rect x="3" y="3.5" width="18" height="5" rx="1"/><rect x="3" y="10.5" width="10" height="5" rx="1"/><path d="M18.5 14v8M14.5 18h8"/>',
     "table_insert_row": '<path d="M12 2v6M9 5.5l3 3 3-3"/><rect x="3" y="11" width="18" height="4.5" rx="1"/><rect x="3" y="17.5" width="18" height="4.5" rx="1"/>',
+    "table_dates": '<rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M8 14h2M14 14h2M8 17.5h2"/>',
     "table_delete_rows": '<g stroke="#D93025"><rect x="3" y="3.5" width="18" height="5" rx="1"/><rect x="3" y="10.5" width="10" height="5" rx="1"/><path d="M15.5 15.5l6 6M21.5 15.5l-6 6"/></g>',
     "table_add_column": '<rect x="3.5" y="3" width="5" height="18" rx="1"/><rect x="10.5" y="3" width="5" height="10" rx="1"/><path d="M18.5 14v8M14.5 18h8"/>',
     "table_insert_column": '<path d="M2 12h6M5.5 9l3 3-3 3"/><rect x="11" y="3" width="4.5" height="18" rx="1"/><rect x="17.5" y="3" width="4.5" height="18" rx="1"/>',

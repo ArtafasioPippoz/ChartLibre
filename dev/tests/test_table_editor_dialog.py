@@ -293,3 +293,36 @@ def test_the_last_row_and_the_last_column_cannot_be_deleted(
 def _con(repo: SqliteRepo):
     assert repo._con is not None
     return repo._con
+
+
+def test_read_dates_writes_iso_and_keeps_unreadable(repo: SqliteRepo) -> None:
+    import pandas as pd
+
+    repo.import_dataframe(
+        pd.DataFrame({"when": ["31/12/2024", "01/02/2025", "soon", "", None]}),
+        table_name="dates", normalize_columns=False,
+    )
+    converted, unread = repo.read_dates("dates", "when")
+    assert (converted, unread) == (2, 1)
+    values = [row[0] for row in _con(repo).execute('SELECT "when" FROM "dates" ORDER BY rowid')]
+    assert values[:3] == ["2024-12-31", "2025-02-01", "soon"]
+    # Read again: ISO stays ISO, nothing left to change.
+    assert repo.read_dates("dates", "when")[0] == 2
+
+
+def test_read_dates_with_free_format(repo: SqliteRepo) -> None:
+    import pandas as pd
+
+    repo.import_dataframe(
+        pd.DataFrame({"when": ["05.03.24 14:30"]}), table_name="dates2", normalize_columns=False
+    )
+    repo.read_dates("dates2", "when", "format", "DD.MM.YY HH:mm")
+    assert _con(repo).execute('SELECT "when" FROM "dates2"').fetchone()[0] == "2024-03-05 14:30:00"
+
+
+def test_date_tool_dialog_previews(qapp) -> None:
+    from app.dialogs.table_tools_dialogs import DateToolDialog
+
+    dialog = DateToolDialog("when", ["31/12/2024", "01/02/2025"])
+    assert "2024-12-31" in dialog.preview.text()
+    assert not dialog.format.isEnabled()

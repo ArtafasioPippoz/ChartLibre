@@ -30,7 +30,7 @@ from app.data.repo._common import (
 )
 from app.logs.logger import applogger
 from app.utils.coercion import to_numbers
-from app.utils.import_cleaning import matches_missing
+from app.utils.import_cleaning import AUTO, convert_dates, date_kind, matches_missing
 
 #: The columns of __sympy__, in StoredFunction's order (their names are older than the class: kept for the
 #: projects already written).
@@ -456,6 +456,48 @@ class ProjectMixin(_Host):
                 numeric=int(len(numbers)),
             )
         return stats
+
+    def read_dates(
+        self,
+        table_name: str,
+        column_name: str,
+        order: str = AUTO,
+        date_format: str = "",
+        *,
+        undo_entry: int | None = None,
+    ) -> tuple[int, int]:
+        """Rewrite one column's dates as ISO text; returns (converted, left as they were).
+
+        The same reading as the import's: the *order*, or the *date_format* ("DD/MM/YYYY HH:mm" or strftime),
+        with this computer's month names read as English. A value that is no date is left as it was.
+        The column holds ISO text whatever the language, so it reads the same anywhere: a date with a time
+        becomes "2024-12-31 13:05:00", one at midnight throughout "2024-12-31".
+        """
+        self._require_column(table_name, column_name)
+        assert self._con is not None
+        table_sql = _quote_ident(table_name)
+        column = _quote_ident(column_name)
+        rows = self._con.execute(f"SELECT rowid, {column} FROM {table_sql} ORDER BY rowid").fetchall()
+        raw = pd.Series([row[1] for row in rows], dtype=object)
+        present = raw.notna() & (raw.astype(str).str.strip() != "")
+        if not present.any():
+            return 0, 0
+        values = raw[present].astype(str)
+        kind = date_kind(values, order, date_format)
+        converted = convert_dates(values, kind, order, date_format)
+        updates = [
+            (str(text), int(rows[position][0]))
+            for position, text in zip(values.index, converted, strict=True)
+            if not pd.isna(text) and str(text) != str(raw.iat[position])
+        ]
+        readable = int(converted.notna().sum())
+        if updates:
+            self.snapshot_for_undo(
+                [table_name], label=f"Read '{column_name}' as dates in '{table_name}'", entry_id=undo_entry
+            )
+            self._con.executemany(f"UPDATE {table_sql} SET {column} = ? WHERE rowid = ?", updates)
+            self._commit()
+        return readable, int(len(values)) - readable
 
     def fill_missing(
         self,

@@ -41,7 +41,7 @@ from app.styles.style import (
     stdSizeAndlayout,
 )
 from app.utils.i18n import _
-from app.utils.import_cleaning import DEFAULT_MISSING, parse_missing
+from app.utils.import_cleaning import DATE_ORDERS, DEFAULT_MISSING, FORMAT, convert_dates, date_kind, parse_missing
 from app.widgets.table_preview import DataFrameTableModel
 
 
@@ -458,6 +458,61 @@ class FillMissingDialog(PanelDialog):
     def missing_codes(self) -> list[str]:
         """The codes typed in Also missing."""
         return parse_missing(self.codes.text())
+
+
+class DateToolDialog(PanelDialog):
+    """How to read one column's dates: the order, or a format; the column is then written as ISO text."""
+
+    def __init__(self, column: str, samples: Sequence[Any], parent: QWidget | None = None) -> None:
+        super().__init__(parent, title=_("Read '{column}' as dates").format(column=column), size=None)
+        self._samples = pd.Series([str(value) for value in samples], dtype="string")
+        form = QFormLayout()
+        stdSizeAndlayout(form)
+        self.add_card(_("Dates"), "dateToolCard").layout().addLayout(form)
+        self.order = QComboBox(self)
+        for key, label in DATE_ORDERS:
+            self.order.addItem(_(label), key)
+        self.order.setToolTip(_("How the dates are written. Auto reads it from the values."))
+        form.addRow(field_label(_("Order")), self.order)
+        self.format = QLineEdit(self)
+        self.format.setPlaceholderText("DD.MM.YYYY HH:mm")
+        self.format.setToolTip(_("The dates' format: YYYY year, MM month, DD day, HH:mm:ss time, MMM month name "
+                                 "(or strftime codes: %Y, %m, %d, %H:%M:%S, %b)."))
+        form.addRow(field_label(_("Format")), self.format)
+        self.preview = QLabel(self)
+        self.preview.setTextFormat(Qt.TextFormat.PlainText)
+        self.preview.setFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
+        self.preview.setToolTip(_("The first values, as they are now and as they will be written: ISO text, "
+                                  "which reads the same in any language."))
+        form.addRow(field_label(_("Preview")), self.preview)
+        self.order.currentIndexChanged.connect(self._refresh)
+        self.format.textChanged.connect(self._refresh)
+        self._refresh()
+        self.add_action("apply", self.accept, default=True)
+        self.add_action("close", self.reject)
+
+    def date_order(self) -> str:
+        return str(self.order.currentData())
+
+    def date_format(self) -> str:
+        return self.format.text().strip()
+
+    def _refresh(self, *_args: object) -> None:
+        """Format only with Format...; the first values, before and after."""
+        self.format.setEnabled(self.date_order() == FORMAT)
+        shown = self._samples.dropna().head(6)
+        if shown.empty:
+            self.preview.setText(_("No values"))
+            return
+        try:
+            kind = date_kind(shown, self.date_order(), self.date_format())
+            after = convert_dates(shown, kind, self.date_order(), self.date_format())
+        except (ValueError, TypeError):
+            self.preview.setText(_("This format cannot be read."))
+            return
+        self.preview.setText("\n".join(
+            f"{before}  ->  {'?' if pd.isna(now) else now}" for before, now in zip(shown, after, strict=True)
+        ))
 
 
 class FindReplaceDialog(PanelDialog):
