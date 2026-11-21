@@ -1579,7 +1579,11 @@ class ChartToolsMixin(_Host):
         """Ask Qt layouts to resolve the current window/widget geometry now."""
         app = QApplication.instance()
         if app is not None:
-            app.processEvents()
+            # Only the pending layout requests, never a full processEvents():
+            # this runs from showEvent, e.g. in the middle of QTabWidget.clear()
+            # after an Undo, and a full pass would run other queued actions
+            # (re-entrantly adding/removing tabs and views) and crash Qt.
+            app.sendPostedEvents(None, int(QEvent.Type.LayoutRequest))
 
         for widget in (self.window(), self, self._content_split, self._chart_area):
             if isinstance(widget, QWidget):
