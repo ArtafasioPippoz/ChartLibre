@@ -135,7 +135,7 @@ def analyses(scratch: Path) -> None:
     measures = ["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g"]
 
     def tree_charts(dialog) -> None:
-        dialog._parameter_form.set_values({"splits": 4})
+        dialog._parameter_form_spec.set_values({"splits": 4})
         dialog.chart_form.set_values({f"chart_{key}": key in ("partition", "importance") for key, *_rest in CHARTS})
 
     figure_id = _run(app, repo, PartitionDialog, "penguins",
