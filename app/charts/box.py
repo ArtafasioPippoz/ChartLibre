@@ -18,7 +18,7 @@ from matplotlib.patches import Patch
 from app.data.series_frame import SeriesFrame
 from app.logs.logger import applogger
 from app.plugin_api.charts import kwarg_spec
-from app.plugin_api.charts.base import BaseAxisRenderer, SeriesData
+from app.plugin_api.charts.base import BaseAxisRenderer, SeriesArtistTags, SeriesData
 from app.plugin_api.charts.kwarg_spec import DEFAULT
 from app.utils.coercion import column_of, to_numbers
 
@@ -279,6 +279,7 @@ class BoxAxisRenderer(BaseAxisRenderer):
                     {
                         "category_label": category_label,
                         "series_label": series_label,
+                        "series_name": sd.name,  # the series' own name, for its effect (SeriesArtistTags)
                         "data": data,
                         "style": style,
                         # The rows a colour marks - Outliers' "Colour them" - each drawn in its colour.
@@ -449,7 +450,9 @@ class BoxAxisRenderer(BaseAxisRenderer):
         legend_seen: set[str] = set()
         annotation_requests: list[dict[str, Any]] = []
 
+        tags = SeriesArtistTags(ax)
         for item in plot_items:
+            tags.next(item["series_name"])
             series_label = item["series_label"]
             style = item["style"]
             data = item["data"]
@@ -519,6 +522,7 @@ class BoxAxisRenderer(BaseAxisRenderer):
                     )
                     legend_labels.append(series_label)
                     legend_seen.add(series_label)
+        tags.done()
 
         self.apply_category_ticks(
             ax,

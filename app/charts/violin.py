@@ -20,7 +20,7 @@ from matplotlib.patches import Patch
 
 from app.charts.box import BoxAxisRenderer
 from app.logs.logger import applogger
-from app.plugin_api.charts.base import BaseAxisRenderer, SeriesData
+from app.plugin_api.charts.base import BaseAxisRenderer, SeriesArtistTags, SeriesData
 
 # The three marker collections violinplot can return, and the option that asks
 # for each.  Keeping them in one table is what makes the styling loop short.
@@ -222,7 +222,9 @@ class ViolinAxisRenderer(BoxAxisRenderer, BaseAxisRenderer):
         legend_labels: list[str] = []
         legend_seen: set[str] = set()
 
+        tags = SeriesArtistTags(ax)
         for item in plot_items:
+            tags.next(item["series_name"])
             series_label = item["series_label"]
             style = item["style"]
             data = item["data"]
@@ -284,6 +286,7 @@ class ViolinAxisRenderer(BoxAxisRenderer, BaseAxisRenderer):
                 legend_labels.append(series_label)
                 legend_seen.add(series_label)
 
+        tags.done()
         self.apply_category_ticks(
             ax,
             category_labels=category_labels,

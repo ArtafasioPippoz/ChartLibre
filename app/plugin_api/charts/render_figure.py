@@ -321,15 +321,39 @@ def _drawn_points(artist: Any) -> int:
 
 
 def _tag_untagged_series(ax: Any, before: set[int], series_list: list[Any]) -> None:
-    """A renderer that does not tag what its series draw (SeriesArtistTags) still gets the effect of an axis'
-    only series: everything it drew is that series'. With several series there is no telling which is whose."""
-    if len(series_list) != 1 or not (getattr(series_list[0], "style", None) or {}).get("path_effects"):
+    """A renderer that does not tag what its series draw (SeriesArtistTags) still gets the effects of its series.
+
+    With one series, everything the renderer drew is that series'. With several, an artist or a container (bars,
+    error bars) is a series' when its label is the series' name - or "name: something", the way a chart labels a
+    series' traces; what has no such label stays without the effect, as there is no telling whose it is.
+    """
+    wanted = [str(sd.name) for sd in series_list if (getattr(sd, "style", None) or {}).get("path_effects")]
+    if not wanted:
         return
     new = [artist for artist in ax.get_children() if id(artist) not in before]
     if any(hasattr(artist, "_chartlibre_series") for artist in new):
         return
+    if len(series_list) == 1:
+        for artist in new:
+            artist._chartlibre_series = wanted[0]
+        return
+
+    def owner(label: object) -> str | None:
+        text = str(label or "")
+        return next((name for name in wanted if text == name or text.startswith(name + ": ")), None)
+
     for artist in new:
-        artist._chartlibre_series = str(series_list[0].name)
+        name = owner(artist.get_label())
+        if name is not None:
+            artist._chartlibre_series = name
+    for container in getattr(ax, "containers", []):  # bars, error bars: of one series, as the label of one of them says
+        parts = [artist for part in container for artist in (part if isinstance(part, (list, tuple)) else [part])]
+        name = owner(container.get_label()) or next(
+            (artist._chartlibre_series for artist in parts if hasattr(artist, "_chartlibre_series")), None)
+        if name is not None:
+            for artist in parts:
+                if id(artist) not in before and not hasattr(artist, "_chartlibre_series"):
+                    artist._chartlibre_series = name
 
 
 def _apply_series_effects(ax: Any, series_list: list[Any]) -> None:

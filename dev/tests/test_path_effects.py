@@ -392,3 +392,30 @@ def test_an_interaction_plot_and_an_untagging_renderer_take_the_series_effect() 
         assert _kinds(ax.lines[0].get_path_effects()) == ["Stroke", "Normal"]
     finally:
         plt.close(figure)
+
+
+def test_several_series_of_a_box_plot_and_a_histogram_each_take_their_own_effect() -> None:
+    import numpy as np
+
+    from app.charts.box import BoxAxisRenderer
+    from app.charts.histogram import HistogramAxisRenderer
+    from app.data.series_frame import SeriesFrame
+    from app.plugin_api.charts.base import SeriesData
+    from app.plugin_api.charts.render_figure import _apply_series_effects, _tag_untagged_series
+
+    rng = np.random.default_rng(1)
+    for renderer in (BoxAxisRenderer, HistogramAxisRenderer):
+        series = [SeriesData(name=name, df=SeriesFrame({"value": rng.normal(size=40) + shift}),
+                             style={"path_effects": "outline(3, white)"} if name == "A" else {})
+                  for shift, name in enumerate("AB")]
+        figure, ax = plt.subplots()
+        try:
+            before = {id(artist) for artist in ax.get_children()}
+            renderer().render_axis(ax, series, {})
+            _tag_untagged_series(ax, before, series)
+            _apply_series_effects(ax, series)
+            drawn = [artist for artist in ax.get_children() if id(artist) not in before and artist.get_path_effects()]
+            assert drawn, renderer  # A's artists have the effect ...
+            assert {artist._chartlibre_series for artist in drawn} == {"A"}  # ... and B's do not
+        finally:
+            plt.close(figure)
