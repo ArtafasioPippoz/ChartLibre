@@ -51,6 +51,10 @@ SHOWCASE_CHART_TYPES: tuple[str, ...] = (
     "Triangular Color Mesh",
     "Scatter Plot (3D)",
     "Heatmap",
+    "Hinton Diagram",
+    "Hillshade",
+    "Left Ventricle Bullseye",
+    "Stacked Traces",
     "Hexbin",
     "Wafer Map",
     "Spectrogram",
@@ -99,6 +103,7 @@ def _create_source_tables(cur: sqlite3.Cursor, rng: np.random.Generator, n: int)
         DROP TABLE IF EXISTS src_samples;
         DROP TABLE IF EXISTS src_field;
         DROP TABLE IF EXISTS src_events;
+        DROP TABLE IF EXISTS src_segments;
 
         CREATE TABLE src_xy       (x REAL, y REAL, color REAL, size REAL);
         CREATE TABLE src_series   (t REAL, v REAL, w REAL);
@@ -110,6 +115,8 @@ def _create_source_tables(cur: sqlite3.Cursor, rng: np.random.Generator, n: int)
         -- Dated events, for the timeline: an ISO date and the text to write
         -- at the top of each stem.
         CREATE TABLE src_events   (happened TEXT, title TEXT);
+        -- One value per segment of the left ventricle (the AHA's 17): the bullseye.
+        CREATE TABLE src_segments (segment INTEGER, value REAL);
         -- Interval rows for the broken-bar renderers: one row per interval,
         -- several rows may share a category (the "broken" part).
         CREATE TABLE src_intervals (task TEXT, start REAL, duration REAL);
@@ -139,6 +146,10 @@ def _create_source_tables(cur: sqlite3.Cursor, rng: np.random.Generator, n: int)
         -- A two-level breakdown: the treemap.
         CREATE TABLE src_budget (dept TEXT, line TEXT, amount REAL);
         """
+    )
+    cur.executemany(
+        "INSERT INTO src_segments VALUES (?, ?)",
+        [(number, 40.0 + 3.0 * number + (-25.0 if number in (7, 8, 13) else 0.0)) for number in range(1, 18)],
     )
     cur.executemany(
         "INSERT INTO src_pairs VALUES (?, ?, ?)",
@@ -853,6 +864,35 @@ def _showcase_definitions() -> list[dict[str, Any]]:
             "series": [
                 ("ripple", "SELECT x, y, z FROM src_grid", {}),
             ],
+        },
+        {
+            "chart_type": "Hinton Diagram",
+            "name": "Hinton showcase",
+            "labels": ("x", "y"),
+            "axis_options": {"title": "Hinton Diagram"},
+            "series": [("ripple", "SELECT x, y, z FROM src_grid", {})],
+        },
+        {
+            "chart_type": "Hillshade",
+            "name": "Hillshade showcase",
+            "labels": ("x", "y"),
+            "axis_options": {"title": "Hillshade"},
+            "series": [("ripple", "SELECT x, y, z FROM src_grid", {})],
+        },
+        {
+            "chart_type": "Left Ventricle Bullseye",
+            "name": "Bullseye showcase",
+            "labels": ("", ""),
+            "axis_options": {"title": "Left Ventricle Bullseye", "colorbar": False},
+            "series": [("segments", "SELECT segment, value FROM src_segments", {})],
+        },
+        {
+            "chart_type": "Stacked Traces",
+            "name": "Stacked traces showcase",
+            "labels": ("t", ""),
+            "axis_options": {"title": "Stacked Traces"},
+            "series": [("channel 1", "SELECT t AS x, v AS y FROM src_series", {}),
+                       ("channel 2", "SELECT t AS x, w AS y FROM src_series", {})],
         },
         {
             "chart_type": "Hexbin",

@@ -536,6 +536,7 @@ class BaseAxisRenderer:
 
         self.apply_reference_lines(ax, options)
         self.apply_measurements(ax, options)
+        self.apply_paths(ax, options)
 
     def apply_reference_lines(self, ax: Any, options: dict[str, Any]) -> None:
         """Draw the full-width/height lines stored in ``options["lines"]``.
@@ -556,6 +557,16 @@ class BaseAxisRenderer:
         for line in lines:
             if isinstance(line, dict):
                 self.apply_reference_line(ax, line)
+
+    @staticmethod
+    def _drawn_effects(kwargs: dict[str, Any], artist: str) -> list[Any] | None:
+        """Pop "path_effects" (kept as text, "outline(3, white)") out of *kwargs*: the matplotlib effects for an
+        *artist* ("line" or "text"), or None for no effect or one that does not parse (charts.path_effects)."""
+        if "path_effects" not in kwargs:
+            return None
+        from app.plugin_api.charts.path_effects import to_matplotlib
+
+        return to_matplotlib(str(kwargs.pop("path_effects") or ""), artist) or None
 
     def apply_reference_line(self, ax: Any, line: dict[str, Any]) -> None:
         """Draw one reference line, or nothing if it does not describe one."""
@@ -591,6 +602,58 @@ class BaseAxisRenderer:
             draw(value, **kwargs)
         except Exception:
             applogger.exception("A reference line could not be drawn: %r", line)
+
+    @staticmethod
+    def parse_path_points(value: Any) -> list[tuple[float, float]]:
+        """The vertices of a path: "x,y; x,y; ..." or a list of pairs; the pairs that are not two finite numbers
+        are left out."""
+        if isinstance(value, str):
+            pairs: list[Any] = [part.replace(",", " ").split() for part in value.replace("\n", ";").split(";")]
+        elif isinstance(value, (list, tuple)):
+            pairs = list(value)
+        else:
+            return []
+        points: list[tuple[float, float]] = []
+        for pair in pairs:
+            try:
+                x, y = float(pair[0]), float(pair[1])
+            except (TypeError, ValueError, IndexError):
+                continue
+            if np.isfinite(x) and np.isfinite(y):
+                points.append((x, y))
+        return points
+
+    def apply_paths(self, ax: Any, options: dict[str, Any]) -> None:
+        """Draw the polygons and polylines stored in ``options["paths"]``:
+        ``{"points": "x,y; x,y", "closed": "yes"|"no", "kwargs": {...}}``."""
+        paths = options.get("paths", [])
+        if isinstance(paths, list):
+            for path in paths:
+                if isinstance(path, dict):
+                    self.apply_path(ax, path)
+
+    def apply_path(self, ax: Any, path: dict[str, Any]) -> None:
+        """Draw one path, or nothing if it has fewer than two usable points."""
+        points = self.parse_path_points(path.get("points"))
+        if len(points) < 2:
+            applogger.warning("Skipping a path with fewer than two points: %r", path.get("points"))
+            return
+        closed = str(path.get("closed", "yes") or "yes").lower() not in ("no", "false", "0")
+        kwargs = path.get("kwargs", {})
+        kwargs = dict(kwargs) if isinstance(kwargs, dict) else {}
+        effects = self._drawn_effects(kwargs, "patch")
+        if effects:
+            kwargs["path_effects"] = effects
+        kwargs.setdefault("facecolor", "none")
+        kwargs.setdefault("edgecolor", "#d62728")
+        kwargs.setdefault("linewidth", 1.6)
+        kwargs.setdefault("zorder", 9_000)
+        try:
+            from matplotlib.patches import Polygon
+
+            ax.add_patch(Polygon(points, closed=closed, **kwargs))
+        except Exception:
+            applogger.exception("A path could not be drawn: %r", path)
 
     def apply_measurements(self, ax: Any, options: dict[str, Any]) -> None:
         """Draw the rulers stored in ``options["measurements"]``.
@@ -628,11 +691,16 @@ class BaseAxisRenderer:
         kwargs = measurement.get("kwargs", {})
         kwargs = dict(kwargs) if isinstance(kwargs, dict) else {}
         color = str(kwargs.pop("color", "") or "#d62728")
+        raw_effect = kwargs.get("path_effects")
+        line_effects = self._drawn_effects(kwargs, "line")  # the ruler's line, and the same on its label
+        text_effects = self._drawn_effects({"path_effects": raw_effect}, "text")
 
         dx, dy = x1 - x0, y1 - y0
         slope_text = "undefined (Δx = 0)" if dx == 0 else f"{dy / dx:.4g}"
 
         try:
+            if line_effects:
+                kwargs["path_effects"] = line_effects
             ax.plot(
                 [x0, x1],
                 [y0, y1],
@@ -644,7 +712,7 @@ class BaseAxisRenderer:
                 zorder=10_000,
                 **kwargs,
             )
-            ax.annotate(
+            label = ax.annotate(
                 f"Δx: {dx:.4g}\nΔy: {dy:.4g}\nslope: {slope_text}",
                 xy=((x0 + x1) / 2.0, (y0 + y1) / 2.0),
                 xytext=(12, 12),
@@ -658,6 +726,8 @@ class BaseAxisRenderer:
                     "alpha": 0.95,
                 },
             )
+            if text_effects:
+                label.set_path_effects(text_effects)
         except Exception:
             applogger.exception("A measurement could not be drawn: %r", measurement)
 
@@ -693,6 +763,9 @@ class BaseAxisRenderer:
         xytext = kwargs.pop("xytext", (10, 10))
         textcoords = kwargs.pop("textcoords", "offset points")
         arrowprops = kwargs.pop("arrowprops", None)
+        effects = self._drawn_effects(kwargs, "text")
+        if effects:
+            kwargs["path_effects"] = effects
 
         if annotation_type == "arrow":
             if not isinstance(arrowprops, dict):

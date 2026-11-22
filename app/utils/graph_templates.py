@@ -36,7 +36,7 @@ FIGURE_LOOK_KEYS: frozenset[str] = frozenset({"mpl_style", "layout_mode", "margi
 #: Axis options that say what *this* axis shows rather than how: never copied.
 AXIS_CONTENT_KEYS: frozenset[str] = frozenset({
     "title", "label", "suptitle", "x_label", "y_label", "z_label",
-    "xlim", "ylim", "zlim", "annotations", "lines", "reference_lines", "measurements",
+    "xlim", "ylim", "zlim", "annotations", "lines", "reference_lines", "measurements", "paths",
     "twin_of", "col_span", "row_span", "sharex", "sharey", "sharez", "subplot",
     "left", "right", "top", "bottom", "axis_id", "figure_id", "renderer", "renderer_name", "problem",
 })

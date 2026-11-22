@@ -1,0 +1,10 @@
+{
+  "id": "medicine",
+  "name": "Medicine",
+  "version": "1.0.0",
+  "description": "Charts of the clinic: the left ventricle's 17-segment bullseye and multi-channel traces such as an EEG.",
+  "author": "ChartLibre",
+  "needs_app": "0.2.0",
+  "packages": [],
+  "default": true
+}

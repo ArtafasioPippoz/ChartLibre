@@ -287,6 +287,7 @@ def _render_figure_from_descriptor(
             _apply_column_date_patterns(ax=ax, axis_desc=axis_desc, repo=repo)
             _keep_dates_in_range(ax, axis_desc)
             _tag_untagged_series(ax, before, series_list)
+            _apply_axis_legend(ax, axis_desc.options if isinstance(axis_desc.options, dict) else {})
             _apply_series_effects(ax, series_list)
 
         _apply_shared_z_ranges(all_axes, ax_by_id)
@@ -301,6 +302,7 @@ def _render_figure_from_descriptor(
         _normalize_axes_fill_policy(figure, descriptor)
         _apply_panel_labels(figure, descriptor, base_axes, ax_by_id)
         _apply_text_effects(figure, descriptor, all_axes, ax_by_id)
+        _apply_sketch(figure, descriptor)
 
 
 #: Most points, bars or wedges one series draws with its effect (dev/plans/path_effects_plan.txt, G): each effect
@@ -1657,6 +1659,66 @@ def _apply_tick_sizes(ax: Any, options: dict[str, Any]) -> None:
                 # at the end that stays next to the tick.
                 if axis == "x":
                     label.set_horizontalalignment("right")
+
+
+#: The figure's "sketch" presets: matplotlib's (scale, length, randomness); "xkcd" is plt.xkcd()'s.
+SKETCH_PRESETS: dict[str, tuple[float, float, float]] = {"light": (0.8, 120.0, 1.5), "xkcd": (1.0, 100.0, 2.0)}
+
+
+def _apply_sketch(figure: Figure, descriptor: FigureDescriptor) -> None:
+    """The hand-drawn look of the figure's "sketch" option: every line, bar, frame and image outline wobbles."""
+    params = SKETCH_PRESETS.get(str((descriptor.options or {}).get("sketch") or ""))
+    if params is None:
+        return
+    for artist in figure.findobj():
+        try:
+            artist.set_sketch_params(*params)
+        except (AttributeError, TypeError, ValueError):
+            continue  # a text has none
+
+
+def _apply_axis_legend(ax: Any, options: dict[str, Any]) -> None:
+    """The axis' legend as its properties ask: hidden, shown, placed, in columns, with a title, a frame, a size.
+
+    The chart type drew the legend; this draws it again from the same entries when something is asked of it, so
+    "auto" everywhere leaves it as it was.
+    """
+    show = str(options.get("legend_show") or "auto")
+    location = str(options.get("legend_loc") or "")
+    columns = int(options.get("legend_columns") or 0)
+    title = str(options.get("legend_title") or "")
+    size = int(options.get("legend_size") or 0)
+    frame = bool(options.get("legend_frame", True))
+    legend = ax.get_legend()
+    if show == "hide":
+        if legend is not None:
+            legend.remove()
+        return
+    if legend is None and show == "show":
+        handles, _labels = ax.get_legend_handles_labels()
+        if handles:
+            ax.legend()
+        legend = ax.get_legend()
+    if legend is None or not (location or columns or title or size or not frame):
+        return
+    kwargs: dict[str, Any] = {"frameon": frame}
+    if location == "outside right":
+        kwargs.update(loc="upper left", bbox_to_anchor=(1.01, 1.0), borderaxespad=0.0)
+    elif location == "outside bottom":
+        kwargs.update(loc="upper center", bbox_to_anchor=(0.5, -0.12), borderaxespad=0.0)
+    elif location:
+        kwargs["loc"] = location
+    if columns:
+        kwargs["ncols"] = columns
+    if size:
+        kwargs["fontsize"] = size
+    kwargs["title"] = title or legend.get_title().get_text() or None
+    try:
+        handles = list(legend.legend_handles)
+        labels = [text.get_text() for text in legend.get_texts()]
+        ax.legend(handles, labels, **kwargs)
+    except Exception:
+        applogger.exception("The legend of an axis could not be redrawn.")
 
 
 def _legend_text_lines(figure: Figure) -> None:

@@ -3247,7 +3247,7 @@ class MainWindow(QMainWindow):
 
         self._snapshot_descriptors(_("Overlay properties"))
         options = self._repo.get_axis_options(axis_id) or {}
-        for key in ("annotations", "lines", "measurements"):
+        for key in ("annotations", "lines", "measurements", "paths"):
             value = payload.get(key)
             if not isinstance(value, list):
                 continue

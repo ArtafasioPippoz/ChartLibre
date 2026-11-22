@@ -449,3 +449,35 @@ def test_a_kaplan_meier_effect_is_on_the_curve_and_not_on_the_band() -> None:
         assert ax.collections and not any(collection.get_path_effects() for collection in ax.collections)
     finally:
         plt.close(figure)
+
+
+def test_annotation_and_measurement_take_an_effect() -> None:
+    from app.charts.scatter import ScatterAxisRenderer
+
+    renderer = ScatterAxisRenderer()
+    figure, ax = plt.subplots()
+    try:
+        text = renderer.apply_annotation(ax, {"x": 1, "y": 1, "text": "hi", "kwargs": {"path_effects": "outline(3, white)"}})
+        renderer.apply_measurement(ax, {"x0": 0, "y0": 0, "x1": 1, "y1": 1, "kwargs": {"path_effects": "shadow"}})
+        assert len(text.get_path_effects()) == 2
+        assert ax.lines[0].get_path_effects() and all(t.get_path_effects() for t in ax.texts)
+    finally:
+        plt.close(figure)
+
+
+def test_paths_are_drawn_from_text_points() -> None:
+    from app.charts.scatter import ScatterAxisRenderer
+
+    renderer = ScatterAxisRenderer()
+    figure, ax = plt.subplots()
+    try:
+        renderer.apply_paths(ax, {"paths": [
+            {"points": "0,0; 1,0; 1,1", "closed": "yes", "kwargs": {"facecolor": "#ccc", "path_effects": "shadow"}},
+            {"points": "0,0; 2,2", "closed": "no"},
+            {"points": "1,1"},
+        ]})
+        assert len(ax.patches) == 2
+        assert ax.patches[0].get_closed() and not ax.patches[1].get_closed()
+        assert ax.patches[0].get_path_effects()
+    finally:
+        plt.close(figure)

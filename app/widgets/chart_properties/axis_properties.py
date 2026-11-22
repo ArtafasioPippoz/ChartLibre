@@ -149,6 +149,7 @@ class AxisPropertiesWidget(BaseProperties):
             *self._extended_option_widgets(),
             self._font_scale,
             self._text_effect,
+            *self._legend_widgets(),
         )
 
     # ------------------------------------------------------------------
@@ -186,7 +187,7 @@ class AxisPropertiesWidget(BaseProperties):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         for section in (title_section, scales, self._ticks_section, position_section, appearance_section,
-                        self._build_kwargs_section()):
+                        self._build_legend_section(), self._build_kwargs_section()):
             layout.addWidget(section)
         layout.addStretch(1)
         scroll = QScrollArea(self)
@@ -216,6 +217,68 @@ class AxisPropertiesWidget(BaseProperties):
         form = InspectorForm(section.body)
         section.body.layout().addWidget(form)
         return section, form
+
+    #: The legend's places: (label, matplotlib "loc" or "outside right" / "outside bottom").
+    LEGEND_LOCATIONS: ClassVar[tuple[tuple[str, str], ...]] = (
+        ("Best", "best"), ("Upper right", "upper right"), ("Upper left", "upper left"),
+        ("Lower left", "lower left"), ("Lower right", "lower right"), ("Center left", "center left"),
+        ("Center right", "center right"), ("Lower center", "lower center"), ("Upper center", "upper center"),
+        ("Center", "center"), ("Outside right", "outside right"), ("Outside bottom", "outside bottom"),
+    )
+
+    def _legend_widgets(self) -> tuple[QWidget, ...]:
+        return (self._legend_show_combo, self._legend_loc_combo, self._legend_columns_spin,
+                self._legend_title_edit, self._legend_frame_check, self._legend_size_spin)
+
+    def _build_legend_section(self) -> InspectorSection:
+        """The legend of this axis - shown or not, where, in how many columns, its title, frame and size - in a
+        section that starts closed. "Auto" everywhere leaves the legend the chart type drew."""
+        section, form = self._new_form_section(_("Legend"), "legend", collapsed=True)
+        body = section.body
+        self._legend_show_combo = QComboBox(body)
+        for label, value in (("Auto", "auto"), ("Show", "show"), ("Hide", "hide")):
+            self._legend_show_combo.addItem(_(label), value)
+        self._legend_loc_combo = QComboBox(body)
+        self._legend_loc_combo.addItem(_("Auto"), "")
+        for label, value in self.LEGEND_LOCATIONS:
+            self._legend_loc_combo.addItem(_(label), value)
+        self._legend_columns_spin = QSpinBox(body)
+        self._legend_columns_spin.setRange(0, 12)
+        self._legend_columns_spin.setSpecialValueText(_("Auto"))
+        self._legend_title_edit = QLineEdit(body)
+        self._legend_title_edit.setPlaceholderText(_("Auto"))
+        self._legend_frame_check = QCheckBox(_("Frame"), body)
+        self._legend_frame_check.setChecked(True)
+        self._legend_size_spin = QSpinBox(body)
+        self._legend_size_spin.setRange(0, 72)
+        self._legend_size_spin.setSpecialValueText(_("Auto"))
+        form.add_row(_("Show"), self._legend_show_combo)
+        form.add_row(_("Location"), self._legend_loc_combo)
+        form.add_row(_("Columns"), self._legend_columns_spin)
+        form.add_row(_("Title"), self._legend_title_edit)
+        form.add_row(_("Size"), self._legend_size_spin)
+        form.add_row(_("Border"), self._legend_frame_check)
+        return section
+
+    def _load_legend(self, options: dict[str, Any]) -> None:
+        self._legend_show_combo.setCurrentIndex(max(0, self._legend_show_combo.findData(
+            str(options.get("legend_show") or "auto"))))
+        self._legend_loc_combo.setCurrentIndex(max(0, self._legend_loc_combo.findData(
+            str(options.get("legend_loc") or ""))))
+        self._legend_columns_spin.setValue(int(options.get("legend_columns") or 0))
+        self._legend_title_edit.setText(str(options.get("legend_title") or ""))
+        self._legend_size_spin.setValue(int(options.get("legend_size") or 0))
+        self._legend_frame_check.setChecked(bool(options.get("legend_frame", True)))
+
+    def _legend_payload(self) -> dict[str, Any]:
+        return {
+            "legend_show": str(self._legend_show_combo.currentData() or "auto"),
+            "legend_loc": str(self._legend_loc_combo.currentData() or ""),
+            "legend_columns": int(self._legend_columns_spin.value()),
+            "legend_title": self._legend_title_edit.text().strip(),
+            "legend_size": int(self._legend_size_spin.value()),
+            "legend_frame": bool(self._legend_frame_check.isChecked()),
+        }
 
     def _on_coordinate_chosen(self, index: int) -> None:
         """The X, Y or Z segment shows the one coordinate page, filled with that coordinate's settings."""
@@ -1187,6 +1250,7 @@ class AxisPropertiesWidget(BaseProperties):
             self._projection_combo,
             self._hide_axis_check,
             self._max_points_combo,
+            *self._legend_widgets(),
             self._renderer_value,
             self._pages,
         )
@@ -1333,6 +1397,7 @@ class AxisPropertiesWidget(BaseProperties):
             self._font_scale.set_factor(options.get("font_scale", 1.0))
             if not self._text_effect.set_current_effect(str(options.get("text_effect") or "")):
                 self._text_effect.set_current_effect("")
+            self._load_legend(options)
             self._load_extended_axis_options(options)
 
         # Translated for reading; the raw chart_type is what the signal
@@ -1364,6 +1429,7 @@ class AxisPropertiesWidget(BaseProperties):
                 self._hide_axis_check,
             self._max_points_combo,
                 self._lines_combo,
+            *self._legend_widgets(),
             )
             + self._extended_option_widgets()
         )
@@ -1381,6 +1447,7 @@ class AxisPropertiesWidget(BaseProperties):
             self._lines_combo.setCurrentIndex(0)
             self._font_scale.set_factor(1.0)
             self._text_effect.set_current_effect("")
+            self._load_legend({})
             self._clear_extended_axis_options()
         self._renderer_key = ""
         self._renderer_value.clear()
@@ -1547,6 +1614,7 @@ class AxisPropertiesWidget(BaseProperties):
             # The renderer's own name, never the translated one the panel shows.
             "renderer": self._renderer_key,
         }
+        payload.update(self._legend_payload())
         payload.update(self._extended_axis_options_payload())
         # No "annotations" key: they moved to OverlayPropertiesWidget, and
         # the window merges a payload into the stored options rather than

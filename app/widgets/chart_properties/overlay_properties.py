@@ -104,6 +104,8 @@ class _Col:
     #: (label, value) pairs for an _ENUM column.
     choices: tuple[tuple[str, str], ...] = ()
     default: str = ""
+    #: What an _EFFECT column draws its effect on: "series" (a line) or "text".
+    artist: str = "series"
 
 
 _ANNOTATION_COLS: Final[tuple[_Col, ...]] = (
@@ -115,6 +117,7 @@ _ANNOTATION_COLS: Final[tuple[_Col, ...]] = (
     _Col("Color", _COLOR, "color"),
     _Col("Font", _FONT, "fontfamily"),
     _Col("Size", _SIZE, "fontsize"),
+    _Col("Effect", _EFFECT, "path_effects", artist="text"),
     _Col("Kwargs JSON", _KWARGS),
 )
 _LINE_COLS: Final[tuple[_Col, ...]] = (
@@ -131,6 +134,15 @@ _MEASUREMENT_COLS: Final[tuple[_Col, ...]] = (
     _Col("End X", _FLOAT, "x1"),
     _Col("End Y", _FLOAT, "y1"),
     _Col("Color", _COLOR, "color"),
+    _Col("Effect", _EFFECT, "path_effects"),
+    _Col("Kwargs JSON", _KWARGS),
+)
+_PATH_COLS: Final[tuple[_Col, ...]] = (
+    _Col("Points", _TEXT, "points"),
+    _Col("Closed", _ENUM, "closed", (("yes", "yes"), ("no", "no")), default="yes"),
+    _Col("Edge", _COLOR, "edgecolor"),
+    _Col("Fill", _COLOR, "facecolor"),
+    _Col("Effect", _EFFECT, "path_effects", artist="patch"),
     _Col("Kwargs JSON", _KWARGS),
 )
 _WIDGET_KINDS: Final[frozenset[str]] = frozenset({_COLOR, _LINESTYLE, _FONT, _SIZE, _EFFECT})
@@ -205,6 +217,7 @@ class OverlayPropertiesWidget(BaseProperties):
         self._annotations_table.itemChanged.connect(self._queue_auto_apply)
         self._lines_table.itemChanged.connect(self._queue_auto_apply)
         self._measurements_table.itemChanged.connect(self._queue_auto_apply)
+        self._paths_table.itemChanged.connect(self._queue_auto_apply)
         self.clear_connected_figure()
 
     # ------------------------------------------------------------------
@@ -251,6 +264,16 @@ class OverlayPropertiesWidget(BaseProperties):
                 "here\" / \"Measure to here\" right-click actions create. "
                 "Color has its own column; anything else goes in Kwargs "
                 "JSON."
+            ),
+        )
+        self._paths_table = self._add_tab(
+            _("Paths"), "overlayPathsCard", "axisPathsTable",
+            _PATH_COLS, add_text=_("Add path"),
+            tooltip=_(
+                "A polygon or a polyline through points in data coordinates, "
+                "written as \"x,y; x,y; ...\" (at least two). Closed joins the "
+                "last point to the first; Edge and Fill are colors; anything "
+                "else goes in Kwargs JSON, for example: {\"linewidth\": 2}."
             ),
         )
         root.addWidget(self._choice, 0)
@@ -349,6 +372,8 @@ class OverlayPropertiesWidget(BaseProperties):
             self._btn_add_annotation, self._btn_delete_annotation = buttons
         elif cols is _LINE_COLS:
             self._btn_add_line, self._btn_delete_line = buttons
+        elif cols is _PATH_COLS:
+            self._btn_add_path, self._btn_delete_path = buttons
         else:
             self._btn_add_measurement, self._btn_delete_measurement = buttons
 
@@ -425,7 +450,7 @@ class OverlayPropertiesWidget(BaseProperties):
                 kwargs[col.key] = stored
             return combo
         if col.kind == _EFFECT:
-            combo = self._table_combo(PathEffectCombo(table, artist="series"))
+            combo = self._table_combo(PathEffectCombo(table, artist=col.artist))
             if text and not combo.set_current_effect(text):
                 kwargs[col.key] = stored
             return combo
@@ -536,6 +561,7 @@ class OverlayPropertiesWidget(BaseProperties):
         self._annotations_table.setRowCount(0)
         self._lines_table.setRowCount(0)
         self._measurements_table.setRowCount(0)
+        self._paths_table.setRowCount(0)
         self._axis_heading.setText(_("Axis: No axis selected"))
         super().clear_connected_figure()
 
@@ -546,6 +572,7 @@ class OverlayPropertiesWidget(BaseProperties):
         self._annotations_table.setRowCount(0)
         self._lines_table.setRowCount(0)
         self._measurements_table.setRowCount(0)
+        self._paths_table.setRowCount(0)
 
         options = self._axis_options()
         if options is None:
@@ -557,6 +584,7 @@ class OverlayPropertiesWidget(BaseProperties):
         self._load_rows(self._annotations_table, _ANNOTATION_COLS, options, "annotations")
         self._load_rows(self._lines_table, _LINE_COLS, options, "lines")
         self._load_rows(self._measurements_table, _MEASUREMENT_COLS, options, "measurements")
+        self._load_rows(self._paths_table, _PATH_COLS, options, "paths")
         self._set_enabled_state(True)
 
     def _load_rows(
@@ -696,6 +724,7 @@ class OverlayPropertiesWidget(BaseProperties):
                 "annotations": self._payload(self._annotations_table, _ANNOTATION_COLS),
                 "lines": self._payload(self._lines_table, _LINE_COLS),
                 "measurements": self._payload(self._measurements_table, _MEASUREMENT_COLS),
+                "paths": self._payload(self._paths_table, _PATH_COLS),
             }
         )
 
@@ -706,6 +735,7 @@ class OverlayPropertiesWidget(BaseProperties):
             self._btn_add_line, self._btn_delete_line,
             self._measurements_table, self._btn_add_measurement,
             self._btn_delete_measurement,
+            self._paths_table, self._btn_add_path, self._btn_delete_path,
         ):
             widget.setEnabled(enabled)
 

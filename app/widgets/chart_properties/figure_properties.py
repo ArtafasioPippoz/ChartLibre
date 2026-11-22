@@ -317,6 +317,7 @@ class FigurePropertiesWidget(BaseProperties):
             self._fig_frameon,
             self._font_scale,
             self._text_effect,
+            self._sketch_combo,
             self._panel_labels_combo,
             self._panel_position_combo,
         )
@@ -605,6 +606,11 @@ class FigurePropertiesWidget(BaseProperties):
         # The halo, outline or shadow of every text of the figure; an axis can have its own. "Style's" takes the
         # one the style carries (none, for most), "None" none even then.
         self._text_effect = PathEffectCombo(opts_section, inherit=_("Style's"))
+        # The hand-drawn look of xkcd: every line, bar and frame wobbles (matplotlib's sketch).
+        self._sketch_combo = QComboBox(opts_section)
+        for label, value in (("Off", ""), ("Light", "light"), ("XKCD", "xkcd")):
+            self._sketch_combo.addItem(_(label), value)
+        self._sketch_combo.setToolTip(_("Draw lines, bars and frames as if by hand, as in the xkcd comics."))
 
         # How the panel shows this figure - it used to be three checkable
         # entries in ChartPanel's own context menu, kept in sync by comparing
@@ -657,6 +663,7 @@ class FigurePropertiesWidget(BaseProperties):
             (_("DPI"), self._fig_dpi),
             (_("Font size"), self._font_scale),
             (_("Text effect"), self._text_effect),
+            (_("Hand-drawn"), self._sketch_combo),
             (_("Width"), self._fig_width_cm),
             (_("Height"), self._fig_height_cm),
             (_("Template"), self._journal_combo),
@@ -783,6 +790,7 @@ class FigurePropertiesWidget(BaseProperties):
         self._fig_frameon.setChecked(False)
         self._font_scale.set_factor(1.0)
         self._text_effect.set_current_effect("")
+        self._sketch_combo.setCurrentIndex(0)
         self._select_layout_mode(self.DEFAULT_LAYOUT_MODE)
         self._select_downsample_threshold(self.DEFAULT_DOWNSAMPLE_THRESHOLD)
         self._reset_layout_preset_combo()
@@ -816,6 +824,7 @@ class FigurePropertiesWidget(BaseProperties):
             self._fig_frameon,
             self._font_scale,
             self._text_effect,
+            self._sketch_combo,
             self._fig_layout_mode,
             self._downsample_combo,
             self._mosaic_edit,
@@ -887,6 +896,7 @@ class FigurePropertiesWidget(BaseProperties):
             self._fig_frameon.setChecked(False)
             self._font_scale.set_factor(1.0)
             self._text_effect.set_current_effect("")
+            self._sketch_combo.setCurrentIndex(0)
             self._select_layout_mode(self.DEFAULT_LAYOUT_MODE)
             self._select_downsample_threshold(self.DEFAULT_DOWNSAMPLE_THRESHOLD)
             self._reset_layout_preset_combo()
@@ -931,6 +941,7 @@ class FigurePropertiesWidget(BaseProperties):
         self._font_scale.set_factor(fig_opts.get("font_scale", 1.0))
         if not self._text_effect.set_current_effect(str(fig_opts.get("text_effect") or "")):
             self._text_effect.set_current_effect("")
+        self._sketch_combo.setCurrentIndex(max(0, self._sketch_combo.findData(str(fig_opts.get("sketch") or ""))))
 
         current_layout = str(
             fig_opts.get("layout_mode", fig_opts.get("layout", self.DEFAULT_LAYOUT_MODE))
@@ -1355,6 +1366,7 @@ class FigurePropertiesWidget(BaseProperties):
             "border": bool(self._fig_frameon.isChecked()),
             "font_scale": float(self._font_scale.factor()),
             "text_effect": self._text_effect.current_effect(),
+            "sketch": str(self._sketch_combo.currentData() or ""),
             "layout_mode": str(
                 self._fig_layout_mode.currentData() or self.DEFAULT_LAYOUT_MODE
             ),
