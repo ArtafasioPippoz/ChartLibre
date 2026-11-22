@@ -419,3 +419,33 @@ def test_several_series_of_a_box_plot_and_a_histogram_each_take_their_own_effect
             assert {artist._chartlibre_series for artist in drawn} == {"A"}  # ... and B's do not
         finally:
             plt.close(figure)
+
+
+def test_a_series_whose_line_style_is_default_draws_solid() -> None:
+    from app.plugin_api.charts.dashes import solid_unless_set
+
+    assert [solid_unless_set(value) for value in (None, "", "default", "Default", "bogus")] == ["-"] * 5
+    assert solid_unless_set("--") == "--"
+
+
+def test_a_kaplan_meier_effect_is_on_the_curve_and_not_on_the_band() -> None:
+    import numpy as np
+
+    from app.charts.survival import KaplanMeierAxisRenderer
+    from app.data.series_frame import SeriesFrame
+    from app.plugin_api.charts.base import SeriesData
+    from app.plugin_api.charts.render_figure import _apply_series_effects, _tag_untagged_series
+
+    rng = np.random.default_rng(2)
+    frame = SeriesFrame({"time": rng.uniform(1, 9, 40), "event": np.ones(40)})
+    sd = SeriesData(name="A", df=frame, style={"path_effects": "shadow"})
+    figure, ax = plt.subplots()
+    try:
+        before = {id(artist) for artist in ax.get_children()}
+        KaplanMeierAxisRenderer().render_axis(ax, [sd], {"confidence": 0.95, "band_alpha": 0.2})
+        _tag_untagged_series(ax, before, [sd])
+        _apply_series_effects(ax, [sd])
+        assert ax.lines and all(line.get_path_effects() for line in ax.lines[:1])
+        assert ax.collections and not any(collection.get_path_effects() for collection in ax.collections)
+    finally:
+        plt.close(figure)

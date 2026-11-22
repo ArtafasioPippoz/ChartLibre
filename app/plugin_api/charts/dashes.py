@@ -63,3 +63,12 @@ def to_matplotlib(text: Any) -> Any:
 def is_custom(text: str) -> bool:
     """Whether *text* is a pattern of its own (not one of matplotlib's names) that can be drawn."""
     return isinstance(text, str) and text not in NAMED and to_matplotlib(text) is not None
+
+
+def solid_unless_set(text: Any) -> Any:
+    """The line style a chart that draws its own lines takes from a series' style: solid when the style says
+    nothing or "default" (which is no matplotlib line style), else what *text* draws - solid when it does not parse."""
+    if not isinstance(text, str) or text.strip().lower() in ("", "default"):
+        return "-"
+    drawn = to_matplotlib(text.rstrip())
+    return "-" if drawn is None else drawn

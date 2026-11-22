@@ -29,9 +29,11 @@ from app.logs.logger import applogger
 from app.plugin_api.charts.base import (
     LEGEND_OPTIONS,
     BaseAxisRenderer,
+    SeriesArtistTags,
     SeriesData,
     merge,
 )
+from app.plugin_api.charts.dashes import solid_unless_set
 from app.utils.coercion import column_of, to_numbers
 
 
@@ -112,14 +114,14 @@ class KaplanMeierAxisRenderer(BaseAxisRenderer):
         },
     )
 
-    def _curves(self, series: list[SeriesData]) -> list[tuple[str, dict[str, Any], np.ndarray, np.ndarray]]:
-        """(label, style, time, event) per curve: one per series, or per group within it."""
+    def _curves(self, series: list[SeriesData]) -> list[tuple[str, dict[str, Any], np.ndarray, np.ndarray, str]]:
+        """(label, style, time, event, series name) per curve: one per series, or per group within it."""
         curves = []
         for sd in self.valid_series(series):
             time = to_numbers(column_of(sd.df, "time")).to_numpy(dtype=float)
             event = to_numbers(column_of(sd.df, "event")).to_numpy(dtype=float)
             if "group" not in sd.df.columns:
-                curves.append((sd.name, dict(sd.style or {}), time, event))
+                curves.append((sd.name, dict(sd.style or {}), time, event, sd.name))
                 continue
             # One pass for every group: a mask per group built by comparing each
             # row in Python was O(rows x groups). Codes come in order of first
@@ -129,7 +131,7 @@ class KaplanMeierAxisRenderer(BaseAxisRenderer):
                 mask = codes == number
                 label = f"{sd.name}: {value}" if len(series) > 1 else str(value)
                 style = {key: item for key, item in (sd.style or {}).items() if key != "color"}
-                curves.append((label, style, time[mask], event[mask]))
+                curves.append((label, style, time[mask], event[mask], sd.name))
         return curves
 
     def render_axis(self, ax: Any, series: list[SeriesData], options: dict) -> None:
@@ -140,7 +142,8 @@ class KaplanMeierAxisRenderer(BaseAxisRenderer):
         scale = 100.0 if bool(self.opt("as_percent", options)) else 1.0
 
         drawn: list[tuple[str, np.ndarray, np.ndarray]] = []
-        for index, (label, style, time, event) in enumerate(self._curves(series)):
+        tags = SeriesArtistTags(ax)  # the effect is the curve's and its censor marks', not the band's or the median's
+        for index, (label, style, time, event, series_name) in enumerate(self._curves(series)):
             try:
                 curve = kaplan_meier(time, event, confidence=confidence or 0.95)
             except NUMERICAL_FAILURES as exc:
@@ -150,19 +153,21 @@ class KaplanMeierAxisRenderer(BaseAxisRenderer):
             end = float(np.nanmax(time[np.isfinite(time)]))
             steps_x = np.append(curve.time, max(end, float(curve.time[-1])))
             steps_y = np.append(curve.survival, curve.survival[-1]) * scale
-            show = bool(style.get("show_in_legend", True))
-            ax.step(steps_x, steps_y, where="post", color=colour,
-                    linestyle=str(style.get("linestyle") or "-") or "-",
-                    linewidth=float(style.get("linewidth") or kwargs.get("linewidth", 1.6)),
-                    label=label if show else "_nolegend_", zorder=3)
             if confidence > 0 and band_alpha > 0:
                 ax.fill_between(steps_x, np.append(curve.lower, curve.lower[-1]) * scale,
                                 np.append(curve.upper, curve.upper[-1]) * scale,
                                 step="post", color=colour, alpha=band_alpha, linewidth=0, zorder=1)
+            show = bool(style.get("show_in_legend", True))
+            tags.next(series_name)
+            ax.step(steps_x, steps_y, where="post", color=colour,
+                    linestyle=solid_unless_set(style.get("linestyle")),
+                    linewidth=float(style.get("linewidth") or kwargs.get("linewidth", 1.6)),
+                    label=label if show else "_nolegend_", zorder=3)
             if bool(self.opt("censor_marks", options)) and curve.censored_time.size:
                 ax.plot(curve.censored_time, curve.censored_survival * scale, linestyle="",
                         marker="|", markersize=8, markeredgewidth=1.2, color=colour,
                         label="_nolegend_", zorder=4)
+            tags.done()
             if bool(self.opt("median_line", options)) and np.isfinite(curve.median):
                 ax.plot([0, curve.median, curve.median], [0.5 * scale, 0.5 * scale, 0],
                         linestyle=":", linewidth=1.0, color=colour, label="_nolegend_", zorder=2)

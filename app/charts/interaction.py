@@ -30,6 +30,7 @@ from app.plugin_api.charts.base import (
     SeriesData,
     merge,
 )
+from app.plugin_api.charts.dashes import solid_unless_set
 from app.utils.coercion import column_of, to_numbers
 
 
@@ -153,7 +154,7 @@ class InteractionAxisRenderer(BaseAxisRenderer):
                 positions, means.mean[row], yerr=errors,
                 color=colour,
                 marker=str(style.get("marker") or kwargs.get("marker", "o")),
-                linestyle=str(style.get("linestyle") or "-") or "-",
+                linestyle=solid_unless_set(style.get("linestyle")),
                 linewidth=float(style.get("linewidth") or kwargs.get("linewidth", 1.6)),
                 capsize=float(kwargs.get("capsize", 3.0)),
                 label=label if bool(style.get("show_in_legend", True)) else "_nolegend_",
