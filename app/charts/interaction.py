@@ -26,6 +26,7 @@ from app.logs.logger import applogger
 from app.plugin_api.charts.base import (
     LEGEND_OPTIONS,
     BaseAxisRenderer,
+    SeriesArtistTags,
     SeriesData,
     merge,
 )
@@ -135,7 +136,9 @@ class InteractionAxisRenderer(BaseAxisRenderer):
         # One x axis for every series: the levels in the order first met.
         levels: list[Any] = list(dict.fromkeys(level for _sd, means in tables for level in means.levels))
         lines = [(sd, means, row) for sd, means in tables for row in range(len(means.traces))]
+        tags = SeriesArtistTags(ax)
         for number, (sd, means, row) in enumerate(lines):
+            tags.next(sd.name)
             style = sd.style or {}
             trace_name = means.traces[row]
             if trace_name in ("", None):
@@ -156,6 +159,7 @@ class InteractionAxisRenderer(BaseAxisRenderer):
                 label=label if bool(style.get("show_in_legend", True)) else "_nolegend_",
                 zorder=3,
             )
+        tags.done()
 
         ax.set_xticks(range(len(levels)))
         ax.set_xticklabels([str(level) for level in levels])

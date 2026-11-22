@@ -266,6 +266,7 @@ def _render_figure_from_descriptor(
                 for band in bands:
                     _draw_band(ax, band)
 
+            before = {id(artist) for artist in ax.get_children()}
             try:
                 renderer_instance = import_class_from_file(renderer)()  # type: ignore
                 renderer_instance.render_axis(
@@ -285,6 +286,7 @@ def _render_figure_from_descriptor(
             _apply_column_labels(ax=ax, axis_desc=axis_desc, repo=repo)
             _apply_column_date_patterns(ax=ax, axis_desc=axis_desc, repo=repo)
             _keep_dates_in_range(ax, axis_desc)
+            _tag_untagged_series(ax, before, series_list)
             _apply_series_effects(ax, series_list)
 
         _apply_shared_z_ranges(all_axes, ax_by_id)
@@ -316,6 +318,18 @@ def _drawn_points(artist: Any) -> int:
             except TypeError:
                 continue
     return 1
+
+
+def _tag_untagged_series(ax: Any, before: set[int], series_list: list[Any]) -> None:
+    """A renderer that does not tag what its series draw (SeriesArtistTags) still gets the effect of an axis'
+    only series: everything it drew is that series'. With several series there is no telling which is whose."""
+    if len(series_list) != 1 or not (getattr(series_list[0], "style", None) or {}).get("path_effects"):
+        return
+    new = [artist for artist in ax.get_children() if id(artist) not in before]
+    if any(hasattr(artist, "_chartlibre_series") for artist in new):
+        return
+    for artist in new:
+        artist._chartlibre_series = str(series_list[0].name)
 
 
 def _apply_series_effects(ax: Any, series_list: list[Any]) -> None:

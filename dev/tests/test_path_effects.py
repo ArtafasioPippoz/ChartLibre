@@ -358,3 +358,37 @@ def test_effect_builder_writes_and_reads_the_text(qapp) -> None:
     for row in dialog._rows:
         row.use.setChecked(False)
     assert dialog.effect() == ""
+
+
+def test_an_interaction_plot_and_an_untagging_renderer_take_the_series_effect() -> None:
+    from types import SimpleNamespace
+
+    import numpy as np
+
+    from app.charts.interaction import InteractionAxisRenderer
+    from app.data.series_frame import SeriesFrame
+    from app.plugin_api.charts.base import SeriesData
+    from app.plugin_api.charts.render_figure import _apply_series_effects, _tag_untagged_series
+
+    rng = np.random.default_rng(3)
+    frame = SeriesFrame({"x": ["a", "a", "b", "b"] * 6, "y": rng.normal(size=24),
+                         "trace": ["u", "v"] * 12})
+    sd = SeriesData(name="s", df=frame, style={"path_effects": "outline(4, white)"})
+    figure, ax = plt.subplots()
+    try:
+        InteractionAxisRenderer().render_axis(ax, [sd], {})
+        _apply_series_effects(ax, [sd])
+        assert any(_kinds(line.get_path_effects()) == ["Stroke", "Normal"] for line in ax.lines)
+    finally:
+        plt.close(figure)
+
+    figure, ax = plt.subplots()  # a renderer that tags nothing: its only series still gets the effect
+    try:
+        before = {id(artist) for artist in ax.get_children()}
+        ax.plot([0, 1], [0, 1])
+        series = SimpleNamespace(name="only", style={"path_effects": "outline(4, white)"})
+        _tag_untagged_series(ax, before, [series])
+        _apply_series_effects(ax, [series])
+        assert _kinds(ax.lines[0].get_path_effects()) == ["Stroke", "Normal"]
+    finally:
+        plt.close(figure)

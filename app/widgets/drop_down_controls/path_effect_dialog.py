@@ -104,7 +104,7 @@ class PathEffectDialog(PanelDialog):
     """The effect of a text or a series, built from its parts; ``effect()`` is its text when accepted."""
 
     def __init__(self, current: str = "", parent: QWidget | None = None, *, artist: str = "text") -> None:
-        super().__init__(parent, title=_("Text effect"), size=None)
+        super().__init__(parent, title=_("Effect"), size=None)
         self._artist = artist
         grid = QGridLayout()
         stdSizeAndlayout(grid)

@@ -1,8 +1,8 @@
-"""PathEffectCombo: the effect of a text or a series - a preview drawn by matplotlib and the Helper button.
+"""PathEffectCombo: the effect of a text or a series - a preview drawn by matplotlib and the Edit button.
 
 The value is the effect as text (app.plugin_api.charts.path_effects), the way it is saved in the project; the
-Helper (path_effect_dialog) builds it from its parts (dev/plans/path_effects_plan.txt, D). There are no ready-made
-effects to choose from: the Helper is the one way, and its colours work on every effect.
+Edit dialog (path_effect_dialog) builds it from its parts (dev/plans/path_effects_plan.txt, D). There are no ready-made
+effects to choose from: the dialog is the one way, and its colours work on every effect.
 """
 from __future__ import annotations
 
@@ -19,6 +19,25 @@ from app.utils.i18n import _
 _ICON_W, _ICON_H = 28, 16  # the size the effect is drawn at; a larger preview grows from it
 
 _PREVIEW_SIZE = (64, 24)
+
+
+def _red_trash() -> QIcon:
+    """The catalogue's Delete icon (the system's trash can), painted red: it goes with the red Delete buttons."""
+    from PySide6.QtCore import QSize
+    from PySide6.QtGui import QColor, QPainter
+
+    from app.styles.style import action_presentation
+
+    ratio, side = 2, 16
+    source = action_presentation("delete")[0].pixmap(QSize(side, side) * ratio)
+    if source.isNull():
+        return QIcon()
+    painter = QPainter(source)
+    painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceIn)
+    painter.fillRect(source.rect(), QColor("#d9342b"))
+    painter.end()
+    source.setDevicePixelRatio(ratio)
+    return QIcon(source)
 
 
 @cache
@@ -67,7 +86,7 @@ def path_effect_preview_icon(value: str, size: tuple[int, int] = (_ICON_W, _ICON
 
 
 class PathEffectCombo(QWidget):
-    """The effect of a text or a series, as text: its preview and the Helper button that builds it.
+    """The effect of a text or a series, as text: its preview and the Edit button that builds it.
 
     *inherit* names the first state, whose value is "" - the figure's effect, for an axis -; the explicit "none"
     then means no effect even where the figure has one, and a small button goes back to the inherited one.
@@ -79,7 +98,7 @@ class PathEffectCombo(QWidget):
 
     def __init__(self, parent: QWidget | None = None, *, inherit: str = "", artist: str = "text") -> None:
         super().__init__(parent)
-        self._artist = artist  # "text", or "series": what the preview and the Helper draw the effect on
+        self._artist = artist  # "text", or "series": what the preview and the dialog draw the effect on
         self._inherit = inherit
         self._effect = ""
         layout = QHBoxLayout(self)
@@ -90,13 +109,13 @@ class PathEffectCombo(QWidget):
         self._preview.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)  # level with the row's label
         self._preview.setToolTip(_("The effect on a piece of text, over a dark line"))
         layout.addWidget(self._preview, 1)
-        self._reset = QPushButton(self)  # a button of the app's theme, as Helper is
-        self._reset.setText("×")
-        self._reset.setFixedWidth(32)
+        self._reset = QPushButton(self)  # a button of the app's theme, with the app's trash can, in red
+        self._reset.setIcon(_red_trash())
+        self._reset.setFixedWidth(36)
         self._reset.setToolTip(_("Back to %s") % inherit if inherit else _("Remove the effect"))
         self._reset.clicked.connect(self._on_reset)
         layout.addWidget(self._reset)
-        self._helper = QPushButton(_("Helper…"), self)
+        self._helper = QPushButton(_("Edit…"), self)
         self._helper.setToolTip(_("An outline, a shadow or a glow drawn under the text, so it stays readable over "
                                   "the data: build it from its parts"))
         self._helper.clicked.connect(self.open_helper)
@@ -120,13 +139,13 @@ class PathEffectCombo(QWidget):
         return True
 
     def open_helper(self) -> None:
-        """Open the Helper on the effect; Apply keeps what it built, Close goes back."""
+        """Open the dialog on the effect; Apply keeps what it built, Close goes back."""
         from app.widgets.drop_down_controls.path_effect_dialog import PathEffectDialog
 
         dialog = PathEffectDialog("" if self._effect == "none" else self._effect, self, artist=self._artist)
         accepted = dialog.exec()
         if not shiboken6.isValid(self) or not shiboken6.isValid(dialog):
-            return  # the editor went while the Helper was open
+            return  # the editor went while the dialog was open
         if accepted and is_valid(dialog.effect()):
             self._change(dialog.effect() or ("none" if self._inherit else ""))
 
