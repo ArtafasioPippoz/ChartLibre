@@ -82,3 +82,4 @@ python.nosync/
 
 # Packs installed from the .clpack files at start (app/utils/packs.py): made again whenever needed
 app/packages/installed/
+dev/appsize.csv

@@ -55,6 +55,7 @@ SHOWCASE_CHART_TYPES: tuple[str, ...] = (
     "Hillshade",
     "Left Ventricle Bullseye",
     "Stacked Traces",
+    "Skew-T Log-P",
     "Hexbin",
     "Wafer Map",
     "Spectrogram",
@@ -104,6 +105,7 @@ def _create_source_tables(cur: sqlite3.Cursor, rng: np.random.Generator, n: int)
         DROP TABLE IF EXISTS src_field;
         DROP TABLE IF EXISTS src_events;
         DROP TABLE IF EXISTS src_segments;
+        DROP TABLE IF EXISTS src_sounding;
 
         CREATE TABLE src_xy       (x REAL, y REAL, color REAL, size REAL);
         CREATE TABLE src_series   (t REAL, v REAL, w REAL);
@@ -117,6 +119,8 @@ def _create_source_tables(cur: sqlite3.Cursor, rng: np.random.Generator, n: int)
         CREATE TABLE src_events   (happened TEXT, title TEXT);
         -- One value per segment of the left ventricle (the AHA's 17): the bullseye.
         CREATE TABLE src_segments (segment INTEGER, value REAL);
+        -- A radiosonde sounding: pressure (hPa), temperature and dew point (degrees C): the Skew-T.
+        CREATE TABLE src_sounding (pressure REAL, temperature REAL, dewpoint REAL);
         -- Interval rows for the broken-bar renderers: one row per interval,
         -- several rows may share a category (the "broken" part).
         CREATE TABLE src_intervals (task TEXT, start REAL, duration REAL);
@@ -147,6 +151,11 @@ def _create_source_tables(cur: sqlite3.Cursor, rng: np.random.Generator, n: int)
         CREATE TABLE src_budget (dept TEXT, line TEXT, amount REAL);
         """
     )
+    for level in np.arange(1000.0, 99.0, -25.0):
+        height_km = 7.0 * np.log(1000.0 / level)
+        temp = 22.0 - 6.5 * min(height_km, 11.0) + (3.0 if 1.0 < height_km < 1.6 else 0.0)
+        cur.execute("INSERT INTO src_sounding VALUES (?, ?, ?)",
+                    (float(level), float(temp), float(temp - (3.0 + 2.5 * height_km if height_km < 6 else 25.0))))
     cur.executemany(
         "INSERT INTO src_segments VALUES (?, ?)",
         [(number, 40.0 + 3.0 * number + (-25.0 if number in (7, 8, 13) else 0.0)) for number in range(1, 18)],
@@ -893,6 +902,13 @@ def _showcase_definitions() -> list[dict[str, Any]]:
             "axis_options": {"title": "Stacked Traces"},
             "series": [("channel 1", "SELECT t AS x, v AS y FROM src_series", {}),
                        ("channel 2", "SELECT t AS x, w AS y FROM src_series", {})],
+        },
+        {
+            "chart_type": "Skew-T Log-P",
+            "name": "Skew-T showcase",
+            "labels": ("", ""),
+            "axis_options": {"title": "Skew-T Log-P"},
+            "series": [("sounding", "SELECT pressure, temperature, dewpoint FROM src_sounding", {})],
         },
         {
             "chart_type": "Hexbin",

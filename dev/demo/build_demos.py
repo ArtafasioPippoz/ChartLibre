@@ -347,6 +347,19 @@ def _lv_perfusion() -> pd.DataFrame:
     return pd.DataFrame({"segment": range(1, 18), "name": names, "perfusion": values})
 
 
+def _sounding() -> pd.DataFrame:
+    """A radiosonde climb on a summer afternoon (synthetic, fixed seed): pressure in hPa, temperature and dew
+    point in degrees C - a warm, humid boundary layer under a dry layer at 700 hPa and a cold tropopause."""
+    rng = np.random.default_rng(8)
+    pressure = np.concatenate([np.arange(1000, 700, -25), np.arange(700, 100, -25)]).astype(float)
+    height_km = 7.0 * np.log(1000.0 / pressure)
+    temperature = 28.0 - 6.6 * np.minimum(height_km, 11.2) + np.where((height_km > 1.2) & (height_km < 1.6), 2.0, 0.0)
+    spread = np.where(height_km < 1.5, 3.0, np.where(height_km < 3.2, 14.0, 20.0)) + rng.uniform(-1.0, 1.0, pressure.size)
+    spread = np.where(height_km > 8.0, 30.0, spread)
+    return pd.DataFrame({"pressure_hpa": pressure, "temperature_c": np.round(temperature, 1),
+                         "dewpoint_c": np.round(temperature - spread, 1)})
+
+
 def _eeg_channels() -> pd.DataFrame:
     """Six EEG-like channels over 8 seconds at 128 Hz (synthetic, fixed seed): an alpha rhythm that is strong at
     the back of the head, noise, and one blink that shows on the front channels at second 3."""
@@ -961,6 +974,7 @@ TABLE_SOURCES: dict[str, Callable[[], pd.DataFrame]] = {
     "terrain_grid": _terrain_grid,
     "lv_perfusion": _lv_perfusion,
     "eeg_channels": _eeg_channels,
+    "sounding": _sounding,
     "energy_flows": _energy_flows,
     "wind_observations": _wind_observations,
     "attribute_chart_counts": _attribute_chart_counts,
@@ -2424,6 +2438,25 @@ def _figure_specs() -> list[FigureSpec]:
                     style={},
                 )
                 for channel in ("Fp1", "Fp2", "C3", "C4", "O1", "O2")
+            ],
+        ),
+        FigureSpec(
+            name="69 · Skew-T - a summer afternoon sounding",
+            key="sounding_skew_t",
+            tables=("sounding",),
+            queries=(),
+            chart_type="Skew-T Log-P",
+            title="Radiosonde sounding: temperature and dew point",
+            x_label="",
+            y_label="",
+            axis_options={},
+            series=[
+                SeriesSpec(
+                    name="sounding",
+                    sql="SELECT pressure_hpa AS pressure, temperature_c AS temperature, dewpoint_c AS dewpoint FROM sounding",
+                    roles={"pressure": "pressure", "temperature": "temperature", "dewpoint": "dewpoint"},
+                    style={},
+                ),
             ],
         ),
     ]

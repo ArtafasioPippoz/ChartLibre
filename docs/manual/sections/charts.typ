@@ -472,6 +472,17 @@ Several recorded channels one above the other on a shared time axis, as an EEG o
 #use[Multi-channel recordings: EEG, ECG, EMG, vibration on several sensors.]
 Key settings: *spacing* (the distance between two baselines; by default a little more than the biggest channel's range), *first on top*, *centre* (each channel's mean as its baseline), *line width*.
 
+// ======================================================================
+== Meteorology
+
+=== Skew-T Log-P
+An atmospheric sounding, the climb of a radiosonde: temperature and dew point against pressure. Pressure falls upwards on a logarithmic scale and the temperature axis is skewed, so the isotherms run from the lower left to the upper right and the two curves spread where they differ. Behind them are the isotherms, the dry adiabats (how a parcel of dry air cools as it rises) and the lines of constant saturation mixing ratio. From the *Meteorology* pack (Preferences > Packages).
+#roles[`pressure` (hPa), `temperature` (°C)][`dewpoint` (°C)]
+#mpl("Axes.plot")
+#example("chart_skew_t_log_p")
+#use[Reading a sounding: how humid and how stable the air is, where a parcel would saturate, where the temperature inverts.]
+Key settings: *skew* (how far the isotherms lean), *top pressure*, the *min* and *max temperature* at the bottom edge, the curves' colours, and a switch for each background family (*isotherms*, *adiabats*, *mixing ratios*).
+
 = Pictures in charts <pictures>
 
 A chart can draw its marks as pictures: a flag per country, an icon per species, a person standing for a thousand people. The pictures are kept *in the project* (a table of its own), so it travels whole and exports the same everywhere. *Project > Pictures* lists them, with the source and the licence of each, which you can edit, and a chart that uses one can credit it.

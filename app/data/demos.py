@@ -216,6 +216,16 @@ DEMO_PROJECTS: tuple[DemoProject, ...] = (
         category="Graph",
     ),
     DemoProject(
+        "Meteorology - a sounding on a Skew-T log-P diagram",
+        "A radiosonde's climb on the meteorologist's chart: temperature and dew point against pressure, on a "
+        "skewed temperature axis over the isotherms, the dry adiabats and the lines of constant mixing ratio, "
+        "from the Meteorology pack. Where the two curves meet the air is saturated; the gap between them is "
+        "the dryness. The sounding is synthetic with a fixed seed.",
+        ("sounding_skew_t",),
+        preview="Skew-T",
+        category="Graph",
+    ),
+    DemoProject(
         "Matrices and scales - an image plot and a secondary axis",
         "A table that already is a grid, drawn as an Image Plot (the penguins' correlation matrix, "
         "values in the cells, with a colorbar - or point it at an image file), and a daily temperature "
