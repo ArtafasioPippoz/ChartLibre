@@ -453,6 +453,14 @@ class FigurePropertiesWidget(BaseProperties):
         # short moment after it changes (see _connect_auto_apply).
 
         style_section_lay.addWidget(style_buttons_row)
+        # The hand-drawn look of xkcd: every line, bar and frame wobbles (matplotlib's sketch).
+        self._sketch_combo = QComboBox(style_section)
+        for label, value in (("Off", ""), ("Light", "light"), ("XKCD", "xkcd")):
+            self._sketch_combo.addItem(_(label), value)
+        self._sketch_combo.setToolTip(_("Draw lines, bars and frames as if by hand, as in the xkcd comics."))
+        sketch_form = InspectorForm(style_section)
+        sketch_form.add_row(_("Hand-drawn"), self._sketch_combo, self._sketch_combo.toolTip())
+        style_section_lay.addWidget(sketch_form)
         return style_section
 
     def _build_grid_section(self) -> QWidget:
@@ -606,11 +614,6 @@ class FigurePropertiesWidget(BaseProperties):
         # The halo, outline or shadow of every text of the figure; an axis can have its own. "Style's" takes the
         # one the style carries (none, for most), "None" none even then.
         self._text_effect = PathEffectCombo(opts_section, inherit=_("Style's"))
-        # The hand-drawn look of xkcd: every line, bar and frame wobbles (matplotlib's sketch).
-        self._sketch_combo = QComboBox(opts_section)
-        for label, value in (("Off", ""), ("Light", "light"), ("XKCD", "xkcd")):
-            self._sketch_combo.addItem(_(label), value)
-        self._sketch_combo.setToolTip(_("Draw lines, bars and frames as if by hand, as in the xkcd comics."))
 
         # How the panel shows this figure - it used to be three checkable
         # entries in ChartPanel's own context menu, kept in sync by comparing
@@ -663,7 +666,6 @@ class FigurePropertiesWidget(BaseProperties):
             (_("DPI"), self._fig_dpi),
             (_("Font size"), self._font_scale),
             (_("Text effect"), self._text_effect),
-            (_("Hand-drawn"), self._sketch_combo),
             (_("Width"), self._fig_width_cm),
             (_("Height"), self._fig_height_cm),
             (_("Template"), self._journal_combo),

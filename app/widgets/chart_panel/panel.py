@@ -363,6 +363,7 @@ class ChartPanel(ChartToolsMixin, QFrame):
         self._canvas.resize_settled.connect(lambda: self._schedule_canvas_geometry_sync(redraw=True))
         self._init_hover_readout()
         self._init_ruler()
+        self._init_path()
         self._init_crosshair()
         self._init_annotation_drag()
         self._init_box_selection()
@@ -859,6 +860,7 @@ class ChartPanel(ChartToolsMixin, QFrame):
         self._figure.clear()
         self._discard_hover_annotation()
         self._discard_ruler()
+        self._discard_path()
         self._discard_crosshair()
         self._discard_annotation_drag()
         self._discard_box_selection()
@@ -2038,6 +2040,7 @@ class ChartPanel(ChartToolsMixin, QFrame):
         )
         menu.addSeparator()
         self._add_measure_menu_items(menu, axes, axis_id, x_value, y_value)
+        self._add_path_menu_items(menu, axes, axis_id, x_value, y_value)
         self._add_selection_menu_items(menu, axis_id)
         return menu
 
@@ -2121,6 +2124,35 @@ class ChartPanel(ChartToolsMixin, QFrame):
                 tooltip=_("Forget the pending point without finishing the measurement."),
                 key=None,
                 action=self._clear_ruler,
+            )
+
+    def _add_path_menu_items(
+        self, menu: QMenu, axes: Any, axis_id: int, x_value: float, y_value: float
+    ) -> None:
+        """Add the path's point-by-point flow to a context menu: add a point here, then finish, close or cancel."""
+        here = self._path_axis_id == axis_id and bool(self._path_points)
+        count = len(self._path_points) if here else 0
+        create_menu_item(
+            parent=self, menu=menu, icon="measure", checkable=False,
+            text=_("Add path point here") if here else _("Draw path from here"),
+            tooltip=_("Start a path, or add a point to the one in progress, at this place."),
+            key=None, action=lambda: self._path_add_point(axes, axis_id, x_value, y_value),
+        )
+        if count >= 2:
+            create_menu_item(
+                parent=self, menu=menu, icon="measure", checkable=False, text=_("Finish path"),
+                tooltip=_("Keep the path as a line through its points."), key=None,
+                action=lambda: self._path_finish(False),
+            )
+            create_menu_item(
+                parent=self, menu=menu, icon="measure", checkable=False, text=_("Close and finish path"),
+                tooltip=_("Join the last point to the first and keep the path as a polygon."), key=None,
+                action=lambda: self._path_finish(True),
+            )
+        if self._path_points:
+            create_menu_item(
+                parent=self, menu=menu, icon="clear", checkable=False, text=_("Cancel path"),
+                tooltip=_("Forget the path in progress."), key=None, action=self._clear_path,
             )
 
     def _axis_at(self, pos: QPoint) -> tuple[int, Any, float, float] | None:
