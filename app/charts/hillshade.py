@@ -44,7 +44,8 @@ class HillshadeAxisRenderer(BaseAxisRenderer):
                      "description": "How high the light is, in degrees over the horizon."},
         "vert_exag": {"default": 1.0, "type": float, "min": 0.0, "max": 100.0, "step": 0.5, "group": "Light",
                       "description": "The heights, stretched by this factor before they are lit: more makes "
-                                     "the relief steeper."},
+                                     "the relief steeper. The cells are taken one unit apart, so it also "
+                                     "sets the heights against the cell size."},
         "blend_mode": {"default": "overlay", "type": ["overlay", "soft", "hsv"], "group": "Light",
                        "description": "How the shade is blended with the colours."},
         "colorbar": {"default": False, "type": bool, "group": "Colorbar",
@@ -78,7 +79,7 @@ class HillshadeAxisRenderer(BaseAxisRenderer):
                              altdeg=float(self.opt("altitude", style) or 45.0))
         shaded = source.shade(np.nan_to_num(z, nan=float(np.nanmin(z))), cmap=cmap,
                               blend_mode=str(self.opt("blend_mode", style) or "overlay"),
-                              vert_exag=float(self.opt("vert_exag", style) or 1.0), dx=dx, dy=dy)
+                              vert_exag=float(self.opt("vert_exag", style) or 1.0))
         shaded[np.isnan(z)] = 0.0  # a hole is transparent
         ascending_y = ys[0] <= ys[-1]
         extent = (float(xs.min() - dx / 2), float(xs.max() + dx / 2),

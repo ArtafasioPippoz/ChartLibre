@@ -77,14 +77,17 @@ class HintonAxisRenderer(BaseAxisRenderer):
 
         ax.set_facecolor(str(self.opt("background_color", style)))
         positive, negative = str(self.opt("positive_color", style)), str(self.opt("negative_color", style))
+        # The axis' own inversion is the axis options' (they set it afterwards): the rows are placed top first.
+        top_first = bool(self.opt("top_row_first", style))
         for row in range(rows):
+            place = rows - 1 - row if top_first else row
             for column in range(columns):
                 value = z_grid[row, column]
                 if not np.isfinite(value) or value == 0:
                     continue
                 side = float(np.sqrt(min(abs(value) / limit, 1.0)))
                 ax.add_patch(
-                    Rectangle((column - side / 2.0, row - side / 2.0), side, side,
+                    Rectangle((column - side / 2.0, place - side / 2.0), side, side,
                               facecolor=positive if value > 0 else negative, edgecolor="none", linewidth=0))
         ax.set_xlim(-0.5, columns - 0.5)
         ax.set_ylim(-0.5, rows - 0.5)
@@ -93,8 +96,7 @@ class HintonAxisRenderer(BaseAxisRenderer):
         if columns <= MAX_TICKS:
             ax.set_xticks(np.arange(columns), [f"{value:.3g}" for value in x_values])
         if rows <= MAX_TICKS:
-            ax.set_yticks(np.arange(rows), [f"{value:.3g}" for value in y_values])
+            labels = [f"{value:.3g}" for value in y_values]
+            ax.set_yticks(np.arange(rows), labels[::-1] if top_first else labels)
         ax.grid(False)
-        if bool(self.opt("top_row_first", style)):
-            ax.invert_yaxis()
         self.apply_annotations(ax, options)

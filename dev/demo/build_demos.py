@@ -310,6 +310,58 @@ def _penguin_correlations() -> pd.DataFrame:
     return matrix.reset_index(drop=True)
 
 
+def _weights_matrix() -> pd.DataFrame:
+    """The weights of a small network's layer, 8 inputs by 6 units (synthetic, fixed seed): signed values in rows
+    of x (input), y (unit) and z (weight) - a matrix a Hinton diagram draws as squares."""
+    rng = np.random.default_rng(5)
+    weights = rng.normal(0, 0.6, (6, 8))
+    weights[1, :3] += 1.4   # one unit listens to the first three inputs
+    weights[4, 5:] -= 1.6   # another is switched off by the last three
+    rows = [(column + 1, row + 1, round(float(weights[row, column]), 3)) for row in range(6) for column in range(8)]
+    return pd.DataFrame(rows, columns=["input", "unit", "weight"])
+
+
+def _terrain_grid() -> pd.DataFrame:
+    """A made-up island 90 by 90 cells (heights in metres, fixed seed): two peaks, a ridge and a valley, with a
+    little roughness - a relief for a hillshade."""
+    rng = np.random.default_rng(3)
+    axis = np.linspace(0.0, 6.0, 90)
+    x, y = np.meshgrid(axis, axis)
+    height = (420 * np.exp(-((x - 2.0) ** 2 + (y - 2.4) ** 2) / 0.9)
+              + 300 * np.exp(-((x - 4.2) ** 2 + (y - 3.6) ** 2) / 1.4)
+              + 120 * np.exp(-((x - y * 0.9 - 0.6) ** 2) / 0.12) * np.exp(-((y - 3.0) ** 2) / 6.0)
+              - 90 * np.exp(-((x - 3.2) ** 2 + (y - 1.2) ** 2) / 0.5)
+              + rng.normal(0, 0.3, x.shape))
+    rows = [(round(float(a), 3), round(float(b), 3), round(float(h), 1)) for a, b, h in zip(x.ravel(), y.ravel(), height.ravel())]
+    return pd.DataFrame(rows, columns=["east_km", "north_km", "height_m"])
+
+
+def _lv_perfusion() -> pd.DataFrame:
+    """The perfusion (% of the maximum) of the left ventricle's 17 AHA segments after a stress test (invented): a
+    defect on the anterior and anteroseptal walls, a milder one at the apex."""
+    values = [88, 61, 58, 84, 92, 90, 90, 66, 63, 87, 94, 93, 80, 70, 76, 90, 72]
+    names = ["basal anterior", "basal anteroseptal", "basal inferoseptal", "basal inferior", "basal inferolateral",
+             "basal anterolateral", "mid anterior", "mid anteroseptal", "mid inferoseptal", "mid inferior",
+             "mid inferolateral", "mid anterolateral", "apical anterior", "apical septal", "apical inferior",
+             "apical lateral", "apex"]
+    return pd.DataFrame({"segment": range(1, 18), "name": names, "perfusion": values})
+
+
+def _eeg_channels() -> pd.DataFrame:
+    """Six EEG-like channels over 8 seconds at 128 Hz (synthetic, fixed seed): an alpha rhythm that is strong at
+    the back of the head, noise, and one blink that shows on the front channels at second 3."""
+    rng = np.random.default_rng(21)
+    t = np.arange(0, 8, 1 / 128)
+    columns: dict[str, np.ndarray] = {"t": np.round(t, 4)}
+    for name, alpha in (("Fp1", 0.3), ("Fp2", 0.3), ("C3", 0.7), ("C4", 0.7), ("O1", 1.6), ("O2", 1.5)):
+        signal = alpha * 12 * np.sin(2 * np.pi * 10 * t + rng.uniform(0, 6)) + rng.normal(0, 6, t.size)
+        signal += 4 * np.sin(2 * np.pi * 2.0 * t + rng.uniform(0, 6))
+        if name.startswith("Fp"):
+            signal += 70 * np.exp(-((t - 3.0) ** 2) / 0.01)
+        columns[name] = np.round(signal, 2)
+    return pd.DataFrame(columns)
+
+
 def _oxide_wafers() -> pd.DataFrame:
     """Oxide layer thickness (angstrom) on 24 semiconductor wafers, three sites each - the real
     measurements of a lot-by-lot study (Pinheiro and Bates 2000, from R's nlme package). In
@@ -905,6 +957,10 @@ TABLE_SOURCES: dict[str, Callable[[], pd.DataFrame]] = {
     "air_passengers": _air_passengers,
     "profit_bridge": _profit_bridge,
     "penguin_correlations": _penguin_correlations,
+    "weights_matrix": _weights_matrix,
+    "terrain_grid": _terrain_grid,
+    "lv_perfusion": _lv_perfusion,
+    "eeg_channels": _eeg_channels,
     "energy_flows": _energy_flows,
     "wind_observations": _wind_observations,
     "attribute_chart_counts": _attribute_chart_counts,
@@ -2291,6 +2347,83 @@ def _figure_specs() -> list[FigureSpec]:
                     roles={"source": "source", "target": "target", "value": "value"},
                     style={},
                 ),
+            ],
+        ),
+        FigureSpec(
+            name="65 · Hinton diagram - the weights of a layer",
+            key="weights_hinton",
+            tables=("weights_matrix",),
+            queries=(),
+            chart_type="Hinton Diagram",
+            title="Weights of 6 units on 8 inputs: white positive, black negative",
+            x_label="input",
+            y_label="unit",
+            axis_options={},
+            series=[
+                SeriesSpec(
+                    name="weights",
+                    sql="SELECT input AS x, unit AS y, weight AS z FROM weights_matrix",
+                    roles={"x": "x", "y": "y", "z": "z"},
+                    style={},
+                ),
+            ],
+        ),
+        FigureSpec(
+            name="66 · Hillshade - an island lit from the north-west",
+            key="terrain_hillshade",
+            tables=("terrain_grid",),
+            queries=(),
+            chart_type="Hillshade",
+            title="Heights of an island (m), lit from the north-west",
+            x_label="east (km)",
+            y_label="north (km)",
+            axis_options={"colorbar": True, "colorbar_label": "height (m)", "vert_exag": 3.0, "blend_mode": "soft"},
+            series=[
+                SeriesSpec(
+                    name="island",
+                    sql="SELECT east_km AS x, north_km AS y, height_m AS z FROM terrain_grid",
+                    roles={"x": "x", "y": "y", "z": "z"},
+                    style={},
+                ),
+            ],
+        ),
+        FigureSpec(
+            name="67 · Left ventricle bullseye - a stress perfusion",
+            key="lv_bullseye",
+            tables=("lv_perfusion",),
+            queries=(),
+            chart_type="Left Ventricle Bullseye",
+            title="Perfusion after stress (% of the maximum), AHA 17 segments",
+            x_label="",
+            y_label="",
+            axis_options={"colorbar_label": "% of maximum", "cmap": "RdYlGn", "vmin": 40, "vmax": 100},
+            series=[
+                SeriesSpec(
+                    name="perfusion",
+                    sql="SELECT segment, perfusion AS value FROM lv_perfusion",
+                    roles={"segment": "segment", "value": "value"},
+                    style={},
+                ),
+            ],
+        ),
+        FigureSpec(
+            name="68 · Stacked traces - six EEG channels",
+            key="eeg_traces",
+            tables=("eeg_channels",),
+            queries=(),
+            chart_type="Stacked Traces",
+            title="EEG, 8 s at 128 Hz: the alpha rhythm at the back, a blink at 3 s in front",
+            x_label="time (s)",
+            y_label="",
+            axis_options={},
+            series=[
+                SeriesSpec(
+                    name=channel,
+                    sql=f"SELECT t AS x, {channel} AS y FROM eeg_channels",
+                    roles={"x": "x", "y": "y"},
+                    style={},
+                )
+                for channel in ("Fp1", "Fp2", "C3", "C4", "O1", "O2")
             ],
         ),
     ]

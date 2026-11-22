@@ -341,6 +341,22 @@ Each grid cell painted with the colour of its own value, with no smoothing betwe
 #use[Reading the exact value in each cell: correlation matrices, plate readers, confusion matrices, calendars.]
 Key settings: *shading* (`flat`/`nearest` keep each cell one colour — the honest reading of measured data; `gouraud` interpolates), *annotate* each cell with its value (with *format*, *font size*, *colour*; skipped automatically on very large grids), *colour bar*.
 
+=== Hinton Diagram
+A matrix drawn as squares: the *area* of each square is the size of its value and its colour is the sign, white for positive and black for negative, on a grey ground. The biggest value fills its cell.
+#roles[`x`, `y`, `z`]
+#mpl("Axes.add_patch")
+#example("chart_hinton_diagram")
+#use[Reading which entries of a matrix weigh most and which way: the weights of a neural layer, a correlation or covariance matrix, a transition table.]
+Key settings: the *positive*, *negative* and *background* colours, *max value* (the value that fills a whole cell; by default the biggest size rounded up to a power of two, as in the Matplotlib example), *top row first* (the lowest `y` at the top, the way a matrix is written).
+
+=== Hillshade
+A grid of heights lit from one direction, drawn from above as a relief map. Each cell is shaded by how it faces the light and tinted by its own height with a colormap, so ridges and hollows stand out at once.
+#roles[`x`, `y`, `z`]
+#mpl("LightSource.shade", "Axes.imshow")
+#example("chart_hillshade")
+#use[Terrain and any surface read as a relief: a digital elevation model, a wafer's topography, the height of a film measured by a profilometer.]
+Key settings: *azimuth* (where the light comes from, in degrees clockwise from north: 315 is the north-west, the way maps are lit), *altitude* (how high the light is), *vertical exaggeration* (more makes the relief steeper), *blend mode* (`overlay`, `soft`, `hsv`), *colormap* and *colour bar*.
+
 === Quiver
 An arrow at each (x, y) pointing in the direction of the vector (`u`, `v`), with length proportional to its magnitude. Works on scattered samples too.
 #roles[`x`, `y`, `u`, `v`][`color`]
@@ -434,6 +450,27 @@ A bar at each (x, y) rising to height `z`.
 #example("chart_3d_bar_chart")
 #use[A small table of values read both ways at once — a value per pair of categories — where a heatmap's colour alone is not enough to compare heights.]
 Key settings: bar *width* and *depth*, *bottom*, *shade*.
+
+// ======================================================================
+== Medicine
+
+Two charts for the clinic, from the *Medicine* pack (Preferences > Packages turns it on or off). Their figures in the demo project _Medicine_ are invented and are not for diagnosis.
+
+=== Left Ventricle Bullseye
+The American Heart Association's 17-segment polar map of the left ventricle: the heart muscle seen from its apex as four rings, six basal segments, six mid, four apical and the apex itself, each coloured by a value. Segments are numbered as the AHA numbers them: 1 to 6 basal from the anterior wall going anticlockwise, 7 to 12 mid, 13 to 16 apical, 17 the apex.
+#roles[`value`][`segment` (1 to 17; without it the rows are the segments in order)]
+#mpl("patches.Wedge")
+#example("chart_left_ventricle_bullseye")
+#use[Perfusion, wall motion, strain or a score for each region of the left ventricle: a stress-test result, a follow-up compared with a baseline.]
+Key settings: *colormap*, *vmin* and *vmax* (the colour scale; fix them to compare two hearts), *value labels* (the value in each segment) or *segment numbers*, *colour bar*.
+
+=== Stacked Traces
+Several recorded channels one above the other on a shared time axis, as an EEG or an ECG is read. Each series is a channel, drawn around its own baseline, the baselines evenly spaced and the channel's name at its baseline; one scale for all, so their sizes compare.
+#roles[`x`, `y`] (one series per channel)
+#mpl("Axes.plot")
+#example("chart_stacked_traces")
+#use[Multi-channel recordings: EEG, ECG, EMG, vibration on several sensors.]
+Key settings: *spacing* (the distance between two baselines; by default a little more than the biggest channel's range), *first on top*, *centre* (each channel's mean as its baseline), *line width*.
 
 = Pictures in charts <pictures>
 

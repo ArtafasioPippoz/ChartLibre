@@ -196,6 +196,26 @@ DEMO_PROJECTS: tuple[DemoProject, ...] = (
         category="Graph",
     ),
     DemoProject(
+        "Matrices and relief - a Hinton diagram and a hillshade",
+        "Two charts that read a grid at a glance. A Hinton diagram draws a matrix as squares - the weights of a "
+        "small network's layer, white where positive and black where negative, the area the size - and a "
+        "Hillshade lights a made-up island from the north-west so that its ridges and hollows stand out. Both "
+        "tables are synthetic with a fixed seed.",
+        ("weights_hinton", "terrain_hillshade"),
+        preview="Hillshade",
+        category="Graph",
+    ),
+    DemoProject(
+        "Medicine - a left ventricle bullseye and EEG traces",
+        "Two charts of the clinic, from the Medicine pack: the American Heart Association's 17-segment polar map "
+        "of the left ventricle, coloured by the perfusion after a stress test, and six EEG channels stacked on "
+        "one time axis, with the alpha rhythm at the back of the head and a blink in front. The figures are "
+        "invented and are not for diagnosis.",
+        ("lv_bullseye", "eeg_traces"),
+        preview="Left ventricle bullseye",
+        category="Graph",
+    ),
+    DemoProject(
         "Matrices and scales - an image plot and a secondary axis",
         "A table that already is a grid, drawn as an Image Plot (the penguins' correlation matrix, "
         "values in the cells, with a colorbar - or point it at an image file), and a daily temperature "
