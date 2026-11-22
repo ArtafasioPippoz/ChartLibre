@@ -481,3 +481,24 @@ def test_paths_are_drawn_from_text_points() -> None:
         assert ax.patches[0].get_path_effects()
     finally:
         plt.close(figure)
+
+
+def test_the_xkcd_sketch_writes_its_text_in_the_bundled_comic_neue() -> None:
+    from types import SimpleNamespace
+
+    from matplotlib import font_manager
+
+    from app.plugin_api.charts.render_figure import XKCD_FONT, _apply_sketch
+
+    figure, ax = plt.subplots()
+    try:
+        ax.set_title("t")
+        _apply_sketch(figure, SimpleNamespace(options={"sketch": "light"}))
+        assert ax.title.get_fontfamily() != [XKCD_FONT]  # only the xkcd preset changes the face
+        _apply_sketch(figure, SimpleNamespace(options={"sketch": "xkcd"}))
+        assert ax.title.get_fontfamily() == [XKCD_FONT]
+        assert XKCD_FONT in {font.name for font in font_manager.fontManager.ttflist}
+        figure.canvas.draw()  # drawn with the font, not with a fallback
+        assert font_manager.findfont(font_manager.FontProperties(family=XKCD_FONT)).endswith("ComicNeue-Regular.ttf")
+    finally:
+        plt.close(figure)

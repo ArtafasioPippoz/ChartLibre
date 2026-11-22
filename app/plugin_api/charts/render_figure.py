@@ -18,6 +18,7 @@ from collections.abc import Callable, Generator, Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import replace
+from functools import cache
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, Literal
@@ -1688,7 +1689,8 @@ SKETCH_PRESETS: dict[str, tuple[float, float, float]] = {"light": (0.8, 120.0, 1
 
 def _apply_sketch(figure: Figure, descriptor: FigureDescriptor) -> None:
     """The hand-drawn look of the figure's "sketch" option: every line, bar, frame and image outline wobbles."""
-    params = SKETCH_PRESETS.get(str((descriptor.options or {}).get("sketch") or ""))
+    kind = str((descriptor.options or {}).get("sketch") or "")
+    params = SKETCH_PRESETS.get(kind)
     if params is None:
         return
     for artist in figure.findobj():
@@ -1696,6 +1698,26 @@ def _apply_sketch(figure: Figure, descriptor: FigureDescriptor) -> None:
             artist.set_sketch_params(*params)
         except (AttributeError, TypeError, ValueError):
             continue  # a text has none
+    if kind == "xkcd" and _register_xkcd_font():
+        from matplotlib.text import Text
+
+        for text in figure.findobj(Text):
+            text.set_fontfamily(XKCD_FONT)
+
+
+#: The hand-written face of the "xkcd" sketch: Comic Neue (SIL Open Font License, app/fonts/OFL.txt), kept with the app.
+XKCD_FONT = "Comic Neue"
+
+
+@cache
+def _register_xkcd_font() -> bool:
+    """Make matplotlib know the bundled Comic Neue; False when its files are not there."""
+    from matplotlib import font_manager
+
+    files = sorted((Path(__file__).resolve().parents[2] / "fonts").glob("ComicNeue-*.ttf"))
+    for path in files:
+        font_manager.fontManager.addfont(str(path))
+    return bool(files)
 
 
 def _apply_axis_legend(ax: Any, options: dict[str, Any]) -> None:
