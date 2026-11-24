@@ -1,0 +1,152 @@
+"""FunctionEditor: a stored function's formula, its parameters' values and its range, in three tabs; and a function
+source's query read back (parse_function_sql) and rewritten (replace_function_sql)."""
+from __future__ import annotations
+
+from app.data.repo.function_sql import (
+    GridRange,
+    function_sql,
+    parse_function_sql,
+    replace_function_sql,
+)
+from app.widgets.function_editor import FunctionEditor
+
+LINE = {"function_name": "Line", "source_type": "expression", "symbols": "a, b", "code_string": "a*x + b",
+        "description": "a line", "from": "0", "to": "4", "points": "5", "values": '{"a": 2.0, "b": 1.0}'}
+
+
+def test_the_query_of_a_function_is_read_back_and_rewritten() -> None:
+    sql = function_sql("O'Brien", {"a": 2.5}, GridRange(-1.0, 3.0, 7), GridRange(0.1, 10.0, 4, "log"))
+    read = parse_function_sql(f'SELECT "x" AS "x", "z" AS "z" FROM ({sql}) AS "_src"')
+    assert read is not None and read.name == "O'Brien" and read.parameters == {"a": 2.5}
+    assert read.x == GridRange(-1.0, 3.0, 7) and read.y == GridRange(0.1, 10.0, 4, "log")
+    assert parse_function_sql('SELECT "x" FROM "t"') is None
+
+    series = f'SELECT "x" AS "x", "y" AS "y" FROM ({function_sql("Line", {"a": 1.0}, GridRange(0, 1, 2))}) AS "_src"'
+    other = function_sql("Line", {"a": 9.0}, GridRange(0, 5, 3))
+    rewritten = replace_function_sql(series, other)
+    assert rewritten == f'SELECT "x" AS "x", "y" AS "y" FROM ({other}) AS "_src"'
+
+
+def test_the_editor_shows_a_function_and_gives_it_back(qapp) -> None:
+    editor = FunctionEditor()
+    try:
+        editor.load(LINE, values={"b": -3.0}, x=GridRange(0, 1, 3))
+        assert editor.symbols.text() == "a=2, b=-3"  # the parameters with their values, in one field
+        assert editor.parameters() == {"a": 2.0, "b": -3.0}  # the chart's own, the stored ones for the rest
+        assert editor.x_range() == GridRange(0, 1, 3) and editor.y_range() is None and editor.ndim() == 1
+        assert not editor._form.isRowVisible(editor.y_row)
+        data = editor.function_data()
+        assert (data["function_name"], data["symbols"], data["code_string"], data["values"]) == \
+            ("Line", "a,b", "a*x + b", {"a": 2.0, "b": -3.0})
+
+        # A parameter added with its value; one with none, said under the field.
+        editor.symbols.setText("a=2, b=-3, c=0.5")
+        assert editor.parameters() == {"a": 2.0, "b": -3.0, "c": 0.5} and editor.problem() == ""
+        editor.symbols.setText("a=2, b")
+        assert editor.problem() == "b needs its value: b=1." == editor._symbols_note.text()
+        assert editor._symbols_note.property("problem")
+        editor.symbols.setText("a=2")
+        assert editor.problem() == "b: not among the parameters - add it with its value (b=1)."
+        editor.text.setPlainText("a*sin(x) + y")  # sympy's sin is not a parameter; y makes it a surface
+        assert editor.problem() == "" and editor.ndim() == 2 and editor._form.isRowVisible(editor.y_row)
+        assert not editor._symbols_note.property("problem")
+
+        editor.set_formula_visible(False)  # New Chart: values and range only
+        assert not editor._form.isRowVisible(editor.text) and editor._form.isRowVisible(editor.symbols)
+    finally:
+        editor.deleteLater()
+
+
+def test_code_takes_its_values_for_its_defs_parameters(qapp) -> None:
+    editor = FunctionEditor()
+    try:
+        editor.load({"function_name": "Bump", "source_type": "code", "symbols": "", "values": '{"h": 2}',
+                     "code_string": "def Bump(h, w):\n    f_numeric = h * np.exp(-(x / w) ** 2)\n    return f_numeric\n"})
+        assert editor.symbols.text() == "h=2, w=1" and editor.declared_parameters() == ["h", "w"]
+        editor.symbols.setText("h=2")
+        assert editor.problem().startswith("w: the def's parameters need their values")
+        editor.text.setPlainText("def Other(h):\n    return h\n")
+        assert "def Bump" in editor.problem()
+    finally:
+        editor.deleteLater()
+
+
+def test_series_properties_edit_a_function_series(qapp, tmp_path) -> None:
+    import time
+
+    from app.data.sqlite_repo import SqliteRepo
+    from app.data_operations import sympy_store
+    from app.main_window.main_window import MainWindow
+
+    def spin(seconds: float) -> None:
+        end = time.monotonic() + seconds
+        while time.monotonic() < end:
+            qapp.processEvents()
+
+    path = tmp_path / "f.dhub"
+    repo = SqliteRepo(db_path=path)
+    sympy_store.save(repo, {**LINE, "values": {"a": 2.0, "b": 1.0}})
+    source = repo.get_data_source("Line")
+    figure_id = repo.create_figure_descriptor(name="Line")
+    axis_id = repo.create_axis_descriptor(figure_id=figure_id, axis_index=0, chart_type="Scatter Plot",
+                                          title="Line", x_label="x", y_label="y", options={})
+    for index, name in enumerate(("mine", "other")):
+        repo.create_series_descriptor(axis_id=axis_id, series_index=index, name=name, roles={"x": "x", "y": "y"},
+                                      sql_query=f'SELECT "x" AS "x", "y" AS "y" FROM {source.from_clause()}',
+                                      style={})
+    window = MainWindow(repo, path)
+    try:
+        window.resize(1200, 760)
+        window.show()
+        window._left_panel.select("chart_properties")
+        spin(0.5)
+        series = window._series_widget
+        series.select_series_named("mine")
+        spin(0.1)
+        card, editor = series._function_section, series._function_editor
+        assert not card.isHidden() and "1 other series" in series._function_note.text()
+        assert editor.parameters() == {"a": 2.0, "b": 1.0} and editor.x_range().stop == 4.0
+
+        # This series' values and range; the project's formula.
+        editor.text.setPlainText("a*x**2 + b")
+        editor.symbols.setText("a=3, b=1")
+        editor.x_row.stop.setValue(2.0)
+        series._apply_function()
+        spin(0.2)
+        mine, other = (window._properties_series_descriptor(i) for i in sorted(series._series_map))
+        assert repo.query_df(mine.sql_query)["y"].tolist() == [1.0, 1.75, 4.0, 7.75, 13.0]
+        assert repo.query_df(other.sql_query)["y"].tolist() == [1.0, 3.0, 9.0, 19.0, 33.0]  # its own values
+        assert sympy_store.stored_values(sympy_store.get(repo, "Line")) == {"a": 2.0, "b": 1.0}  # kept
+
+        # One Undo step: the formula and the query back as they were.
+        window._on_undo()
+        assert sympy_store.get(repo, "Line")["code_string"] == "a*x + b"
+        assert "4.0, 5" in window._properties_series_descriptor(mine.id).sql_query
+
+        # A formula of x and y on a series of y = f(x): said, nothing changed.
+        series.select_series_named("mine")
+        editor.text.setPlainText("a*x + y")
+        series._apply_function()
+        assert "f(x)" in series._function_note.text()
+        assert sympy_store.get(repo, "Line")["code_string"] == "a*x + b"
+    finally:
+        window.close()
+        repo.close()
+
+
+def test_the_parameters_note_is_as_tall_as_its_lines_not_the_cards_spare_height(qapp) -> None:
+    """Chart properties > Series > Function: in a tall card the note under Parameters took the space left."""
+    from PySide6.QtWidgets import QVBoxLayout, QWidget
+
+    from app.widgets.function_editor import FunctionEditor
+
+    holder = QWidget()
+    layout = QVBoxLayout(holder)
+    editor = FunctionEditor(holder)
+    layout.addWidget(editor)
+    holder.resize(320, 1100)
+    holder.show()
+    qapp.processEvents()
+    note = editor._symbols_note
+    assert note.height() <= note.heightForWidth(note.width()) + 2
+    holder.close()

@@ -1,0 +1,27 @@
+"""ChartLibre.
+
+The name, the version and the mark live here because two dialogs and a
+window title need them, and a string repeated in three places is a string
+that ends up disagreeing with itself.  Bump ``APP_VERSION`` here and
+nowhere else.
+"""
+
+APP_NAME: str = "ChartLibre"
+APP_VERSION: str = "0.2.0"
+
+from app import SVG as _SVG  # noqa: E402
+
+#: The application's own mark: an open bracket - "libre", a structure left
+#: open to write into rather than a locked box - graduated like a ruler,
+#: with a small three-point chart breaking out past it. Bare path data, the
+#: same shape ``DataOperationDialogBase.Icon`` uses for a plugin's own
+#: icon; ``app.styles.style.icon_from_svg_source`` wraps it in the standard
+#: stroke-only SVG document at whatever size a window icon needs.
+APP_ICON: str = _SVG.APP
+
+
+# Plugins written before the shared modules moved to app.plugin_api import them
+# by their old paths; these keep working (see app/plugin_api/__init__.py).
+from app.plugin_api import install_old_path_aliases
+
+install_old_path_aliases()

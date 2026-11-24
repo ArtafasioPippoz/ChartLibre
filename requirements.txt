@@ -1,0 +1,83 @@
+# Python 3.15 is the interpreter the pins are for (the first releases with a cp315
+# wheel; older interpreters take the same pins where those releases support them).
+PySide6==6.12.0
+matplotlib==3.11.2
+numpy==2.5.5
+pandas==3.1.1
+# Required for every .xlsx/.xlsm import and export - app.dialogs.import_data_dialog
+# and app.widgets.table_list both hardcode engine="openpyxl", with no fallback.
+openpyxl==3.1.5
+PyWavelets==1.10.0
+scikit-learn==1.9.1
+scipy==1.18.1
+statsmodels==0.15.0
+# Function's Expression and Code models, and the stored functions Fit curve offers (app.data_operations.sympy_store).
+sympy==1.14.0
+pytest==9.2.0
+pytest-xdist==3.8.0
+
+# macOS only: SF Symbols are drawn through AppKit.  Without it the
+# interface still works - every action also names an SVG - but the icons
+# are the shipped SVGs rather than the system ones.
+# Not below 12.2: 11.1 tagged a wheel cp314 during Python 3.14's beta,
+# and importing it on a released 3.14 kills the interpreter outright.
+pyobjc-framework-Cocoa>=12.2; sys_platform == "darwin"
+
+# Optional: app/charts/text.py guards the import in a try/except and falls
+# back to plain, non-adjusted labels when this is absent, so the Text
+# renderer works either way - installed, it spreads overlapping labels apart
+# instead of leaving them stacked at their points.
+adjustText==1.4.0
+
+# Optional: Edit Localization's "Translate missing (auto)" button
+# (app/utils/machine_translation.py) guards the import the same way
+# adjustText does above - the editor works fully without it, just without
+# that one button. Google Translate or MyMemory, neither needs an API key.
+# DeepL (todo A-08) needs no package, only a key in Settings.
+deep-translator==1.11.4
+# Argos Translate, free and offline, needs ctranslate2 and sentencepiece -
+# left out here on purpose: a few tens of MB on every install, for a tool
+# only a translator uses. Edit Localization offers it once they are there:
+#     pip install ctranslate2 sentencepiece
+
+# File importers (app/importers, todo I-01): other programs' files. Small, and
+# installed with everything else, because inside a ready-made package nobody
+# can add a library afterwards: Excel 97-2003 .xls (xlrd), LibreOffice .ods
+# (odfpy), Excel binary .xlsb (pyxlsb), SPSS .sav with its value labels
+# (pyreadstat), R .rds/.RData (pyreadr). Without one, only its format says
+# which library it needs (FileImporter.require).
+xlrd==2.0.2
+odfpy==1.4.1
+pyxlsb==1.0.10
+# No Python 3.15 wheels yet (2026-10): on 3.15 these two formats say which package they need.
+pyreadstat==1.3.6; python_version < "3.15"
+pyreadr==0.5.7; python_version < "3.15"
+# Optional, as large as the rest of the importers together (about 100 MB
+# installed): Parquet and Feather/Arrow files. The import says how to add it.
+#     python -m pip install pyarrow
+
+# Required for "Import - Database" against a PostgreSQL or MySQL server.
+# Pure Python, deliberately: no C extension means no wheel to be missing on
+# whatever Python this ships on next, the same reasoning as adjustText above
+# just without the fallback, since importing a server database has no local
+# equivalent to fall back to.
+pg8000==1.31.6
+PyMySQL==1.2.4
+
+# Import - Web's own CA bundle (app.utils.data_sources.read_web_url). A
+# python.org macOS build has no trust store wired up until "Install
+# Certificates.command" is run once, so every HTTPS fetch fails with
+# CERTIFICATE_VERIFY_FAILED - indistinguishable at a glance from an actual
+# network problem - until certifi's bundle is used instead. Guarded by an
+# ImportError fallback to urlopen's own default context, the same pattern
+# as adjustText above, so its absence degrades rather than crashes.
+certifi==2026.10.23
+
+
+# Optional: the Assistant panel (app/ai, its provider a plugin in app/ai_providers).
+# Without anthropic the panel says how to enable Claude and the rest of the
+# application is the same; without keyring the API key is read from the
+# environment (ANTHROPIC_API_KEY) instead of the macOS Keychain or the Windows
+# Credential Manager. Both are pure Python, on every platform.
+anthropic==2.9.0
+keyring==25.7.0

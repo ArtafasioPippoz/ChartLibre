@@ -1,0 +1,330 @@
+"""Shared pytest fixtures and options for the ChartLibre test suite.
+
+Artifacts (databases, saved figures) go to the directory chosen by
+``_artifacts_root``; set ``CHARTLIBRE_TEST_ARTIFACTS`` to redirect them.
+"""
+# dev/tests/conftest.py
+from __future__ import annotations
+
+import os
+import re
+import sys
+import tempfile
+from collections.abc import Iterator
+from pathlib import Path
+
+from app.utils.qt_plugins import ensure_visible_plugins
+
+ensure_visible_plugins()  # macOS may flag the environment's Qt plugins hidden; Qt then finds none
+
+import matplotlib
+import pytest
+
+# The assistant's key lives in the system keychain: the tests never read or write the developer's.
+os.environ["PYTHON_KEYRING_BACKEND"] = "keyring.backends.null.Keyring"
+os.environ["CHARTLIBRE_ALL_PACKS"] = "1"  # every pack loaded, whatever this machine's Preferences say (app.utils.packs)
+
+from app.logs.logger import AppLogger
+
+# The tests log to a file of their own. They shared the application's -
+# app/logs/chartlibre.log - so its Log window showed the errors the tests cause
+# on purpose (a malformed web_sources.json, a preview rolled back twice) as if
+# the application had met them.
+AppLogger.reset()
+AppLogger.configure(Path(tempfile.gettempdir()) / "chartlibre-test-logs")
+
+from app.data.sqlite_repo import SqliteRepo
+
+matplotlib.use("Agg")
+
+
+@pytest.fixture(autouse=True)
+def _operations_compute_in_place(request: pytest.FixtureRequest):
+    """Preview and Apply finish before they return, unless a test asks otherwise.
+
+    The operations that compute on a worker thread would otherwise hand
+    their results back only once the event loop runs, and every test that
+    reads the chart straight after preview() would read it too early. The
+    tests of the background path itself are marked ``background``.
+    """
+    from app.plugin_api.data_operations.dialog_base import DataOperationDialogBase
+
+    DataOperationDialogBase.BACKGROUND_ENABLED = request.node.get_closest_marker("background") is not None
+    yield
+    DataOperationDialogBase.BACKGROUND_ENABLED = True
+
+
+@pytest.fixture(autouse=True)
+def _dialogs_start_from_their_defaults(_private_user_config):
+    """Every test opens its dialogs as built, not as a previous test left them.
+
+    The dialogs remember their entries and parameters - and whether the data
+    came from a chart or a table - when they close; one test leaving
+    Smoothing on a table would otherwise change what the next one opens.
+    """
+    from app.utils import config
+    from app.utils.dialog_state import CONFIG_SECTION, GEOMETRY_SECTION
+
+    config.set_section(CONFIG_SECTION, {})
+    config.set_section(GEOMETRY_SECTION, {})
+    # The table operations keep each table's casting (roles and column types)
+    # in a section named after the dialog.
+    for name, section in config.load_user_config().items():
+        if isinstance(section, dict) and "casting" in section:
+            config.set_section(name, {})
+    yield
+
+
+@pytest.fixture(autouse=True, scope="module")
+def _no_windows_left_from_the_last_file():
+    """A file's leftover windows go with it.
+
+    Tests rarely delete what they open, and every widget alive is repolished when a style sheet is applied:
+    by the end of a run one apply took 50 seconds, a third of the whole suite.
+    """
+    yield
+    from PySide6.QtCore import QCoreApplication, QEvent
+    from PySide6.QtWidgets import QApplication
+
+    app = QApplication.instance()
+    if app is None:
+        return
+    for widget in QApplication.topLevelWidgets():
+        widget.close()
+        widget.deleteLater()
+    QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+
+
+@pytest.fixture(autouse=True, scope="session")
+def _private_user_config(tmp_path_factory: pytest.TempPathFactory):
+    """Point user.json at an empty one of its own for the whole run: every setting at its default.
+
+    Dialogs and the main window remember their state in user.json when they close - splitter sizes, the last
+    connection, the last import - and the tests close a great many of them. Against the real file that left the
+    developer's own window with its panels 47 px wide after a test run. Empty rather than a copy of it: a
+    developer's settings (developer mode, the Advanced section open, a remembered casting) made the same
+    suite pass on one machine and fail on another.
+    """
+    from app.utils import config
+
+    copy = config.USER_CONFIG_PATH  # pytest_configure pointed it at an empty file, before any collection
+    copy.write_text("{}", encoding="utf-8")
+    try:
+        yield copy
+    finally:
+        config.USER_CONFIG_PATH = _REAL_USER_CONFIG
+
+
+def _artifacts_root() -> Path:
+    """Return the directory that receives test artifacts.
+
+    Resolution order:
+      1. ``CHARTLIBRE_TEST_ARTIFACTS`` environment variable, when set;
+      2. ``C:/bin/dhub`` on Windows, the fixed location used on the dev machine;
+      3. an in-repo ``dev/test_results`` folder;
+      4. the system temp directory.
+
+    Why: the previous implementation referenced ``root`` before assignment and
+    only worked because the resulting NameError fell through to the fallback.
+    """
+    candidates: list[Path] = []
+
+    override = os.environ.get("CHARTLIBRE_TEST_ARTIFACTS", "").strip()
+    if override:
+        candidates.append(Path(override))
+    if sys.platform.startswith("win"):
+        candidates.append(Path("C:/bin/dhub"))
+    candidates.append(Path(__file__).resolve().parents[1] / "test_results")
+    candidates.append(Path(tempfile.gettempdir()) / "chartlibre_test_results")
+
+    for candidate in candidates:
+        try:
+            candidate.mkdir(parents=True, exist_ok=True)
+            # Why: a mounted read-only folder passes mkdir(exist_ok=True) but
+            # fails on the first write, so probe an actual create/unlink cycle.
+            probe = candidate / ".write_probe"
+            probe.touch()
+            probe.unlink()
+        except Exception:
+            continue
+        return candidate
+    raise RuntimeError("No writable directory available for test artifacts")
+
+
+@pytest.fixture(scope="session")
+def test_results_dir() -> Path:
+    base = _artifacts_root() / "chartlibre_tests"
+    base.mkdir(parents=True, exist_ok=True)
+    return base
+
+
+@pytest.fixture(scope="session")
+def plots_dir(test_results_dir: Path) -> Path:
+    path = test_results_dir / "plots"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+@pytest.fixture
+def tmp_db_path(tmp_path: Path) -> Path:
+    return tmp_path / "test.dhub"
+
+
+@pytest.fixture
+def repo(tmp_db_path: Path) -> Iterator[SqliteRepo]:
+    """A fresh, empty SqliteRepo. A module that needs seed data defines its own ``repo``, shadowing this one."""
+    built = SqliteRepo(db_path=tmp_db_path)
+    yield built
+    built.close()
+
+
+_REAL_USER_CONFIG: Path | None = None
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    config.addinivalue_line(
+        "markers", "background: Preview and Apply compute on a worker thread, as in the app"
+    )
+    sys.path.insert(0, str(Path(__file__).parent))  # slow_tests.py, beside this file
+    # The private user.json from the very start: collecting the tests imports the plugin scanners, which read
+    # the settings (the extension packs switched on or off) - read from the developer's own file, a pack they
+    # had switched off was missing from the whole run.
+    global _REAL_USER_CONFIG
+    from app.utils import config
+
+    _REAL_USER_CONFIG = config.USER_CONFIG_PATH
+    private = Path(tempfile.mkdtemp(prefix="chartlibre_user_config_")) / "user.json"
+    private.write_text("{}", encoding="utf-8")
+    config.USER_CONFIG_PATH = private
+
+
+def pytest_addoption(parser: pytest.Parser) -> None:
+    # Keep show-plots available for other tests.
+    parser.addoption(
+        "--show-plots",
+        action="store_true",
+        default=True,
+        help="Save rendered matplotlib figures to the plots dir",
+    )
+    parser.addoption(
+        "--all",
+        action="store_true",
+        default=False,
+        help="Run the slow tests too (dev/tests/slow_tests.py lists them)",
+    )
+
+
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    """Leave the slow tests out of a run of the whole folder; --all, or naming a file, runs them."""
+    from slow_tests import SLOW_TESTS
+
+    named = {Path(arg.split("::")[0]).name for arg in config.args if ".py" in arg}
+    quick, slow, met = [], [], set()
+    for item in items:
+        file, _, test = item.nodeid.rpartition("/")[2].partition("::")
+        spellings = {file, f"{file}::{test}", f"{file}::{test.partition('[')[0]}"}
+        found = spellings & SLOW_TESTS
+        met |= found
+        (slow if found and file not in named else quick).append(item)
+    if not named and not config.getoption("keyword") and SLOW_TESTS - met:
+        # A renamed test would otherwise slip back into the normal run unnoticed.
+        raise pytest.UsageError(f"slow_tests.py names tests that are gone: {sorted(SLOW_TESTS - met)}")
+    if slow and not config.getoption("--all"):
+        config.hook.pytest_deselected(items=slow)
+        items[:] = quick
+
+
+@pytest.fixture(scope="session")
+def show_plots(request: pytest.FixtureRequest) -> bool:
+    return bool(request.config.getoption("--show-plots"))
+
+
+
+
+@pytest.fixture(scope="session")
+def qapp():
+    """One QApplication for the whole session.
+
+    Qt allows exactly one, and creating a second aborts the process, so every
+    test that needs widgets - or only a palette and a device pixel ratio -
+    shares this rather than making its own.  Two modules used to define their
+    own copy of this fixture, which shadowed it and duplicated the check below.
+
+    Some environments ship a PySide6 whose widget constructors exist but reject
+    their arguments; there the whole group is skipped rather than failing one
+    test at a time with an error that says nothing about the cause.
+    """
+    qt = pytest.importorskip("PySide6.QtWidgets")
+
+    try:
+        app = qt.QApplication.instance() or qt.QApplication([])
+        qt.QLineEdit(qt.QWidget())
+    except Exception:  # pragma: no cover - depends on the installed PySide6
+        pytest.skip("PySide6 widgets are not usable in this environment")
+
+    yield app
+
+
+@pytest.fixture(autouse=True, scope="module")
+def _close_leftover_windows():
+    """After each test module, close and delete the windows it left open.
+
+    Tests build dialogs and panels and rarely destroy them; hundreds piled up
+    over a run, and every stylesheet applied later repolished all of them -
+    20 s for one apply_platform_style by the time the window-chrome tests ran.
+    """
+    yield
+    from PySide6.QtWidgets import QApplication
+
+    app = QApplication.instance()
+    if not isinstance(app, QApplication):
+        return
+    # Deleted, not closed: close() runs closeEvent, where dialogs remember
+    # their entries in user.json - and the next module's dialogs would open
+    # with this module's choices.
+    for widget in app.topLevelWidgets():
+        widget.hide()
+        widget.deleteLater()
+    app.processEvents()
+    app.sendPostedEvents(None, 0)  # the DeferredDelete events
+    app.processEvents()
+
+
+@pytest.fixture(autouse=True, scope="session")
+def _qt_messages_to_stderr_at_exit():
+    """At the end of the run, Qt's messages go back to its own handler.
+
+    Qt warns while the process shuts down (a web page released with its
+    profile), after pytest has closed the streams the application's logger
+    writes to - which printed "--- Logging error ---" tracebacks after the
+    summary for every one of them.
+    """
+    yield
+    from PySide6.QtCore import qInstallMessageHandler
+
+    qInstallMessageHandler(None)
+
+
+@pytest.fixture
+def report_image(request: pytest.FixtureRequest):
+    """``report_image(figure, caption="")``: keep a matplotlib figure for the HTML test report.
+
+    Does nothing unless the test run was started by ``dev/tools/test_report.py`` (it sets
+    ``CHARTLIBRE_REPORT_IMAGES``), so a plain pytest run is not slowed down or littered.
+    """
+    folder = os.environ.get("CHARTLIBRE_REPORT_IMAGES", "").strip()
+    counter = {"n": 0}
+
+    def save(figure, caption: str = "") -> None:
+        if not folder:
+            return
+        base = re.sub(r"[^\w.-]+", "_", request.node.nodeid)
+        counter["n"] += 1
+        target = Path(folder)
+        target.mkdir(parents=True, exist_ok=True)
+        stem = f"{base}__{counter['n']}"
+        figure.savefig(target / f"{stem}.png", dpi=80)
+        if caption:
+            (target / f"{stem}.txt").write_text(caption, encoding="utf-8")
+
+    return save

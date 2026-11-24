@@ -1,0 +1,770 @@
+"""Scatter plot renderer.
+
+Draws one collection per series, optionally colouring and sizing points from
+extra role columns.  Integer colour columns are treated as discrete category
+ids; float columns go through a colormap.
+"""
+from __future__ import annotations
+
+from typing import Any, ClassVar, cast
+
+import matplotlib.dates as mdates
+import numpy as np
+import pandas as pd
+from matplotlib import rcParams
+from matplotlib.patches import Ellipse
+from matplotlib.transforms import Affine2D
+
+from app.logs.logger import applogger
+from app.plugin_api.charts.base import (
+    ERROR_BAR_KWARGS,
+    BaseAxisRenderer,
+    SeriesArtistTags,
+    SeriesData,
+    in_legend,
+)
+from app.utils.coercion import coerce_axis, column_of, to_numbers
+
+
+def _reorder_error(error: Any, order: np.ndarray) -> Any:
+    """Apply a point ordering to a symmetric or asymmetric error array.
+
+    Symmetric errors are one value per point; asymmetric ones are (2, N), so
+    the reordering has to happen along the last axis in both cases.
+    """
+    if error is None:
+        return None
+    array = np.asarray(error)
+    return array[..., order]
+
+
+
+
+class ScatterAxisRenderer(BaseAxisRenderer):
+    """Renderer for 2D scatter plots.
+
+    Behavior:
+    - If marker is set, draw scatter markers.
+    - If line style is set, draw a connecting line.
+    - If marker is empty and line style is set, draw only the line.
+    - If both marker and line style are empty/none, nothing is drawn.
+
+    Honors per-series style fields such as:
+        - label
+        - visible
+        - show_in_legend
+        - sort_x
+        - color
+        - marker
+        - linestyle
+        - alpha
+        - zorder
+    """
+
+    RequiredRoles = ["x", "y"]
+    OptionalRoles = [
+        "color",
+        "size",
+        # A column naming, for each point, a picture of the project to draw it as (Project > Pictures).
+        "picture",
+        # Error bars: one column for a symmetric half-width, or a low/high pair
+        # for an asymmetric interval.  See BaseAxisRenderer.error_values.
+        "xerr",
+        "xerr_low",
+        "xerr_high",
+        "yerr",
+        "yerr_low",
+        "yerr_high",
+    ]
+
+    Name = "Scatter Plot"
+    WhenToUse: str = "Use it to see the relation between two numeric variables."
+    Category: str = "Pairwise data"
+    Description = "Scatter Plot"
+    Keywords: str = "dispersione scatter xy correlation correlazione punti points"
+    Goals: ClassVar[list[str]] = ["relate"]
+    Link:str="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.scatter.html#matplotlib.axes.Axes.scatter"
+
+    def _float_option(self, name: str, options: dict[str, Any], default: float = 0.0) -> float:
+        """Return a renderer option as float without upsetting Pylance.
+
+        BaseAxisRenderer.opt() is intentionally generic and returns object, so
+        direct calls like float(self.opt(...)) are reported by Pylance.  This
+        wrapper narrows the value at runtime and gives the type checker a real
+        float return type.
+        """
+        value = cast(Any, self.opt(name, options))
+        if value in (None, ""):
+            return default
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            applogger.warning("Invalid float option %s=%r; using %r", name, value, default)
+            return default
+
+    def _int_option(self, name: str, options: dict[str, Any], default: int = 0) -> int:
+        """Return a renderer option as int without Pylance object warnings."""
+        value = cast(Any, self.opt(name, options))
+        if value in (None, ""):
+            return default
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            applogger.warning("Invalid integer option %s=%r; using %r", name, value, default)
+            return default
+
+    #: Options this renderer draws itself rather than forwarding to
+    #: ax.scatter, which would reject them as unknown keywords.
+    OVERLAY_KWARGS: frozenset[str] = frozenset(
+        {
+            "confidence_ellipse",
+            "confidence_ellipse_color",
+            "trend_degree",
+            "trend_band",
+            "trend_sigma",
+            "markersize",
+        }
+    )
+
+    Kwargs: ClassVar[dict[str, Any]] = {
+        "confidence_ellipse": {
+            "default": 0.0,
+            "type": float,
+            "min": 0.0,
+            "max": 5.0,
+            "group": "Statistics",
+            "description": (
+                "Draw the covariance ellipse of the cloud, this many standard "
+                "deviations across. 0 draws none; 2 covers about 95% of a "
+                "bivariate normal sample. It shows the correlation as a tilt, "
+                "which a cloud of points alone does not make obvious."
+            ),
+        },
+        "confidence_ellipse_color": {
+            "default": "#D32F2F",
+            "type": str,
+            "kind": "color",
+            "group": "Statistics",
+            "description": "Outline colour of the covariance ellipse.",
+        },
+        "trend_degree": {
+            "default": 0,
+            "type": int,
+            "min": 0,
+            "max": 6,
+            "group": "Statistics",
+            "description": (
+                "Degree of a least-squares trend line through the points. "
+                "0 draws none, 1 is a straight line."
+            ),
+        },
+        "trend_band": {
+            "default": "none",
+            "type": ["none", "confidence", "prediction"],
+            "group": "Statistics",
+            "description": (
+                "Uncertainty band around the trend. 'confidence' is the "
+                "uncertainty of the fitted curve itself and is narrow; "
+                "'prediction' is where the next observation would fall and is "
+                "much wider. They answer different questions and are routinely "
+                "confused, so they are named rather than offered as one band."
+            ),
+        },
+        "trend_sigma": {
+            "default": 2.0,
+            "type": float,
+            "min": 0.5,
+            "max": 5.0,
+            "group": "Statistics",
+            "description": "Half-width of the band, in standard deviations.",
+        },
+        "alpha": {
+            "default": 0.8,
+            "type": float,
+            "min": 0.0,
+            "max": 1.0,
+            "description": (
+                "Marker opacity from 0.0 (transparent) to 1.0 (opaque)."
+            ),
+        },
+        "norm": {
+            "default": None,
+            "type": ["linear", "log", "symlog", "logit"],
+            "description": (
+                "Normalization for numeric color data before colormap mapping."
+            ),
+        },
+        "vmin": {
+            "default": None,
+            "type": float,
+            "min": -1_000_000_000.0,
+            "max": 1_000_000_000.0,
+            "description": (
+                "Lower bound for colormap normalization "
+                "when numeric color data is used."
+            ),
+        },
+        "vmax": {
+            "default": None,
+            "type": float,
+            "min": -1_000_000_000.0,
+            "max": 1_000_000_000.0,
+            "description": (
+                "Upper bound for colormap normalization "
+                "when numeric color data is used."
+            ),
+        },
+        "plotnonfinite": {
+            "default": False,
+            "type": bool,
+            "description": (
+                "Draw points whose color values are NaN, inf, or -inf "
+                "using the colormap bad color."
+            ),
+        },
+        "markersize": {
+            "default": None,
+            "type": float,
+            "min": 0.0,
+            "max": 100.0,
+            "group": "Marker",
+            "description": (
+                "Marker size in points (Matplotlib's markersize; the area drawn "
+                "is its square). Leave empty for the style's size; a series' own "
+                "Marker size, or a size column, takes precedence."
+            ),
+        },
+        "label": {
+            "default": None,
+            "type": str,
+            "description": "Legend label override. If empty, the series name is used.",
+        },
+        "visible": {
+            "default": True,
+            "type": bool,
+            "description": "Whether the scatter collection is visible.",
+        },
+        "zorder": {
+            "default": None,
+            "type": float,
+            "min": -1000.0,
+            "max": 1000.0,
+            "description": "Drawing order; higher values are drawn on top.",
+        },
+        "picker": {
+            "default": None,
+            "type": float,
+            "min": 0.0,
+            "max": 1000.0,
+            "description": "Pick tolerance in points. Leave empty to disable picking.",
+        },
+        "rasterized": {
+            "default": False,
+            "type": bool,
+            "description": "Rasterize the scatter collection during vector export.",
+        },
+        **ERROR_BAR_KWARGS,
+    }
+
+    @staticmethod
+    def _x_values(column: Any) -> tuple[pd.Series, bool]:
+        """The x column as plottable numbers, and whether it was dates.
+
+        A date column is drawn as dates, the way the Time Series and
+        Timeline renderers read one: pd.to_numeric turned every date into
+        NaN, and the series was dropped as having no points at all.
+        """
+        coerced, is_temporal = coerce_axis(column)
+        if is_temporal:
+            return pd.Series(mdates.date2num(coerced.to_numpy()), index=coerced.index), True
+        return coerced, False
+
+    def render_axis(self, ax, series: list[SeriesData], options: dict) -> None:
+        """Render all scatter series onto a single axis."""
+        base_kwargs = self.get_kwargs(options)
+
+        # ax.scatter and ax.plot reject errorbar keywords, so the drawing
+        # kwargs are the base set minus those; the error bars get them back
+        # through error_kwargs().
+        draw_kwargs = {
+            key: value
+            for key, value in base_kwargs.items()
+            if key not in ERROR_BAR_KWARGS and key not in self.OVERLAY_KWARGS
+        }
+        legend_handles_found = False
+        temporal = False
+
+        tags = SeriesArtistTags(ax)
+        for series_index, sd in enumerate(series):
+            tags.next(sd.name)
+            style = dict(sd.style or {})
+            if not bool(style.get("visible", True)) or not self.ensure_required_roles(sd.df):
+                continue
+
+            x, x_is_temporal = self._x_values(sd.df['x'])
+            y = to_numbers(column_of(sd.df, 'y'))
+            if x is None or y is None:
+                applogger.warning(f"Series { sd.name} skipped: required numeric 'x' and 'y' data not found.")
+                continue
+
+            mask = x.notna() & y.notna()
+            if not bool(mask.any()):
+                applogger.info("Series '%s' skipped: no finite x/y pairs.", sd.name)
+                continue
+
+            # Only a series that is drawn decides the axis is dated: a skipped
+            # one (no points) must not turn the others' numbers into dates.
+            temporal = temporal or x_is_temporal
+
+            x_values = x[mask].to_numpy(dtype=float)
+            y_values = y[mask].to_numpy(dtype=float)
+            color_values, color_is_discrete = self._point_colors(sd, style, series_index, mask)
+            size_values = to_numbers(column_of(sd.df, 'size'))[mask].to_numpy(dtype=float) if 'size' in sd.df.columns else None
+
+            picture_values = (sd.df["picture"][mask].astype(str).to_numpy() if "picture" in sd.df.columns else None)
+
+            # Optional sort by X ascending.
+            order = np.arange(x_values.size)
+            if bool(style.get("sort_x", False)):
+                order = np.argsort(x_values, kind="stable")
+                x_values = x_values[order]
+                y_values = y_values[order]
+                if color_values is not None:
+                    color_values = color_values[order]
+                if size_values is not None:
+                    size_values = size_values[order]
+                if picture_values is not None:
+                    picture_values = picture_values[order]
+
+            show_in_legend = bool(style.get("show_in_legend", True))
+            series_label = self._series_label(sd, style, options)
+
+            marker_style, has_marker = self.series_marker(
+                style, options, rcparam="scatter.marker"
+            )
+            line_style, has_line = self.series_linestyle(style, options)
+
+            # Neither a marker nor a line would draw nothing at all: fall
+            # back to the style sheet's own scatter marker (None lets
+            # Matplotlib read rcParams), a plain dot when that is "none".
+            if not has_marker and not has_line:
+                rc_marker = str(rcParams.get("scatter.marker", "") or "").strip()
+                marker_style = None if rc_marker.lower() not in ("", "none") else "."
+                has_marker = True
+
+            flat_color = str(style.get("color", "") or "").strip()
+
+            # Drawn first, and with no marker or line of their own, so the
+            # markers below sit on top of them and only one artist per series
+            # ends up in the legend.
+            if self.has_error_roles(sd.df):
+                self._draw_error_bars(ax, sd, style, series_index, base_kwargs, mask, order,
+                                      x_values, y_values, flat_color)
+
+            if has_marker:
+                # If a line is also drawn, let the line own the legend label.
+                label = series_label if show_in_legend and series_label and not has_line else None
+                legend_handles_found |= self._draw_markers(
+                    ax, sd, style, options, base_kwargs, draw_kwargs, x_values, y_values,
+                    marker_style, color_values, color_is_discrete, size_values, flat_color, label, picture_values)
+
+            if has_line:
+                label = series_label if show_in_legend and series_label else None
+                legend_handles_found |= self._draw_line(ax, style, x_values, y_values, line_style, flat_color, label)
+
+        tags.done()
+        if temporal:
+            # Only on a dated axis: on a numeric one AutoDateLocator would
+            # read the values as days since 1970.
+            locator = mdates.AutoDateLocator()
+            ax.xaxis.set_major_locator(locator)
+            ax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(locator))
+
+        # After the points, so the ellipse and the trend sit over the cloud
+        # they describe; before the legend, so both can name themselves in it.
+        legend_handles_found |= self._draw_series_overlays(ax, series, options)
+
+        if legend_handles_found:
+            ax.legend()
+        # Draw descriptor annotations after renderer-owned artists.
+        self.apply_annotations(ax, options or {})
+
+    def _point_colors(self, sd: SeriesData, style: dict, series_index: int,
+                      mask: pd.Series) -> tuple[np.ndarray | None, bool]:
+        """The colour of each kept point - RGBA rows, or numbers for a colormap - and whether those are category ids."""
+        if 'color' not in sd.df.columns:
+            return None, False
+        color_source = sd.df['color']
+        # A colour column with nothing in it (Outlier "Colour" on a series with no outliers writes none): the
+        # series' own colour. Read as numbers it was all NaN and the points were not drawn at all.
+        kept = color_source[mask].astype(object)
+        if all(pd.isna(value) or not str(value).strip() for value in kept):
+            return None, False
+        # A non-numeric colour column (colour names, hex codes - the
+        # Pairwise sample demo's own "orange"/"green"/"blue"/"red")
+        # holds literal colour specs, not a continuous field: coercing
+        # it with pd.to_numeric turned every value to NaN, and an
+        # all-NaN `c=` array does not raise from ax.scatter but does
+        # silently break its data-limits autoscale, collapsing the
+        # axes to a near-zero range regardless of the real x/y extent.
+        color_is_literal = not pd.api.types.is_numeric_dtype(color_source.dtype)
+        if color_is_literal and not self.literal_point_colours(color_source):
+            # Text that is not colour specs ("major"/"minor", species
+            # names) is a category: number the labels in order of first
+            # appearance and let the discrete palette path colour them.
+            codes, _labels = pd.factorize(color_source)
+            # Integer ids, 1-based: the palette path takes id-1 modulo its
+            # length, and an empty cell (code -1 -> 0) gets the fallback.
+            color_source = pd.Series(codes + 1, index=color_source.index, dtype="int64")
+            color_is_literal = False
+        if not color_is_literal:
+            color = to_numbers(color_source)
+            if color is None:
+                return None, False
+            return color[mask].to_numpy(dtype=float), self.is_discrete_integer_color(color_source[mask])
+        # A row with no colour of its own takes the series' -
+        # what lets a column colour only some of the points
+        # (the outliers) and leave the rest as they were.
+        # As RGBA, one row per point: the column arrives as a
+        # pandas string array and the series colour as an RGBA
+        # tuple, and Series.where between the two raised - the
+        # whole axis was then left empty.
+        from matplotlib.colors import to_rgba
+
+        fallback = to_rgba(cast(Any, self.series_color(style, series_index)))
+        return np.array(
+            [
+                fallback if value is None or pd.isna(value) or not str(value).strip()
+                else to_rgba(cast(Any, str(value).strip()))
+                for value in color_source[mask].astype(object)
+            ],
+            dtype=float,
+        ).reshape(-1, 4), False
+
+    def _series_label(self, sd: SeriesData, style: dict, options: dict) -> str:
+        """The series' legend label: its own, else the axis' label option, else its name."""
+        series_label = str(style.get("label", "") or "").strip()
+        if series_label:
+            return series_label
+        return str(self.opt("label", options) or "").strip() or sd.name.strip()
+
+    def _draw_error_bars(self, ax, sd: SeriesData, style: dict, series_index: int, base_kwargs: dict,
+                         mask: pd.Series, order: np.ndarray, x_values: np.ndarray, y_values: np.ndarray,
+                         flat_color: str) -> None:
+        """The series' error bars, with no marker or line of their own."""
+        x_error = self.error_values(sd.df, "x", mask)
+        y_error = self.error_values(sd.df, "y", mask)
+        if x_error is None and y_error is None:
+            return
+        if bool(style.get("sort_x", False)):
+            x_error = _reorder_error(x_error, order)
+            y_error = _reorder_error(y_error, order)
+
+        error_kwargs = self.error_kwargs(base_kwargs)
+        error_kwargs.setdefault(
+            "ecolor", flat_color or self.series_color(style, series_index)
+        )
+        if "alpha" in style and style["alpha"] not in (None, ""):
+            error_kwargs["alpha"] = style["alpha"]
+        if "zorder" in style and style["zorder"] not in (None, ""):
+            error_kwargs["zorder"] = style["zorder"]
+
+        try:
+            ax.errorbar(
+                x_values,
+                y_values,
+                xerr=x_error,
+                yerr=y_error,
+                fmt="none",
+                label="_nolegend_",
+                **error_kwargs,
+            )
+        except Exception:
+            applogger.exception(
+                "Failed to draw error bars for series '%s'.", sd.name
+            )
+
+    def _draw_markers(self, ax, sd: SeriesData, style: dict, options: dict, base_kwargs: dict, draw_kwargs: dict,
+                      x_values: np.ndarray, y_values: np.ndarray, marker_style: Any,
+                      color_values: np.ndarray | None, color_is_discrete: bool, size_values: np.ndarray | None,
+                      flat_color: str, label: str | None, picture_values: np.ndarray | None = None) -> bool:
+        """The series' markers; True when they are in the legend."""
+        flat_color = str(style.get("markercolor") or "").strip() or flat_color  # the markers' own colour
+        from app.plugin_api.charts import picture_markers
+
+        if picture_values is not None:
+            # A column names the picture of each point: every name drawn in one go, the points whose name the
+            # project does not have keep the series' own marker.
+            from app.charts.time_series import _marker_every
+
+            size = style.get("markersize") or base_kwargs.get("markersize")
+            every = _marker_every(style.get("markevery"))
+            drawn = picture_markers.draw_named(ax, x_values, y_values, picture_values, size_points=size,
+                                               colour=flat_color, zorder=float(style.get("zorder") or 2.5),
+                                               label=label or "", every=every,
+                                               areas=size_values)
+            if drawn.all():
+                return bool(label)
+            keep = ~drawn
+            x_values, y_values = x_values[keep], y_values[keep]
+            color_values = color_values[keep] if color_values is not None else None
+            size_values = size_values[keep] if size_values is not None else None
+
+        if picture_markers.is_picture(marker_style):
+            from app.charts.time_series import _marker_every
+
+            every = _marker_every(style.get("markevery"))
+            size = style.get("markersize") or base_kwargs.get("markersize")
+            if picture_markers.draw(ax, x_values[::every], y_values[::every], marker_style, size_points=size,
+                                    colour=flat_color, zorder=float(style.get("zorder") or 2.5), label=label or ""):
+                return bool(label)
+            marker_style = None  # no such picture: the style's own marker
+        scatter_kwargs: dict[str, Any] = dict(draw_kwargs)
+        scatter_kwargs["marker"] = marker_style
+
+        if "alpha" in style and style["alpha"] not in (None, ""):
+            scatter_kwargs["alpha"] = style["alpha"]
+
+        if "zorder" in style and style["zorder"] not in (None, ""):
+            scatter_kwargs["zorder"] = style["zorder"]
+
+        if "visible" in style:
+            scatter_kwargs["visible"] = bool(style["visible"])
+
+        if color_values is not None:
+            if color_is_discrete:
+                # Discrete integer values are category ids. Resolve them
+                # to explicit face colors before calling scatter so
+                # Matplotlib does not try to parse the integer ids as a
+                # continuous ``c`` array.
+                discrete_colors = self.map_integer_colors_to_palette(color_values, flat_color)
+                # For discrete colors, bypass scatter's ``c`` parsing and
+                # set both face and edge colors explicitly. This avoids
+                # colormap behavior and prevents an axis-level ``c`` or
+                # ``facecolors='none'`` from making only the marker edge
+                # appear colored.
+                for key in ("c", "color", "facecolor", "facecolors", "edgecolor", "edgecolors",
+                            "cmap", "norm", "vmin", "vmax"):
+                    scatter_kwargs.pop(key, None)
+                scatter_kwargs["facecolors"] = discrete_colors
+                scatter_kwargs["edgecolors"] = discrete_colors
+            else:
+                scatter_kwargs["c"] = color_values
+
+                norm = self.opt("norm", options)
+                if norm not in (None, ""):
+                    scatter_kwargs["norm"] = norm
+
+                vmin = self.opt("vmin", options)
+                if vmin not in (None, "") and isinstance(vmin, (int, float)):
+                    scatter_kwargs["vmin"] = float(vmin)
+
+                vmax = self.opt("vmax", options)
+                if vmax not in (None, "") and isinstance(vmax, (int, float)):
+                    scatter_kwargs["vmax"] = float(vmax)
+        else:
+            if flat_color:
+                scatter_kwargs["c"] = flat_color
+            else:
+                scatter_kwargs.pop("c", None)
+
+            scatter_kwargs.pop("norm", None)
+            scatter_kwargs.pop("vmin", None)
+            scatter_kwargs.pop("vmax", None)
+
+        # A size column wins; then the series' own Marker size, then
+        # the axis' markersize option, then the style's scatter size.
+        # Points, as in Matplotlib's markersize; scatter wants area.
+        scatter_kwargs.pop("markersize", None)
+        marker_points = style.get("markersize")
+        if marker_points in (None, ""):
+            marker_points = base_kwargs.get("markersize")
+        if marker_points not in (None, ""):
+            try:
+                scatter_kwargs["s"] = float(marker_points) ** 2
+            except (TypeError, ValueError):
+                applogger.warning("Series '%s': markersize=%r is not a number; ignored.", sd.name, marker_points)
+        if size_values is not None:
+            scatter_kwargs["s"] = size_values
+
+        # pop() must tolerate a missing key: get_kwargs only emits keys
+        # whose value is not None, so "label" is absent whenever no
+        # label was configured.
+        if label:
+            scatter_kwargs["label"] = label
+        else:
+            scatter_kwargs.pop("label", None)
+
+        from app.charts.time_series import _marker_every
+
+        every = _marker_every(style.get("markevery"))
+        if every > 1:  # a marker on every n-th point: the per-point arrays thinned the same way
+            count = len(x_values)
+            x_values, y_values = x_values[::every], y_values[::every]
+            for key in ("c", "s", "facecolors", "edgecolors"):
+                value = scatter_kwargs.get(key)
+                if hasattr(value, "__len__") and not isinstance(value, str) and len(value) == count:
+                    scatter_kwargs[key] = value[::every]
+        scatter_collection = ax.scatter(
+            x_values,
+            y_values,
+            **scatter_kwargs,
+        )
+        return in_legend(scatter_collection)
+
+    def _draw_line(self, ax, style: dict, x_values: np.ndarray, y_values: np.ndarray, line_style: Any,
+                   flat_color: str, label: str | None) -> bool:
+        """The line through the series' points, with no markers of its own; True when it is in the legend."""
+        line_kwargs: dict[str, Any] = {
+            "linestyle": line_style,
+            "marker": "None",
+        }
+
+        if flat_color:
+            line_kwargs["color"] = flat_color
+
+        if "alpha" in style and style["alpha"] not in (None, ""):
+            line_kwargs["alpha"] = style["alpha"]
+
+        if "zorder" in style and style["zorder"] not in (None, ""):
+            line_kwargs["zorder"] = style["zorder"]
+
+        linewidth_value = style.get("linewidth", style.get("line_width"))
+        if linewidth_value not in (None, ""):
+            line_kwargs["linewidth"] = linewidth_value
+
+        line_kwargs["label"] = label or "_nolegend_"
+
+        line_list = ax.plot(
+            x_values,
+            y_values,
+            **line_kwargs,
+        )
+        return bool(line_list) and in_legend(line_list[0])
+
+    def _draw_series_overlays(self, ax, series: list[SeriesData], options: dict) -> bool:
+        """Each drawn series' ellipse and trend; True when one of them is in the legend."""
+        found = False
+        for sd in series:
+            if not (sd.style or {}).get("visible", True):
+                continue
+            if not self.ensure_required_roles(sd.df):
+                continue
+            x = self._x_values(sd.df["x"])[0].to_numpy(dtype=float)
+            y = to_numbers(column_of(sd.df, "y")).to_numpy(dtype=float)
+            mask = np.isfinite(x) & np.isfinite(y)
+            if mask.sum() >= 3 and self._draw_overlays(
+                ax, x[mask], y[mask], {**options, **(sd.style or {})}
+            ):
+                found = True
+        return found
+
+    def _draw_overlays(
+        self, ax: Any, x: np.ndarray, y: np.ndarray, options: dict
+    ) -> bool:
+        """Draw the covariance ellipse and the trend line.  True if either was.
+
+        Both are summaries of the cloud rather than of any one point, which is
+        why they are computed here from the finite pairs and not threaded
+        through the per-point drawing above.
+        """
+        drawn = False
+
+        n_std = self._float_option("confidence_ellipse", options, 0.0)
+        if n_std > 0.0:
+            drawn = self._draw_confidence_ellipse(ax, x, y, n_std, options) or drawn
+
+        degree = self._int_option("trend_degree", options, 0)
+        if degree > 0:
+            drawn = self._draw_trend(ax, x, y, degree, options) or drawn
+
+        return drawn
+
+    def _draw_confidence_ellipse(
+        self, ax: Any, x: np.ndarray, y: np.ndarray, n_std: float, options: dict
+    ) -> bool:
+        """Draw the covariance ellipse of the cloud.
+
+        Built the way Matplotlib's own example does: a unit circle whose axes
+        are set from the Pearson correlation, then rotated 45 degrees and
+        scaled by each standard deviation.  The rotation is what encodes the
+        correlation - an uncorrelated cloud comes out axis-aligned - and doing
+        it through a transform rather than by solving for the eigenvectors
+        keeps the ellipse correct when the axes are rescaled under it.
+        """
+        covariance = np.cov(x, y)
+        spread_x, spread_y = covariance[0, 0], covariance[1, 1]
+        if not np.isfinite(spread_x) or spread_x <= 0 or spread_y <= 0:
+            applogger.info("No covariance ellipse: the cloud has no spread.")
+            return False
+
+        pearson = covariance[0, 1] / np.sqrt(spread_x * spread_y)
+        pearson = float(np.clip(pearson, -1.0, 1.0))
+
+        ellipse = Ellipse(
+            (0.0, 0.0),
+            width=np.sqrt(1.0 + pearson) * 2.0,
+            height=np.sqrt(1.0 - pearson) * 2.0,
+            facecolor="none",
+            edgecolor=str(self.opt("confidence_ellipse_color", options) or "#D32F2F"),
+            linewidth=1.6,
+            linestyle="--",
+            label=f"{n_std:g}\u03c3 ellipse",
+        )
+        ellipse.set_transform(
+            Affine2D()
+            .rotate_deg(45)
+            .scale(np.sqrt(spread_x) * n_std, np.sqrt(spread_y) * n_std)
+            .translate(float(np.mean(x)), float(np.mean(y)))
+            + ax.transData
+        )
+        ax.add_patch(ellipse)
+        return True
+
+    def _draw_trend(
+        self, ax: Any, x: np.ndarray, y: np.ndarray, degree: int, options: dict
+    ) -> bool:
+        """Draw a least-squares trend line, optionally with its error band."""
+        if x.size <= degree + 1:
+            applogger.info(
+                "No trend line: %d points cannot support a degree-%d fit.",
+                x.size,
+                degree,
+            )
+            return False
+
+        coefficients = np.polyfit(x, y, degree)
+        grid = np.linspace(float(np.min(x)), float(np.max(x)), 256)
+        fitted = np.polyval(coefficients, grid)
+
+        color = str(self.opt("confidence_ellipse_color", options) or "#D32F2F")
+        ax.plot(grid, fitted, color=color, linewidth=1.8, label=f"degree {degree} trend")
+
+        band = str(self.opt("trend_band", options) or "none").strip().lower()
+        if band in ("confidence", "prediction"):
+            residuals = y - np.polyval(coefficients, x)
+            # Degrees of freedom, not n: the fit already spent degree+1 of them,
+            # and dividing by n would understate the scatter it did not explain.
+            dof = max(1, x.size - (degree + 1))
+            sigma = float(np.sqrt(np.sum(residuals**2) / dof))
+
+            # The confidence band is the uncertainty of the mean response and
+            # narrows towards the centroid; the prediction band adds one whole
+            # residual standard deviation, because a future point scatters
+            # about the curve as well as the curve being uncertain.
+            leverage = 1.0 / x.size + (grid - np.mean(x)) ** 2 / np.sum(
+                (x - np.mean(x)) ** 2
+            )
+            half = sigma * np.sqrt(leverage + (1.0 if band == "prediction" else 0.0))
+            half *= self._float_option("trend_sigma", options, 2.0)
+
+            ax.fill_between(
+                grid,
+                fitted - half,
+                fitted + half,
+                color=color,
+                alpha=0.15,
+                linewidth=0,
+                label=f"{band} band",
+            )
+        return True

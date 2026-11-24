@@ -1,0 +1,171 @@
+"""Fit Y by X (Analysis): one Y against each X, the analysis chosen by their types (AN-03).
+
+Continuous by continuous is a Bivariate fit, continuous by groups a Oneway
+(means, ANOVA, Tukey / Games-Howell / Dunn), groups by groups a Contingency
+table, groups by continuous a Logistic fit - see app.analysis.fit_y_by_x.
+OK writes each report's tables and draws, per X, the scatter with its line,
+the box plot by group, the mosaic or the probability curves.
+"""
+from __future__ import annotations
+
+import re
+from collections.abc import Mapping
+from dataclasses import dataclass
+from typing import Any, ClassVar
+
+import pandas as pd
+
+from app import SVG
+from app.analysis import fit_y_by_x as fyx
+from app.plugin_api import reading_guide
+from app.plugin_api.data_operations.column_roles import (
+    CONTINUOUS,
+    ColumnCasting,
+    ColumnRole,
+)
+from app.plugin_api.data_operations.roles_base import RolesOperationDialogBase
+from app.utils import report_html
+from app.utils.i18n import _
+
+
+def _slug(title: str) -> str:
+    """A report title as part of a table name: "Tukey HSD (equal variances)" -> "tukey_hsd_equal_variances"."""
+    return re.sub(r"\W+", "_", title).strip("_").lower()
+
+
+@dataclass(slots=True)
+class FitYByXReport:
+    results: list[fyx.FitYByXResult]
+
+
+class FitYByXDialog(RolesOperationDialogBase):
+    """One response against one or more factors, each pair analysed as its types call for."""
+
+    FITS_MODEL = True
+    Name = "Fit Y by X"
+    Description = ("Y against each X, the analysis chosen by their types: bivariate fit, oneway ANOVA "
+                   "with pairwise comparisons, contingency table, or logistic fit.")
+    Category = "Basic Analysis"
+    CHART_PANELS = ('Scatter Plot', 'Box Plot', 'Mosaic Plot')
+    Order = 11
+    Icon = SVG.FIT_Y_BY_X
+    Keywords: str = (
+        "fit y by x bivariate bivariata oneway one-way anova post hoc tukey games-howell dunn holm "
+        "pairwise comparisons confronti multipli contingency contingenza crosstabs chi-squared "
+        "logistic logistica regression line retta correlation correlazione"
+    )
+    Goals: ClassVar[list[str]] = ["compare", "relate"]
+
+    ROLES = (
+        ColumnRole("response", "Y", "The response: its type and X's choose the analysis.", minimum=1, maximum=1),
+        ColumnRole("factor", "X", "One report per column: continuous, or the groups.", minimum=1),
+    )
+    DISTINCT_ROLES = (("response", "factor", "Y cannot also be an X."),)
+
+    @staticmethod
+    def _continuous(casting: ColumnCasting, column: str, *, as_response: bool) -> bool:
+        kind = casting.kinds.get(column)
+        # Ordinal: a measure when it is the response, groups when it is the factor.
+        return kind == CONTINUOUS or (as_response and kind == "ordinal")
+
+    #: The chart each analysis draws.
+    _CHART_OF = {fyx.BIVARIATE: "Scatter Plot", fyx.ONEWAY: "Box Plot", fyx.CONTINGENCY: "Mosaic Plot",
+                 fyx.LOGISTIC: "Scatter Plot"}
+
+    def charts_drawn(self) -> set[str] | None:
+        """The charts of the analyses the pairs call for: a scatter for two measures, a box plot for a measure
+        by groups, a mosaic for two categories."""
+        casting = self.roles_widget.casting()
+        ys, xs = casting.columns("response"), casting.columns("factor")
+        if not ys or not xs:
+            return None
+        y_continuous = self._continuous(casting, ys[0], as_response=True)
+        return {self._CHART_OF[fyx.analysis_for(y_continuous, self._continuous(casting, x, as_response=False))]
+                for x in xs}
+
+    def compute(self, frame: pd.DataFrame, casting: ColumnCasting, params: Mapping[str, Any], model: str) -> Any:
+        del params, model
+        y = casting.columns("response")[0]
+        y_continuous = self._continuous(casting, y, as_response=True)
+        return FitYByXReport([
+            fyx.fit_y_by_x(frame, y, x, y_continuous=y_continuous,
+                           x_continuous=self._continuous(casting, x, as_response=False))
+            for x in casting.columns("factor")
+        ])
+
+    # ------------------------------------------------------------------
+    # The report
+    # ------------------------------------------------------------------
+
+    def report_body(self, report: FitYByXReport) -> str:
+        blocks = []
+        for result in report.results:
+            parts = [report_html.note(_(note)) for note in result.notes]
+            for title, table in result.tables.items():
+                p_columns = [c for c in table.columns if str(c).startswith("pvalue") or c == "Prob>ChiSq"]
+                parts.append(report_html.section(_(title), self.report_table(table, p_columns=p_columns)))
+            blocks.append(report_html.section(f"{_(result.kind)}: {result.y} by {result.x}", "".join(parts)))
+        return "".join(blocks)
+
+    def how_to_read(self, report: FitYByXReport) -> list[str]:
+        result = report.results[0]
+        y, x, tables = result.y, result.x, result.tables
+        guide = reading_guide
+        if result.kind == fyx.BIVARIATE:
+            fit = tables["Linear fit"]
+            return [guide.r_squared(guide.lookup(tables["Summary of fit"], "RSquare", by="Measure"), y=y),
+                    guide.slope(fit["Estimate"].iloc[1], fit["Lower 95%"].iloc[1], fit["Upper 95%"].iloc[1],
+                                y=y, x=x)]
+        if result.kind == fyx.ONEWAY:
+            return [guide.p_value(guide.lookup(tables["Tests"], "One-way ANOVA", by="test", value="pvalue"),
+                                  null=_("the groups of {x} had the same mean of {y}").format(x=x, y=y),
+                                  shown=_("the means differ"))]
+        if result.kind == fyx.CONTINGENCY:
+            return [guide.p_value(guide.lookup(tables["Tests"], "Pearson chi-squared", by="test", value="pvalue"),
+                                  null=_("{y} did not depend on {x}").format(y=y, x=x),
+                                  shown=_("{y} depends on {x}").format(y=y, x=x))]
+        whole = tables["Whole model test"]
+        areas = whole[whole["Measure"].astype(str).str.startswith("AUC (")]
+        return [guide.p_value(guide.lookup(whole, "Prob>ChiSq", by="Measure"),
+                              null=_("{x} did not change the odds of {y}").format(x=x, y=y),
+                              shown=_("{y} depends on {x}").format(y=y, x=x)),
+                guide.auc(areas["Value"].iloc[0], level=str(areas["Measure"].iloc[0])[5:-1]) if not areas.empty else ""]
+
+    # ------------------------------------------------------------------
+    # OK: tables and a figure
+    # ------------------------------------------------------------------
+
+    def apply_results(self, report: FitYByXReport) -> list[dict[str, Any]]:
+        frames: dict[str, pd.DataFrame] = {}
+        for result in report.results:
+            stem = f"{result.y}_by_{result.x}"
+            for title, frame in result.tables.items():
+                frames[f"{stem}_{_slug(title)}"] = frame
+            if not result.curve.empty:
+                frames[f"{stem}_curve"] = result.curve
+        names = self.write_result_tables(frames)
+        written: list[dict[str, Any]] = [{"table": name} for name in names.values()]
+        panels = [self._panel(result, names.get(f"{result.y}_by_{result.x}_curve")) for result in report.results]
+        y = report.results[0].y
+        return self.draw_report(report, y, panels, written=written)
+
+    def _panel(self, result: fyx.FitYByXResult, curve_table: str | None) -> tuple:
+        table, y, x = self.table, result.y, result.x
+        title = _("{y} by {x}").format(y=y, x=x)
+        if result.kind == fyx.BIVARIATE:
+            sql, roles = self.series_select(table, {"x": x, "y": y})
+            series = [(y, sql, roles, {"linestyle": "", "marker": "o"})]
+            sql, roles = self.series_select(str(curve_table), {"x": x, "y": "Fit"})
+            series.append((_("Linear fit"), sql, roles, {"linestyle": "-", "marker": "", "color": "#d62728"}))
+            return ("Scatter Plot", title, x, y, series)
+        if result.kind == fyx.ONEWAY:
+            sql, roles = self.series_select(table, {"value": y, "group": x})
+            return ("Box Plot", title, x, y, [(y, sql, roles, {})])
+        if result.kind == fyx.CONTINGENCY:
+            sql, roles = self.series_select(table, {"x": x, "y": y})
+            return ("Mosaic Plot", title, x, y, [(y, sql, roles, {})])
+        series = []
+        for column in result.curve.columns[1:]:
+            sql, roles = self.series_select(str(curve_table), {"x": x, "y": column})
+            series.append((column, sql, roles, {"linestyle": "-", "marker": ""}))
+        return ("Scatter Plot", title, x, _("Probability"), series)

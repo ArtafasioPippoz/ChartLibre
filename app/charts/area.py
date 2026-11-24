@@ -1,0 +1,523 @@
+"""Five renderers from Matplotlib's basic plot types: stackplot, stairs,
+stem, fill_between and barbs.
+
+https://matplotlib.org/stable/plot_types/basic/index.html
+
+None of them inherits ``ScatterAxisRenderer``, and the reason is worth stating
+because inheriting it is the obvious first thought.  What a scatter does is
+read an x and a y per series and draw one mark per row; every renderer here
+breaks one half of that.  ``stackplot`` needs *every* series at once, because a
+stacked band's position depends on the ones below it.  ``fill_between`` reads
+two y columns and draws a region rather than marks.  ``stairs`` reads bin edges
+and one value fewer than it has edges.  ``stem`` draws to a baseline rather
+than marking a point.  ``barbs`` reads four columns.  Nothing
+of the scatter's drawing survives contact with any of them, so inheriting it
+would mean overriding ``render_axis`` entirely - which is inheritance for the
+sake of a shared ancestor and buys nothing.
+
+What *is* shared is the appearance vocabulary - alpha, zorder, label, picker -
+and that is reused directly out of ``ScatterAxisRenderer.Kwargs``, the same way
+the ECDF renderer already does.  Sharing the options without sharing the
+drawing is the honest version of the relationship.
+"""
+from __future__ import annotations
+
+from typing import Any, ClassVar
+
+import numpy as np
+
+from app.charts.scatter import ScatterAxisRenderer
+from app.data.series_frame import SeriesFrame
+from app.logs.logger import applogger
+from app.plugin_api.charts.base import BaseAxisRenderer, SeriesArtistTags, SeriesData
+from app.utils.coercion import to_numbers
+
+#: The options every renderer here understands, borrowed rather than retyped.
+#: Only the ones that describe an artist's appearance: the scatter's colour
+#: mapping and error bars mean nothing to a filled region or a wind barb.
+_SHARED_KWARGS: dict[str, Any] = {
+    key: value
+    for key, value in ScatterAxisRenderer.Kwargs.items()
+    if key in {"alpha", "label", "zorder", "picker", "rasterized", "visible"}
+}
+
+
+def _numeric(frame: SeriesFrame, column: str) -> np.ndarray:
+    """Return one column as floats, with unparseable entries as NaN."""
+    return to_numbers(frame[column]).to_numpy(dtype=float)
+
+
+class StackplotAxisRenderer(BaseAxisRenderer):
+    """Series stacked on top of one another, as bands over a shared x.
+
+    The one renderer here that is not per-series: a band's lower edge is the
+    sum of everything under it, so the whole set has to be drawn in one call.
+    """
+
+    Name: str = "Stack Plot"
+    WhenToUse: str = "Use it to show how parts build up a total over time."
+    Category: str = "Pairwise data"
+    Description: str = (
+        "Series stacked into filled bands over a shared x, for showing how a "
+        "total divides between its parts."
+    )
+    Link: str = "https://matplotlib.org/stable/plot_types/basic/stackplot.html"
+
+    RequiredRoles: ClassVar[list[str]] = ["x", "y"]
+    OptionalRoles: ClassVar[list[str]] = []
+
+    Kwargs: ClassVar[dict[str, Any]] = {
+        **_SHARED_KWARGS,
+        "baseline": {
+            "default": "zero",
+            "type": ["zero", "sym", "wiggle", "weighted_wiggle"],
+            "group": "Layout",
+            "description": (
+                "Where the stack sits. zero is the usual one; sym centres it "
+                "on zero, and the two wiggle forms minimise slope for a "
+                "streamgraph."
+            ),
+        },
+        "show_legend": {
+            "default": True,
+            "type": bool,
+            "group": "Legend",
+            "description": "Show the legend naming each band.",
+        },
+    }
+
+    def render_axis(
+        self,
+        ax: Any,
+        series: list[SeriesData],
+        *,
+        options: dict | None = None,
+    ) -> None:
+        """Stack every visible series over the x of the first one."""
+        options = options or {}
+        base_kwargs = self.get_kwargs(options)
+        show_legend = bool(base_kwargs.pop("show_legend", True))
+
+        usable = self.valid_series(series)
+        if not usable:
+            return
+
+        # One x for the whole stack, taken from the first series.  Stacking
+        # presumes a shared axis: bands sampled at different x cannot be added
+        # to each other, and interpolating them here would invent data.
+        x = _numeric(usable[0].df, "x")
+        columns: list[np.ndarray] = []
+        labels: list[str] = []
+        for sd in usable:
+            y = _numeric(sd.df, "y")
+            if y.size != x.size:
+                applogger.warning(
+                    "Stack plot: series '%s' has %d points against the stack's "
+                    "%d and is skipped; every band must share one x.",
+                    sd.name,
+                    y.size,
+                    x.size,
+                )
+                continue
+            # A gap in a band would break the sum, so missing values read as
+            # zero contribution rather than removing the row from every band.
+            columns.append(np.nan_to_num(y, nan=0.0))
+            labels.append(str((sd.style or {}).get("label") or sd.name))
+
+        if not columns:
+            return
+
+        try:
+            ax.stackplot(x, *columns, labels=labels, **base_kwargs)
+        except Exception:
+            applogger.exception("Stack plot failed to draw.")
+            return
+
+        if show_legend:
+            ax.legend()
+        # Draw descriptor annotations after renderer-owned artists.
+        self.apply_annotations(ax, options or {})
+
+
+class StairsAxisRenderer(BaseAxisRenderer):
+    """A step outline, drawn from values and the edges between them.
+
+    The natural shape for anything already binned - a histogram computed
+    elsewhere, a rate held constant between readings - where a line would imply
+    a slope the data does not claim.
+    """
+
+    Name: str = "Stairs"
+    WhenToUse: str = "Use it for values that hold until the next change, or precomputed bins."
+    Category: str = "Pairwise data"
+    Description: str = (
+        "A step outline over bin edges, for values that hold constant between "
+        "them rather than sloping."
+    )
+    Link: str = "https://matplotlib.org/stable/plot_types/basic/stairs.html"
+
+    #: ``y`` is the value per step.  ``x`` is optional and read as the *edges*,
+    #: which is why there is one more of them than of the values.
+    RequiredRoles: ClassVar[list[str]] = ["y"]
+    OptionalRoles: ClassVar[list[str]] = ["x"]
+
+    Kwargs: ClassVar[dict[str, Any]] = {
+        **_SHARED_KWARGS,
+        "fill": {
+            "default": False,
+            "type": bool,
+            "group": "Appearance",
+            "description": "Fill under the steps instead of drawing an outline.",
+        },
+        "orientation": {
+            "default": "vertical",
+            "type": ["vertical", "horizontal"],
+            "group": "Layout",
+            "description": "Which axis the values grow along.",
+        },
+        "linewidth": {
+            "default": 1.8,
+            "type": float,
+            "min": 0.1,
+            "max": 10.0,
+            "group": "Appearance",
+            "description": "Width of the step outline.",
+        },
+        "color": {
+            "default": None,
+            "type": str,
+            "kind": "color",
+            "group": "Appearance",
+            "description": "Outline colour. Leave empty to follow the cycle.",
+        },
+    }
+
+    def render_axis(self, ax: Any, series: list[SeriesData], options: dict) -> None:
+        tags = SeriesArtistTags(ax)
+        for sd in series:
+            tags.next(sd.name)
+            tags.follow(("color", "linestyle"))  # a step line: no marker, no size
+            style = dict(sd.style or {})
+            if not style.get("visible", True) or not self.ensure_required_roles(sd.df):
+                continue
+
+            values = _numeric(sd.df, "y")
+            if values.size == 0:
+                continue
+
+            kwargs = self.get_kwargs({**options, **style})
+            kwargs.setdefault("label", style.get("label") or sd.name)
+
+            edges = None
+            if "x" in sd.df.columns:
+                edges = _numeric(sd.df, "x")
+                # Matplotlib wants one more edge than value.  A column of the
+                # same length is the common case - it is the x of a line chart
+                # - so the last step is closed by extrapolating one width
+                # rather than refusing to draw.
+                if edges.size == values.size:
+                    step = edges[-1] - edges[-2] if edges.size > 1 else 1.0
+                    edges = np.append(edges, edges[-1] + step)
+                elif edges.size != values.size + 1:
+                    applogger.warning(
+                        "Stairs: series '%s' has %d edges for %d values, which "
+                        "is neither; the edges are ignored.",
+                        sd.name,
+                        edges.size,
+                        values.size,
+                    )
+                    edges = None
+
+            try:
+                ax.stairs(values, edges, **kwargs)
+            except Exception:
+                applogger.exception("Stairs failed to draw series '%s'.", sd.name)
+        tags.done()
+        # Draw descriptor annotations after renderer-owned artists.
+        self.apply_annotations(ax, options or {})
+
+
+class StemAxisRenderer(BaseAxisRenderer):
+    """One stem per point, from a baseline up to the value.
+
+    A scatter says where the points are; a stem says how far each is from a
+    reference, which is what a spectrum, an impulse response or a set of
+    residuals is read for. The x is discrete in all of those cases, and a
+    line joining the tops would claim values between the samples that do not
+    exist.
+
+    Not a Timeline, which is the same drawing with the y invented: there the
+    stems only separate labels, and the renderer is a Scatter underneath (see
+    app/charts/timeline.py). Here the height is the data.
+    """
+
+    Name: str = "Stem Plot"
+    WhenToUse: str = "Use it for discrete values, such as a sampled signal or a spectrum."
+    Category: str = "Pairwise data"
+    Description: str = (
+        "A stem from a baseline to each value, for impulses, spectra and "
+        "anything else sampled at discrete x."
+    )
+    Link: str = "https://matplotlib.org/stable/plot_types/basic/stem.html"
+
+    RequiredRoles: ClassVar[list[str]] = ["x", "y"]
+    OptionalRoles: ClassVar[list[str]] = []
+
+    #: Only ``label`` of the shared appearance set: ``ax.stem`` takes a fixed
+    #: signature and raises on any other keyword - it is a helper that builds
+    #: three artists, not a single artist accepting the usual properties.
+    Kwargs: ClassVar[dict[str, Any]] = {
+        "label": _SHARED_KWARGS["label"],
+        "linefmt": {
+            "default": None,
+            "type": str,
+            "group": "Appearance",
+            "description": (
+                "Matplotlib format string for the stems, e.g. \"C0-\" or "
+                "\"grey:\". Empty follows the style."
+            ),
+        },
+        "markerfmt": {
+            "default": None,
+            "type": str,
+            "group": "Appearance",
+            "description": (
+                "Format string for the marker at the top of each stem, e.g. "
+                "\"C0o\". Empty follows the style; \" \" draws none."
+            ),
+        },
+        "basefmt": {
+            "default": None,
+            "type": str,
+            "group": "Appearance",
+            "description": (
+                "Format string for the baseline, e.g. \"C7-\". Empty follows "
+                "the style."
+            ),
+        },
+        "bottom": {
+            "default": 0.0,
+            "type": float,
+            "group": "Appearance",
+            "description": "Where the stems start. The reference the values are read against.",
+        },
+        "orientation": {
+            "default": "vertical",
+            "type": ["vertical", "horizontal"],
+            "group": "Layout",
+            "description": "Which axis the stems grow along.",
+        },
+    }
+
+    def render_axis(self, ax: Any, series: list[SeriesData], options: dict) -> None:
+        axis_options = options or {}
+
+        for sd in series:
+            style = dict(sd.style or {})
+            if not style.get("visible", True) or not self.ensure_required_roles(sd.df):
+                continue
+
+            x = _numeric(sd.df, "x")
+            y = _numeric(sd.df, "y")
+            mask = np.isfinite(x) & np.isfinite(y)
+            if not mask.any():
+                applogger.info("Series '%s' skipped: no finite x/y pairs.", sd.name)
+                continue
+
+            # Empty format strings are dropped rather than forwarded: ax.stem
+            # reads "" as a format meaning "no colour, no style, no marker"
+            # and draws nothing, where absent means "use the defaults".
+            kwargs = {
+                key: value
+                for key, value in self.get_kwargs({**axis_options, **style}).items()
+                if not (isinstance(value, str) and value == "")
+            }
+            kwargs.setdefault("label", style.get("label") or sd.name)
+
+            try:
+                container = ax.stem(x[mask], y[mask], **kwargs)
+                # For the live style preview (picking.STEM_FMT_KEYS): which part each artist is.
+                for part, artist in (
+                    ("linefmt", container.stemlines),
+                    ("markerfmt", container.markerline),
+                    ("basefmt", container.baseline),
+                ):
+                    artist._chartlibre_series = sd.name
+                    artist._chartlibre_stem = part
+            except Exception:
+                applogger.exception("Stem Plot failed to draw series '%s'.", sd.name)
+
+        self.apply_annotations(ax, axis_options)
+
+
+class FillBetweenAxisRenderer(BaseAxisRenderer):
+    """A filled region between two curves, or between one curve and a level.
+
+    What a confidence band is: this renderer exists mostly so the fit and
+    smoothing operations have somewhere to draw their uncertainty.
+    """
+
+    Name: str = "Fill Between"
+    WhenToUse: str = "Use it to show a range around a line, or the difference between two curves."
+    Category: str = "Pairwise data"
+    Description: str = (
+        "The region between two y curves over a shared x, for confidence "
+        "bands and tolerance limits."
+    )
+    Link: str = "https://matplotlib.org/stable/plot_types/basic/fill_between.html"
+
+    RequiredRoles: ClassVar[list[str]] = ["x", "y"]
+    #: ``y2`` is the other edge.  Without it the fill runs to ``baseline``,
+    #: which is how "everything above zero" is drawn.
+    OptionalRoles: ClassVar[list[str]] = ["y2"]
+
+    Kwargs: ClassVar[dict[str, Any]] = {
+        **_SHARED_KWARGS,
+        "baseline": {
+            "default": 0.0,
+            "type": float,
+            "group": "Layout",
+            "description": (
+                "The level the fill runs to when a series has no y2 column."
+            ),
+        },
+        "color": {
+            "default": None,
+            "type": str,
+            "kind": "color",
+            "group": "Appearance",
+            "description": "Fill colour. Leave empty to follow the cycle.",
+        },
+        "edge_line": {
+            "default": True,
+            "type": bool,
+            "group": "Appearance",
+            "description": (
+                "Draw the upper curve as a line over the fill. A band on its "
+                "own reads as an area; with the line it reads as an estimate "
+                "and its uncertainty, which is usually what it is."
+            ),
+        },
+        "show_legend": {
+            "default": True,
+            "type": bool,
+            "group": "Legend",
+            "description": "Show the legend naming each band.",
+        },
+    }
+
+    def render_axis(self, ax: Any, series: list[SeriesData], options: dict) -> None:
+        base = self.get_kwargs(options)
+        baseline = float(base.pop("baseline", 0.0) or 0.0)
+        edge_line = bool(base.pop("edge_line", True))
+        show_legend = bool(base.pop("show_legend", True))
+        drawn = False
+
+        for sd in series:
+            style = dict(sd.style or {})
+            if not style.get("visible", True) or not self.ensure_required_roles(sd.df):
+                continue
+
+            x = _numeric(sd.df, "x")
+            y = _numeric(sd.df, "y")
+            lower = _numeric(sd.df, "y2") if "y2" in sd.df.columns else np.full_like(x, baseline)
+
+            # Rows where either edge is missing are dropped rather than filled
+            # through: a band drawn across a gap claims coverage that was never
+            # measured.
+            mask = np.isfinite(x) & np.isfinite(y) & np.isfinite(lower)
+            if not mask.any():
+                applogger.info("Series '%s' skipped: no finite band.", sd.name)
+                continue
+
+            label = str(style.get("label") or sd.name)
+            kwargs = {**base, **{k: v for k, v in style.items() if k in base or k == "color"}}
+            kwargs.pop("visible", None)
+
+            patch = ax.fill_between(
+                x[mask], y[mask], lower[mask], label=label, **kwargs
+            )
+            if edge_line:
+                # Same colour as the band it belongs to, taken from the patch
+                # so the two cannot drift apart when the cycle assigns it.
+                ax.plot(x[mask], y[mask], color=patch.get_facecolor()[0][:3], linewidth=1.6)
+            drawn = True
+
+        if drawn and show_legend:
+            ax.legend()
+        # Draw descriptor annotations after renderer-owned artists.
+        self.apply_annotations(ax, options or {})
+
+
+class BarbsAxisRenderer(BaseAxisRenderer):
+    """Wind barbs: a direction and a magnitude at each point.
+
+    Barbs rather than arrows because a barb encodes speed in its flags, so it
+    stays readable where a field of arrows of different lengths does not.
+    """
+
+    Name: str = "Wind Barbs"
+    WhenToUse: str = "Use it for wind speed and direction on a map or grid, in the meteorological notation."
+    #: Where Matplotlib itself files it, alongside quiver and streamplot -
+    #: see app/charts/vector_field.py, which holds the other two. It read
+    #: "Pairwise data" until they existed, which put the three members of one
+    #: family in two different sections of the chart picker.
+    Category: str = "Gridded data"
+    Description: str = (
+        "A barb per point showing the direction and strength of a vector "
+        "field, read from u and v components. Barbs encode speed in flags, "
+        "so they stay readable where a field of arrows does not."
+    )
+    Link: str = "https://matplotlib.org/stable/plot_types/arrays/barbs.html"
+
+    RequiredRoles: ClassVar[list[str]] = ["x", "y", "u", "v"]
+    OptionalRoles: ClassVar[list[str]] = []
+
+    Kwargs: ClassVar[dict[str, Any]] = {
+        **_SHARED_KWARGS,
+        "length": {
+            "default": 7.0,
+            "type": float,
+            "min": 2.0,
+            "max": 20.0,
+            "group": "Appearance",
+            "description": "Length of a barb in points.",
+        },
+        "barbcolor": {
+            "default": None,
+            "type": str,
+            "kind": "color",
+            "group": "Appearance",
+            "description": "Colour of the barb shaft and flags.",
+        },
+        "flip_barb": {
+            "default": False,
+            "type": bool,
+            "group": "Appearance",
+            "description": (
+                "Flip which side the flags sit on. The convention is "
+                "hemisphere-dependent, which is the only reason this exists."
+            ),
+        },
+    }
+
+    def render_axis(self, ax: Any, series: list[SeriesData], options: dict) -> None:
+        base_kwargs = self.get_kwargs(options)
+
+        for sd in series:
+            style = dict(sd.style or {})
+            if not style.get("visible", True) or not self.ensure_required_roles(sd.df):
+                continue
+
+            columns = [_numeric(sd.df, role) for role in ("x", "y", "u", "v")]
+            mask = np.logical_and.reduce([np.isfinite(column) for column in columns])
+            if not mask.any():
+                applogger.info("Series '%s' skipped: no finite barbs.", sd.name)
+                continue
+
+            try:
+                ax.barbs(*(column[mask] for column in columns), **base_kwargs)
+            except Exception:
+                applogger.exception("Wind barbs failed to draw series '%s'.", sd.name)
+        # Draw descriptor annotations after renderer-owned artists.
+        self.apply_annotations(ax, options or {})

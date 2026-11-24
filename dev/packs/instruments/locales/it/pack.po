@@ -1,0 +1,62 @@
+# Italiano translation for the pack instruments.
+# Message ids are the English source strings.
+
+msgid ""
+msgstr "Project-Id-Version: ChartLibre\nLanguage: it\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\n"
+
+msgid "A LabVIEW Write To Measurement File text file: each segment a dataset."
+msgstr "Un file di testo LabVIEW Write To Measurement File: ogni segmento è un set di dati."
+
+msgid "A National Instruments .tdms file (LabVIEW, DAQ): each group a dataset, its channels as columns."
+msgstr "Un file .tdms di National Instruments (LabVIEW, DAQ): ogni gruppo è un set di dati, i suoi canali sono colonne."
+
+msgid "A VNA's .sNp file: frequency and each S (or Y, Z) parameter as its file gives it."
+msgstr "Un file .sNp di un VNA: frequenza e ciascun parametro S (o Y, Z) come indicato nel file."
+
+msgid "A circuit simulation's waveforms: one column per trace; each plot a dataset, .step runs numbered."
+msgstr "Le forme d'onda di una simulazione di circuito: una colonna per traccia; ogni grafico rappresenta un set di dati, le esecuzioni .step sono numerate."
+
+msgid "A logic analyser's or a digital simulation's signals: a row per change, every signal's value."
+msgstr "Segnali di un analizzatore logico o di una simulazione digitale: una riga per ogni variazione, il valore di ogni segnale."
+
+msgid "A spectrum (IR, UV-Vis, Raman, NMR, MS) in JCAMP-DX: x and y with their units; each block a dataset."
+msgstr "Uno spettro (IR, UV-Vis, Raman, NMR, MS) in JCAMP-DX: x e y con le rispettive unità; ogni blocco rappresenta un set di dati."
+
+msgid "Circuit simulation"
+msgstr "Simulazione di circuiti"
+
+msgid "Files of instruments and simulators: Touchstone, SPICE raw, VCD, NI TDMS, LabVIEW .lvm and JCAMP-DX spectra."
+msgstr "File di strumenti e simulatori: Touchstone, SPICE raw, VCD, NI TDMS, LabVIEW .lvm e spettri JCAMP-DX."
+
+msgid "Instrument files"
+msgstr "File degli strumenti"
+
+msgid "JCAMP-DX spectrum"
+msgstr "Spettro JCAMP-DX"
+
+msgid "Lab instruments"
+msgstr "Strumenti di laboratorio"
+
+msgid "LabVIEW measurement (.lvm)"
+msgstr "Misurazione LabVIEW (.lvm)"
+
+msgid "NI TDMS"
+msgstr "NI TDMS"
+
+msgid "Oscilloscopes and logic"
+msgstr "Oscilloscopi e logica"
+
+msgid "RF"
+msgstr "RF"
+
+msgid "SPICE raw (LTspice, ngspice)"
+msgstr "SPICE raw (LTspice, ngspice)"
+
+msgid "Spectroscopy and XRD"
+msgstr "Spettroscopia e XRD"
+
+msgid "Touchstone S-parameters"
+msgstr "Parametri S Touchstone"
+
+msgid "VCD (value change dump)"
+msgstr "VCD (dump di modifica del valore)"

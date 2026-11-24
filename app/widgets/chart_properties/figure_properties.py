@@ -1,0 +1,1392 @@
+"""Property editor for figure-level settings.
+
+Covers the figure name, grid shape, layout mode and margins, suptitle, and the
+attached Matplotlib style.  Every change goes through the connected redraw
+callback, which is debounced by the main window.
+"""
+from __future__ import annotations
+
+from app.styles.style import field_label
+from collections.abc import Callable
+from pathlib import Path
+from typing import Any
+
+from matplotlib import rcParams
+from PySide6.QtCore import QSize, Qt, QTimer, Signal
+from PySide6.QtWidgets import (
+    QCheckBox,
+    QComboBox,
+    QDoubleSpinBox,
+    QFileDialog,
+    QGridLayout,
+    QInputDialog,
+    QLabel,
+    QLineEdit,
+    QPlainTextEdit,
+    QSizePolicy,
+    QSpinBox,
+    QVBoxLayout,
+    QWidget,
+)
+
+from app.dialogs.edit_mpl_styles_dialog import (
+    MplStyleEditorDialog,
+    _sanitize_mplstyle_text,
+)
+from app.logs.logger import applogger
+from app.plugin_api.charts import layout_presets, panel_labels
+from app.plugin_api.charts.render_figure import (
+    DEFAULT_MPL_STYLE_KEY,
+    OPT_DOWNSAMPLE_THRESHOLD,
+    OPT_SHARED_HORIZONTAL_SPACE,
+    OPT_SHARED_VERTICAL_SPACE,
+)
+from app.styles.style import (
+    MARGIN_PANEL,
+    create_action_button,
+    fit_spin_width,
+    load_icon,
+    stdSizeAndlayout,
+)
+from app.utils.config import MPLSTYLES_DIR, get_value
+from app.utils.figure_metrics import (
+    CM_PER_INCH,
+    DEFAULT_FIGURE_DPI,
+    DEFAULT_FIGURE_SIZE_IN,
+    OPT_FIGURE_DPI,
+    OPT_FIGURE_HEIGHT_CM,
+    OPT_FIGURE_WIDTH_CM,
+    figure_metrics_from_options,
+)
+from app.utils.hidpi import apply_configured_dpi
+from app.utils.i18n import _
+from app.widgets.chart_panel import RESIZE_MODE_CHOICES
+from app.widgets.chart_properties.base_properties import BaseProperties
+from PySide6.QtGui import QPalette
+from app.widgets.inspector import InspectorCard, InspectorForm, drawn_icon
+from app.widgets.drop_down_controls.path_effect_combo import PathEffectCombo
+from app.widgets.font_scale_control import FontScaleControl
+from app.widgets.pair_grid import PairGrid
+
+
+def _read_text_any_encoding(path: Path) -> str:
+    raw = path.read_bytes()
+    for enc in ("utf-8", "utf-8-sig", "cp1252", "latin-1"):
+        try:
+            return raw.decode(enc).replace("\r\n", "\n").replace("\r", "\n")
+        except UnicodeDecodeError:
+            continue
+    return raw.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
+
+
+#: Figure widths journals ask for, in cm: (label, width). A figure set to one keeps its proportions.
+JOURNAL_WIDTHS: tuple[tuple[str, float], ...] = (
+    ("Nature - one column (8.9 cm)", 8.9), ("Nature - two columns (18.3 cm)", 18.3),
+    ("Science - one column (5.5 cm)", 5.5), ("Science - two columns (12.0 cm)", 12.0),
+    ("Science - three columns (18.3 cm)", 18.3),
+    ("Cell - one column (8.5 cm)", 8.5), ("Cell - 1.5 columns (11.4 cm)", 11.4),
+    ("Cell - two columns (17.4 cm)", 17.4),
+    ("PNAS - one column (8.7 cm)", 8.7), ("PNAS - two columns (17.8 cm)", 17.8),
+    ("IEEE - one column (8.89 cm)", 8.89), ("IEEE - two columns (18.19 cm)", 18.19),
+    ("APS - one column (8.6 cm)", 8.6), ("APS - two columns (17.8 cm)", 17.8),
+    ("A4 page width, 2 cm margins (17.0 cm)", 17.0),
+)
+
+
+class FigurePropertiesWidget(BaseProperties):
+    """Reusable Figure properties editor extracted from the old dialog Figure tab.
+
+    Width, height, and DPI belong to the figure, not to the application: they
+    are stored in the connected figure's descriptor options and pushed into
+    rcParams only for the duration of a render, so that switching figures picks
+    up that figure's own metrics instead of whatever was edited last.
+    """
+
+    style_changed = Signal(str)
+    #: The current style, for every figure of the project.
+    style_applied_to_all = Signal(str)
+    grid_layout_requested = Signal(int, int)
+    figure_options_requested = Signal(dict)
+    #: Emitted with one of app.plugin_api.charts.layout_presets.PRESETS.
+    layout_preset_requested = Signal(str)
+    #: A figure template to apply (its file's path), and a name to save this figure as one under.
+    template_requested = Signal(str)
+    template_save_requested = Signal(str)
+    #: Emitted with a mosaic text ("AAB;CCB") to arrange the axes by (layout_presets.plan_mosaic).
+    layout_mosaic_requested = Signal(str)
+
+    #: (label, preset constant) for the layout preset combo, in the order
+    #: offered. Grid first, since it is what a new figure already looks
+    #: like - re-picking it is how another preset gets undone.
+    LAYOUT_PRESETS: tuple[tuple[str, str], ...] = (
+        ("Grid", layout_presets.GRID),
+        ("Shared axes (grid)", layout_presets.SHARED_GRID),
+        ("Main + secondary (grid)", layout_presets.MAIN_AND_SECONDARY),
+        ("Overlapping (twin Y)", layout_presets.OVERLAPPING),
+        ("Stacked, shared x", layout_presets.STACKED_SHARED_X),
+        ("Side by side, shared y", layout_presets.SIDE_BY_SIDE_SHARED_Y),
+    )
+
+    #: The shipped style the "ChartLibreDefault" button applies (file stem in MPLSTYLES_DIR).
+
+    #: (label, descriptor value, tooltip) for Matplotlib's layout engines.
+    #:
+    #: These four are the whole set Matplotlib accepts.  GridSpec is not one of
+    #: them - it is how axes are *created*, which this application already does
+    #: for every figure (see ``_create_axes_from_gridspec``), and it is what
+    #: gives an axis its row_span/col_span.  The engine only decides how the
+    #: resulting axes are spaced.
+    #: The engine a figure gets when its descriptor names none. Tight is
+    #: forgiving on the simple single- and few-axis figures most charts are,
+    #: and needs no per-figure margins block to look right.
+    DEFAULT_LAYOUT_MODE = "tight"
+
+    LAYOUT_ENGINES: tuple[tuple[str, str, str], ...] = (
+        (
+            "Tight",
+            "tight",
+            "Automatic spacing that keeps axes, labels and titles from "
+            "overlapping. The default; best for simple grids.",
+        ),
+        (
+            "Constrained",
+            "constrained",
+            "A more thorough solver than Tight. Better for a dense grid of "
+            "plots or figure-level legends and colorbars.",
+        ),
+        (
+            "Compressed",
+            "compressed",
+            "Like Constrained, but pulls fixed-aspect axes together and "
+            "removes the gaps between them.",
+        ),
+        (
+            "Manual",
+            "none",
+            "No automatic spacing - the Manual spacing values below are used "
+            "instead.",
+        ),
+    )
+
+    #: (label, row-count threshold, tooltip) for the downsample combo. 0
+    #: disables it - a very large series is drawn in full unless a threshold
+    #: is actually picked, since decimating a series changes what a plot
+    #: shows and should never happen invisibly. Above the threshold, a
+    #: series query is decimated to roughly that many rows before it ever
+    #: reaches pandas - see SqliteRepo.downsampled_series_frame.
+    #: The threshold a figure gets when its descriptor names none. Enough
+    #: points to keep the shape of almost any curve, few enough that a
+    #: redraw stays quick even on a huge series.
+    DEFAULT_DOWNSAMPLE_THRESHOLD = 1_000
+
+    DOWNSAMPLE_THRESHOLDS: tuple[tuple[str, int, str], ...] = (
+        ("Off", 0, "Draw every point, however many a series has."),
+        (
+            "100",
+            100,
+            "Decimate a series past 100 points to roughly that many, "
+            "picked at even intervals.",
+        ),
+        (
+            "1,000",
+            1_000,
+            "Decimate a series past 1,000 points to roughly that many. "
+            "The default.",
+        ),
+        (
+            "10,000",
+            10_000,
+            "Decimate a series past 10,000 points to roughly that many - "
+            "about where redraws start to feel slow.",
+        ),
+        (
+            "100,000",
+            100_000,
+            "Decimate a series past 100,000 points to roughly that many.",
+        ),
+    )
+
+    #: (option key, label, default, tooltip) for the manual spacing block.
+    #: Defaults match ``_apply_subplot_margins`` in the renderer, so opening
+    #: this panel on a figure that has no margins block shows what it is
+    #: actually being drawn with.
+    MARGIN_FIELDS: tuple[tuple[str, str, float, str], ...] = (
+        ("left", "Left", 0.04, "Left edge of the axes area, as a fraction of figure width."),
+        ("right", "Right", 0.99, "Right edge of the axes area, as a fraction of figure width."),
+        ("bottom", "Bottom", 0.06, "Bottom edge of the axes area, as a fraction of figure height."),
+        ("top", "Top", 0.97, "Top edge of the axes area, as a fraction of figure height."),
+        ("wspace", "Column gap", 0.08, "Width of the gap between columns, as a fraction of the average axis width."),
+        ("hspace", "Row gap", 0.08, "Height of the gap between rows, as a fraction of the average axis height."),
+    )
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        # _repo/_figure_id/_figure/_redraw_callback come from BaseProperties.
+        #: Text of the style currently attached to the figure ("" = Matplotlib's own).
+        self._style_text = ""
+        #: The layout preset last applied to each figure, shown in its combo until another is picked.
+        self._applied_presets: dict[int, str] = {}
+
+        self._style_edit: QLineEdit
+
+        self._nrows_combo: QComboBox
+        self._ncols_combo: QComboBox
+        self._fig_dpi: QSpinBox
+        self._fig_width_cm: QDoubleSpinBox
+        self._fig_height_cm: QDoubleSpinBox
+        self._fig_frameon: QCheckBox
+        self._resize_mode_combo: QComboBox
+        self._on_resize_mode_changed: Callable[[str], None] | None = None
+        self._fig_layout_mode: QComboBox
+        self._downsample_combo: QComboBox
+        self._mosaic_edit: QLineEdit
+        self._panel_labels_combo: QComboBox
+        self._panel_position_combo: QComboBox
+        # Bound before _build_ui rather than declared: the layout combo's
+        # currentIndexChanged handler reads them, and a stray signal during
+        # construction would otherwise hit an attribute that does not exist.
+        self._margin_spins: dict[str, QDoubleSpinBox] = {}
+        self._margins_section: QWidget | None = None
+
+        self._apply_persisted_metrics_to_rcparams()
+        self._build_ui()
+        self._install_auto_apply(self._apply_all)
+        self._connect_auto_apply()
+        self.clear_connected_figure()
+
+    def _load_note(self, desc: Any) -> None:
+        """Show the figure's notes and dates, without saving them back.
+
+        Notes still waiting to be saved belong to the figure shown before,
+        and are saved to it first.
+        """
+        if self._note_timer.isActive():
+            self._note_timer.stop()
+            self._save_note()
+        self._note_figure_id = getattr(desc, "id", None)
+        self._note_edit.blockSignals(True)
+        self._note_edit.setPlainText(str(getattr(desc, "note", "") or ""))
+        self._note_edit.blockSignals(False)
+        self._show_dates(desc)
+
+    def _show_dates(self, desc: Any) -> None:
+        from app.widgets.project_info_panel import readable_date
+
+        created = str(getattr(desc, "created", "") or "")
+        modified = str(getattr(desc, "last_modified", "") or "")
+        parts = []
+        if created:
+            parts.append(_("Created {date}").format(date=readable_date(created)))
+        if modified:
+            parts.append(_("modified {date}").format(date=readable_date(modified)))
+        self._dates_label.setText(" · ".join(parts))
+
+    def _save_note(self) -> None:
+        """Write the notes typed, a moment after typing stopped."""
+        figure_id = getattr(self, "_note_figure_id", None)
+        if self._repo is None or figure_id is None:
+            return
+        try:
+            self._repo.set_figure_note(int(figure_id), self._note_edit.toPlainText())
+        except Exception as exc:
+            applogger.exception("Could not save the figure's notes: %s", exc)
+            return
+        if figure_id == self._figure_id:
+            self._show_dates(self._repo.get_figure_descriptor(int(figure_id)))
+
+    def _connect_auto_apply(self) -> None:
+        """Apply an edit a short moment after the last control change.
+
+        The style, layout-preset and display combos are left out: each
+        already applies itself through its own handler, and the layout
+        preset in particular is a one-shot rearrangement that deliberately
+        does not ride on the panel's apply.
+        """
+        self._watch(
+            self._name_edit,  # Enter or leaving the box applies
+            self._nrows_combo,
+            self._ncols_combo,
+            self._fig_layout_mode,
+            self._downsample_combo,
+            self._fig_dpi,
+            self._fig_width_cm,
+            self._fig_height_cm,
+            self._shared_vspace,
+            self._shared_hspace,
+            *self._margin_spins.values(),
+            self._fig_frameon,
+            self._font_scale,
+            self._text_effect,
+            self._sketch_combo,
+            self._panel_labels_combo,
+            self._panel_position_combo,
+        )
+
+    def _shared_space_spin(self, parent: QWidget) -> QDoubleSpinBox:
+        """A spin box for one shared-axis gap, in Matplotlib's own units.
+
+        Same range and step as the Manual spacing gaps below, which these
+        are the shared-axis counterpart of: a fraction of the average axis
+        size, which can legitimately exceed 1 when panels need spreading
+        far apart.
+        """
+        spin = QDoubleSpinBox(parent)
+        spin.setRange(0.0, 2.0)
+        spin.setDecimals(3)
+        spin.setSingleStep(0.01)
+        spin.setValue(0.0)
+        fit_spin_width(spin)
+        spin.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        return spin
+
+    def _build_ui(self) -> None:
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(*MARGIN_PANEL)
+        lay.setSpacing(0)
+
+        lay.addWidget(self._build_name_section())
+        lay.addWidget(self._build_options_section())  # "Size": how it is shown, and how big it is
+        lay.addWidget(self._build_style_section())
+        lay.addWidget(self._build_grid_section())  # "Layout": the grid and the panel letters
+
+        lay.addWidget(self._build_margins_section())
+        lay.addStretch(1)
+
+    def _build_name_section(self) -> QWidget:
+        """The Name and notes card."""
+        # One card: a name is a line and the notes a few more, and two cards
+        # spent a title and a frame's padding on each.
+        # Notes are saved on their own, a moment after typing stops: they
+        # change nothing drawn, so they do not go through the panel's apply
+        # and its redraw.
+        name_section = InspectorCard(self, _("Name and notes"), "figureNameCard")
+        name_section_lay = name_section.card.layout()
+
+        self._name_edit = QLineEdit(name_section)
+        self._name_edit.setPlaceholderText(_("Chart name"))
+        self._name_edit.setToolTip(
+            _("Name of this figure. Also the title of its chart tab.")
+        )
+        stdSizeAndlayout(self._name_edit)
+        name_section_lay.addWidget(self._name_edit)
+
+        self._note_edit = QPlainTextEdit(name_section)
+        self._note_edit.setPlaceholderText(_("What this figure shows, where its data came from..."))
+        self._note_edit.setFixedHeight(72)
+        self._note_edit.setToolTip(_("Kept with the figure in the project, and printed under it in reports."))
+        name_section_lay.addWidget(self._note_edit)
+        self._dates_label = QLabel(name_section)
+        self._dates_label.setProperty("muted", True)
+        self._dates_label.setWordWrap(True)
+        name_section_lay.addWidget(self._dates_label)
+        self._note_timer = QTimer(self)
+        self._note_timer.setSingleShot(True)
+        self._note_timer.setInterval(700)
+        self._note_timer.timeout.connect(self._save_note)
+        self._note_edit.textChanged.connect(self._note_timer.start)
+        return name_section
+
+    def _build_view_combo(self, view_section: QWidget) -> None:
+        """How the panel shows this figure: the first row of Size, the first thing to change when a chart does not fit."""
+        self._resize_mode_combo = QComboBox(view_section)
+        self._configure_combo_width(self._resize_mode_combo, minimum_contents_length=14)
+        for value, label, tooltip in RESIZE_MODE_CHOICES:
+            self._resize_mode_combo.addItem(_(label), value)
+            self._resize_mode_combo.setItemData(
+                self._resize_mode_combo.count() - 1,
+                _(tooltip),
+                Qt.ItemDataRole.ToolTipRole,
+            )
+        self._resize_mode_combo.currentIndexChanged.connect(
+            self._on_resize_mode_selected
+        )
+
+    def _build_style_section(self) -> QWidget:
+        """The Style card."""
+        style_section = InspectorCard(self, _("Style"), "figureStyleCard")
+        style_section_lay = style_section.card.layout()
+
+        # The style's name, shown, not typed: a grey field, and a small "…" at its left picks another.
+        self._style_edit = QLineEdit(style_section)
+        self._style_edit.setReadOnly(True)
+        self._style_edit.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self._style_edit.setEnabled(False)  # read-only and greyed: nothing to type here
+        self._style_edit.setToolTip(_("The figure's style - Browse… chooses another"))
+
+        style_buttons_row = QWidget(style_section)
+        style_buttons_lay = QGridLayout(style_buttons_row)
+        style_buttons_lay.setContentsMargins(0, 0, 0, 0)
+        style_buttons_lay.setSpacing(8)
+        style_buttons_lay.setColumnStretch(0, 1)
+        style_buttons_lay.setColumnStretch(1, 1)
+
+        self._btn_browse = create_action_button(
+            parent=style_buttons_row,
+            action_id="open",
+            action=self._browse_for_style_file,
+            layout=None,
+            presentation=(load_icon("open"), "", _("Browse… Pick a .mplstyle file from the mplstyles folder")),
+        )
+        self._btn_browse.setFixedWidth(34)
+        # A folder drawn here, in the button's own text colour: the catalogue's icon showed as a blank grey button.
+        self._btn_browse.setIcon(drawn_icon("folder", self._btn_browse.palette().color(QPalette.ColorRole.ButtonText)))
+        self._btn_browse.setIconSize(QSize(16, 16))
+        style_buttons_lay.addWidget(self._style_edit, 0, 0, 1, 2)
+        style_buttons_lay.addWidget(self._btn_browse, 0, 2)
+        self._btn_style_to_all = create_action_button(
+            parent=style_buttons_row,
+            action_id="copy",
+            action=lambda: self.style_applied_to_all.emit(self._current_style_text()),
+            layout=None,
+            presentation=(load_icon("copy"), _("Apply to all"),
+                          _("Give every figure of the project this style")),
+        )
+        self._btn_edit = create_action_button(
+                             parent=style_buttons_row,
+                             action_id="edit",
+                             action=self._edit_current_style,
+                             layout=None,
+                         )
+        style_buttons_lay.addWidget(self._btn_edit, 1, 0)
+        style_buttons_lay.addWidget(self._btn_style_to_all, 1, 1, 1, 2)
+        # No Apply button: every control on this panel applies itself a
+        # short moment after it changes (see _connect_auto_apply).
+
+        style_section_lay.addWidget(style_buttons_row)
+        # The hand-drawn look of xkcd: every line, bar and frame wobbles (matplotlib's sketch).
+        self._sketch_combo = QComboBox(style_section)
+        for label, value in (("Off", ""), ("Light", "light"), ("XKCD", "xkcd")):
+            self._sketch_combo.addItem(_(label), value)
+        self._sketch_combo.setToolTip(_("Draw lines, bars and frames as if by hand, as in the xkcd comics."))
+        sketch_form = InspectorForm(style_section)
+        sketch_form.add_row(_("Hand-drawn"), self._sketch_combo, self._sketch_combo.toolTip())
+        style_section_lay.addWidget(sketch_form)
+        return style_section
+
+    def _build_grid_section(self) -> QWidget:
+        """The Grid card."""
+        grid_section = InspectorCard(self, _("Layout"), "figureGridCard")
+        grid_section_lay = grid_section.card.layout()
+
+        self._nrows_combo = QComboBox(grid_section)
+        self._ncols_combo = QComboBox(grid_section)
+        self._configure_combo_width(self._nrows_combo)
+        self._configure_combo_width(self._ncols_combo)
+
+        for i in range(1, 7):
+            self._nrows_combo.addItem(str(i), i)
+            self._ncols_combo.addItem(str(i), i)
+
+
+        # A preset writes row_span/col_span/sharex/sharey/twin_of across
+        # every axis at once - the rows/cols above only ever set a uniform
+        # grid, which is one of the four this offers rather than the whole
+        # of what an axis's own options can already express.
+        #
+        # Picking one applies it there and then, with no button of its own:
+        # the same way the Display combo just above already works, and
+        # unlike the Rows/Cols combos, whose value is part of what the
+        # panel's Apply writes. It deliberately does NOT ride on Apply -
+        # this combo always reloads showing "Grid" (a preset is a one-shot
+        # rearrangement, not a stored figure property), so an Apply pressed
+        # for some unrelated edit would silently flatten a hand-built
+        # layout back to a uniform grid.
+        self._layout_preset_combo = QComboBox(grid_section)
+        # A placeholder first row, carrying no preset, and the row this
+        # combo is put back to after every apply (see
+        # _reset_layout_preset_combo). Two things need it: picking the
+        # same preset twice in a row has to work - "Grid" is how another
+        # preset gets undone, and currentIndexChanged does not fire when
+        # the index has not changed - and a combo left showing "Overlapping"
+        # would otherwise claim to describe a figure it merely rearranged
+        # once, including after switching to a different chart.
+        self._layout_preset_combo.addItem(_("Apply a preset…"), None)
+        self._fill_layout_preset_combo()
+        self._configure_combo_width(self._layout_preset_combo, minimum_contents_length=20)
+        self._layout_preset_combo.setToolTip(
+            _("Arrange every axis in this figure using the chosen layout.")
+        )
+        # activated, not currentIndexChanged: picking the preset already shown
+        # applies it again (after a hand edit, say).
+        self._layout_preset_combo.activated.connect(
+            self._on_layout_preset_selected
+        )
+
+        # Axes that share a scale are drawn flush by default, the way
+        # Matplotlib's own shared-axis gallery example does it - these two
+        # are how to ask for a gap anyway. They apply only between axes
+        # that actually share the scale that gap runs across (see
+        # render_figure._close_gaps_between_shared_neighbours), which is
+        # what makes them a different setting from Manual spacing below:
+        # that one is the whole figure's margins under one layout mode,
+        # this one is what "attached" means when axes are attached.
+        self._shared_vspace = self._shared_space_spin(grid_section)
+        self._shared_vspace.setToolTip(
+            _("Gap between shared axes stacked one above the other. 0 draws them flush.")
+        )
+        self._shared_hspace = self._shared_space_spin(grid_section)
+        self._shared_hspace.setToolTip(
+            _("Gap between shared axes side by side. 0 draws them flush.")
+        )
+        form = InspectorForm(grid_section)
+        form.add_row(_("Rows"), self._nrows_combo)
+        form.add_row(_("Cols"), self._ncols_combo)
+        form.add_row(_("Gap V"), self._shared_vspace, self._shared_vspace.toolTip())
+        form.add_row(_("Gap H"), self._shared_hspace, self._shared_hspace.toolTip())
+        form.add_row(_("Preset"), self._layout_preset_combo)
+
+        # A mosaic, as plt.subplot_mosaic reads it: letters are the axes in order, a repeated letter
+        # is one axis spanning those cells, a dot an empty cell.
+        self._mosaic_edit = QLineEdit(grid_section)
+        self._mosaic_edit.setPlaceholderText(_("AAB;CCB"))
+        self._mosaic_edit.setToolTip(
+            _("Lay the axes out as a mosaic: one letter per cell, A the first axis, B the second. "
+              "A repeated letter is one axis spanning those cells; a dot is an empty cell; ; or Enter "
+              "starts a new row. Press Enter to apply.")
+        )
+        self._mosaic_edit.returnPressed.connect(self._on_mosaic_entered)
+        form.add_row(_("Mosaic"), self._mosaic_edit)
+        self._build_panel_letters_section(grid_section, form)
+        grid_section_lay.addWidget(form)
+
+        return grid_section
+
+    def _build_panel_letters_section(self, grid_section: QWidget, form: InspectorForm) -> None:
+        """Letters for the panels, for a paper's text to refer to: two rows of the Layout card."""
+        section = grid_section
+        self._panel_labels_combo = QComboBox(section)
+        self._configure_combo_width(self._panel_labels_combo, minimum_contents_length=10)
+        for value, text in panel_labels.STYLES:
+            self._panel_labels_combo.addItem(_(text), value)
+        self._panel_labels_combo.setToolTip(_("Write a letter on each panel of a multi-axis figure."))
+        self._panel_position_combo = QComboBox(section)
+        self._configure_combo_width(self._panel_position_combo, minimum_contents_length=10)
+        for value, text in panel_labels.POSITIONS:
+            self._panel_position_combo.addItem(_(text), value)
+        form.add_row(_("Letters"), self._panel_labels_combo, self._panel_labels_combo.toolTip())
+        form.add_row(_("Position"), self._panel_position_combo)
+
+    def _build_options_section(self) -> QWidget:
+        """The Figure options card."""
+        opts_section = InspectorCard(self, _("Size"), "figureOptionsCard")
+        opts_section_lay = opts_section.card.layout()
+
+        self._fig_dpi = QSpinBox(opts_section)
+        self._fig_dpi.setRange(20, 2400)
+        self._fig_dpi.setSingleStep(10)
+        fit_spin_width(self._fig_dpi)
+        self._fig_dpi.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+
+        self._fig_width_cm = QDoubleSpinBox(opts_section)
+        self._fig_width_cm.setRange(0.1, 500.0)
+        self._fig_width_cm.setDecimals(2)
+        self._fig_width_cm.setSingleStep(0.5)
+        self._fig_width_cm.setSuffix(_(" cm"))
+        fit_spin_width(self._fig_width_cm)
+        self._fig_width_cm.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+
+        self._fig_height_cm = QDoubleSpinBox(opts_section)
+        self._fig_height_cm.setRange(0.1, 500.0)
+        self._fig_height_cm.setDecimals(2)
+        self._fig_height_cm.setSingleStep(0.5)
+        self._fig_height_cm.setSuffix(_(" cm"))
+        fit_spin_width(self._fig_height_cm)
+        self._fig_height_cm.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+
+        # No text of its own: the row's label already says "Frame", and a
+        # sentence beside the box ran off the edge of the panel.
+        self._fig_frameon = QCheckBox(opts_section)
+        # The width a journal's column asks for (todo H-05); the height follows, the proportions kept.
+        self._journal_combo = QComboBox(opts_section)
+        self._configure_combo_width(self._journal_combo, minimum_contents_length=14)
+        self._journal_combo.addItem(_("Journal column…"), None)
+        for label, width in JOURNAL_WIDTHS:
+            self._journal_combo.addItem(_(label), width)
+        self._journal_combo.setToolTip(_("Set the width a journal's column asks for; the height keeps the proportions."))
+        self._journal_combo.activated.connect(self._on_journal_width_selected)
+        # A line round the whole figure. (Matplotlib's frameon is the figure's
+        # background, which on a white page showed no change at all.)
+        self._fig_frameon.setToolTip(_("Draw a line round the whole figure"))
+        # Every font of the figure at once, on top of its style (todo N-12).
+        self._font_scale = FontScaleControl(opts_section)
+        fit_spin_width(self._font_scale)
+        self._font_scale.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        # The halo, outline or shadow of every text of the figure; an axis can have its own. "Style's" takes the
+        # one the style carries (none, for most), "None" none even then.
+        self._text_effect = PathEffectCombo(opts_section, inherit=_("Style's"))
+
+        # How the panel shows this figure - it used to be three checkable
+        # entries in ChartPanel's own context menu, kept in sync by comparing
+        # an action's *translated* label against the mode, which stopped
+        # working the moment the interface language changed. One combo, next
+        # to the figure's other display settings, with the mode as the
+        # stored value rather than the label.
+        self._fig_layout_mode = QComboBox(opts_section)
+        self._configure_combo_width(self._fig_layout_mode, minimum_contents_length=14)
+        for label, value, tooltip in self.LAYOUT_ENGINES:
+            self._fig_layout_mode.addItem(_(label), value)
+            self._fig_layout_mode.setItemData(
+                self._fig_layout_mode.count() - 1,
+                _(tooltip),
+                Qt.ItemDataRole.ToolTipRole,
+            )
+        self._fig_layout_mode.currentIndexChanged.connect(
+            self._update_margin_controls_enabled
+        )
+
+        # A large series drawn in full costs more the more of it there is to
+        # paint - see todo.txt P2-5. Rather than one hard-coded cutoff, this
+        # offers a few, so a figure with genuinely huge series can pick one
+        # deliberately instead of the application guessing at what "large"
+        # means for it.
+        self._downsample_combo = QComboBox(opts_section)
+        self._configure_combo_width(self._downsample_combo, minimum_contents_length=14)
+        self._downsample_combo.setVisible(False)  # moved to the axis (Max points); kept for the loading code
+        # The label is one word: a long one ("Downsample large series above")
+        # sets the width of the label column for the whole form, and every
+        # other row - Width and Height in particular - loses that width to a
+        # phrase only this row needs. The tooltip says the rest.
+        self._downsample_combo.setToolTip(
+            _("Draw at most this many points per series, sampling the rest away.")
+        )
+        for label, value, tooltip in self.DOWNSAMPLE_THRESHOLDS:
+            self._downsample_combo.addItem(_(label), value)
+            self._downsample_combo.setItemData(
+                self._downsample_combo.count() - 1,
+                _(tooltip),
+                Qt.ItemDataRole.ToolTipRole,
+            )
+
+        # One setting a row, its label on the left: a pair of fields a row cut the labels and put the
+        # Border box under its word; every row now reads as label and control on one line.
+        self._build_view_combo(opts_section)
+        form = InspectorForm(opts_section)
+        for text, field in (
+            (_("View"), self._resize_mode_combo),
+            (_("DPI"), self._fig_dpi),
+            (_("Font size"), self._font_scale),
+            (_("Text effect"), self._text_effect),
+            (_("Width"), self._fig_width_cm),
+            (_("Height"), self._fig_height_cm),
+            (_("Template"), self._journal_combo),
+            (_("Figure layout"), self._fig_layout_mode),
+            (_("Border"), self._fig_frameon),
+        ):
+            form.add_row(text, field, field.toolTip())
+        opts_section_lay.addWidget(form)
+        return opts_section
+
+
+    def _build_margins_section(self) -> QWidget:
+        """Spacing controls for the manual layout mode.
+
+        The renderer has always honoured a ``margins`` block in the figure
+        options - ``_apply_subplot_margins`` reads all six values - but nothing
+        in the UI ever wrote one, so the only way to use manual layout was to
+        edit the project file by hand.  These are those six values.
+
+        They apply only under "Manual": the three automatic engines compute
+        spacing themselves and overwrite whatever subplots_adjust set, so the
+        controls are disabled rather than silently ignored.
+        """
+        # Closed: it applies only under the Manual layout, which few figures use.
+        section = InspectorCard(self, _("Manual spacing"), "figureMarginsCard", collapsed=True)
+        section_lay = section.card.layout()
+
+        # Two fields per row - the natural pairs an edge or a gap already
+        # comes in (Left/Right, Bottom/Top, Column gap/Row gap) - rather than
+        # one full-width form row each: six rows of one spin box made this
+        # the tallest section in the panel. A PairGrid keeps the two columns
+        # of numbers aligned and drops to one pair per row - never to a
+        # clipped number - when the panel is too narrow for two.
+        self._margin_spins = {}
+        pairs: list[tuple[QWidget, QWidget]] = []
+        for key, label, default, tooltip in self.MARGIN_FIELDS:
+            spin = QDoubleSpinBox(section)
+            # Fractions of the figure, so 0..1 for edges.  wspace/hspace
+            # are fractions of the average axis size and can legitimately
+            # exceed 1 when axes need to be spread far apart.
+            spin.setRange(0.0, 2.0 if key in ("wspace", "hspace") else 1.0)
+            spin.setDecimals(3)
+            spin.setSingleStep(0.01)
+            spin.setValue(default)
+            spin.setToolTip(_(tooltip))
+            fit_spin_width(spin)
+            self._margin_spins[key] = spin
+
+            text = QLabel(_(label), section)
+            text.setToolTip(_(tooltip))
+            pairs.append((text, spin))
+
+        section_lay.addWidget(PairGrid(pairs, section))
+        self._margins_section = section
+        return section
+
+    def _update_margin_controls_enabled(self) -> None:
+        """Enable the spacing controls only when the layout engine is manual."""
+        manual = str(self._fig_layout_mode.currentData() or "") == "none"
+        enabled = manual and self._figure_id is not None
+        for spin in self._margin_spins.values():
+            spin.setEnabled(enabled)
+
+        if self._margins_section is not None:
+            self._margins_section.setToolTip(
+                ""
+                if manual
+                else _("Set Figure layout to Manual to edit spacing by hand.")
+            )
+
+    def _before_reload(self) -> None:
+        """Push this figure's own metrics into rcParams before reloading.
+
+        Runs after set_connected_figure has set _repo/_figure_id/_figure
+        (both helpers below read _figure_id) and before
+        _reload_from_descriptor rebuilds the fields from them.
+        """
+        # Disabled and unwired until set_resize_mode_control actually attaches
+        # a live callback: a caller that connects a figure without also
+        # calling it - a future one, or a test - must not leave a combo that
+        # looks interactive wired to whichever panel used it last.
+        self._on_resize_mode_changed = None
+        self._resize_mode_combo.setEnabled(False)
+        self._apply_persisted_metrics_to_rcparams()
+        self._apply_rcparams_to_connected_figure()
+
+    def set_resize_mode_control(self, current: str, on_change: Callable[[str], None]) -> None:
+        """Show the panel's current fit mode, and wire changes back to it.
+
+        Called separately from ``set_connected_figure``: the fit mode is
+        state ChartPanel owns and persists itself, not a descriptor key this
+        widget writes through ``figure_options_requested`` - the caller
+        passes ``panel.resize_mode`` and ``panel.set_resize_mode`` directly,
+        the same way it already hands over ``redraw_callback``.
+        """
+        self._on_resize_mode_changed = on_change
+        self._resize_mode_combo.blockSignals(True)
+        try:
+            index = self._resize_mode_combo.findData(current)
+            self._resize_mode_combo.setCurrentIndex(max(0, index))
+        finally:
+            self._resize_mode_combo.blockSignals(False)
+        self._resize_mode_combo.setEnabled(True)
+
+    def _on_resize_mode_selected(self, _index: int) -> None:
+        if self._on_resize_mode_changed is None:
+            return
+        mode = str(self._resize_mode_combo.currentData() or "")
+        if mode:
+            self._on_resize_mode_changed(mode)
+
+    def clear_connected_figure(self) -> None:
+        self._on_resize_mode_changed = None
+        self._resize_mode_combo.setEnabled(False)
+
+        self._set_style("", None)
+
+        width_cm, height_cm = self._rcparams_figsize_cm()
+        self._nrows_combo.setCurrentIndex(0)
+        self._ncols_combo.setCurrentIndex(0)
+        self._fig_dpi.setValue(self._rcparams_dpi())
+        self._fig_width_cm.setValue(width_cm)
+        self._fig_height_cm.setValue(height_cm)
+        self._fig_frameon.setChecked(False)
+        self._font_scale.set_factor(1.0)
+        self._text_effect.set_current_effect("")
+        self._sketch_combo.setCurrentIndex(0)
+        self._select_layout_mode(self.DEFAULT_LAYOUT_MODE)
+        self._select_downsample_threshold(self.DEFAULT_DOWNSAMPLE_THRESHOLD)
+        self._reset_layout_preset_combo()
+        self._load_shared_spacing_into_spins({})
+        self._load_margins_into_spins({})
+        self._name_edit.clear()
+        if self._note_timer.isActive():
+            self._note_timer.stop()
+            self._save_note()
+        self._note_figure_id = None
+        self._note_edit.blockSignals(True)
+        self._note_edit.clear()
+        self._note_edit.blockSignals(False)
+        self._dates_label.clear()
+        super().clear_connected_figure()
+
+    def _set_enabled_state(self, enabled: bool) -> None:
+        for widget in (
+            self._name_edit,
+            self._note_edit,
+            self._btn_browse,
+            self._btn_edit,
+            self._nrows_combo,
+            self._ncols_combo,
+            self._layout_preset_combo,
+            self._shared_vspace,
+            self._shared_hspace,
+            self._fig_dpi,
+            self._fig_width_cm,
+            self._fig_height_cm,
+            self._fig_frameon,
+            self._font_scale,
+            self._text_effect,
+            self._sketch_combo,
+            self._fig_layout_mode,
+            self._downsample_combo,
+            self._mosaic_edit,
+            self._panel_labels_combo,
+            self._panel_position_combo,
+        ):
+            widget.setEnabled(enabled)
+
+        # Always last: the spacing controls need the layout mode as well as the
+        # connected state, so they cannot just follow ``enabled``.
+        self._update_margin_controls_enabled()
+
+    def _figure_options(self) -> dict[str, Any]:
+        """Return figure options safely from the connected descriptor."""
+        if self._repo is None or self._figure_id is None:
+            return {}
+
+        desc = self._repo.load_figure_descriptor(self._figure_id)
+
+        if desc is None:
+            applogger.warning(
+                "No figure descriptor found for figure_id=%s. "
+                "Figure options unavailable.",
+                self._figure_id,
+            )
+            return {}
+
+        options = getattr(desc, "options", None)
+
+        if options is None:
+            return {}
+
+        if isinstance(options, dict):
+            return dict(options)
+
+        applogger.error(
+            "Figure id=%r has invalid options. Editing stopped; "
+            "please check the descriptor schema.",
+            getattr(desc, "id", self._figure_id),
+        )
+        return {}
+
+    def _reload_from_descriptor(self) -> None:
+        """Reload figure controls from the current descriptor.
+
+        This is the single descriptor reload path for the figure panel. It
+        handles missing descriptors safely and keeps the UI in a valid state.
+        """
+        if self._repo is None or self._figure_id is None:
+            self.clear_connected_figure()
+            return
+
+        desc = self._repo.load_figure_descriptor(self._figure_id)
+
+        if desc is None:
+            applogger.warning(
+                "No figure descriptor found for figure_id=%s. "
+                "Figure editing disabled for this figure.",
+                self._figure_id,
+            )
+            self._set_style("", None)
+            self._nrows_combo.setCurrentIndex(0)
+            self._ncols_combo.setCurrentIndex(0)
+
+            width_cm, height_cm = self._rcparams_figsize_cm()
+            self._fig_dpi.setValue(self._rcparams_dpi())
+            self._fig_width_cm.setValue(width_cm)
+            self._fig_height_cm.setValue(height_cm)
+            self._fig_frameon.setChecked(False)
+            self._font_scale.set_factor(1.0)
+            self._text_effect.set_current_effect("")
+            self._sketch_combo.setCurrentIndex(0)
+            self._select_layout_mode(self.DEFAULT_LAYOUT_MODE)
+            self._select_downsample_threshold(self.DEFAULT_DOWNSAMPLE_THRESHOLD)
+            self._reset_layout_preset_combo()
+            self._load_shared_spacing_into_spins({})
+            self._load_margins_into_spins({})
+            self._set_enabled_state(False)
+            return
+
+        options = getattr(desc, "options", None)
+
+        if options is None:
+            fig_opts: dict[str, Any] = {}
+        elif isinstance(options, dict):
+            fig_opts = dict(options)
+        else:
+            applogger.error(
+                "Figure id=%r has invalid options. Editing stopped; "
+                "please check the descriptor schema.",
+                getattr(desc, "id", self._figure_id),
+            )
+            fig_opts = {}
+
+        self._name_edit.setText(str(getattr(desc, "name", "") or ""))
+        self._load_note(desc)
+
+        self._load_style_from_text(str(fig_opts.get("mpl_style", "") or ""))
+
+        nrows = int(getattr(desc, "nrows", None) or 1)
+        ncols = int(getattr(desc, "ncols", None) or 1)
+
+        self._nrows_combo.setCurrentIndex(
+            max(0, self._nrows_combo.findData(nrows))
+        )
+        self._ncols_combo.setCurrentIndex(
+            max(0, self._ncols_combo.findData(ncols))
+        )
+
+        self._load_metrics_into_spins(fig_opts)
+        self._load_shared_spacing_into_spins(fig_opts)
+        self._load_margins_into_spins(fig_opts)
+        self._fig_frameon.setChecked(bool(fig_opts.get("border", False)))
+        self._font_scale.set_factor(fig_opts.get("font_scale", 1.0))
+        if not self._text_effect.set_current_effect(str(fig_opts.get("text_effect") or "")):
+            self._text_effect.set_current_effect("")
+        self._sketch_combo.setCurrentIndex(max(0, self._sketch_combo.findData(str(fig_opts.get("sketch") or ""))))
+
+        current_layout = str(
+            fig_opts.get("layout_mode", fig_opts.get("layout", self.DEFAULT_LAYOUT_MODE))
+            or self.DEFAULT_LAYOUT_MODE
+        )
+
+        self._select_layout_mode(current_layout)
+        for combo, key, default in (
+            (self._panel_labels_combo, "panel_labels", ""),
+            (self._panel_position_combo, "panel_label_position", "outside"),
+        ):
+            index = combo.findData(str(fig_opts.get(key) or default))
+            combo.setCurrentIndex(max(0, index))
+
+        try:
+            downsample_threshold = int(
+                fig_opts.get(OPT_DOWNSAMPLE_THRESHOLD, self.DEFAULT_DOWNSAMPLE_THRESHOLD)
+            )
+        except (TypeError, ValueError):
+            downsample_threshold = self.DEFAULT_DOWNSAMPLE_THRESHOLD
+        self._select_downsample_threshold(downsample_threshold)
+        # Nothing to restore: a preset is an action this panel performed
+        # once, not a property the figure carries, so there is no "current
+        # preset" a descriptor could tell us about.
+        self._reset_layout_preset_combo()
+
+        self._set_enabled_state(True)
+
+    @staticmethod
+    def _style_label_for_path(path: Path) -> str:
+        """Return a "folder.style" label for a style file under MPLSTYLES_DIR.
+
+        Example: ``mplstyles/color/discrete-rainbow/discrete-rainbow-10.mplstyle``
+        becomes ``color.discrete-rainbow.discrete-rainbow-10``.
+        """
+        try:
+            rel = path.relative_to(MPLSTYLES_DIR)
+        except ValueError:
+            return path.name
+        return ".".join(rel.with_suffix("").parts)
+
+    def _set_style(self, text: str, path: Path | None) -> None:
+        """Show a style in the text box; no signal is emitted."""
+        self._style_text = text
+        if path is not None:
+            label = self._style_label_for_path(path)
+        elif text.strip():
+            label = _("(Embedded style)")
+        else:
+            # No style of its own: it is drawn with the default chart style of Settings > Charts, by name.
+            label = str(get_value(DEFAULT_MPL_STYLE_KEY) or "").strip().replace("/", ".") or _("Matplotlib")
+        self._style_edit.setText(label)
+        self._style_edit.setToolTip(str(path) if path is not None else _(
+            "This figure has no style of its own: it uses the default chart style (Settings > Charts)."))
+        self._update_style_buttons()
+
+    def _load_style_from_text(self, current_style: str) -> None:
+        """Show the figure's stored style, naming the mplstyles file it equals if any."""
+        matched: Path | None = None
+        if current_style and MPLSTYLES_DIR.exists():
+            for path in sorted(MPLSTYLES_DIR.rglob("*.mplstyle")):
+                try:
+                    text = _sanitize_mplstyle_text(_read_text_any_encoding(path))
+                except OSError:
+                    continue
+                if text == current_style:
+                    matched = path
+                    break
+        self._set_style(current_style, matched)
+
+    def _apply_style_file(self, path: Path) -> None:
+        text = _sanitize_mplstyle_text(_read_text_any_encoding(path))
+        self._set_style(text, path)
+        self.style_changed.emit(text)
+
+    def _browse_for_style_file(self) -> None:
+        """Pick a ``.mplstyle`` file, starting in the mplstyles folder."""
+        if self._repo is None or self._figure_id is None:
+            return
+        start_dir = str(MPLSTYLES_DIR) if MPLSTYLES_DIR.exists() else ""
+        path_str, _unused = QFileDialog.getOpenFileName(
+            self,
+            _("Select Matplotlib Style"),
+            start_dir,
+            _("Matplotlib Style (*.mplstyle);;All Files (*)"),
+        )
+        if path_str:
+            self._apply_style_file(Path(path_str))
+
+    def _update_style_buttons(self) -> None:
+        """Enable Edit only when a concrete or embedded style is selected."""
+        self._btn_edit.setEnabled(bool(self._style_text.strip()))
+
+    def _current_style_text(self) -> str:
+        """Return the style text currently attached to the figure."""
+        return self._style_text
+
+    def _edit_current_style(self) -> None:
+        """Open the style editor preloaded with the current selected style."""
+        if self._repo is None or self._figure_id is None:
+            return
+
+        style_text = self._current_style_text()
+        if not style_text.strip():
+            return
+
+        style_holder: dict[str, str] = {"text": ""}
+
+        def capture_style(style_path: str) -> None:
+            path = Path(style_path)
+            if not path.exists():
+                applogger.error(
+                    f"Style file not found: {path}. Editing stopped; please check it."
+                )
+            style_holder["text"] = _sanitize_mplstyle_text(
+                _read_text_any_encoding(path)
+            )
+            dialog.accept()
+
+        repo, figure_id = self._repo, int(self._figure_id)
+
+        def draw_this_figure(figure: Any) -> None:
+            """The chart being styled, without its saved style, so the
+            editor's own rcParams are what it is drawn with."""
+            from dataclasses import replace
+
+            from app.plugin_api.charts.render_figure import (
+                render_figure_from_descriptor,
+            )
+
+            descriptor = repo.load_figure_descriptor(figure_id)
+            if descriptor is None:
+                return
+            options = dict(descriptor.options or {})
+            options.pop("mpl_style", None)
+            render_figure_from_descriptor(
+                figure=figure, descriptor=replace(descriptor, options=options), repo=repo
+            )
+
+        dialog = MplStyleEditorDialog(
+            parent=self,
+            apply_callback=capture_style,
+            initial_style_text=style_text,
+            figure_drawer=draw_this_figure,
+        )
+        if not dialog.exec():
+            return
+
+        edited_style_text = style_holder["text"]
+        if not edited_style_text.strip():
+            return
+
+        self.style_changed.emit(edited_style_text)
+        self._load_style_from_text(edited_style_text)
+
+    def _apply_all(self) -> None:
+        """Apply both grid layout and figure options from one button."""
+        self._apply_grid_layout()
+        self._save_figure_options()
+
+    def _apply_grid_layout(self) -> None:
+        nrows = int(self._nrows_combo.currentData() or 1)
+        ncols = int(self._ncols_combo.currentData() or 1)
+        self.grid_layout_requested.emit(nrows, ncols)
+
+    def _on_layout_preset_selected(self, _index: int) -> None:
+        """Request the chosen preset, applied across every axis in the figure.
+
+        Unlike ``_apply_grid_layout`` (a uniform rows x cols the person
+        chose), a preset computes its own grid size from how many axes the
+        figure has - see app.plugin_api.charts.layout_presets - so there is nothing
+        here to read from the Rows/Cols combos.
+
+        Guarded on a connected figure: ``_reload_from_descriptor`` resets
+        this combo to "Grid" whenever a different chart is selected, and a
+        reset that arrived while nothing was connected would otherwise
+        rearrange whichever figure happened to be connected next.
+        """
+        if self._repo is None or self._figure_id is None:
+            return
+        preset = self._layout_preset_combo.currentData()
+        if not preset:
+            return
+        if preset == self.SAVE_TEMPLATE:
+            self._reset_layout_preset_combo()
+            name, accepted = QInputDialog.getText(self, _("Save as template"), field_label(_("Template name")))
+            if accepted and name.strip():
+                self.template_save_requested.emit(name.strip())
+                self._fill_layout_preset_combo()
+                self._reset_layout_preset_combo()
+            return
+        if str(preset).startswith(self.TEMPLATE_PREFIX):
+            self._applied_presets[self._figure_id] = str(preset)
+            self.template_requested.emit(str(preset)[len(self.TEMPLATE_PREFIX):])
+            return
+        # Shown again after the reload the apply triggers, for this figure only.
+        self._applied_presets[self._figure_id] = str(preset)
+        self.layout_preset_requested.emit(str(preset))
+
+    def _on_journal_width_selected(self, _index: int) -> None:
+        """The chosen column's width, the height scaled with it; the combo back on its prompt."""
+        width = self._journal_combo.currentData()
+        self._journal_combo.setCurrentIndex(0)
+        if not width:
+            return
+        old_width, old_height = self._fig_width_cm.value(), self._fig_height_cm.value()
+        self._fig_width_cm.setValue(float(width))
+        if old_width > 0:
+            self._fig_height_cm.setValue(round(old_height * float(width) / old_width, 2))
+
+    #: The combo's data for a template (a prefix before its path) and for "save one".
+    TEMPLATE_PREFIX = "template:"
+    SAVE_TEMPLATE = "save-template"
+
+    def _fill_layout_preset_combo(self) -> None:
+        """The presets, then the templates in Templates/, then "Save this layout as a template..."."""
+        from app.data import figure_templates
+
+        combo = self._layout_preset_combo
+        combo.blockSignals(True)
+        try:
+            while combo.count() > 1:
+                combo.removeItem(1)
+            for label, preset in self.LAYOUT_PRESETS:
+                combo.addItem(_(label), preset)
+            found = figure_templates.available()
+            if found:
+                combo.insertSeparator(combo.count())
+                for name, path in found:
+                    combo.addItem(name, f"{self.TEMPLATE_PREFIX}{path}")
+            combo.insertSeparator(combo.count())
+            combo.addItem(_("Save this layout as a template…"), self.SAVE_TEMPLATE)
+        finally:
+            combo.blockSignals(False)
+
+    def _on_mosaic_entered(self) -> None:
+        """Request the mosaic typed, applied across every axis in the figure."""
+        text = self._mosaic_edit.text().strip()
+        if self._repo is None or self._figure_id is None or not text:
+            return
+        self.layout_mosaic_requested.emit(text)
+
+    def _reset_layout_preset_combo(self) -> None:
+        """Put the preset combo back on its placeholder row, silently.
+
+        Signals blocked: this runs from the reload that the apply itself
+        triggers, and an unblocked reset would read as the user picking
+        the placeholder - harmless today (it carries no preset) but only
+        by accident.
+        """
+        self._layout_preset_combo.blockSignals(True)
+        try:
+            preset = self._applied_presets.get(self._figure_id) if self._figure_id is not None else None
+            self._layout_preset_combo.setCurrentIndex(max(0, self._layout_preset_combo.findData(preset)) if preset else 0)
+        finally:
+            self._layout_preset_combo.blockSignals(False)
+
+    def _select_layout_mode(self, mode: str) -> None:
+        """Show *mode* in the layout combo, falling back to the default."""
+        index = self._fig_layout_mode.findData(str(mode or ""))
+        if index < 0:
+            index = max(0, self._fig_layout_mode.findData(self.DEFAULT_LAYOUT_MODE))
+        self._fig_layout_mode.setCurrentIndex(index)
+
+    def _select_downsample_threshold(self, threshold: int) -> None:
+        """Show *threshold* in the downsample combo, or the default."""
+        index = self._downsample_combo.findData(int(threshold))
+        if index < 0:
+            index = max(
+                0, self._downsample_combo.findData(self.DEFAULT_DOWNSAMPLE_THRESHOLD)
+            )
+        self._downsample_combo.setCurrentIndex(index)
+
+    def _rcparams_dpi(self) -> int:
+        try:
+            dpi = int(round(float(rcParams.get("figure.dpi", DEFAULT_FIGURE_DPI))))
+        except (TypeError, ValueError):
+            return int(DEFAULT_FIGURE_DPI)
+        return max(1, dpi)
+
+    def _load_margins_into_spins(self, fig_opts: dict[str, Any]) -> None:
+        """Show this figure's manual spacing, or the renderer's defaults.
+
+        Each field falls back independently: a figure whose options set only
+        ``hspace`` should show its own hspace next to the defaults for the
+        rest, which is what the renderer draws it with.
+        """
+        margins = fig_opts.get("margins")
+        margins = margins if isinstance(margins, dict) else {}
+
+        for key, _label, default, _tooltip in self.MARGIN_FIELDS:
+            try:
+                value = float(margins.get(key, default))
+            except (TypeError, ValueError):
+                value = default
+
+            spin = self._margin_spins[key]
+            spin.setValue(min(max(value, spin.minimum()), spin.maximum()))
+
+    def _load_shared_spacing_into_spins(self, fig_opts: dict[str, Any]) -> None:
+        """Show this figure's shared-axis gaps, or the flush default.
+
+        0.0 for a figure that has never set them, which is what the
+        renderer draws shared axes with - see
+        render_figure._shared_axis_spacing.
+        """
+        for key, spin in (
+            (OPT_SHARED_VERTICAL_SPACE, self._shared_vspace),
+            (OPT_SHARED_HORIZONTAL_SPACE, self._shared_hspace),
+        ):
+            try:
+                value = float(fig_opts.get(key, 0.0) or 0.0)
+            except (TypeError, ValueError):
+                value = 0.0
+            spin.setValue(min(max(value, spin.minimum()), spin.maximum()))
+
+    def _load_metrics_into_spins(self, fig_opts: dict[str, Any]) -> None:
+        """Show this figure's own metrics, falling back to the rcParams ones.
+
+        A figure saved before metrics were per-figure carries no keys, so the
+        fallback is the live rcParams value - which is what that figure has
+        been rendering with all along.
+        """
+        metrics = figure_metrics_from_options(fig_opts)
+        if metrics is None:
+            width_cm, height_cm = self._rcparams_figsize_cm()
+            dpi = self._rcparams_dpi()
+        else:
+            width_cm, height_cm, dpi_value = metrics
+            dpi = int(round(dpi_value))
+
+        self._fig_dpi.setValue(max(1, dpi))
+        self._fig_width_cm.setValue(width_cm)
+        self._fig_height_cm.setValue(height_cm)
+
+    def _rcparams_figsize_cm(self) -> tuple[float, float]:
+        try:
+            width_in, height_in = rcParams.get("figure.figsize", DEFAULT_FIGURE_SIZE_IN)
+            width_cm = float(width_in) * CM_PER_INCH
+            height_cm = float(height_in) * CM_PER_INCH
+        except (TypeError, ValueError):
+            width_cm = DEFAULT_FIGURE_SIZE_IN[0] * CM_PER_INCH
+            height_cm = DEFAULT_FIGURE_SIZE_IN[1] * CM_PER_INCH
+
+        if width_cm <= 0.0 or height_cm <= 0.0:
+            width_cm = DEFAULT_FIGURE_SIZE_IN[0] * CM_PER_INCH
+            height_cm = DEFAULT_FIGURE_SIZE_IN[1] * CM_PER_INCH
+        return width_cm, height_cm
+
+    def _apply_size_to_rcparams(self) -> None:
+        width_cm = float(self._fig_width_cm.value())
+        height_cm = float(self._fig_height_cm.value())
+        width_in = width_cm / CM_PER_INCH
+        height_in = height_cm / CM_PER_INCH
+        dpi = float(self._fig_dpi.value())
+
+        rcParams["figure.figsize"] = [width_in, height_in]
+        rcParams["figure.dpi"] = dpi
+        # No persistence here: the values ride out in the options payload that
+        # _save_figure_options emits, and are stored against this figure alone.
+        self._apply_rcparams_to_connected_figure()
+
+    def _apply_rcparams_to_connected_figure(self) -> None:
+        """Push the edited size and dpi onto the figure this panel is showing.
+
+        ``set_dpi`` is not called directly.  rcParams holds the dpi the user
+        typed into the spin box, with no display scaling in it, while the Qt
+        backend keeps ``figure.dpi`` in device pixels.  Writing the configured
+        value straight onto the figure broke that invariant for whatever
+        ChartPanel was showing, so editing any figure property re-introduced
+        the sizing bug that ChartPanel had just fixed - which is what made
+        FIXED zoom wrong again.
+        """
+        if self._figure is None:
+            return
+        try:
+            width_in, height_in = rcParams.get("figure.figsize", DEFAULT_FIGURE_SIZE_IN)
+            dpi = float(rcParams.get("figure.dpi", DEFAULT_FIGURE_DPI))
+            apply_configured_dpi(self._figure, self._figure.canvas, dpi)
+            self._figure.set_size_inches(float(width_in), float(height_in), forward=False)
+        except Exception:
+            return
+        # The chart panel owns how the figure is shown (its FIXED-mode zoom
+        # lives in the dpi just overwritten): let it put that back.
+        widget = self._figure.canvas
+        while widget is not None and not hasattr(widget, "reapply_view_geometry"):
+            widget = widget.parent() if hasattr(widget, "parent") else None
+        if widget is not None:
+            widget.reapply_view_geometry()
+
+    def _apply_persisted_metrics_to_rcparams(self) -> None:
+        """Push the connected figure's own metrics into rcParams.
+
+        Called before a render rather than once at startup: rcParams is global
+        and every figure wants a different answer, so the value has to be set
+        from the descriptor each time a figure becomes the current one.
+
+        A figure with no metrics of its own resets rcParams to Matplotlib's
+        defaults rather than leaving the previous figure's size in place -
+        selecting a plain figure after one with an explicit large size used
+        to push that large size onto the plain figure's canvas.
+        """
+        metrics = figure_metrics_from_options(self._figure_options())
+        if metrics is None:
+            width_in, height_in = DEFAULT_FIGURE_SIZE_IN
+            dpi = DEFAULT_FIGURE_DPI
+        else:
+            width_cm, height_cm, dpi = metrics
+            width_in = float(width_cm) / CM_PER_INCH
+            height_in = float(height_cm) / CM_PER_INCH
+
+        if width_in > 0.0 and height_in > 0.0:
+            rcParams["figure.figsize"] = [width_in, height_in]
+        if dpi > 0.0:
+            rcParams["figure.dpi"] = float(dpi)
+
+    def _save_figure_options(self) -> None:
+        self._apply_size_to_rcparams()
+
+        payload = {
+            "name": self._name_edit.text().strip(),
+            "border": bool(self._fig_frameon.isChecked()),
+            "font_scale": float(self._font_scale.factor()),
+            "text_effect": self._text_effect.current_effect(),
+            "sketch": str(self._sketch_combo.currentData() or ""),
+            "layout_mode": str(
+                self._fig_layout_mode.currentData() or self.DEFAULT_LAYOUT_MODE
+            ),
+            "panel_labels": str(self._panel_labels_combo.currentData() or "") or None,
+            "panel_label_position": str(self._panel_position_combo.currentData() or "outside"),
+            # Max points is the axis' now (Axis > Max points); a figure's earlier value is kept as it is,
+            # the axes without their own still read it.
+            OPT_SHARED_VERTICAL_SPACE: float(self._shared_vspace.value()),
+            OPT_SHARED_HORIZONTAL_SPACE: float(self._shared_hspace.value()),
+            OPT_FIGURE_WIDTH_CM: float(self._fig_width_cm.value()),
+            OPT_FIGURE_HEIGHT_CM: float(self._fig_height_cm.value()),
+            OPT_FIGURE_DPI: float(self._fig_dpi.value()),
+            "margins": {
+                key: float(spin.value())
+                for key, spin in self._margin_spins.items()
+            },
+        }
+        self.figure_options_requested.emit(payload)
+
+        if callable(self._redraw_callback):
+            self._redraw_callback()

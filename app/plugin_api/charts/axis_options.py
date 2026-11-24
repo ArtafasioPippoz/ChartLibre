@@ -1,0 +1,274 @@
+"""What an axis's grid, ticks and limits were asked for.
+
+One vocabulary, read by the properties widget that writes these keys and by
+the renderer that applies them.  It exists because the two used to disagree in
+a way nobody could see:
+
+* ``grid: False`` meant "do nothing" rather than "no grid", so unticking Show
+  grid left the grid exactly where it was whenever the active .mplstyle set
+  ``axes.grid: True`` - which the shipped styles do;
+* the grid was one setting for the whole axis (which ticks, which direction),
+  so "x major only" was expressible and "x major and y minor" was not;
+* minor ticks were a single switch that only ever turned them *on*, and
+  turning it off did nothing at all.
+
+So a grid or a tick setting is now per axis (x, y) and per tick class (major,
+minor), and each one distinguishes three things a boolean cannot: leave it to
+the style sheet, force it off, force it on.
+
+No Qt and no Matplotlib here - the widget and the renderer both import it, and
+the legacy translation is the part worth testing on its own.
+"""
+from __future__ import annotations
+
+from typing import Any
+
+#: Leave this setting to the active .mplstyle.  The default everywhere, and
+#: the honest reading of an option nobody has set.
+AUTO: str = "auto"
+
+#: Force it off, whatever the style sheet says. This is the value that did not
+#: exist before, and the reason Show grid appeared not to work.
+OFF: str = "off"
+
+#: Force it on, in the style sheet's own appearance.
+ON: str = "on"
+
+#: Grid choices, as (stored value, label).  The line styles force an
+#: appearance as well as presence, which is what makes a minor grid usable:
+#: dotted minor against solid major reads as two levels rather than as noise.
+#:
+#: "Default" rather than the "From the style" it read as until the grid and
+#: tick settings moved onto a tab of their own: six of these combos sit
+#: three-across there, and a label that long left each of them showing "Fr".
+#: It is also the word the Series panel's own defer-to-the-style entries
+#: use, and one vocabulary for one idea is worth more than the extra words.
+GRID_CHOICES: tuple[tuple[str, str], ...] = (
+    (AUTO, "Default"),
+    (OFF, "Off"),
+    (ON, "On"),
+    ("-", "Solid"),
+    ("--", "Dashed"),
+    (":", "Dotted"),
+    ("-.", "Dash-dot"),
+)
+
+#: Tick choices.  Direction doubles as "on", because a tick that is shown is
+#: shown somewhere: inside the axes, outside, or across.
+TICK_CHOICES: tuple[tuple[str, str], ...] = (
+    (AUTO, "Default"),
+    (OFF, "Off"),
+    (ON, "On"),
+    ("in", "Inside"),
+    ("out", "Outside"),
+    ("inout", "Both sides"),
+)
+
+#: The axes and tick classes every grid and tick setting is written for.
+#:
+#: Three, so a 3D chart can say where its depth ticks point and whether its
+#: box is gridded.  The two halves of that are not equally supported by
+#: Matplotlib, and the difference is worth knowing before reading
+#: render_figure's appliers:
+#:
+#: * ticks *are* per axis on a 3D axes - ``tick_params(axis="z")`` works;
+#: * the grid is *not*.  ``Axes3D.grid`` takes ``(visible, **kwargs)`` and
+#:   throws the rest away, so one switch draws or hides all three planes at
+#:   once.  The z column is still offered, because the alternative is a panel
+#:   that says nothing about the grid of a 3D chart at all, but the renderer
+#:   resolves the three settings into the one answer Matplotlib accepts and
+#:   says so in the log.
+AXES: tuple[str, ...] = ("x", "y", "z")
+WHICH: tuple[str, ...] = ("major", "minor")
+
+#: The axes a scale, a direction and a manual range can be set for.  The same
+#: three as AXES, and named separately because the two answer different
+#: questions - AXES is "what can be ticked and gridded", this is "what can be
+#: scaled and bounded" - and because they were not always the same list.
+#:
+#: A 2D axes simply has no z, and the renderer skips what it cannot set - so
+#: a z limit typed on a scatter plot is stored and ignored rather than
+#: refused, which is what a projection changed later needs.
+LIMIT_AXES: tuple[str, ...] = ("x", "y", "z")
+
+#: How the view range is decided.
+LIMITS_AUTO: str = "auto"
+LIMITS_AUTO_X: str = "auto_x"
+LIMITS_AUTO_Y: str = "auto_y"
+LIMITS_MANUAL: str = "manual"
+
+LIMIT_CHOICES: tuple[tuple[str, str], ...] = (
+    (LIMITS_AUTO, "Automatic (all axes)"),
+    (LIMITS_AUTO_X, "Automatic x, manual y and z"),
+    (LIMITS_AUTO_Y, "Automatic y, manual x and z"),
+    (LIMITS_MANUAL, "Manual (all axes)"),
+)
+
+#: Which axis each mode leaves to Matplotlib.
+#:
+#: z is manual in every mode but the first, which costs nothing and is the
+#: only rule that stays sayable: the alternative - a mode per combination of
+#: three axes - is eight entries in a combo. An unset end is already "leave
+#: this end alone", so a manual z with both boxes empty behaves exactly as an
+#: automatic one until something is typed in it.
+_AUTOMATIC_AXES: dict[str, frozenset[str]] = {
+    LIMITS_AUTO: frozenset({"x", "y", "z"}),
+    LIMITS_AUTO_X: frozenset({"x"}),
+    LIMITS_AUTO_Y: frozenset({"y"}),
+    LIMITS_MANUAL: frozenset(),
+}
+
+
+def axis_title(options: dict[str, Any], fallback: str = "") -> str:
+    """The axis' title: the one in its options - empty included, which means none - else *fallback*.
+
+    The Title field writes "title" (and "label") whenever the axis is
+    edited; emptied, it is "". Read with ``or``, that empty string fell back
+    on the title the axis was created with, so a title could not be removed.
+    *fallback* - the descriptor's own title - is for an axis never edited.
+    """
+    for key in ("title", "label"):
+        value = options.get(key)
+        if value is not None:
+            return str(value).strip()
+    return str(fallback or "").strip()
+
+
+def grid_key(axis: str, which: str) -> str:
+    """Return the option key for one grid setting."""
+    return f"grid_{axis}_{which}"
+
+
+def tick_key(axis: str, which: str) -> str:
+    """Return the option key for one tick setting."""
+    return f"ticks_{axis}_{which}"
+
+
+def limit_key(axis: str, edge: str) -> str:
+    """Return the option key for one manual limit, e.g. ``x_min``."""
+    return f"{axis}_{edge}"
+
+
+def interval_key(axis: str) -> str:
+    """Return the option key for one axis' major tick interval, e.g. ``x_interval``."""
+    return f"{axis}_interval"
+
+
+def manual_interval(options: dict[str, Any], axis: str) -> float | None:
+    """The step between major ticks on *axis*, in its units; None: automatic (Matplotlib's ticks).
+
+    A step must be a positive, finite number: zero, a negative or a word is no step, so automatic.
+    """
+    value = options.get(interval_key(axis))
+    if value is None or value == "":
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if 0 < number < float("inf") else None
+
+
+def grid_setting(options: dict[str, Any], axis: str, which: str) -> str:
+    """Return one grid setting, translating a pre-per-axis figure if needed."""
+    value = options.get(grid_key(axis, which))
+    if value is not None:
+        return _clean(value, GRID_CHOICES)
+    return _legacy_grid(options, axis, which)
+
+
+def tick_setting(options: dict[str, Any], axis: str, which: str) -> str:
+    """Return one tick setting, translating a pre-per-axis figure if needed."""
+    value = options.get(tick_key(axis, which))
+    if value is not None:
+        return _clean(value, TICK_CHOICES)
+    return _legacy_ticks(options, which)
+
+
+def limits_mode(options: dict[str, Any]) -> str:
+    """Return which axes are automatic; automatic for both by default."""
+    value = str(options.get("limits_mode", LIMITS_AUTO) or LIMITS_AUTO).strip().lower()
+    return value if value in dict(LIMIT_CHOICES) else LIMITS_AUTO
+
+
+def is_automatic(options: dict[str, Any], axis: str) -> bool:
+    """True when *axis* is left to Matplotlib to scale."""
+    return axis in _AUTOMATIC_AXES[limits_mode(options)]
+
+
+def manual_limit(options: dict[str, Any], axis: str, edge: str) -> float | None:
+    """Return one manual limit, or None when it is not a usable number.
+
+    None rather than a default: an unset edge means "this end stays
+    automatic", which ``set_xlim`` understands directly, and a zero invented
+    here would be a limit the user never typed.
+    """
+    value = options.get(limit_key(axis, edge))
+    if value is None or value == "":
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if number == number and abs(number) != float("inf") else None
+
+
+def _clean(value: Any, choices: tuple[tuple[str, str], ...]) -> str:
+    """Return a known value, falling back to AUTO rather than raising."""
+    text = str(value or "").strip().lower()
+    return text if text in dict(choices) else AUTO
+
+
+def _legacy_grid(options: dict[str, Any], axis: str, which: str) -> str:
+    """Translate ``grid`` / ``grid_which`` / ``grid_axis`` into one setting.
+
+    A figure saved before this existed keeps the appearance it had, which is
+    why "off" is not the answer for an untouched combination: ``grid(True,
+    which="major", axis="x")`` never said anything about the y grid, and the
+    style sheet decided it. Only what the old options actually turned on
+    becomes ON.
+    """
+    if not bool(options.get("grid", False)):
+        return AUTO
+
+    old_which = str(options.get("grid_which", "major") or "major").strip().lower()
+    old_axis = str(options.get("grid_axis", "both") or "both").strip().lower()
+
+    covers_which = old_which in {which, "both"}
+    covers_axis = old_axis in {axis, "both"}
+    return ON if covers_which and covers_axis else AUTO
+
+
+def _legacy_ticks(options: dict[str, Any], which: str) -> str:
+    """Translate ``minor_ticks`` / ``tick_direction`` into one setting.
+
+    The old direction applied to every tick on the axes, and the old switch
+    only ever turned minor ticks on - there was no way to turn them off, so
+    "not asked for" translates to AUTO rather than to OFF.
+    """
+    direction = str(options.get("tick_direction", "") or "").strip().lower()
+    if which == "major":
+        return direction if direction in dict(TICK_CHOICES) else AUTO
+
+    if bool(options.get("minor_ticks", False)):
+        return direction if direction in dict(TICK_CHOICES) else ON
+    return AUTO
+
+
+def defaults() -> dict[str, Any]:
+    """Return every grid, tick and limit key at its default.
+
+    Used by the properties widget to reset, and as the shape of the payload:
+    a key that is always present cannot be one the renderer silently misses.
+    """
+    payload: dict[str, Any] = {}
+    for axis in AXES:
+        for which in WHICH:
+            payload[grid_key(axis, which)] = AUTO
+            payload[tick_key(axis, which)] = AUTO
+    for axis in LIMIT_AXES:
+        for edge in ("min", "max"):
+            payload[limit_key(axis, edge)] = None
+        payload[interval_key(axis)] = None
+    payload["limits_mode"] = LIMITS_AUTO
+    return payload

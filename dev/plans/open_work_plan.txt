@@ -1,0 +1,74 @@
+Open work: what is left in the plans and in todo.txt, in the order to do it (2026-11-13)
+==========================================================================================
+Sources: dev/plans/*.txt, todo.txt, the notes of the last sessions. One step = one commit on main, tests of the
+area, the size line of todo.txt. "You" = what only the owner can decide or check.
+
+0. Close what is built (half a day, before anything new)
+---------------------------------------------------------
+0.1 (done, OK'd 2026-11-13) You: restart the app and look at the finished work with your eyes - Chart properties (Figure, Axis, Series,
+    Animation, Overlays) in light and dark, at 300 and 420 px; Project panel (information, database info);
+    Preferences > Log; Project history > Delete; the animation grey rectangle (commit 48148f3, unverified on
+    macOS); Column Info button; the Up/Down/Delete buttons. A list of what is wrong goes back as one message.
+0.2 Housekeeping: the stash "main-wip-before-inspector-merge-2026-11-12" (an older version of the inspector, to
+    drop once 0.1 is fine); the worktree and branch claude/chart-properties-ui-plan-missing-f5203e (delete); the
+    demo/*.dhub-shm and -wal files that opening a demo leaves (ignore them in .gitignore).
+0.3 todo.txt: tick ID101 (done), ID100 (done), ID42, ID47 (done); keep it honest with 0.1's result.
+
+1. Chart properties: the plan's open items (dev/plans/chart_properties_ui_plan.txt, last section) - 4 commits
+---------------------------------------------------------------------------------------------------------
+1.1 Figure page to five sections: View + Options -> "Size"; Grid + Panel letters -> "Layout"; its height under 800
+    px at 300 px. The hidden TitledCards of the Series page (selector, options wrapper) taken out.
+1.2 Behaviour: the page chosen is remembered; a filter with no match says so ("No property found"); a hidden
+    section shows again when the filter is cleared; the segments reachable by Tab and arrow keys; each section
+    title a button with a name for screen readers.
+1.3 Looks: Windows (fluent sheet) and Linux checked in the real window, light and dark; every page and every
+    dialog at 1280x720 (the memory rule); the Series Line/Marker editors at 300 px without a horizontal bar.
+1.4 The manual's screenshots of the panel retaken; the strings new since 2026-11-12 listed for you to translate:
+    Options, Template, Apply to all, Row span, Column span, Search properties..., Previous axis, Next axis,
+    Matplotlib, Log, At start, View the log..., Project tables, Reclaimable:, Delete history (+ its question).
+    The Italian terms of the animation and a few wrong ones were already corrected (Legenda, Punti massimi...).
+
+2. Small things already designed (each 1-3 commits)
+----------------------------------------------------
+2.1 ID48 Preferences: an "Advanced mode" setting - off, the window hides the assistant, the workpads and the
+    other expert tools (the section icons are done).
+2.2 SQL workpad (dev/plans/sql_workpad_plan.txt, "Missing"): a Stop button, views and indexes kept by Apply
+    (the CSV export is dropped, 2026-11-13). The result is above the statement now; the one-line hint is gone.
+    The workpad moved out of the app's rail into ChartLibre Developer (2026-11-13, by your choice).
+2.3 ID46 Marker editor and rotation (dev/plans/line_editor_plan.txt B and C): a point/SVG-path marker editor and a
+    __markers__ table; rotation by a constant or a column (arrows).
+2.4 ID32 Animated charts: MP4 export; frames drawn in place for big charts (the plan's end).
+2.5 ID34 Result mini-charts beside an operation result.
+2.6 ID38 Windows UI parity: a test that opens every dialog at 1366x768 and at 125% scaling (the audit script of
+    2026-11-13 - open every dialog, list labels - becomes that test).
+
+3. Small models (dev/plans/small_models_guided_plan.txt): decided 2026-11-13 - qwen2.5:3b (step E) and the free
+Apple models (step F). Waiting for your yes on the 1.9 GB download of qwen2.5:3b (ollama pull); the 20-request
+measure runs by hand, one provider at a time, never beside the tests.
+
+4. Imports and plugins (dev/plans/import_formats_plan.txt, importer_plugins_plan.txt) - ID11, ID26
+---------------------------------------------------------------------------------------------------
+The plans are written, the code of I-01 partly in. Order: the formats that need no sample file (HDF5/NetCDF), then
+the ones that need yours (TDMS, JCAMP compressed, instrument exports - you send the files), then the importer
+plugin tools (Importer Builder, "Reload", the documentation and examples: the plan's sections 4 and 5).
+
+5. The roadmap, in the todo's own order (each one a plan of its own before code)
+---------------------------------------------------------------------------------
+5.1 DONE 2026-11-14 (A-F; to look at in the app): analyses and charts as Python - dev/plans/analysis_api_plan.txt (steps A-F:
+    the engine out of the assistant, Analysis()/Chart(), the SymPy workpad, Copy as Python / Save as function,
+    export and re-run a whole history = ID02). Then ID01 saved models, ID14 imputation and preprocessing,
+    ID04 local data filtering.
+5.2 Visible differentiation: ID03 Graph Builder, ID05 templates and batch, ID06 publication export, ID07 units.
+5.3 Statistical depth: ID08, ID13, ID15, ID12; then reliability, DOE, signal, ML (ID16-ID24), the specialist ones
+    (ID28-ID36, ID41) last. ID22 (cancelling long operations) and ID09 (errors and onboarding) can come earlier:
+    they are small and every user meets them.
+
+6. Yours only (todo "User-owned")
+----------------------------------
+ID43 GitHub description, topics, social image; ID44 test on Linux (also the colon and tab rules of 2026-11-13);
+ID45 sign the macOS app, a Windows installer; ID37 Windows release polish (keyring, Anthropic package).
+
+Decisions I need from you
+-------------------------
+a) 0.1: the list of what is still wrong in the panels.   b) 3: the small-models way.   c) 5: which of 5.1-5.3
+you want first (the todo says 5.1).   d) 2.1: is "Advanced mode" still wanted as written?

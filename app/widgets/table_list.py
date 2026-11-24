@@ -1,0 +1,1062 @@
+"""Panel showing the list of user tables (link badge / Table / Notes / Source)."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+import pandas as pd
+import PySide6.QtCore
+from pandas import isna
+from PySide6.QtGui import QColor, QPainter, QStandardItem, QStandardItemModel
+from PySide6.QtWidgets import (
+    QAbstractItemView,
+    QFileDialog,
+    QFrame,
+    QHeaderView,
+    QInputDialog,
+    QLineEdit,
+    QMessageBox,
+    QStyledItemDelegate,
+    QStyleOptionViewItem,
+    QTableView,
+    QVBoxLayout,
+    QWidget,
+)
+
+from app.data.sqlite_repo import DatabaseError, SqliteRepo
+from app.dialogs.operation_history_dialog import OperationHistoryDialog
+from app.dialogs.query_builder_dialog import QueryBuilderDialog
+from app.dialogs.table_editor_dialog import TableEditorDialog
+from app.logs.logger import applogger
+from app.styles.style import (
+    CONTEXT_MENU_ICONS,
+    MenuItem,
+    apply_fusion_for_item_view_styling,
+    create_menu,
+    load_icon,
+)
+from app.utils.config import get_section, update_section
+from app.utils.i18n import _
+from app.utils.import_runner import refresh_link
+from app.utils.messages import ask
+
+# Tables written by a data operation are prefixed, so the list can hide the
+# whole class of them without keeping a registry of what it produced.
+GENERATED_TABLE_PREFIX: str = "_"
+
+CONFIG_SECTION: str = "table_list"
+CONFIG_SHOW_GENERATED: str = "show_generated"
+
+
+def _is_generated(name: str) -> bool:
+    """Return True for a table written by a data operation."""
+    return str(name).startswith(GENERATED_TABLE_PREFIX)
+
+
+# ---------------------------------------------------------------------------
+# Link badge delegate
+# ---------------------------------------------------------------------------
+class _LinkDelegate(QStyledItemDelegate):
+    """Draws the source badge: a chain link for a linked table, "Q" for a query, "F" for a stored function.
+
+    One delegate for all because they occupy the same column and are mutually
+    exclusive - a saved query or a function is never an import target - so a
+    second column would be empty in every row.
+    """
+
+    #: The letter and its colour of each source that is not a table.
+    _LETTERS = {"query": ("Q", "#c2410c"), "function": ("F", "#7c3aed")}
+
+    _BADGE_SIZE = 16
+    _DOT_RADIUS = 4
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        # Loaded lazily (not as a class attribute) so the icon is only
+        # touched once a QApplication instance is guaranteed to exist.
+        self._icon = load_icon("link")
+
+    def paint(
+        self,
+        painter: QPainter,
+        option: QStyleOptionViewItem,
+        index: PySide6.QtCore.QModelIndex | PySide6.QtCore.QPersistentModelIndex,
+    ) -> None:
+        super().paint(painter, option, index)
+
+        rect: PySide6.QtCore.QRect = option.rect
+
+        letter = self._LETTERS.get(str(index.data(TableListPanel.ROLE_KIND) or ""))
+        if letter is not None:
+            painter.save()
+            painter.setPen(QColor(letter[1]))
+            font = painter.font()
+            font.setBold(True)
+            painter.setFont(font)
+            painter.drawText(
+                rect,
+                PySide6.QtCore.Qt.AlignmentFlag.AlignCenter,
+                letter[0],
+            )
+            painter.restore()
+            return
+
+        if not index.data(PySide6.QtCore.Qt.ItemDataRole.UserRole):
+            return
+
+        if not self._icon.isNull():
+            size = self._BADGE_SIZE
+            x = rect.x() + (rect.width() - size) // 2
+            y = rect.y() + (rect.height() - size) // 2
+            self._icon.paint(painter, PySide6.QtCore.QRect(x, y, size, size))
+            return
+
+        # Fallback: small highlight-coloured dot.
+        painter.save()
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setBrush(option.palette.highlight().color())
+        painter.setPen(PySide6.QtCore.Qt.PenStyle.NoPen)
+        cx = rect.x() + rect.width() // 2
+        cy = rect.y() + rect.height() // 2
+        painter.drawEllipse(cx - self._DOT_RADIUS, cy - self._DOT_RADIUS,
+                             self._DOT_RADIUS * 2, self._DOT_RADIUS * 2)
+        painter.restore()
+
+    def sizeHint(self, option: QStyleOptionViewItem, index: PySide6.QtCore.QModelIndex | PySide6.QtCore.QPersistentModelIndex) -> PySide6.QtCore.QSize:
+        return PySide6.QtCore.QSize(36, 32)
+
+
+# ---------------------------------------------------------------------------
+# Custom model – persists Notes edits
+# ---------------------------------------------------------------------------
+class _TableListModel(QStandardItemModel):
+    """Model that writes Notes edits back to the repo as soon as they commit."""
+
+    def __init__(self, panel: TableListPanel) -> None:
+        super().__init__(panel)
+        self._panel = panel
+
+    def setData(
+        self,
+        index: PySide6.QtCore.QModelIndex | PySide6.QtCore.QPersistentModelIndex,
+        value: object,
+        role: int = PySide6.QtCore.Qt.ItemDataRole.EditRole,
+    ) -> bool:
+        if not super().setData(index, value, role):
+            return False
+        if role == PySide6.QtCore.Qt.ItemDataRole.EditRole and index.column() == self._panel.COL_NOTES:
+            self._panel._persist_notes_for_row(index.row())
+        return True
+
+
+# ---------------------------------------------------------------------------
+# Panel
+# ---------------------------------------------------------------------------
+class TableListPanel(QWidget):
+    """Panel: list of user tables with link badge / Table / Notes / Source columns."""
+
+    tableSelected = PySide6.QtCore.Signal(str)
+    #: The tables changed here (edited, duplicated, renamed, deleted): the
+    #: window refreshes whatever is drawn from them.
+    changed = PySide6.QtCore.Signal()
+
+    COL_HAS_LINK = 0
+    COL_TABLE = 1
+    COL_NOTES = 2
+    COL_FILE = 3
+
+    #: The link column holds only its badge, so it is as narrow as the badge.
+    LINK_COLUMN_WIDTH = 28
+
+    ROLE_TABLE_NAME = PySide6.QtCore.Qt.ItemDataRole.UserRole + 1
+    ROLE_HAS_LINK = PySide6.QtCore.Qt.ItemDataRole.UserRole
+    ROLE_IS_QUERY = PySide6.QtCore.Qt.ItemDataRole.UserRole + 2
+    #: What the row is: "table", "query" or "function" (a stored function, read as the query of its grid).
+    ROLE_KIND = PySide6.QtCore.Qt.ItemDataRole.UserRole + 3
+
+    def __init__(self, repo:SqliteRepo,parent: QWidget ) -> None:
+        super().__init__(parent)
+        self._repo=repo
+        self._reloading = False
+        # Generated tables are hidden by default: a project with a few fits has
+        # more of them than imported tables, and they are not what the user is
+        # looking for in this list.  The choice is remembered in user.json.
+        self._show_generated = bool(
+            get_section(CONFIG_SECTION).get(CONFIG_SHOW_GENERATED, False)
+        )
+
+        self._view = self._build_view()
+        self._model = self._build_model()
+        self._view.setModel(self._model)
+
+        self._link_delegate = _LinkDelegate(self._view)
+        self._view.setItemDelegateForColumn(self.COL_HAS_LINK, self._link_delegate)
+
+        self._configure_headers()
+
+        sel = self._view.selectionModel()
+        if sel is not None:
+            sel.selectionChanged.connect(self._on_selection_changed)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.addWidget(self._view, 1)
+        self._build_context_menu()
+        self.setLayout(layout)
+
+    # ------------------------------------------------------------------
+    # Construction helpers
+    # ------------------------------------------------------------------
+    def _build_view(self) -> QTableView:
+        """Build the source list as a Finder sidebar rather than a data grid.
+
+        No frame: a sidebar is a plain list on the sidebar surface.
+        Alternating rows are on though, to match TablePreviewPanel - this grew
+        a Table/Link/File/Notes header since the "single column of names"
+        this was originally built for, and reads the same way a real table
+        does now, striped or not.
+        """
+        view = QTableView(self)
+        apply_fusion_for_item_view_styling(view)
+        view.setShowGrid(False)
+        view.setFrameShape(QFrame.Shape.NoFrame)
+        view.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        view.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        # No inline stylesheet here.  One that set only ``color`` on
+        # ::item:selected was what made a selected row two-tone: naming the
+        # subcontrol hands Qt the whole item-painting path, so the cell drew a
+        # default blue while the view drew its own selection colour behind it.
+        # The row's appearance belongs in the .qss with everything else.
+        view.setAlternatingRowColors(True)
+        view.setSortingEnabled(False)
+        view.setContextMenuPolicy(PySide6.QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
+        view.verticalHeader().setVisible(False)
+        view.verticalHeader().setDefaultSectionSize(32)
+        # Only the Notes column is meant to be editable.
+        view.setEditTriggers(
+            QAbstractItemView.EditTrigger.DoubleClicked
+            | QAbstractItemView.EditTrigger.EditKeyPressed
+            | QAbstractItemView.EditTrigger.SelectedClicked
+        )
+
+        return view
+
+    def _build_model(self) -> _TableListModel:
+        model = _TableListModel(self)
+        model.setColumnCount(4)
+        model.setHorizontalHeaderLabels(["", _("Table"), _("Notes"), _("Source")])
+        # No title over the link badges - the column is only as wide as one -
+        # but the header still says what it is when pointed at.
+        link_header = model.horizontalHeaderItem(self.COL_HAS_LINK)
+        if link_header is not None:
+            link_header.setToolTip(_("Link: a chain for a table linked to its source, Q for a saved query, "
+                                     "F for a stored function"))
+        return model
+
+    def _configure_headers(self) -> None:
+        """Configure manually resizable column headers."""
+        hh = self._view.horizontalHeader()
+        hh.setSectionResizeMode(self.COL_TABLE, QHeaderView.ResizeMode.Interactive)
+        # First and untitled, so it is only as wide as the badge it draws
+        # (16 px) and the cell's padding, in every language.
+        hh.setSectionResizeMode(self.COL_HAS_LINK, QHeaderView.ResizeMode.Fixed)
+        hh.resizeSection(self.COL_HAS_LINK, self.LINK_COLUMN_WIDTH)
+        hh.setSectionResizeMode(self.COL_FILE, QHeaderView.ResizeMode.Interactive)
+        hh.setSectionResizeMode(self.COL_NOTES, QHeaderView.ResizeMode.Interactive)
+        hh.resizeSection(self.COL_TABLE, 180)
+        hh.resizeSection(self.COL_FILE, 240)
+        hh.resizeSection(self.COL_NOTES, 200)
+        hh.setMinimumSectionSize(self.LINK_COLUMN_WIDTH)
+        hh.setSectionsMovable(False)
+        hh.setHighlightSections(False)
+        hh.setStretchLastSection(True)
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+    def set_repo(self, repo: SqliteRepo) -> None:
+        self._repo = repo
+
+    def clear(self) -> None:
+        self._reloading = True
+        try:
+            self._model.removeRows(0, self._model.rowCount())
+        finally:
+            self._reloading = False
+
+    def reload(self) -> None:
+        if self._repo is None:
+            self.clear()
+            return
+
+        self._reloading = True
+        selected_to_emit: str | None = None
+        # Kept across the reload by name: refreshed after Column Info, an edit or an import, the list stayed on
+        # its first row and the preview followed it.
+        current_before = self._current_source()
+        selected_before = [name for name, _kind in self.selected_sources()]
+
+        try:
+            self._model.removeRows(0, self._model.rowCount())
+
+            # Data sources, not tables: saved queries and stored functions are
+            # listed alongside physical tables and rendered by the same row builder.
+            df: pd.DataFrame = self._repo.list_data_sources(functions=True)
+            for row in df.itertuples(index=False):
+                if not self._show_generated and _is_generated(str(row.Table)):
+                    continue
+                self._model.appendRow(self._build_row(row))
+
+            if self._model.rowCount() > 0:
+                selected_to_emit = self._reselect(selected_before, current_before[0] if current_before else None)
+
+        except Exception as exc:
+            applogger.exception("Table list failed: %s", exc)
+
+        finally:
+            self._reloading = False
+
+        if selected_to_emit:
+            self.tableSelected.emit(selected_to_emit)
+
+    def _reselect(self, names: list[str], current: str | None) -> str:
+        """Select the rows named *names* again, *current* the current one; the first row when none is left.
+
+        Returns the current row's name, which the preview then shows.
+        """
+        rows = {str(self._model.item(row, self.COL_TABLE).data(self.ROLE_TABLE_NAME)): row
+                for row in range(self._model.rowCount())}
+        kept = [rows[name] for name in names if name in rows]
+        current_row = rows.get(current or "", kept[0] if kept else 0)
+        sm = self._view.selectionModel()
+        if sm is None:
+            self._view.selectRow(current_row)
+        else:
+            flags = PySide6.QtCore.QItemSelectionModel.SelectionFlag
+            sm.clearSelection()
+            for row in kept or [current_row]:
+                sm.select(self._model.index(row, self.COL_TABLE), flags.Select | flags.Rows)
+            sm.setCurrentIndex(self._model.index(current_row, self.COL_TABLE), flags.NoUpdate)
+        return str(self._model.item(current_row, self.COL_TABLE).data(self.ROLE_TABLE_NAME))
+
+    #: How many characters of a query's SQL the Source column shows before
+    #: cutting it off - the full text is always still in the tooltip.
+    _SOURCE_TEXT_MAX = 60
+
+    @classmethod
+    def _source_display_text(cls, is_query: bool, has_link: bool, source_path: str) -> str:
+        """Return the Source column's own text for one row.
+
+        A saved query shows its SQL, a stored function its formula (collapsed to one line, truncated); a
+        database-backed link shows "connection -> table" rather than the
+        raw "connection#table" list_data_sources/_link_display_path
+        (import_data_dialog.py) store in source_path; a file or web link
+        shows its filename; a plain table with no link shows nothing.
+        """
+        if is_query:
+            collapsed = " ".join(source_path.split())
+            if len(collapsed) <= cls._SOURCE_TEXT_MAX:
+                return collapsed
+            return collapsed[: cls._SOURCE_TEXT_MAX - 1] + "…"
+
+        if not has_link or not source_path:
+            return ""
+
+        # A database link's own display path is "connection#table" (or
+        # "connection#query") - never a filesystem path, so a "/" before
+        # the "#" means this is instead a file path that happens to
+        # contain one, not a database link.
+        head, sep, tail = source_path.partition("#")
+        if sep and "/" not in head and "://" not in source_path:
+            return f"{head} → {tail}"
+
+        return Path(source_path).name
+
+    def _build_row(self, row) -> list[QStandardItem]:
+        """Build the four QStandardItems for one row of the source dataframe."""
+        table_name = str(row.Table)
+        has_link = bool(row.has_link)
+        kind = str(getattr(row, "kind", "table"))
+        is_query = kind == "query"
+        source_path = "" if isna(row.source_path) else str(row.source_path)
+        notes = "" if isna(row.Notes) else str(row.Notes)
+
+        it_table = QStandardItem(table_name)
+        it_table.setData(table_name, self.ROLE_TABLE_NAME)
+        it_table.setData(is_query, self.ROLE_IS_QUERY)
+        it_table.setData(kind, self.ROLE_KIND)
+        it_table.setEditable(False)
+
+        # has_link is stored on UserRole; the delegate draws the icon/dot.
+        it_link = QStandardItem()
+        it_link.setData(has_link, self.ROLE_HAS_LINK)
+        it_link.setData(is_query, self.ROLE_IS_QUERY)
+        it_link.setData(kind, self.ROLE_KIND)
+        tips = {"query": _("Saved query"), "function": _("Stored function: its values on its range")}
+        it_link.setToolTip(tips.get(kind, _("Linked to its source") if has_link else ""))
+        it_link.setEditable(False)
+        it_link.setFlags(PySide6.QtCore.Qt.ItemFlag.ItemIsEnabled | PySide6.QtCore.Qt.ItemFlag.ItemIsSelectable)
+
+        source_text = self._source_display_text(kind != "table", has_link, source_path)
+        it_file = QStandardItem(source_text)
+        # The short/truncated form goes in the cell; the full path or SQL
+        # goes in the tooltip - list_data_sources puts a query's SQL in
+        # source_path, same field a file/database link's path lives in.
+        it_file.setToolTip(source_path)
+        it_file.setEditable(False)
+        if not source_text:
+            # Dim placeholder so empty cells don't compete visually.
+            it_file.setForeground(QColor(128, 128, 128, 80))
+
+        it_notes = QStandardItem(notes)
+        it_notes.setEditable(kind == "table")
+
+        for item in (it_table, it_link, it_file, it_notes):
+            item.setFlags(item.flags() | PySide6.QtCore.Qt.ItemFlag.ItemIsSelectable | PySide6.QtCore.Qt.ItemFlag.ItemIsEnabled)
+
+        return [it_link, it_table, it_notes, it_file]
+
+    @property
+    def current(self) -> str | None:
+        """Return the currently selected table name, if any."""
+        table, _has_link = self._selected_row_info()
+        return table
+
+    def current_table(self) -> str | None:
+        """Compatibility helper for callers that prefer a method."""
+        return self.current
+
+    def select_table(self, table: str) -> None:
+        table = (table or "").strip()
+        if not table:
+            return
+        for r in range(self._model.rowCount()):
+            idx = self._model.index(r, self.COL_TABLE)
+            if str(self._model.data(idx, PySide6.QtCore.Qt.ItemDataRole.DisplayRole)) == table:
+                self._view.selectRow(r)
+                self._view.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
+                return
+
+    # ------------------------------------------------------------------
+    # Persistence
+    # ------------------------------------------------------------------
+    def _persist_notes_for_row(self, row: int) -> None:
+        if self._reloading or self._repo is None:
+            return
+        table = self._model.item(row, self.COL_TABLE).data(self.ROLE_TABLE_NAME)
+        notes = self._model.item(row, self.COL_NOTES).text()
+        if table:
+            self._repo.set_table_notes(str(table), notes)
+
+    # ------------------------------------------------------------------
+    # Selection & context menu
+    # ------------------------------------------------------------------
+    def selected_tables(self) -> list[str]:
+        """Return all selected table names in visual row order."""
+        sm = self._view.selectionModel()
+        if sm is None:
+            return []
+        rows = sorted({index.row() for index in sm.selectedRows(self.COL_TABLE)})
+        tables: list[str] = []
+        for row in rows:
+            item = self._model.item(row, self.COL_TABLE)
+            if item is None:
+                continue
+            table = item.data(self.ROLE_TABLE_NAME)
+            if table:
+                tables.append(str(table))
+        return tables
+
+    def selected_sources(self) -> list[tuple[str, str]]:
+        """Return the selected rows as ``(name, kind)`` - "table", "query" or "function" - in row order.
+
+        The list holds all three and they are deleted differently - a saved
+        query is a row in ``__queries__``, a function one in ``__sympy__``, not
+        a table, so DROP TABLE on its name matches nothing and leaves it exactly
+        where it was.
+        """
+        selection = self._view.selectionModel()
+        if selection is None:
+            return []
+
+        rows = sorted({index.row() for index in selection.selectedRows(self.COL_TABLE)})
+        sources: list[tuple[str, str]] = []
+        for row in rows:
+            item = self._model.item(row, self.COL_TABLE)
+            if item is None:
+                continue
+            name = item.data(self.ROLE_TABLE_NAME)
+            if name:
+                sources.append((str(name), str(item.data(self.ROLE_KIND) or "table")))
+        return sources
+
+    def _current_source(self) -> tuple[str, str] | None:
+        """Return the current row as ``(name, kind)``, or None."""
+        row = self._current_row()
+        if row < 0:
+            return None
+        item = self._model.item(row, self.COL_TABLE)
+        if item is None:
+            return None
+        name = item.data(self.ROLE_TABLE_NAME)
+        if not name:
+            return None
+        return str(name), str(item.data(self.ROLE_KIND) or "table")
+
+    def _current_row(self) -> int:
+        """Return the current row, falling back to the first selected row."""
+        current = self._view.currentIndex()
+        if current.isValid():
+            return current.row()
+        sm = self._view.selectionModel()
+        if sm is None:
+            return -1
+        rows = sm.selectedRows(self.COL_TABLE)
+        return rows[0].row() if rows else -1
+
+    def _selected_row_info(self) -> tuple[str | None, bool]:
+        """Return the current-row table info.
+
+        Multi-selection is allowed, but Plot/Export/Rename/Link act on the
+        current row. Delete uses selected_tables().
+        """
+        row = self._current_row()
+        if row < 0:
+            return None, False
+        table_item = self._model.item(row, self.COL_TABLE)
+        link_item = self._model.item(row, self.COL_HAS_LINK)
+        if table_item is None or link_item is None:
+            return None, False
+        table = table_item.data(self.ROLE_TABLE_NAME)
+        has_link = bool(link_item.data(self.ROLE_HAS_LINK))
+        return (str(table) if table else None), has_link
+
+    def _on_selection_changed(self, *_args: object) -> None:
+        if self._reloading:
+            return
+        table, _unused = self._selected_row_info()
+        if table:
+            self.tableSelected.emit(table)
+
+    def _build_context_menu(self) -> None:
+        self._view.customContextMenuRequested.connect(
+            self._show_context_menu
+        )
+
+
+    def show_menu_at(self, global_pos: PySide6.QtCore.QPoint) -> None:
+        """The right-click menu, for the selected rows, opened at *global_pos* (the title's menu button)."""
+        self._show_context_menu(None, global_pos)
+
+    def edit_selected(self) -> None:
+        """Edit what is selected: the table, the stored function or the saved query - as the menu's Edit."""
+        parent = self.window()
+        items = self._edit_items(parent, self.selected_sources(), any(
+            kind != "table" for _name, kind in self.selected_sources())) if parent is not None else []
+        if items:
+            items[0].callback()
+
+    def _show_context_menu(self, pos: PySide6.QtCore.QPoint | None,
+                           global_pos: PySide6.QtCore.QPoint | None = None) -> None:
+        if pos is not None:
+            self._select_clicked_row(pos)
+        table, has_link = self._selected_row_info()
+        selected_tables = self.selected_tables()
+        if (not table and not selected_tables) or self._repo is None:
+            return
+        parent = self.window()
+        if parent is None:
+            return
+
+        selected_sources = self.selected_sources()
+        has_query = any(kind != "table" for _name, kind in selected_sources)
+
+        # New Chart, Edit and Delete are the buttons beside the Tables title: not repeated here.
+        items: list[MenuItem | None] = []
+        if len(selected_sources) == 1:
+            items.append(
+                MenuItem(
+                    text=_("Rename"),
+                    tooltip=_("Rename the selected table, saved query or stored function"),
+                    callback=self._rename_table,
+                    icon="rename",
+                )
+            )
+        if len(selected_sources) == 1 and not has_query:
+            items.append(
+                MenuItem(
+                    text=_("Duplicate table"),
+                    tooltip=_("Copy this table, rows and columns, under a new name"),
+                    callback=self._duplicate_table,
+                    icon="duplicate_table",
+                )
+            )
+        items.append(None)
+        if len(selected_sources) == 1:
+            items.append(
+                MenuItem(
+                    text=_("History…"),
+                    tooltip=_("The operations applied to or from this table"),
+                    callback=self._show_history,
+                    icon="operation_history",
+                )
+            )
+        if len(selected_sources) == 1 and not has_query and self._repo is not None and self._repo.models():
+            items.append(
+                MenuItem(
+                    text=_("Predict with a saved model…"),
+                    tooltip=_("Apply a model kept in the project to this table: its predictions in a new table"),
+                    callback=self._predict_with_model,
+                    icon="chart_from_columns",
+                )
+            )
+        if has_link:
+            items.append(
+                MenuItem(
+                    text=_("Update link"),
+                    tooltip=_("Update current table from its link"),
+                    callback=self._refresh_link_for_table,
+                    icon="link",
+                )
+            )
+        items.extend(
+            [
+                MenuItem(
+                    text=_("Export…"),
+                    tooltip=_("Save the whole table, or what the query returns, as CSV or Excel"),
+                    callback=self._export_table,
+                    icon="export_rows",
+                ),
+                None,
+                MenuItem(
+                    text=_("Delete unused generated tables…"),
+                    tooltip=_("Delete the tables written by operations that no chart or saved query uses"),
+                    callback=self.delete_unused_generated,
+                    icon="delete",
+                ),
+                MenuItem(
+                    text=_("Show generated tables"),
+                    tooltip=_(
+                        "Show the tables written by fits, smoothing, outlier "
+                        "and spectral operations. Their names start with an "
+                        "underscore."
+                    ),
+                    callback=self.set_generated_visible,
+                    icon="preview",
+                    checkable=True,
+                    checked=self._show_generated,
+                ),
+                MenuItem(
+                    text=_("Reload tables"),
+                    tooltip=_("Reload database tables"),
+                    callback=self.reload,
+                    icon="reload",
+                ),
+            ]
+        )
+
+        menu = create_menu(self, items, icons=CONTEXT_MENU_ICONS)
+        menu.exec(global_pos if global_pos is not None else self._view.viewport().mapToGlobal(pos))
+
+    def _select_clicked_row(self, pos: PySide6.QtCore.QPoint) -> None:
+        """The row under a right-click made current, the selection kept; selected when nothing is."""
+        clicked_index = self._view.indexAt(pos)
+        if clicked_index.isValid():
+            sm = self._view.selectionModel()
+            if sm is not None:
+                clicked_row = clicked_index.row()
+                clicked_table_index = self._model.index(clicked_row, self.COL_TABLE)
+
+                # Do not call selectRow() here. On a right-click it clears the
+                # existing multi-selection. Keep the selected rows exactly as
+                # they are and only move the current index used by Plot/Export.
+                sm.setCurrentIndex(
+                    clicked_table_index,
+                    PySide6.QtCore.QItemSelectionModel.SelectionFlag.NoUpdate,
+                )
+
+                # If the user opens the context menu with no selected rows,
+                # create a single selection for the clicked row.
+                if not sm.hasSelection():
+                    sm.select(
+                        clicked_table_index,
+                        PySide6.QtCore.QItemSelectionModel.SelectionFlag.ClearAndSelect
+                        | PySide6.QtCore.QItemSelectionModel.SelectionFlag.Rows,
+                    )
+
+    @staticmethod
+    def _delete_texts(selected_sources: list[tuple[str, str]]) -> tuple[str, str]:
+        """Delete's text and tooltip, named for what is selected."""
+        has_query = any(kind != "table" for _name, kind in selected_sources)
+        has_function = any(kind == "function" for _name, kind in selected_sources)
+        # Named for what is actually selected: "Delete selected tables" over a
+        # saved query is a menu entry that promises the wrong thing.
+        if len(selected_sources) > 1:
+            delete_text = (
+                _("Delete selected items…") if has_query else _("Delete selected tables…")
+            )
+            delete_tip = (
+                _("Delete {count} selected items").format(count=len(selected_sources))
+                if has_query
+                else _("Delete {count} selected tables").format(
+                    count=len(selected_sources)
+                )
+            )
+        else:
+            delete_text = _("Delete…")
+            delete_tip = (
+                _("Delete the selected stored function")
+                if has_function
+                else _("Delete the selected saved query")
+                if has_query
+                else _("Delete the selected table")
+            )
+        return delete_text, delete_tip
+
+    def _edit_items(self, parent: QWidget, selected_sources: list[tuple[str, str]], has_query: bool) -> list[MenuItem]:
+        """The Edit entry for the selection: the table, the stored function or the saved query."""
+        items: list[MenuItem] = []
+        # The whole table is managed here; the data preview below works on
+        # the cells selected in it - an action belongs to one menu, not both.
+        # Editing: the table in the editor, a saved query in the Query
+        # Builder (opened empty from the menu bar and New Table).
+        if len(selected_sources) == 1 and not has_query:
+            items.append(
+                MenuItem(
+                    text=_("Edit table..."),
+                    tooltip=_(
+                        "Edit cells, add or delete rows and columns, change a "
+                        "column's type, and manage the Hide and ClusterId columns"
+                    ),
+                    callback=self._edit_table,
+                    icon="document-edit",
+                )
+            )
+        elif self._single_selected_function() is not None and callable(getattr(parent, "edit_stored_function", None)):
+            items.append(
+                MenuItem(
+                    text=_("Edit function…"),
+                    tooltip=_("Open this stored function in Functions: its formula, parameters and range"),
+                    callback=lambda: parent.edit_stored_function(self._single_selected_function() or ""),
+                    icon="document-edit",
+                )
+            )
+        elif self._single_selected_query() is not None:
+            items.append(
+                MenuItem(
+                    text=_("Edit query…"),
+                    tooltip=_("Open this saved query in the Query Builder"),
+                    callback=self._edit_selected_query,
+                    icon="query_builder",
+                )
+            )
+        return items
+
+    def _single_selected_query(self) -> str | None:
+        """The name of the selected saved query, when exactly one row is selected and it is one."""
+        sources = self.selected_sources()
+        current = self._current_source()
+        if len(sources) == 1 and current is not None and current[1] == "query":
+            return current[0]
+        return None
+
+    def _single_selected_function(self) -> str | None:
+        """The name of the selected stored function, when exactly one row is selected and it is one."""
+        sources = self.selected_sources()
+        current = self._current_source()
+        if len(sources) == 1 and current is not None and current[1] == "function":
+            return current[0]
+        return None
+
+    def _edit_selected_query(self) -> None:
+        """Open the selected saved query in the Query Builder.
+
+        Reload afterwards regardless of the dialog's own result - a rename
+        or a delete from inside the builder should not leave a stale row
+        (or a stale SQL preview in the tooltip) behind here.
+        """
+        current_source = self._current_source()
+        if self._repo is None or current_source is None or current_source[1] != "query":
+            return
+        name, _kind = current_source
+        QueryBuilderDialog(self._repo, query_name=name, parent=self.window()).exec()
+        self.reload()
+
+    def _selected_table(self) -> str | None:
+        """The selected table's name, when exactly one table (not a query) is selected."""
+        current = self._current_source()
+        if self._repo is None or current is None or current[1] != "table" or len(self.selected_sources()) != 1:
+            return None
+        return current[0]
+
+    def edit_selected_table(self) -> bool:
+        """Open the table editor on the selected table; False when no one table is selected."""
+        if self._selected_table() is None or self._repo is None:
+            return False
+        self._edit_table()
+        return True
+
+    def _edit_table(self) -> None:
+        """Open the table editor on the selected table, then refresh what shows it."""
+        table = self._selected_table()
+        if table is None or self._repo is None:
+            return
+        TableEditorDialog(self._repo, table, self.window()).exec()
+        self.reload()
+        # A column added, dropped or retyped, or rows hidden: every chart and
+        # the preview built on this table may draw something else now.
+        self.changed.emit()
+
+    def _duplicate_table(self) -> None:
+        """Copy the selected table under a new name, and select the copy."""
+        table = self._selected_table()
+        if table is None or self._repo is None:
+            return
+        try:
+            name = self._repo.duplicate_table(table)
+        except (ValueError, DatabaseError) as exc:
+            applogger.exception("Duplicate table failed: %s", exc)
+            QMessageBox.warning(self, _("Could not do that"), str(exc))
+            return
+        applogger.info("Table '%s' duplicated as '%s'.", table, name)
+        self.reload()
+        self.changed.emit()
+        parent = self.window()
+        panel = getattr(parent, "_table_panel", None)
+        if panel is not None and hasattr(panel, "select_table"):
+            panel.select_table(name)
+
+    def _show_history(self) -> None:
+        """Show the recorded operations that read or wrote the selected table."""
+        current = self._current_source()
+        if self._repo is None or current is None:
+            return
+        OperationHistoryDialog(self._repo, current[0], parent=self.window()).exec()
+
+    def _predict_with_model(self) -> None:
+        """Predict with a saved model: the selected table scored, the predictions in a new table."""
+        current = self._current_source()
+        if self._repo is None or current is None:
+            return
+        from app.dialogs.predict_dialog import PredictDialog
+
+        dialog = PredictDialog(self._repo, self.window(), table=current[0])
+        dialog.applied.connect(self.reload)
+        dialog.exec()
+        if dialog.created_table_name:
+            self.changed.emit()
+
+    def delete_unused_generated(self) -> None:
+        """The generated tables nothing uses, listed and deleted once confirmed (Undo takes each back)."""
+        if self._repo is None:
+            return
+        names = self._repo.unused_generated_tables()
+        if not names:
+            QMessageBox.information(self, _("Generated tables"), _("Every generated table is used by a chart or "
+                                                                   "a saved query: nothing to delete."))
+            return
+        shown = "\n".join(names[:20]) + (f"\n… (+{len(names) - 20})" if len(names) > 20 else "")
+        answer = QMessageBox.question(
+            self, _("Generated tables"),
+            _("{count} generated tables are used by no chart and no saved query:\n\n{names}\n\n"
+              "Delete them? Undo takes them back.").format(count=len(names), names=shown))
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+        for name in names:
+            self._repo.delete_table(name)
+        self.reload()
+
+    def set_generated_visible(self, visible: bool) -> None:
+        """Show or hide the tables written by data operations."""
+        self._show_generated = bool(visible)
+        update_section(CONFIG_SECTION, **{CONFIG_SHOW_GENERATED: self._show_generated})
+        self.reload()
+
+    def _on_new_plot_tab(self) -> None:
+        """Emit a signal to request a new plot tab for the selected table."""
+        parent = self.window()
+        if parent is None or self._repo is None:
+            return
+        fn = getattr(parent, "_on_new_plot_tab", None)
+        if callable(fn):
+            fn()
+
+    def _rename_table(self) -> None:
+        """Rename the selected table, saved query or stored function, and refresh dependent UI."""
+        sources = self.selected_sources()
+        if len(sources) != 1 or self._repo is None:
+            return
+        name, kind = sources[0]
+        new, ok = QInputDialog.getText(self, _("Rename"), _("New name for '{name}'").format(name=name),
+                                       QLineEdit.EchoMode.Normal, name)
+        new = (new or "").strip()
+        if not ok or not new or new == name:
+            return
+        try:
+            if kind == "query":
+                self._repo.rename_query(name, new)
+            elif kind == "function":
+                from app.data_operations import sympy_store
+
+                sympy_store.rename(self._repo, name, new)
+            else:
+                self._repo.rename_table(name, new)
+        except ValueError as exc:
+            QMessageBox.warning(self, _("Rename"), str(exc))
+            return
+        except Exception as exc:
+            applogger.exception("Rename failed: %s", exc)
+            return
+        self.reload()
+        self.changed.emit()
+        parent = self.window()
+        if parent is not None and hasattr(parent, "_table_panel"):
+            parent._table_panel.select_table(new)  # type: ignore[attr-defined]
+
+    def _export_table(self) -> None:
+        """Save the selected table, or saved query's result, as CSV or Excel - the file type chosen."""
+        table, _unused = self._selected_row_info()
+        if not table or self._repo is None:
+            return
+        path, chosen = QFileDialog.getSaveFileName(
+            self, _("Export"), f"{table}.csv", _("CSV (*.csv);;Excel (*.xlsx)"),
+        )
+        if not path:
+            return
+        target = Path(path)
+        if target.suffix.lower() not in (".csv", ".xlsx"):
+            target = target.with_suffix(".xlsx" if "xlsx" in chosen else ".csv")
+        try:
+            source = self._repo.get_data_source(table)
+            if source is None:
+                return
+            frame = self._repo.query_df(f"SELECT * FROM {source.from_clause()}")
+            if target.suffix.lower() == ".xlsx":
+                frame.to_excel(target, index=False, engine="openpyxl")
+            else:
+                frame.to_csv(target, index=False)
+        except Exception as exc:
+            applogger.exception("Export failed: %s", exc)
+            QMessageBox.warning(self, _("Could not do that"), str(exc))
+            return
+        applogger.info("Exported %s to %s.", table, target)
+
+    def _refresh_link_for_table(self) -> None:
+        """Refresh the external link associated with a table.
+
+        A file or web link carries everything it needs. A PostgreSQL or
+        MySQL link never carries its password - see
+        ``app.utils.data_sources.DatabaseConnection.to_link_settings`` - so
+        this is where that gets asked for, fresh, every time.
+        """
+        table, _unused = self._selected_row_info()
+        if self._repo is None or table is None:
+            return
+        link = self._repo.get_table_link(table)
+        if not link:
+            applogger.exception(f"No link for this table: {table}")
+            return
+
+        source = (link.get("settings") or {}).get("source") or {}
+        password: str | None = None
+        if source.get("kind") in ("postgres", "mysql"):
+            entered, ok = QInputDialog.getText(
+                self,
+                _("Update link"),
+                _("Password for {username}@{host}:").format(
+                    username=source.get("username", ""), host=source.get("host", "")
+                ),
+                QLineEdit.EchoMode.Password,
+            )
+            if not ok:
+                return
+            password = entered
+
+        try:
+            refresh_link(self._repo, link_id=int(link["id"]), password=password)
+            self.changed.emit()
+        except Exception as exc:
+            applogger.exception(f"Link refresh failed: {exc}")
+
+    def _delete_selected(self) -> None:
+        """Delete the selected tables, saved queries and stored functions, after confirmation.
+
+        All three appear in this list and each needs its own call: deleting a
+        saved query used to run DROP TABLE on its name, which matches nothing,
+        so the row was still there when the list reloaded.
+        """
+        if self._repo is None:
+            return
+
+        sources = self.selected_sources()
+        if not sources:
+            current = self._current_source()
+            sources = [current] if current else []
+        if not sources:
+            return
+
+        if not self._confirm_delete(sources):
+            return
+
+        try:
+            for name, kind in sources:
+                if kind == "query":
+                    self._repo.delete_query(name)
+                    applogger.info("Deleted query '%s'.", name)
+                elif kind == "function":
+                    self._repo.delete_sympy_function(name)
+                    applogger.info("Deleted stored function '%s'.", name)
+                else:
+                    self._repo.delete_table(name)
+            self.reload()
+            self.changed.emit()
+
+            # Ensure dependent previews/listeners are notified after delete.
+            current_table = self.current
+            self.tableSelected.emit(current_table or "")
+        except Exception as exc:
+            applogger.exception(f"Delete failed: {exc}")
+
+    def _confirm_delete(self, sources: list[tuple[str, str]]) -> bool:
+        """Ask before deleting, in the wording the selection deserves.
+
+        A saved query gets its own question because its consequence is
+        different: the table is gone either way, but a chart built on a query
+        stops finding its data.
+        """
+        if len(sources) == 1:
+            name, kind = sources[0]
+            if kind == "query":
+                return ask(self, "query.confirm_delete", name=name)
+            if kind == "function" and self._repo is not None:
+                charts = self._repo.charts_drawing_function(name)
+                if charts:
+                    listed = "\n".join(f"- {chart}" for chart in charts[:12])
+                    if len(charts) > 12:
+                        listed += "\n" + _("... and {count} more").format(count=len(charts) - 12)
+                    return ask(self, "function.confirm_delete_drawn", name=name, count=len(charts), charts=listed)
+                return ask(self, "function.confirm_delete", name=name)
+            return ask(self, "table.confirm_delete", table=name)
+
+        preview = "\n".join(
+            f"- {name}" + (f" ({kind})" if kind != "table" else "")
+            for name, kind in sources[:12]
+        )
+        if len(sources) > 12:
+            preview += f"\n... and {len(sources) - 12} more"
+
+        if any(kind != "table" for _name, kind in sources):
+            return ask(
+                self, "source.confirm_delete_many", count=len(sources), sources=preview
+            )
+        return ask(
+            self,
+            "table.confirm_delete_many",
+            count=len(sources),
+            tables=preview,
+        )
+
+
+
+

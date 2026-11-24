@@ -1,0 +1,893 @@
+"""Paged preview of a database table.
+
+Rows are fetched in chunks through a lazy model rather than loaded up front, so
+opening a table with millions of rows costs the same as opening a small one.
+The panel also hosts the table context-menu operations (hide, filter, column
+edit) that are implemented on the repository.
+"""
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any, ClassVar
+
+import pandas as pd
+from PySide6.QtCore import (
+    QAbstractTableModel,
+    QEvent,
+    QModelIndex,
+    QObject,
+    QPersistentModelIndex,
+    QPoint,
+    Qt,
+    Signal,
+)
+from PySide6.QtGui import QColor, QKeySequence, QShortcut
+from PySide6.QtWidgets import (
+    QApplication,
+    QFileDialog,
+    QFrame,
+    QHeaderView,
+    QInputDialog,
+    QLineEdit,
+    QMenu,
+    QMessageBox,
+    QStyledItemDelegate,
+    QTableView,
+    QVBoxLayout,
+    QWidget,
+)
+
+from app.data import column_metadata, sql_builders
+from app.data.sqlite_repo import SqliteRepo
+from app.logs.logger import applogger
+from app.styles.style import (
+    CONTEXT_MENU_ICONS,
+    MenuItem,
+    apply_fusion_for_item_view_styling,
+    create_menu,
+    create_menu_item,
+)
+from app.utils.coercion import column_of, to_numbers
+from app.utils.config import get_constant
+from app.utils.i18n import _
+from app.utils.messages import show_message
+
+# Rows loaded when previewing a saved query.  A preview is for judging shape
+# and content, not for scrolling a whole result set.
+QUERY_PREVIEW_ROW_LIMIT: int = get_constant("query_preview_row_limit", 1000)
+
+
+class _BestFormatDelegate(QStyledItemDelegate):
+    """The Best format, sized to the cell: 1/3 is 0.333 in a narrow column and 0.333333333333 in a wide one
+    (column_metadata.best_text) - the stored value itself unchanged, edited and copied whole."""
+
+    PADDING = 24
+
+    def initStyleOption(self, option, index) -> None:
+        super().initStyleOption(option, index)
+        model = index.model()
+        if not getattr(model, "shows_best", lambda _c: False)(index.column()):
+            return
+        # The room left for the text: the cell less the sheet's padding (8 px a side on #dataTable::item) and
+        # the item's own text margins. The cell's width less a guess of 10 left 0.333… elided where 0.33 fits.
+        room = option.rect.width() - self.PADDING
+        metrics = option.fontMetrics
+        option.text = column_metadata.best_text(option.text, lambda text: metrics.horizontalAdvance(text) <= room)
+
+
+def _type_code(decl_type: str | None) -> str:
+    match (decl_type or "").strip().upper():
+        case 'BLOB':
+            return "BLB"
+        case '':
+            return "?"
+        case 'INT'|'INTEGER'|'TINYINT'|'SMALLINT'|'MEDIUMINT'|'BIGINT'|'UNSIGNED BIG INT'|'INT2'|'INT8':
+            return 'I'
+        case 'REAL'|'DOUBLE'|'DOUBLE PRECISION'|'FLOAT'|'NUMERIC'|'DECIMAL(10,5)':
+            return 'F'
+        case 'BOOLEAN':
+            return 'B'
+        case 'DATE'|'DATETIME'|'TIMESTAMP'|'TIME':
+            return 'DT'  # Column Info says TIMESTAMP for these: the header agrees
+        case other if other.startswith(('TIMESTAMP', 'DATETIME')):  # TIMESTAMP WITH TIME ZONE...
+            return 'DT'
+        case _ :
+            return 'S'
+
+
+#: Row height of every data table (the preview, the table editor).
+DATA_TABLE_ROW_HEIGHT = 32
+
+
+def style_data_table(view: QTableView) -> None:
+    """Draw *view* as the application draws a table of data.
+
+    The preview and the table editor show the same table, so they share
+    one look: the ``QTableView#dataTable`` rules of the stylesheets, no
+    grid, alternating rows, no frame (the card around the view draws it),
+    and columns resized by hand.
+    """
+    view.setObjectName("dataTable")
+    apply_fusion_for_item_view_styling(view)
+    view.setShowGrid(False)
+    view.setAlternatingRowColors(True)
+    view.setFrameShape(QFrame.Shape.NoFrame)
+    view.setSortingEnabled(False)
+    view.verticalHeader().setDefaultSectionSize(DATA_TABLE_ROW_HEIGHT)
+    header = view.horizontalHeader()
+    # Interactive rather than ResizeToContents: the latter locks every
+    # column at its computed width and silently undoes a drag the moment
+    # the user lets go of it. Columns are still sized to fit whenever a
+    # new model is set (resizeColumnsToContents), so a view opens fitted;
+    # the difference is that a resize the user makes now sticks.
+    header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+    header.setHighlightSections(False)
+
+
+
+
+class DataFrameTableModel(QAbstractTableModel):
+    """Read-only view over an already-materialised DataFrame.
+
+    Used for saved queries and for the query builder's Run preview.  A query
+    result has no rowid, so the chunked model's rowid paging does not apply to
+    it; a bounded page loaded up front is simpler and, for a preview, cheaper
+    than inventing OFFSET paging that nobody scrolls through.
+    """
+
+    def __init__(self, frame: Any, parent: QObject | None = None) -> None:
+        super().__init__(parent)
+        self._frame = frame
+        self._columns = [str(column) for column in frame.columns]
+
+    @property
+    def frame(self) -> Any:
+        """Return the underlying DataFrame."""
+        return self._frame
+
+    def rowCount(self, parent: QModelIndex | QPersistentModelIndex = QModelIndex()) -> int:
+        return 0 if parent.isValid() else int(len(self._frame))
+
+    def columnCount(self, parent: QModelIndex | QPersistentModelIndex = QModelIndex()) -> int:
+        return 0 if parent.isValid() else len(self._columns)
+
+    def column_name(self, index: int) -> str | None:
+        """Return the column name at a position, mirroring LazyTableModel."""
+        return self._columns[index] if 0 <= index < len(self._columns) else None
+
+    def data(self, index: QModelIndex | QPersistentModelIndex, role: int = Qt.ItemDataRole.DisplayRole):
+        # EditRole too: copying reads the stored value, which here is the shown one.
+        if not index.isValid() or role not in (Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.EditRole):
+            return None
+        try:
+            value = self._frame.iat[index.row(), index.column()]
+        except IndexError:
+            return None
+        return "" if value is None else str(value)
+
+    def headerData(self, section: int, orientation, role: int = Qt.ItemDataRole.DisplayRole):
+        if role != Qt.ItemDataRole.DisplayRole:
+            return None
+        if orientation == Qt.Orientation.Horizontal:
+            return self._columns[section] if section < len(self._columns) else None
+        return section + 1
+
+
+class TablePreviewPanel(QWidget):
+    """Reusable table preview panel with a context-sensitive right-click menu."""
+    refresh = Signal()
+    #: "New chart from selected columns": the source and its picked columns.
+    chart_requested = Signal(str, list)
+    #: "Histogram and statistics": the source and its one selected column.
+    histogram_requested = Signal(str, str)
+    #: Analysis > Statistics on (table, column): the column's statistics, as the analysis computes them.
+    statistics_requested = Signal(str, str)
+    #: A SELECT of the selected cells' columns and rows, for the Query Builder.
+    query_requested = Signal(str)
+    #: Rows of these tables were marked Selected here: the charts ring them too (todo R-07).
+    selected_rows_changed = Signal(list)
+    #: Show only Selected switched for the table shown: every chart of it draws again (R-07).
+    selected_only_changed = Signal(list)
+
+    def __init__(self, parent: QWidget, repo:SqliteRepo) -> None:
+        super().__init__(parent)
+        self._repo = repo
+        self._table: str|None = None
+
+        self.view = QTableView(self)
+        # Finder's list view: alternating rows carry the eye across a wide
+        # row, and the frame is dropped so the list meets the sidebar
+        # hairline instead of drawing a second border beside it.
+        style_data_table(self.view)
+
+        # QTableView is backed by a viewport. Right-click events may arrive on
+        # the viewport, not on the view, so wire both and also filter events.
+        for widget in (self.view, self.view.viewport()):
+            widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+            widget.installEventFilter(self)
+        self.view.customContextMenuRequested.connect(self._show_context_menu)
+        self.view.viewport().customContextMenuRequested.connect(self._show_context_menu)
+
+        self.view.horizontalHeader().setStretchLastSection(True)
+        self.view.verticalHeader().setVisible(False)
+        # Best: a number with as many digits as its column's width shows, redrawn as the column is resized.
+        self.view.setItemDelegate(_BestFormatDelegate(self.view))
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.addWidget(self.view, 1)
+        self.setLayout(layout)
+
+        copy = QShortcut(QKeySequence(QKeySequence.StandardKey.Copy), self.view)
+        copy.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        copy.activated.connect(self._copy_selection)
+
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:
+        if watched in (self.view, self.view.viewport()):
+            event_type = event.type()
+            if event_type == QEvent.Type.ContextMenu:
+                pos = event.pos()  # type: ignore[attr-defined]
+                if watched is self.view:
+                    pos = self.view.viewport().mapFrom(self.view, pos)
+                self._show_context_menu(pos)
+                event.accept()
+                return True
+            if event_type == QEvent.Type.MouseButtonPress and event.button() == Qt.MouseButton.RightButton:  # type: ignore[attr-defined]
+                pos = event.pos()  # type: ignore[attr-defined]
+                if watched is self.view:
+                    pos = self.view.viewport().mapFrom(self.view, pos)
+                self._show_context_menu(pos)
+                event.accept()
+                return True
+        return super().eventFilter(watched, event)
+
+    def clear(self) -> None:
+        self._repo = None
+        self._table = None
+        self.view.setModel(None)
+
+    def _open_column_info(self, column: str) -> None:
+        """Column Info (R-08): the column's name, types and description; the preview reloads after."""
+        from app.dialogs.column_info_dialog import ColumnInfoDialog
+
+        if self._repo is None or not self._table:
+            return
+        dialog = ColumnInfoDialog(self._repo, str(self._table), column, self)
+        if dialog.exec():
+            self._reload_model()
+            self.refresh.emit()
+
+    def set_context(self, repo: SqliteRepo | None, table: str | None) -> None:
+        if repo is None or not table:
+            self.clear()
+            return
+        self._repo = repo
+        self._table = table
+        self._reload_model()
+
+    def set_model(self, model) -> None:
+        self._repo = None
+        self._table = None
+        self.view.setModel(model)
+        self.view.resizeColumnsToContents()
+
+    def _reload_model(self) -> None:
+        """Show the current source, whether it is a table or a saved query.
+
+        The source is resolved through the repository rather than assumed to be
+        a table, which is what lets a saved query be previewed with no second
+        code path here.  Queries get the DataFrame model because their result
+        has no rowid for the chunked model to page on.
+        """
+        if self._repo is None or not self._table:
+            self.view.setModel(None)
+            return
+
+        try:
+            source = self._repo.get_data_source(self._table)
+            if source is not None and source.is_query:
+                frame = self._repo.data_source_page(
+                    source, limit=QUERY_PREVIEW_ROW_LIMIT, offset=0
+                )
+                self.view.setModel(DataFrameTableModel(frame, parent=self.view))
+                self.view.resizeColumnsToContents()
+                return
+
+            self.view.setModel(LazyTableModel(self._repo, self._table, parent=self.view))
+            self.view.resizeColumnsToContents()
+        except Exception as exc:
+            applogger.exception("Preview model init failed for source=%s: %s", self._table, exc)
+            self.view.setModel(None)
+
+    def _model(self) -> LazyTableModel | None:
+        model = self.view.model()
+        return model if isinstance(model, LazyTableModel) else None
+
+    def _current_column_name(self) -> str | None:
+        model = self._model()
+        index = self.view.currentIndex()
+        if model is None or not index.isValid():
+            return None
+        return model.column_name(index.column())
+
+    def _query_column_name(self) -> str | None:
+        """The current column of a saved query or a stored function on screen (no LazyTableModel): its header."""
+        model, index = self.view.model(), self.view.currentIndex()
+        if model is None or not index.isValid():
+            return None
+        header = model.headerData(index.column(), Qt.Orientation.Horizontal, Qt.ItemDataRole.DisplayRole)
+        return str(header) if header is not None else None
+
+    def show_menu_at(self, global_pos: QPoint) -> None:
+        """The right-click menu for the current cell, opened at *global_pos* (the title's menu button)."""
+        current = self.view.currentIndex()
+        pos = self.view.visualRect(current).center() if current.isValid() else QPoint(-1, -1)
+        menu = self._build_context_menu(pos)
+        if menu is not None:
+            menu.exec(global_pos)
+
+    def column_info(self) -> None:
+        """Column Info for the current column, as the menu's."""
+        column = self._current_column_name() if self._model() is not None else self._query_column_name()
+        if not column:  # no cell chosen yet: the first selected column, else the table's first
+            model = self._model()
+            selected = sorted({index.column() for index in self.view.selectionModel().selectedIndexes()}) \
+                if self.view.selectionModel() is not None else []
+            if model is not None:
+                column = model.column_name(selected[0] if selected else 0) if model.columnCount() else None
+        if column:
+            self._open_column_info(column)
+
+    def chart(self) -> None:
+        """A chart of the selected columns: one column's histogram, else New plot with them."""
+        if not self._table:
+            return
+        _rows, positions = self._selected_block()
+        selected = self._column_names(positions)
+        if len(selected) == 1:
+            self.histogram_requested.emit(str(self._table), selected[0])
+        else:
+            self._request_chart()
+
+    def _show_context_menu(self, pos: QPoint) -> None:
+        """Show the preview's right-click menu."""
+        menu = self._build_context_menu(pos)
+        if menu is None:
+            return
+        menu.exec(self.view.viewport().mapToGlobal(pos))
+
+    def _build_context_menu(self, pos: QPoint) -> QMenu | None:
+        """Build the right-click menu for *pos*, or None to show nothing.
+
+        Split out from _show_context_menu so a test can inspect the built
+        menu's actions without going through QMenu.exec(), which opens a
+        real (blocking) local event loop.
+
+        The view is backed by one of two model kinds: LazyTableModel for a
+        real table, or the read-only DataFrameTableModel for a saved query
+        (see _reload_model). _model() only ever returns a LazyTableModel, so
+        gating the whole menu on it being non-None made the menu disappear
+        entirely while a query was on screen, instead of just hiding the
+        items that write back to a table a query does not have. The guard
+        below only requires some model to be loaded; lazy_model still gates
+        the table-only items further down.
+        """
+        if self.view.model() is None:
+            return None
+
+        lazy_model = self._model()
+        if lazy_model is not None:
+            if self._repo is None:
+                self._repo = lazy_model.repo
+            if self._table is None:
+                self._table = lazy_model.table
+        if self._repo is None or not self._table:
+            return None
+
+        clicked = self.view.indexAt(pos)
+        # Inside the selection, the selection stays: it is what the menu acts on.
+        selection = self.view.selectionModel()
+        if clicked.isValid() and not (selection is not None and selection.isSelected(clicked)):
+            self.view.setCurrentIndex(clicked)
+
+        column = self._current_column_name() if lazy_model is not None else self._query_column_name()
+        # Copy, Column Info and the chart are the buttons beside the Data title: not repeated here.
+        items: list[MenuItem | None] = []
+        if column and lazy_model is not None:
+            items.append(
+                MenuItem(
+                    _("Statistics of '{column}'…").format(column=column),
+                    callback=lambda _=False, col=column: self.statistics_requested.emit(str(self._table), col),
+                    icon="column_stats",
+                    tooltip=_("Analysis > Statistics on this column"),
+                )
+            )
+        if lazy_model is not None:
+            items.append(
+                MenuItem(
+                    _("Create query from selection"),
+                    callback=self._request_query,
+                    icon="query",
+                    tooltip=_("Open the Query Builder on the selected columns and rows of this table"),
+                )
+            )
+        items.append(None)
+
+        menu = create_menu(self, items, icons=CONTEXT_MENU_ICONS)
+
+        if column:
+            self._add_flag_menu(menu, column, "Hide")
+            self._add_flag_menu(menu, column, "Selected")
+        if lazy_model is not None:
+            table = str(self._table)
+            create_menu_item(
+                parent=self, icons=CONTEXT_MENU_ICONS, menu=menu, icon="select_points", checkable=True,
+                checked=self._repo.selected_only(table),
+                text=_("Show only the Selected rows on the charts"),
+                tooltip=_("Every chart of '{table}' draws only its rows marked Selected; the others stay, out of "
+                          "view - nothing is hidden, and analyses read every row.").format(table=table),
+                key=None, action=lambda checked=False, table=table: self._set_selected_only(table, checked),
+            )
+            rows_selected = self._selected_block()[0]
+            if rows_selected:
+                menu.addSeparator()
+                create_menu_item(
+                    parent=self, icons=CONTEXT_MENU_ICONS, menu=menu, icon="preview_hide_rows", checkable=False,
+                    text=_("Hide selected rows"),
+                    tooltip=_("Leave the selected rows out of every chart and analysis (Hide = 1); they stay in "
+                              "the table, greyed."),
+                    key=None, action=lambda _=False: self._set_selected_rows_hidden(True),
+                )
+                show = create_menu_item(
+                    parent=self, icons=CONTEXT_MENU_ICONS, menu=menu, icon="preview_show_rows", checkable=False,
+                    text=_("Show selected rows"),
+                    tooltip=_("Bring the selected hidden rows back into the charts and analyses (Hide = 0)."),
+                    key=None, action=lambda _=False: self._set_selected_rows_hidden(False),
+                )
+                show.setEnabled(lazy_model.any_hidden(rows_selected))
+        if column or lazy_model is not None:
+            menu.addSeparator()
+
+        # The whole table - edit, export, reload - is the table list's, right above this panel on the Data page: an
+        # action belongs to one menu, not both. Exporting the cells selected here is a button of the Data title.
+        trailing_items: tuple[MenuItem | None, ...] = ()
+
+        for item in trailing_items:
+            if item is None:
+                menu.addSeparator()
+                continue
+            create_menu_item(
+                parent=self,
+                icons=CONTEXT_MENU_ICONS,
+                menu=menu,
+                icon=item.icon,
+                checkable=item.checkable,
+                text=item.text,
+                tooltip=item.tooltip,
+                key=item.shortcut,
+                action=item.callback,
+            )
+
+        return menu
+
+    def _set_selected_only(self, table: str, on: bool) -> None:
+        if self._repo is not None:
+            if on and not self._repo.selected_row_ids(table):
+                # Nothing is marked Selected yet - only highlighted here: those rows are what the user means,
+                # otherwise every chart would draw nothing.
+                model = self._model()
+                ids = ([row_id for row in self._selected_block()[0] if (row_id := model.row_id(row)) is not None]
+                       if model is not None else [])
+                if ids:
+                    self._repo.select_rows(table, ids)
+                    self.selected_rows_changed.emit([table])
+                    self._reload_model()
+            self._repo.set_selected_only(table, bool(on))
+            self.selected_only_changed.emit([table])
+
+    # ------------------------------------------------------------------
+    # Selection helpers
+    # ------------------------------------------------------------------
+    def _selected_block(self) -> tuple[list[int], list[int]]:
+        """Rows and columns that hold a selected cell, in view order."""
+        indexes = self.view.selectedIndexes()
+        if not indexes and self.view.currentIndex().isValid():
+            indexes = [self.view.currentIndex()]
+        rows = sorted({index.row() for index in indexes})
+        columns = sorted({index.column() for index in indexes})
+        return rows, columns
+
+    def _column_names(self, positions: list[int]) -> list[str]:
+        model = self.view.model()
+        names: list[str] = []
+        for position in positions:
+            getter = getattr(model, "column_name", None)
+            name = getter(position) if getter is not None else None
+            if name:
+                names.append(str(name))
+        return names
+
+    def _copy_selection(self) -> None:
+        """Copy the selected cells as tab-separated text, rows on lines."""
+        model = self.view.model()
+        if model is None:
+            return
+        selected = {(i.row(), i.column()) for i in self.view.selectedIndexes()}
+        if not selected and self.view.currentIndex().isValid():
+            current = self.view.currentIndex()
+            selected = {(current.row(), current.column())}
+        if not selected:
+            return
+        rows = sorted({row for row, _col in selected})
+        columns = sorted({col for _row, col in selected})
+        lines = []
+        for row in rows:
+            cells = []
+            for col in columns:
+                # The values as stored, not as formatted: pasted, they are numbers again.
+                value = model.data(model.index(row, col), Qt.ItemDataRole.EditRole) if (row, col) in selected else ""
+                cells.append("" if value is None else str(value))
+            lines.append("\t".join(cells))
+        QApplication.clipboard().setText("\n".join(lines))
+
+    # ------------------------------------------------------------------
+    # Table tools
+    # ------------------------------------------------------------------
+    def _request_query(self) -> None:
+        """A SELECT of what is selected: its columns (all when every column is), its rows (all when every row is)."""
+        model = self._model()
+        if model is None or not self._table:
+            return
+        rows, positions = self._selected_block()
+        columns = None if len(positions) >= model.columnCount() else self._column_names(positions)
+        rowids = None
+        if rows and len(rows) < model.rowCount():
+            rowids = [rid for rid in (model.row_id(row) for row in rows) if rid is not None]
+        self.query_requested.emit(sql_builders.select_rows(str(self._table), columns, rowids))
+
+    def _request_chart(self) -> None:
+        if not self._table:
+            return
+        _rows, positions = self._selected_block()
+        self.chart_requested.emit(str(self._table), self._column_names(positions))
+
+    def _duplicate_table(self) -> None:
+        if self._repo is None or not self._table:
+            return
+        try:
+            name = self._repo.duplicate_table(self._table)
+        except Exception as exc:
+            applogger.exception("Duplicate table failed: %s", exc)
+            QMessageBox.warning(self, _("Could not do that"), str(exc))
+            return
+        applogger.info("Table '%s' duplicated as '%s'.", self._table, name)
+        self.refresh.emit()
+
+    def _export_rows(self) -> None:
+        """Save the selected block, or every visible row, as CSV or Excel."""
+        model = self.view.model()
+        if model is None or not self._table:
+            return
+        rows, positions = self._selected_block()
+        several = len(rows) * len(positions) > 1
+        try:
+            if several:
+                names = self._column_names(positions)
+                frame = pd.DataFrame(
+                    [[model.data(model.index(r, c)) for c in positions] for r in rows],
+                    columns=names,
+                )
+                for name in names:
+                    converted = to_numbers(column_of(frame, name))
+                    if converted.notna().sum() == frame[name].replace("", None).notna().sum():
+                        frame[name] = converted
+            elif isinstance(model, DataFrameTableModel):
+                frame = model.frame
+            else:
+                assert self._repo is not None
+                frame = self._repo.visible_rows(self._table)
+        except Exception as exc:
+            applogger.exception("Export rows failed: %s", exc)
+            QMessageBox.warning(self, _("Could not do that"), str(exc))
+            return
+
+        path, chosen = QFileDialog.getSaveFileName(
+            self,
+            _("Export rows"),
+            f"{self._table}.csv",
+            _("CSV (*.csv);;Excel (*.xlsx)"),
+        )
+        if not path:
+            return
+        target = Path(path)
+        if target.suffix.lower() not in (".csv", ".xlsx"):
+            target = target.with_suffix(".xlsx" if "xlsx" in chosen else ".csv")
+        try:
+            if target.suffix.lower() == ".xlsx":
+                frame.to_excel(target, index=False, engine="openpyxl")
+            else:
+                frame.to_csv(target, index=False)
+        except Exception as exc:
+            applogger.exception("Export rows failed: %s", exc)
+            QMessageBox.warning(self, _("Could not do that"), str(exc))
+            return
+        applogger.info("Exported %d rows to %s.", len(frame), target)
+
+    #: Per flag column: the submenu's title, then its four labels - the
+    #: verb, the comparison tooltip, the empty-cells item and its tooltip,
+    #: the same-as-cell item and its tooltip.
+    _FLAG_MENU_TEXT: ClassVar[dict[str, tuple[str, str, str, str, str, str]]] = {
+        "Hide": (
+            "Hide rows by selected column",
+            "Hide rows where {column} {operator} value",
+            "Hide NULL / empty values",
+            "Hide rows where the selected column is empty",
+            "Hide rows equal to selected cell",
+            "Hide rows matching the selected cell value",
+        ),
+        "Selected": (
+            "Select rows by selected column",
+            "Mark Selected the rows where {column} {operator} value",
+            "Select NULL / empty values",
+            "Mark Selected the rows where the selected column is empty",
+            "Select rows equal to selected cell",
+            "Mark Selected the rows matching the selected cell value",
+        ),
+    }
+
+    def _add_flag_menu(self, menu: QMenu, column: str, flag: str) -> None:
+        """The submenu that sets *flag* (Hide or Selected) on rows by *column*."""
+        title, compare_tip, empty_text, empty_tip, same_text, same_tip = self._FLAG_MENU_TEXT[flag]
+        submenu = menu.addMenu(_(title))
+        # The operator is the payload and stays as it is; only the label is
+        # translated. Wrapping the operator too would compare against a
+        # translated string instead of SQL.
+        for label, operator in (
+            (_("Equal to..."), "="),
+            (_("Different from..."), "!="),
+            (_("Lower than..."), "<"),
+            (_("Lower or equal..."), "<="),
+            (_("Higher than..."), ">"),
+            (_("Higher or equal..."), ">="),
+        ):
+            create_menu_item(
+                parent=self, icons=CONTEXT_MENU_ICONS, menu=submenu, icon=None, checkable=False,
+                text=label, tooltip=_(compare_tip).format(column=column, operator=operator), key=None,
+                action=lambda _=False, col=column, op=operator: self._flag_by_comparison(flag, col, op),
+            )
+        create_menu_item(
+            parent=self, icons=CONTEXT_MENU_ICONS, menu=submenu, icon=None, checkable=False,
+            text=_(empty_text), tooltip=_(empty_tip), key=None,
+            action=lambda _=False, col=column: self._flag_special(flag, col, "null_or_empty"),
+        )
+        create_menu_item(
+            parent=self, icons=CONTEXT_MENU_ICONS, menu=submenu, icon=None, checkable=False,
+            text=_(same_text), tooltip=_(same_tip), key=None,
+            action=lambda _=False: self._flag_selected_cell_value(flag),
+        )
+
+    def show_selected_rows(self, tables: list[str]) -> None:
+        """Rows of *tables* were marked Selected elsewhere (a chart): shown, the first one scrolled to."""
+        if self._repo is None or self._table not in tables:
+            return
+        self._reload_model()
+        model = self._model()
+        ids = self._repo.selected_row_ids(self._table) if model is not None else []
+        if ids:
+            position = self._repo.row_position(self._table, ids[0])
+            self.view.scrollTo(model.index(position, 0), QTableView.ScrollHint.PositionAtCenter)
+
+    def _set_selected_rows_hidden(self, hidden: bool) -> None:
+        """Hide, or show again, the rows that hold a selected cell; the charts redraw without (or with) them."""
+        model = self._model()
+        if model is None or self._repo is None or not self._table:
+            return
+        ids = [row_id for row in self._selected_block()[0] if (row_id := model.row_id(row)) is not None]
+        try:
+            changed = self._repo.set_rows_hidden(self._table, ids, hidden)
+        except Exception as exc:
+            applogger.exception("%s rows failed: %s", "Hide" if hidden else "Show", exc)
+            show_message(self, "preview.hide_rows_failed", error=exc)
+            return
+        applogger.info("%s: %d rows %s.", self._table, changed, "hidden" if hidden else "shown again")
+        if model.has_column("Hide"):
+            model.reread()  # where they are, the selection kept: Show undoes Hide on the same rows
+        else:
+            self._reload_model()  # the Hide column was just added
+        self.refresh.emit()
+
+    def _flag_done(self, flag: str, count: int) -> None:
+        if flag == "Selected" and self._table:
+            self.selected_rows_changed.emit([self._table])
+        self._reload_model()
+        show_message(self, "preview.rows_hidden" if flag == "Hide" else "preview.rows_selected", count=count)
+
+    def _flag_by_comparison(self, flag: str, column: str, operator: str) -> None:
+        if self._repo is None or not self._table:
+            return
+        title = _("Hide rows") if flag == "Hide" else _("Select rows")
+        value, ok = QInputDialog.getText(
+            self, title, f"{title}: {column} {operator}", QLineEdit.EchoMode.Normal, "",
+        )
+        if not ok:
+            return
+        try:
+            self._flag_done(flag, self._repo.flag_rows_by_value(self._table, flag, column, operator, value))
+        except Exception as exc:
+            applogger.exception("%s rows failed: %s", flag, exc)
+            show_message(self, "preview.hide_rows_failed", error=exc)
+
+    def _flag_special(self, flag: str, column: str, mode: str) -> None:
+        if self._repo is None or not self._table:
+            return
+        try:
+            self._flag_done(flag, self._repo.flag_rows_special(self._table, flag, column, mode))
+        except Exception as exc:
+            applogger.exception("%s rows failed: %s", flag, exc)
+            show_message(self, "preview.hide_rows_failed", error=exc)
+
+    def _flag_selected_cell_value(self, flag: str) -> None:
+        index = self.view.currentIndex()
+        column = self._current_column_name()
+        if not index.isValid() or column is None or self._repo is None or not self._table:
+            return
+        value = index.data(Qt.ItemDataRole.EditRole)  # the value stored, not its format
+        try:
+            self._flag_done(flag, self._repo.flag_rows_by_value(self._table, flag, column, "=", value))
+        except Exception as exc:
+            applogger.exception("%s selected value failed: %s", flag, exc)
+            show_message(self, "preview.hide_rows_failed", error=exc)
+
+
+class LazyTableModel(QAbstractTableModel):
+    def __init__(self, repo: SqliteRepo, table: str, parent=None) -> None:
+        super().__init__(parent)
+        self._repo = repo
+        self._table = table
+        self._columns: list[str] = []
+        self._codes: list[str] = []
+        self._formats: list[column_metadata.ColumnInfo | None] = []
+        self._row_count: int = 0
+        self._chunk_size = 5000
+        self._cache: dict[int, list[list[Any]]] = {}
+        self._chunk_rowid: dict[int, int] = {}
+        #: Each fetched chunk's rowids, row by row: what a selection in the view is in the table.
+        self._chunk_rowids: dict[int, list[int]] = {}
+        self._load_schema_and_count()
+
+    @property
+    def repo(self) -> SqliteRepo:
+        return self._repo
+
+    @property
+    def table(self) -> str:
+        return self._table
+
+    def _load_schema_and_count(self) -> None:
+        if not self._repo.is_open:
+            return
+        shown = set(self._repo.get_columns(self._table))  # not the row id column
+        rows = [row for row in self._repo.table_info(self._table) if str(row[1]) in shown]
+        self._columns = [str(row[1]) for row in rows]
+        self._codes = [_type_code(str(row[2])) for row in rows]
+        self._row_count = int(self._repo.row_count(self._table))
+        # Each column's format from Column Info, None where it has none: the text shown only.
+        infos = column_metadata.column_info(self._repo, self._table)
+        self._formats = [
+            infos[name] if name in infos and infos[name].format else None
+            for name in self._columns
+        ]
+
+    def column_name(self, index: int) -> str | None:
+        return self._columns[index] if 0 <= index < len(self._columns) else None
+
+    def shows_best(self, index: int) -> bool:
+        """Whether column *index* is a number shown in the Best format: no format and no labels of its own."""
+        return (0 <= index < len(self._columns) and self._codes[index] in ("F", "I", "?")
+                and self._formats[index] is None)
+
+    def rowCount(self, parent: QModelIndex | QPersistentModelIndex = QModelIndex()) -> int:
+        return 0 if parent.isValid() else self._row_count
+
+    def columnCount(self, parent: QModelIndex | QPersistentModelIndex = QModelIndex()) -> int:
+        return 0 if parent.isValid() else len(self._columns)
+
+    def headerData(self, section, orientation, role: int = Qt.ItemDataRole.DisplayRole):
+        if role != Qt.ItemDataRole.DisplayRole:
+            return None
+        if orientation == Qt.Orientation.Horizontal:
+            if 0 <= section < len(self._columns):
+                return f"{self._columns[section]} ({self._codes[section]})"
+            return None
+        return str(section + 1)
+
+    #: The tint of a row marked Selected - by a box selection on a chart, or here.
+    SELECTED_ROW_TINT = QColor(31, 119, 180, 46)
+    #: The text of a row marked Hide: readable, and plainly set apart.
+    HIDDEN_ROW_TEXT = QColor(128, 128, 128)
+
+    def data(self, index: QModelIndex | QPersistentModelIndex, role: int = Qt.ItemDataRole.DisplayRole):
+        if not index.isValid():
+            return None
+        if role == Qt.ItemDataRole.BackgroundRole:
+            return self._selected_tint(index.row())
+        if role == Qt.ItemDataRole.ForegroundRole:
+            # A hidden row stays in the table, greyed: it is left out of the charts, not deleted.
+            return self.HIDDEN_ROW_TEXT if self._flag_value(index.row(), "Hide") == 1 else None
+        if role not in (Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.EditRole):
+            return None
+        row_index = index.row()
+        column_index = index.column()
+        if row_index >= self._row_count or column_index >= len(self._columns):
+            return None
+        chunk = row_index // self._chunk_size
+        offset = row_index % self._chunk_size
+        rows = self._cache.get(chunk)
+        if rows is None:
+            rows = self._fetch_chunk(chunk)
+            self._cache[chunk] = rows
+        if offset >= len(rows):
+            return None
+        value = rows[offset][column_index]
+        # Shown in the column's format (Column Info); edited and copied as stored.
+        shown = self._formats[column_index] if role == Qt.ItemDataRole.DisplayRole else None
+        if shown is not None:
+            return column_metadata.format_value(value, shown)
+        return "" if value is None else str(value)
+
+    def _selected_tint(self, row_index: int) -> QColor | None:
+        """The row's tint when it is marked Selected; None otherwise."""
+        return self.SELECTED_ROW_TINT if self._flag_value(row_index, "Selected") == 1 else None
+
+    def _flag_value(self, row_index: int, flag: str) -> Any:
+        """Row *row_index*'s *flag* column (Hide, Selected) as read; None when the table has none or the
+        row is not read yet - its text, read first, brings it."""
+        if flag not in self._columns or row_index >= self._row_count:
+            return None
+        chunk, offset = divmod(row_index, self._chunk_size)
+        rows = self._cache.get(chunk)
+        if rows is None or offset >= len(rows):
+            return None
+        return rows[offset][self._columns.index(flag)]
+
+    def has_column(self, name: str) -> bool:
+        """Whether the table shown has the column *name* (Hide, Selected...)."""
+        return name in self._columns
+
+    def any_hidden(self, rows: list[int]) -> bool:
+        """Whether one of view rows *rows* is marked Hide."""
+        return any(self._flag_value(row, "Hide") == 1 for row in rows)
+
+    def reread(self) -> None:
+        """Read the rows again where they are: the values changed, not the rows or the columns."""
+        self.clear_cache()
+        if self._row_count and self._columns:
+            self.dataChanged.emit(self.index(0, 0), self.index(self._row_count - 1, len(self._columns) - 1))
+
+    def _fetch_chunk(self, chunk_index: int) -> list[list[Any]]:
+        last_rowid = self._chunk_rowid.get(chunk_index - 1, 0) if chunk_index > 0 else 0
+        if not self._repo.is_open:
+            return []
+        rows = self._repo.read_rows_after_rowid(self._table, last_rowid, self._chunk_size)
+        if not rows:
+            return []
+        self._chunk_rowid[chunk_index] = int(rows[-1][0])
+        self._chunk_rowids[chunk_index] = [int(row[0]) for row in rows]
+        return [list(row[1:]) for row in rows]
+
+    def row_id(self, row_index: int) -> int | None:
+        """The table's rowid of view row *row_index*, reading its chunk if need be."""
+        chunk, offset = divmod(row_index, self._chunk_size)
+        if chunk not in self._cache:
+            # Chunks are read in order: each starts after the previous one's last rowid.
+            for earlier in range(chunk + 1):
+                if earlier not in self._cache:
+                    self._cache[earlier] = self._fetch_chunk(earlier)
+        ids = self._chunk_rowids.get(chunk, [])
+        return ids[offset] if offset < len(ids) else None
+
+    def clear_cache(self) -> None:
+        self._cache.clear()
+        self._chunk_rowid.clear()
+        self._chunk_rowids.clear()

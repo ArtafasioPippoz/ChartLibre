@@ -1,0 +1,369 @@
+"""Pie chart renderer.
+
+A pie is the one chart in this application that cannot show several series at
+once: the wedges of a pie must sum to the whole, so two overlaid pies would
+either hide one another or stop meaning anything.  The renderer therefore draws
+the **first visible series** and logs the others rather than silently drawing a
+subset - a chart that quietly ignores half its data is worse than one that says
+so.
+
+Roles:
+    value    required numeric size of each wedge; negatives are dropped
+    label    optional wedge label, otherwise the value's position is used
+    explode  optional radial offset per wedge, in fractions of the radius
+
+``wedge_width`` below 1 turns the pie into a donut, which is the same data with
+a hole - useful because the eye compares arc length better than area.
+"""
+from __future__ import annotations
+
+from typing import Any, ClassVar, cast
+
+import numpy as np
+
+from app.logs.logger import applogger
+from app.plugin_api.charts import kwarg_spec
+from app.plugin_api.charts.base import (
+    LEGEND_OPTIONS,
+    BaseAxisRenderer,
+    SeriesData,
+    merge,
+)
+from app.utils.coercion import column_of, to_numbers
+
+# Where the percentage labels are placed, as a fraction of the radius.
+_DEFAULT_PCT_DISTANCE: float = 0.6
+_DEFAULT_LABEL_DISTANCE: float = 1.1
+
+
+class PieAxisRenderer(BaseAxisRenderer):
+    """Renderer for pie and donut charts.
+
+    Honors per-series style fields: ``label``, ``visible``, ``color``.
+    """
+
+    RequiredRoles: ClassVar[list[str]] = ["value"]
+    OptionalRoles: ClassVar[list[str]] = [
+        "label", "explode",
+        # A column naming, for each wedge, a picture of the project to draw on it (Project > Pictures).
+        "picture",
+    ]
+
+    #: A pie's wedges have to sum to one whole.
+    MaxSeries: int | None = 1
+
+    Name: str = "Pie Chart"
+    WhenToUse: str = "Use it to show the shares of a total with only a few categories."
+    Category: str = "Statistical distributions"
+    Description: str = "Pie or donut chart of one series."
+    Link: str = (
+        "https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.pie.html"
+    )
+
+    #: Forwarded verbatim to ``ax.pie``.  These were already being assembled
+    #: one by one into a dict of the same names; the schema now says so, and
+    #: the assembly is a single call.
+    Kwargs: ClassVar[dict[str, Any]] = {
+        "autopct": {
+            # A deliberate deviation from Matplotlib, which draws no
+            # percentages at all: a pie without them is a picture of a ratio
+            # nobody can read off.
+            "default": "%1.1f%%",
+            "type": str,
+            "group": "Labels",
+            "description": (
+                "Format for the percentage drawn inside each wedge, e.g. "
+                "'%1.1f%%'.  Leave empty to draw no percentages."
+            ),
+        },
+        "startangle": {
+            # Also deliberate: Matplotlib starts at 3 o'clock.
+            "default": 90.0,
+            "type": float,
+            "min": -360.0,
+            "max": 360.0,
+            "group": "Layout",
+            "description": (
+                "Angle of the first wedge, counter-clockwise from the x axis. "
+                "90 puts it at the top, which is where a reader starts."
+            ),
+        },
+        "counterclock": {
+            "default": True,
+            "type": bool,
+            "group": "Layout",
+            "description": "Lay the wedges out counter-clockwise.",
+        },
+        "radius": {
+            "default": 1.0,
+            "type": float,
+            "min": 0.1,
+            "max": 3.0,
+            "group": "Layout",
+            "description": "Pie radius in axes units.",
+        },
+        "pctdistance": {
+            "default": _DEFAULT_PCT_DISTANCE,
+            "type": float,
+            "min": 0.0,
+            "max": 2.0,
+            "group": "Labels",
+            "description": "Distance of the percentage text from the centre.",
+        },
+        "labeldistance": {
+            "default": _DEFAULT_LABEL_DISTANCE,
+            "type": float,
+            "min": 0.0,
+            "max": 3.0,
+            "group": "Labels",
+            "description": "Distance of the wedge labels from the centre.",
+        },
+        "shadow": {
+            "default": False,
+            "type": bool,
+            "group": "Appearance",
+            "description": "Draw a shadow under the pie.",
+        },
+        "normalize": {
+            "default": True,
+            "type": bool,
+            "group": "Layout",
+            "description": (
+                "Scale the values so they fill a full circle. Switch off to "
+                "draw a partial pie when the values are already fractions of a "
+                "whole that is not all present."
+            ),
+        },
+    }
+
+    #: Read here and translated into something else entirely.  Not one of
+    #: these names is a keyword ``ax.pie`` accepts: the first three become
+    #: entries in ``wedgeprops``, the colormap becomes an explicit list of
+    #: colours, and the legend is drawn afterwards from the returned wedges.
+    Options: ClassVar[dict[str, Any]] = merge(
+        LEGEND_OPTIONS,
+        {
+            "show_legend": {
+                # False, against the shared default: a pie already labels its
+                # own wedges, so a legend is the exception here.
+                "default": False,
+                "description": (
+                    "Show a legend instead of relying on the labels around "
+                    "the pie. Useful when the labels are long."
+                ),
+            },
+            "wedge_width": {
+                "default": 1.0,
+                "type": float,
+                "min": 0.05,
+                "max": 1.0,
+                "group": "Layout",
+                "description": (
+                    "Wedge thickness as a fraction of the radius. Below 1 the "
+                    "pie becomes a donut."
+                ),
+            },
+            "colormap": {
+                "default": None,
+                kwarg_spec.RCPARAM: "image.cmap",
+                kwarg_spec.STYLE_DEFAULT: True,
+                "type": str,
+                "kind": "colormap",
+                "group": "Appearance",
+                "description": (
+                    "Colormap used to colour the wedges, e.g. 'tab20'. Empty "
+                    "uses the current style's colour cycle."
+                ),
+            },
+            "edge_color": {
+                "default": "white",
+                "type": str,
+                "kind": "color",
+                "group": "Appearance",
+                "description": (
+                    "Colour of the line between wedges. A light edge is what "
+                    "keeps adjacent wedges of similar colour readable."
+                ),
+            },
+            "edge_width": {
+                "default": 1.0,
+                "type": float,
+                "min": 0.0,
+                "max": 10.0,
+                "group": "Appearance",
+                "description": "Width of the line between wedges.",
+            },
+        },
+    )
+
+    def render_axis(self, ax: Any, series: list[SeriesData], options: dict) -> None:
+        """Draw the first visible series as a pie."""
+        drawable = self.valid_series(series)
+        if not drawable:
+            return
+
+        if len(drawable) > 1:
+            applogger.warning(
+                "Pie chart: %d series on this axis, only '%s' is drawn. A pie's "
+                "wedges have to sum to one whole, so put the others on their "
+                "own axis.",
+                len(drawable),
+                drawable[0].name,
+            )
+
+        sd = drawable[0]
+        values, labels, explode = self._wedges(sd)
+        pictures = self._wedge_pictures(sd)
+        if values.size == 0:
+            applogger.info("Series '%s' skipped: no positive values.", sd.name)
+            return
+
+        pie_kwargs = self._pie_kwargs(options, wedge_count=values.size)
+        if labels is not None:
+            pie_kwargs["labels"] = labels
+        if explode is not None:
+            pie_kwargs["explode"] = explode
+
+        result = ax.pie(values, **pie_kwargs)
+        wedges = result[0]
+        for wedge in wedges:  # the series' name: its effect finds them (path_effects)
+            wedge._chartlibre_series = sd.name
+
+        # A pie drawn on non-square axes is an ellipse, and an ellipse cannot
+        # be read: equal aspect is part of the chart, not a preference.
+        ax.set_aspect("equal")
+        if pictures is not None:
+            self._draw_pictures(ax, wedges, pictures)
+
+        if self.opt("show_legend", options) and labels is not None:
+            ax.legend(wedges, labels, loc="center left", bbox_to_anchor=(1.0, 0.5))
+        # Draw descriptor annotations after renderer-owned artists.
+        self.apply_annotations(ax, options or {})
+
+    @staticmethod
+    def _wedge_pictures(sd: SeriesData) -> list[str] | None:
+        """The picture named for each drawn wedge (same rows as _wedges keeps), None without the role."""
+        if "picture" not in sd.df.columns:
+            return None
+        values = to_numbers(column_of(sd.df, "value"))
+        keep = values.notna() & (values > 0)
+        return [str(name) for name in sd.df.loc[keep, "picture"].tolist()]
+
+    @staticmethod
+    def _draw_pictures(ax: Any, wedges: Any, pictures: list[str]) -> None:
+        """Each picture at its wedge's middle, smaller on a narrow wedge; a donut's on the ring."""
+        from app.plugin_api.charts import picture_markers
+
+        for wedge, name in zip(wedges, pictures, strict=False):
+            if not name or name in ("nan", "None"):
+                continue
+            angle = np.deg2rad((wedge.theta1 + wedge.theta2) / 2)
+            span = (wedge.theta2 - wedge.theta1) / 360
+            inner = wedge.r - wedge.width if wedge.width else 0.0
+            radius = (wedge.r + inner) / 2 if wedge.width else wedge.r * 0.62
+            centre = np.array(wedge.center)
+            point = centre + radius * np.array([np.cos(angle), np.sin(angle)])
+            picture_markers.draw(ax, [point[0]], [point[1]], picture_markers.PREFIX + name,
+                                 size_points=34 if span > 0.08 else 22, zorder=3)
+
+    # ------------------------------------------------------------------
+    # Data
+    # ------------------------------------------------------------------
+
+    def _wedges(
+        self,
+        sd: SeriesData,
+    ) -> tuple[np.ndarray, list[str] | None, np.ndarray | None]:
+        """Return the values, labels and explode offsets for one series.
+
+        Non-finite and negative values are dropped: a negative wedge has no
+        meaning in a pie, and Matplotlib would draw it as if it were positive.
+        """
+        values = to_numbers(column_of(sd.df, "value"))
+        keep = values.notna() & (values > 0)
+
+        dropped = int((~keep).sum())
+        if dropped:
+            applogger.info(
+                "Pie chart: %d non-positive or missing value(s) dropped from '%s'.",
+                dropped,
+                sd.name,
+            )
+
+        wedge_values = values[keep].to_numpy(dtype=float)
+
+        labels: list[str] | None = None
+        if "label" in sd.df.columns:
+            labels = [str(value) for value in sd.df.loc[keep, "label"].tolist()]
+
+        explode: np.ndarray | None = None
+        if "explode" in sd.df.columns:
+            explode = (
+                to_numbers(sd.df.loc[keep, "explode"])
+                .fillna(0.0)
+                .to_numpy(dtype=float)
+            )
+
+        return wedge_values, labels, explode
+
+    # ------------------------------------------------------------------
+    # Options
+    # ------------------------------------------------------------------
+    def _float_option(self, name: str, options: dict[str, Any], default: float = 0.0) -> float:
+        """Return an option as float without Pylance object-conversion warnings."""
+        value = cast(Any, self.opt(name, options))
+        if value in (None, ""):
+            return default
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            applogger.warning(
+                "Invalid pie option %s=%r; using %r",
+                name,
+                value,
+                default,
+            )
+            return default
+
+    def _pie_kwargs(self, options: dict, *, wedge_count: int) -> dict[str, Any]:
+        """Translate this renderer's options into ``ax.pie`` keywords."""
+        kwargs = self.get_kwargs(options)
+        radius = self._float_option("radius", options, 1.0)
+
+        # A donut is a pie whose wedges are drawn as annuli; anything below 1
+        # has to reach Matplotlib through wedgeprops, not through a keyword.
+        wedge_props: dict[str, Any] = {}
+        width = self._float_option("wedge_width", options, 1.0)
+        if 0.0 < width < 1.0:
+            wedge_props["width"] = width * radius
+
+        edge_color = str(self.opt("edge_color", options) or "").strip()
+        if edge_color:
+            wedge_props["edgecolor"] = edge_color
+            wedge_props["linewidth"] = self._float_option("edge_width", options, 0.0)
+        if wedge_props:
+            kwargs["wedgeprops"] = wedge_props
+
+        colormap = str(self.opt("colormap", options) or "").strip()
+        if colormap:
+            kwargs["colors"] = self._colormap_colors(colormap, wedge_count)
+
+        return kwargs
+
+    @staticmethod
+    def _colormap_colors(name: str, count: int) -> Any:
+        """Sample *count* evenly spaced colours from a named colormap."""
+        from matplotlib import colormaps  # pyright: ignore[reportAttributeAccessIssue]
+
+        try:
+            colormap = colormaps[name]
+        except KeyError:
+            applogger.warning(
+                "Unknown colormap %r; using the style's colour cycle.",
+                name,
+            )
+            return None
+
+        if count <= 1:
+            return colormap([0.5])
+        return colormap(np.linspace(0.0, 1.0, count))

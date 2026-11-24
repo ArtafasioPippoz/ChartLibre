@@ -1,0 +1,610 @@
+"""Machine translation of catalogue strings, through ``deep_translator``.
+
+Edit Localization's "Translate missing (auto)" fills empty translations
+with a first draft to review. ``deep_translator`` is a soft dependency:
+the editor works fully without it, just without that one button.
+
+Three services. Google Translate and MyMemory are free and need no key:
+Google is the better of the two, MyMemory answers when Google does not -
+Google turns away addresses that ask too often, and says so with an HTTP
+429 on the very first request. DeepL is the best of the three and needs an
+API key - the free plan's will do - typed in Settings and kept in user.json
+on this computer, never in the repository (todo A-08). DeepL is called
+directly rather than through ``deep_translator``, whose DeepL client sends
+the key in the URL, a form DeepL no longer accepts; so DeepL works even
+without ``deep_translator`` installed.
+
+A fourth, Argos Translate, is free, open source and runs on this computer:
+no key, no request limit, no network once a language is downloaded. It
+needs ``ctranslate2`` and ``sentencepiece`` - a few tens of MB - and not
+the ``argostranslate`` package itself, which brings PyTorch and spaCy
+along only to split long texts into sentences, something a catalogue's
+short strings never need. Each language's model (85-150 MB) is downloaded
+from Argos's own index the first time it is asked for and kept in the
+user's cache folder (:func:`argos_models_dir`). Its translations are
+plainer than DeepL's: a first draft, like the others.
+
+What makes a catalogue string different from prose is its placeholders.
+``{count}``, ``%s`` and ``<b>`` are code, not words: a service translates
+``{count}`` into ``{conteggio}`` and the running application then fails
+to format the string. So each placeholder is swapped for a numbered token
+before the text leaves (``{0}``, ``{1}`` - digits survive every service
+tried), put back afterwards, and a translation that lost or invented one is
+thrown away rather than saved: an empty translation falls back to the
+English text, a broken one crashes a dialog.
+
+No Qt here: the dialog runs :func:`translate_all` on a worker thread.
+"""
+from __future__ import annotations
+
+import functools
+import json
+import re
+import shutil
+import threading
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+import zipfile
+from collections.abc import Callable, Iterable, Sequence
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
+
+from app.utils.data_sources import _web_fetch_ssl_context
+
+#: The services offered, as (key, name shown in the dialog).
+PROVIDERS: tuple[tuple[str, str], ...] = (
+    ("google", "Google Translate"),
+    ("mymemory", "MyMemory"),
+    ("deepl", "DeepL"),
+    ("argos", "Argos Translate (offline)"),
+)
+
+#: The user.json key holding the DeepL API key. Settings writes it; nothing
+#: else stores it, and it never leaves this computer except to DeepL.
+DEEPL_KEY_SETTING: str = "deepl_api_key"
+#: user.json's MyMemory e-mail: with one, MyMemory's free quota is 50,000 characters a day instead of 5,000.
+MYMEMORY_EMAIL_SETTING: str = "mymemory_email"
+
+#: Google allows five requests a second; this stays under it.
+_MIN_INTERVAL_S: dict[str, float] = {"google": 0.25, "mymemory": 0.0, "deepl": 0.1, "argos": 0.0}
+
+#: Most characters one request carries. MyMemory's free tier takes 500 a
+#: request; Google takes 5000; DeepL 128 KiB, but a block is also what a
+#: failure loses, and the progress moves a block at a time: a few dozen
+#: strings, not hundreds. Argos works here, a block at a time: smaller still.
+_BLOCK_CHARS: dict[str, int] = {"google": 1500, "mymemory": 450, "deepl": 1500, "argos": 500}
+
+#: DeepL's two hosts: a free-plan key ends in ":fx" and only works on the first.
+DEEPL_FREE_URL: str = "https://api-free.deepl.com/v2/translate"
+DEEPL_PRO_URL: str = "https://api.deepl.com/v2/translate"
+
+#: The target languages DeepL translates into, as it spells them.
+DEEPL_TARGETS: tuple[str, ...] = (
+    "AR", "BG", "CS", "DA", "DE", "EL", "EN-GB", "EN-US", "ES", "ET", "FI", "FR",
+    "HU", "ID", "IT", "JA", "KO", "LT", "LV", "NB", "NL", "PL", "PT-BR", "PT-PT",
+    "RO", "RU", "SK", "SL", "SV", "TR", "UK", "ZH-HANS", "ZH-HANT",
+)
+
+#: Argos Translate's list of models: one entry per language pair, each
+#: with the links its .argosmodel archive can be downloaded from.
+ARGOS_INDEX_URL: str = "https://raw.githubusercontent.com/argosopentech/argospm-index/main/index.json"
+
+#: Most texts DeepL takes in one request.
+_DEEPL_TEXTS_PER_REQUEST: int = 50
+
+#: How long to wait before asking again after "too many requests".
+_RATE_LIMIT_PAUSE_S: float = 2.0
+
+#: Consecutive failures after which the service is taken to be refusing
+#: (rate limit, no network) and the run stops instead of asking again.
+MAX_CONSECUTIVE_FAILURES: int = 3
+
+#: A placeholder: a str.format field, a %-conversion, or an HTML tag.
+_PLACEHOLDER_RE = re.compile(
+    r"\{[^{}]*\}"                                   # {count}, {0}, {value:.2f}
+    r"|%(?:\([^)]*\))?[-+ #0]*\d*(?:\.\d+)?[sdifrxXeEgGc%]"  # %s, %(name)s, %.2f
+    r"|</?[A-Za-z][^<>]*>"                          # <b>, </a>, <br/>
+)
+_TOKEN_RE = re.compile(r"\{\s*(\d+)\s*\}")
+
+
+def available() -> bool:
+    """True when ``deep_translator`` is installed (Google and MyMemory)."""
+    try:
+        import deep_translator  # pyright: ignore[reportMissingImports]
+    except ImportError:
+        return False
+    return True
+
+
+def argos_available() -> bool:
+    """True when Argos Translate's engine (``ctranslate2``, ``sentencepiece``) is installed."""
+    try:
+        import ctranslate2  # pyright: ignore[reportMissingImports]
+        import sentencepiece  # pyright: ignore[reportMissingImports]
+    except ImportError:
+        return False
+    return True
+
+
+def available_providers(deepl_key: str = "") -> list[tuple[str, str]]:
+    """The services that can be asked here: (key, name), in PROVIDERS order.
+
+    Google and MyMemory when ``deep_translator`` is installed, DeepL when
+    there is a key for it, Argos when its engine is installed.
+    """
+    usable = {
+        "google": available(),
+        "mymemory": available(),
+        "deepl": bool(deepl_key.strip()),
+        "argos": argos_available(),
+    }
+    return [(key, name) for key, name in PROVIDERS if usable[key]]
+
+
+class DeepLTranslator:
+    """English to one language through DeepL's v2 API; ``translate(text)``.
+
+    Each line of *text* travels as one ``text`` field - up to fifty a
+    request - so the newlines a block is split back on survive whatever
+    DeepL does with sentences. *opener* is ``urllib.request.urlopen``,
+    replaceable in tests.
+    """
+
+    def __init__(self, api_key: str, target: str, *, opener: Callable[..., Any] | None = None) -> None:
+        self.api_key = api_key.strip()
+        self.target = target
+        self.url = DEEPL_FREE_URL if self.api_key.endswith(":fx") else DEEPL_PRO_URL
+        self._open = opener or functools.partial(urllib.request.urlopen, context=_web_fetch_ssl_context())
+
+    def translate(self, text: str) -> str:
+        lines = text.split("\n")
+        translated: list[str] = []
+        for start in range(0, len(lines), _DEEPL_TEXTS_PER_REQUEST):
+            translated.extend(self._request(lines[start:start + _DEEPL_TEXTS_PER_REQUEST]))
+        return "\n".join(translated)
+
+    def _request(self, lines: list[str]) -> list[str]:
+        fields = [("text", line) for line in lines]
+        fields += [("source_lang", "EN"), ("target_lang", self.target), ("preserve_formatting", "1")]
+        request = urllib.request.Request(
+            self.url,
+            data=urllib.parse.urlencode(fields).encode("utf-8"),
+            headers={
+                "Authorization": f"DeepL-Auth-Key {self.api_key}",
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            method="POST",
+        )
+        try:
+            with self._open(request, timeout=30) as response:
+                answer = json.loads(response.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            raise RuntimeError(_deepl_refusal(exc.code)) from exc
+        except urllib.error.URLError as exc:
+            raise RuntimeError(f"DeepL could not be reached ({exc.reason})") from exc
+        except ValueError as exc:  # not JSON
+            raise RuntimeError("DeepL sent an answer that is not JSON") from exc
+        texts = [str(item.get("text", "")) for item in answer.get("translations", [])]
+        if len(texts) != len(lines):
+            raise RuntimeError("DeepL answered a different number of lines")
+        return texts
+
+
+def argos_models_dir() -> Path:
+    """Where Argos models are kept: the user's cache folder (config.user_cache_dir), which costs only a new download."""
+    from app.utils.config import user_cache_dir
+
+    return user_cache_dir() / "argos-models"
+
+
+class ArgosTranslator:
+    """English to one language on this computer, with an Argos model; ``translate(text)``.
+
+    Downloads the model on first use (see :func:`argos_model`). Each line
+    of *text* is translated as one sentence, all of a block's lines in one
+    batch, so the newlines a block is split back on survive.
+    """
+
+    def __init__(self, language: str, *, models_dir: Path | None = None, opener: Callable[..., Any] | None = None) -> None:
+        import ctranslate2  # pyright: ignore[reportMissingImports]
+        import sentencepiece  # pyright: ignore[reportMissingImports]
+
+        folder = argos_model(language, models_dir or argos_models_dir(), opener=opener)
+        self._pieces = sentencepiece.SentencePieceProcessor(model_file=str(folder / "sentencepiece.model"))
+        self._translator = ctranslate2.Translator(str(folder / "model"), device="cpu")
+
+    def translate(self, text: str) -> str:
+        lines = text.split("\n")
+        asked = [index for index, line in enumerate(lines) if line.strip()]
+        if not asked:
+            return text
+        results = self._translator.translate_batch(
+            [self._pieces.encode(lines[index], out_type=str) for index in asked], beam_size=4
+        )
+        for index, result in zip(asked, results):
+            lines[index] = self._pieces.decode(result.hypotheses[0])
+        return "\n".join(lines)
+
+
+def argos_model(language: str, root: Path, *, opener: Callable[..., Any] | None = None) -> Path:
+    """The folder of the English-to-*language* model under *root*, downloaded if missing.
+
+    Raises ValueError when Argos has no model for the language, and
+    RuntimeError, worded for the dialog, when the download fails.
+    """
+    folder = root / f"en_{language.lower()}"
+    if (folder / "sentencepiece.model").is_file() and (folder / "model" / "model.bin").is_file():
+        return folder
+    if opener is None:
+        from app import APP_NAME, APP_VERSION
+
+        open_url = functools.partial(urllib.request.urlopen, context=_web_fetch_ssl_context())
+
+        def fetch(url: str, timeout: float) -> Any:
+            # argos-net.com answers 403 to Python's own "Python-urllib" name: the application says its own.
+            return open_url(urllib.request.Request(url, headers={"User-Agent": f"{APP_NAME}/{APP_VERSION}"}),
+                            timeout=timeout)
+    else:
+        fetch = opener
+    try:
+        with fetch(ARGOS_INDEX_URL, timeout=30) as response:
+            index = json.loads(response.read().decode("utf-8"))
+        entry = next(
+            (item for item in index if item.get("from_code") == "en" and item.get("to_code") == language.lower()),
+            None,
+        )
+        if entry is None:
+            raise ValueError(f"Argos Translate has no model for {language!r}")
+        url = next((link for link in entry.get("links", []) if link.startswith("https://")), None)
+        if url is None:
+            raise ValueError(f"Argos Translate's model for {language!r} has no download link")
+        root.mkdir(parents=True, exist_ok=True)
+        archive = root / f"en_{language.lower()}.argosmodel.part"
+        with fetch(url, timeout=60) as response, archive.open("wb") as out:
+            while chunk := response.read(1 << 20):
+                out.write(chunk)
+    except urllib.error.URLError as exc:
+        raise RuntimeError(f"Argos Translate's model could not be downloaded ({getattr(exc, 'reason', exc)})") from exc
+    except (OSError, json.JSONDecodeError) as exc:
+        raise RuntimeError(f"Argos Translate's model could not be downloaded ({exc})") from exc
+    try:
+        _unpack_argos(archive, folder)
+    finally:
+        archive.unlink(missing_ok=True)
+    return folder
+
+
+def _unpack_argos(archive: Path, folder: Path) -> None:
+    """Unpack an .argosmodel into *folder*: its model/ and sentencepiece.model.
+
+    The archive holds them under one top folder whose name varies between
+    versions ("en_it/", "translate-en_de-1_3/"); stanza/ - the sentence
+    splitter this module does without - is left out.
+    """
+    staging = folder.with_name(folder.name + ".unpacking")
+    shutil.rmtree(staging, ignore_errors=True)
+    try:
+        with zipfile.ZipFile(archive) as bundle:
+            for member in bundle.infolist():
+                parts = Path(member.filename).parts[1:]  # without the top folder
+                if not parts or parts[0] == "stanza" or member.is_dir():
+                    continue
+                if ".." in parts or Path(member.filename).is_absolute():
+                    raise RuntimeError("Argos Translate's model archive is not well formed")
+                target = staging.joinpath(*parts)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                with bundle.open(member) as source, target.open("wb") as out:
+                    shutil.copyfileobj(source, out)
+        if not (staging / "sentencepiece.model").is_file() or not (staging / "model" / "model.bin").is_file():
+            raise RuntimeError("Argos Translate's model archive lacks its model")
+        shutil.rmtree(folder, ignore_errors=True)
+        staging.rename(folder)
+    except zipfile.BadZipFile as exc:
+        raise RuntimeError("Argos Translate's model archive is damaged") from exc
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
+
+
+def _deepl_refusal(status: int) -> str:
+    """What an HTTP error from DeepL means, in words the dialog can show."""
+    if status == 403:
+        return "DeepL refused the API key: check it in Settings"
+    if status == 456:
+        return "Too many requests: DeepL's quota for this month is used up"
+    if status == 429:
+        return "Too many requests to DeepL"
+    return f"DeepL answered HTTP {status}"
+
+
+def protect(text: str) -> tuple[str, list[str]]:
+    """Return *text* with its placeholders swapped for ``{0}``, ``{1}``…"""
+    placeholders: list[str] = []
+
+    def swap(match: re.Match[str]) -> str:
+        placeholders.append(match.group(0))
+        return "{" + str(len(placeholders) - 1) + "}"
+
+    return _PLACEHOLDER_RE.sub(swap, text), placeholders
+
+
+def restore(translated: str, placeholders: list[str]) -> str | None:
+    """Put the placeholders back, or None if the service lost or added one."""
+    found = [int(index) for index in _TOKEN_RE.findall(translated)]
+    if sorted(found) != list(range(len(placeholders))):
+        return None
+    return _TOKEN_RE.sub(lambda match: placeholders[int(match.group(1))], translated)
+
+
+def provider_code(codes: Iterable[str], language: str) -> str | None:
+    """Return the service's code for a catalogue's two-letter *language*.
+
+    Each service spells languages its own way - "it" for Google, "it-IT"
+    for MyMemory, "zh-CN" for Chinese on both - so take the exact code if
+    the service has it, else the language's own country (de-DE), else the
+    first regional one it starts.
+    """
+    wanted = language.lower()
+    listed = list(codes)
+    exact = next((code for code in listed if code.lower() == wanted), None)
+    if exact is not None:
+        return exact
+    regional = [code for code in listed if code.lower().startswith(wanted + "-")]
+    # The language's own country first - de-DE, not de-AT, which happened to be listed first - then the first.
+    home = next((code for code in regional if code.lower() == f"{wanted}-{wanted}"), None)
+    return home or (regional[0] if regional else None)
+
+
+def _make_translator(provider: str, language: str, *, deepl_key: str = "") -> Any:
+    """Return a translator from English to *language*: DeepL's, Argos's, or deep_translator's."""
+    if provider == "argos":
+        return ArgosTranslator(language)
+    if provider == "deepl":
+        target = provider_code(DEEPL_TARGETS, language)
+        if target is None or not deepl_key.strip():
+            raise ValueError(
+                f"DeepL does not translate into {language!r}" if target is None else "DeepL needs an API key in Settings"
+            )
+        return DeepLTranslator(deepl_key, target)
+    from deep_translator import (  # pyright: ignore[reportMissingImports]
+        GoogleTranslator,
+        MyMemoryTranslator,
+    )
+    from deep_translator.constants import (  # pyright: ignore[reportMissingImports]
+        GOOGLE_LANGUAGES_TO_CODES,
+        MY_MEMORY_LANGUAGES_TO_CODES,
+    )
+
+    if provider == "mymemory":
+        kind, codes, source = MyMemoryTranslator, MY_MEMORY_LANGUAGES_TO_CODES, "en-GB"
+    else:
+        kind, codes, source = GoogleTranslator, GOOGLE_LANGUAGES_TO_CODES, "en"
+    target = provider_code(codes.values(), language)
+    if target is None:
+        raise ValueError(f"{dict(PROVIDERS).get(provider, provider)} does not translate into {language!r}")
+    if provider == "mymemory":
+        from app.utils.config import get_value
+
+        email = str(get_value(MYMEMORY_EMAIL_SETTING, "") or "").strip()
+        return kind(source=source, target=target, email=email or None)
+    return kind(source=source, target=target)
+
+
+@dataclass(slots=True)
+class TranslationRun:
+    """What a run produced, and why it stopped short if it did."""
+
+    translations: dict[str, str] = field(default_factory=dict)
+    #: Strings the service translated but whose placeholders did not survive.
+    rejected: int = 0
+    #: Strings no service translated, or that were never reached.
+    failed: int = 0
+    #: The last error a service gave, for the message at the end.
+    error: str = ""
+    stopped: bool = False
+    #: (service that refused, service that took over), in order.
+    switched: list[tuple[str, str]] = field(default_factory=list)
+    #: Services that refused for their request limit - Google's "too many
+    #: requests", MyMemory's free daily quota - by name, in order.
+    limited: list[str] = field(default_factory=list)
+
+
+def make_blocks(texts: list[str], limit: int) -> list[list[str]]:
+    """Group *texts* into blocks of at most *limit* characters, one per line.
+
+    A block travels as one request, its strings joined by newlines, which
+    is what makes a long catalogue take minutes instead of the better part
+    of an hour. A string with a newline of its own travels alone: the
+    newlines are how the answer is split back into strings.
+    """
+    blocks: list[list[str]] = []
+    current: list[str] = []
+    size = 0
+    for text in texts:
+        if "\n" in text or len(text) >= limit:
+            if current:
+                blocks.append(current)
+                current, size = [], 0
+            blocks.append([text])
+            continue
+        if current and size + len(text) + 1 > limit:
+            blocks.append(current)
+            current, size = [], 0
+        current.append(text)
+        size += len(text) + 1
+    if current:
+        blocks.append(current)
+    return blocks
+
+
+def translate_all(
+    texts: Iterable[str],
+    *,
+    language: str,
+    provider: str = "google",
+    fallbacks: Sequence[str] = (),
+    cancel_event: threading.Event | None = None,
+    progress: Callable[[int, int], None] | None = None,
+    on_result: Callable[[str, str], None] | None = None,
+    translator: Any = None,
+    make_translator: Callable[[str, str], Any] | None = None,
+    deepl_key: str = "",
+) -> TranslationRun:
+    """Translate every text in *texts* from English into *language*.
+
+    In blocks (see :func:`make_blocks`), paced for the service. A block
+    whose answer does not split back into as many lines as it sent is asked
+    again one string at a time rather than guessed at. *on_result* hears
+    each translation as it arrives, so a caller can show them - and keep
+    them - before the run ends.
+
+    Never raises for a service problem. A service that fails
+    :data:`MAX_CONSECUTIVE_FAILURES` requests in a row - Google answering
+    "too many requests" - is left, and what it did not translate goes to
+    the next of *fallbacks*; with none left, the run reports what it has.
+    *translator* and *make_translator* are for tests: anything with a
+    ``translate(text) -> str`` method, and a (provider, language) factory.
+    *deepl_key* is the DeepL API key, needed only when DeepL is in the chain.
+    """
+    pending = list(dict.fromkeys(text for text in texts if text.strip()))
+    run = TranslationRun()
+    def default_factory(name: str, code: str) -> Any:
+        if name == "deepl":
+            return _make_translator(name, code, deepl_key=deepl_key)
+        return _make_translator(name, code)
+
+    factory = make_translator or default_factory
+    chain = [provider, *(name for name in fallbacks if name != provider)]
+    names = dict(PROVIDERS)
+    state = {"done": 0}
+
+    def advance(count: int) -> None:
+        state["done"] += count
+        if progress is not None:
+            progress(state["done"], len(pending))
+
+    def cancelled() -> bool:
+        return cancel_event is not None and cancel_event.is_set()
+
+    todo = pending
+    for position, name in enumerate(chain):
+        if not todo or cancelled():
+            break
+        if position > 0:
+            run.switched.append((names.get(chain[position - 1], chain[position - 1]), names.get(name, name)))
+        try:
+            service = translator if (position == 0 and translator is not None) else factory(name, language)
+        except (ValueError, RuntimeError) as exc:  # no such language, or Argos's model did not download
+            run.error = str(exc)
+            continue
+        todo = _translate_with(service, name, todo, run, cancelled, advance, on_result)
+
+    run.failed += len(todo)
+    run.stopped = cancelled()
+    if progress is not None:
+        progress(len(pending), len(pending))
+    return run
+
+
+def _is_rate_limit(exc: BaseException) -> bool:
+    return "too many requests" in str(exc).lower() or type(exc).__name__ == "TooManyRequests"
+
+
+def _translate_with(
+    translator: Any,
+    provider: str,
+    texts: list[str],
+    run: TranslationRun,
+    cancelled: Callable[[], bool],
+    advance: Callable[[int], None],
+    on_result: Callable[[str, str], None] | None,
+) -> list[str]:
+    """Translate *texts* with one service; return those it did not translate."""
+    interval = _MIN_INTERVAL_S.get(provider, 0.0)
+    name = dict(PROVIDERS).get(provider, provider)
+    state = {"failures_in_a_row": 0, "last_request": 0.0}
+    unanswered: list[str] = []
+
+    def ask(masked: str) -> str | None:
+        for attempt in (1, 2):
+            wait = interval - (time.monotonic() - state["last_request"])
+            if wait > 0:
+                time.sleep(wait)
+            state["last_request"] = time.monotonic()
+            try:
+                answer = str(translator.translate(masked) or "")
+                # MyMemory can answer its quota warning as if it were the
+                # translation; it must never reach the catalogue.
+                if answer.lstrip().upper().startswith("MYMEMORY WARNING"):
+                    raise RuntimeError("Too many requests: " + answer.strip()[:120])
+            except Exception as exc:
+                run.error = str(exc).split(".")[0][:160] or type(exc).__name__
+                if _is_rate_limit(exc) and name not in run.limited:
+                    # deep_translator words every 429 as Google's limit,
+                    # MyMemory's daily quota included: say whose it was.
+                    run.limited.append(name)
+                # One pause and one more try, the first time a service says
+                # it is being asked too often: a burst can trip the limit
+                # without the service refusing for good.
+                if attempt == 1 and state["failures_in_a_row"] == 0 and _is_rate_limit(exc):
+                    time.sleep(_RATE_LIMIT_PAUSE_S)
+                    continue
+                state["failures_in_a_row"] += 1
+                return None
+            state["failures_in_a_row"] = 0
+            return answer
+        return None
+
+    def keep(text: str, translated: str, placeholders: list[str]) -> None:
+        restored = restore(translated.strip(), placeholders)
+        if restored is None or not restored.strip():
+            run.rejected += 1
+            return
+        # Services trim; the catalogue's spacing is part of the string
+        # (" cm" is a suffix after a number).
+        lead = text[: len(text) - len(text.lstrip())]
+        trail = text[len(text.rstrip()):]
+        restored = lead + restored.strip() + trail
+        run.translations[text] = restored
+        if on_result is not None:
+            on_result(text, restored)
+
+    def giving_up() -> bool:
+        return state["failures_in_a_row"] >= MAX_CONSECUTIVE_FAILURES or cancelled()
+
+    def one_by_one(block: list[str]) -> None:
+        for index, text in enumerate(block):
+            if giving_up():
+                unanswered.extend(block[index:])
+                return
+            masked, placeholders = protect(text)
+            answer = ask(masked)
+            if answer is None:
+                unanswered.append(text)
+            else:
+                keep(text, answer, placeholders)
+                advance(1)
+
+    blocks = make_blocks(texts, _BLOCK_CHARS.get(provider, 450))
+    for number, block in enumerate(blocks):
+        if giving_up():
+            unanswered.extend(text for rest in blocks[number:] for text in rest)
+            break
+        if len(block) == 1:
+            one_by_one(block)
+            continue
+        protected = [protect(text) for text in block]
+        answer = ask("\n".join(masked for masked, _placeholders in protected))
+        lines = answer.split("\n") if answer is not None else []
+        if answer is None:
+            unanswered.extend(block)
+        elif len(lines) == len(block):
+            for text, (_masked, placeholders), line in zip(block, protected, lines):
+                keep(text, line, placeholders)
+            advance(len(block))
+        else:
+            one_by_one(block)
+    return unanswered

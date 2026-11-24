@@ -1,0 +1,10 @@
+{
+  "id": "assistant_providers",
+  "name": "More assistant providers",
+  "version": "1.0.0",
+  "description": "The assistant through GitHub Copilot's models or Apple's on-device Foundation Models.",
+  "author": "ChartLibre",
+  "needs_app": "0.2.0",
+  "packages": [],
+  "default": true
+}

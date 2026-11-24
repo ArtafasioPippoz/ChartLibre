@@ -1,0 +1,94 @@
+ID09 Plain-language errors and onboarding, ID11 More instrument and scientific imports (2026-11-16)
+=====================================================================================================
+Both are in the todo's "Foundation" and "Core" groups. ID11's long plan exists (import_formats_plan.txt,
+importer_plugins_plan.txt); this file says where it stands and what to do next. ID09 had no plan. One step = one
+commit on main, the tests of the area, the size line of todo.txt. Nothing is built before the owner's go.
+
+PART A - ID09: errors you can act on, and a first run that teaches
+------------------------------------------------------------------
+
+What there is today (read in the code)
+- Every box comes from the catalogue in config.json (app/utils/messages.show_message / ask, 95 ids); an id used
+  nowhere or missing is caught by a sweep test. "import.failed" says "Import failed:\n{error}" and the error is the
+  library's own text (pandas, sqlite3, a reader): "Error tokenizing data. C error: Expected 3 fields in line 7,
+  saw 5", "no such column: x", "unable to open database file".
+- A new run starts on an empty "Untitled" project with no question (app/utils/startup.py); the demo set is one menu
+  item away (File > Load demo, about 30 projects in demo/). No tour, no hint on the empty window.
+- The assistant explains an analysis error (AnalysisError names the closest analysis) - the only place that says
+  what to do next.
+
+Goal
+An error says what happened in the user's words, which file / line / column, and what to try; the library's text
+stays one click away ("Details"). A first run shows a small way in: open a demo, import a file, ask the assistant.
+
+A1. One translator of errors, app/utils/friendly_errors.py
+    friendly(exc, context) -> FriendlyError(title, what, try_this: list[str], details)
+    - a table of rules, each: an exception class or a regex on its text, the sentence, the suggestions. First
+      rules (the errors users really meet): delimiter / field count (ParserError) -> "Line 7 has 5 values, the
+      header 3: try another separator (Read options > Delimiter) or skip the first lines"; UnicodeDecodeError ->
+      "The file is not UTF-8: try Windows-1252 or Latin-1 (Read options > Encoding)"; a missing optional package
+      (already worded for xlrd) -> "needs pip install X"; sqlite "no such column / table" -> the name and the
+      closest existing ones (difflib, as analysis_api.closest); "syntax error near" -> the word and its position;
+      permission / file in use / file missing; database locked; a date that does not parse; out of memory on big
+      files; a network error on web import (offline, 404, certificate).
+    - Unknown errors keep today's text, with "Details" holding the traceback's last line; never a silent loss.
+    - Languages: the sentences are catalogue strings (translated by the owner); the numbers and names are
+      placeholders. The rules are data (a list), so adding one is one entry and one test.
+A2. Where it is used, in this order: Import dialog (preview failed, import failed), SQL workpad and Query Builder
+    (the position and the closest column), Open project (not a ChartLibre file, newer version, locked), Export,
+    the Python workpad (a NameError / KeyError on a table or column gets the same "did you mean"), plugin load
+    errors (which file, which line). show_message gets an optional `details=`: a "Show details" button.
+A3. A first run that shows the way: when the project is untitled and empty, the empty chart area shows a card
+    (not a dialog): "Start with an example" (three small demos: Anscombe, penguins, a signal), "Import a file",
+    "Ask the assistant". Gone after the first table; "Don't show again" in Preferences > General.
+A4. A short tour (7 steps, skippable, once): the Tables list, the Import button, chart properties, the Analysis
+    page, the assistant, History, the manual. Built as coach marks over the real widgets (a transparent overlay
+    with a rounded hole and a bubble), driven by a list of (widget finder, text); started also from Help > Take the
+    tour. Offscreen test: every step finds its widget at 1280x720.
+A5. The manual: a "First steps" page that follows the tour; the errors table (what each message means) generated
+    from the rules of A1 so it cannot drift from the code.
+
+Order and size: A1 (M, the rules grow with use) -> A2 import and SQL first (S each) -> A3 (S) -> A4 (M) -> A5 (S).
+Tests: each rule fed a real error produced by the library (not a made-up string); the sweep that every
+catalogue id is used; the tour's steps resolve; a first run with a clean user.json shows the card.
+Decisions for you: (1) tour yes/no, or only the card of A3; (2) the first-run card's three demos; (3) keep the
+original error text visible always, or only under "Details" [proposed: Details].
+
+PART B - ID11: instrument and scientific imports
+-------------------------------------------------
+
+Where it stands (read in app/importers, the plan's status)
+- The importer plugin family and its dispatch are in (suffix, then sniff, then the text fallback), with a
+  Dataset combo and metadata. Built: Parquet, Feather/Arrow, ODS, XLSB, MATLAB, WAV, Stata, SAS, SPSS, R,
+  Touchstone, SPICE raw, VCD, JCAMP-DX, LabVIEW .lvm, GPX, Prism, and the closed formats (JMP, Minitab, Origin)
+  refused with the way to export.
+- Missing from the todo's list: HDF5/NetCDF, TDMS, compressed JCAMP, and "common instrument exports" (Keysight
+  B1500/EasyEXPERT, Keithley 4200A/Clarius, oscilloscope files, STDF/KLARF).
+- Packages: h5py, netCDF4, npTDMS, scikit-rf, pyarrow, pyreadstat are not installed in the dev environment, so the
+  readers for them are tested only through the "missing package" path.
+
+B1. Make the existing readers verifiable: install pyarrow, pyreadstat, scikit-rf in .python (your permission) and
+    run each reader on a tiny real file; the tests then cover the real path, not only the message. (S)
+B2. HDF5 / NetCDF (no sample file needed): a tree browser as the Dataset combo, one dataset a table, attributes
+    to metadata, 1-D and 2-D arrays (2-D to a long table with an index column), a decimation option for millions
+    of points; read in the background. Packages h5py and netCDF4, optional. (M)
+B3. TDMS (NI): groups as datasets, channels as columns, properties as metadata, waveform time axis from
+    wf_increment. Package npTDMS. Needs one real file of yours to be sure. (M)
+B4. Compressed JCAMP-DX (ASDF/DIF/PAC/SQZ): the compressed forms of the spectrum, own decoder (about 150 lines,
+    the IUPAC examples as known answers). (S-M)
+B5. Instrument exports, after your sample files: B1500/EasyEXPERT, Keithley 4200A/Clarius, the VNA and the
+    oscilloscope in the lab. One reader each; a Dataset per sweep; the setup in metadata. Without a file the
+    reader would be a guess: you send them, I do not invent a format. (M each)
+B6. The importer tools (importer_plugins_plan.txt sections 4 and 5): "Importer Builder", Reload, the examples and
+    the manual chapter on writing an importer. (M)
+B7. The manual: the table of formats by category and the package each needs (step 4 of the old plan). (S)
+Shared with ID09: every reader's failure goes through friendly_errors (A1): "Line N of the file is not a number:
+..." and the missing-package message with the pip line.
+
+Order: B1, B2, B4 now (need nothing from you but the install); B3 and B5 when your files arrive; B6, B7 last.
+Decisions for you: (1) may I install pyarrow, pyreadstat, scikit-rf, h5py, netCDF4, npTDMS in .python;
+(2) which instrument files you can send, and which come first; (3) background read for big files as the default.
+
+Both together
+-------------
+Do A1 first: B's readers then get good errors from the start. Then B1-B2-B4 and A2-A3 alternate (each small).

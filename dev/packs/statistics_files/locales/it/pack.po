@@ -1,0 +1,47 @@
+# Italiano translation for the pack statistics_files.
+# Message ids are the English source strings.
+
+msgid ""
+msgstr "Project-Id-Version: ChartLibre\nLanguage: it\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\n"
+
+msgid "A SAS dataset (.sas7bdat) or transport file (.xpt)."
+msgstr "Un dataset SAS (.sas7bdat) o file di trasporto (.xpt)."
+
+msgid "A Stata dataset (.dta), value labels as categories."
+msgstr "Un dataset Stata (.dta), etichette di valore come categorie."
+
+msgid "An R data file (.rds, .RData): each object a dataset."
+msgstr "Un file di dati R (.rds, .RData): ogni oggetto è un set di dati."
+
+msgid "An SPSS data file (.sav, .zsav), value labels as categories."
+msgstr "Un file di dati SPSS (.sav, .zsav), etichette di valore come categorie."
+
+msgid "Closed formats (JMP, Minitab, Origin)"
+msgstr "Formati chiusi (JMP, Minitab, Origin)"
+
+msgid "Files of programs whose format has no free reader: export them as CSV or Excel."
+msgstr "File di programmi il cui formato non ha lettore libero: esportarli come CSV o Excel."
+
+msgid "Files of statistics programs: SPSS, Stata, SAS and R, and what to do with JMP, Minitab and Origin files."
+msgstr "File dei programmi statistici: SPSS, Stata, SAS e R, e cosa fare con i file JMP, Minitab e Origin."
+
+msgid "Other"
+msgstr "Altri"
+
+msgid "R"
+msgstr "R"
+
+msgid "SAS"
+msgstr "SAS"
+
+msgid "SPSS"
+msgstr "SPESA"
+
+msgid "Stata"
+msgstr "Stata"
+
+msgid "Statistics software"
+msgstr "Software statistico"
+
+msgid "Statistics software files"
+msgstr "File di software di statistica"

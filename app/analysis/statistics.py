@@ -1,0 +1,953 @@
+"""Descriptive statistics and hypothesis tests on plain arrays.
+
+The engine behind the Statistics data operation. Nothing here knows about
+Qt, the repository or a chart: every function takes numbers and returns
+numbers, so it can be tested against reference values and called from a
+script exactly as the dialog calls it.
+
+A test result is a row dictionary - ``test``, ``n``, ``statistic``,
+``pvalue``, ``note`` - which is what the report prints. A test that cannot
+run on the data it was given returns a row with only a note saying why,
+rather than raising: one unusable series must not blank the whole report.
+"""
+from __future__ import annotations
+
+import itertools
+import warnings
+from collections.abc import Mapping, Sequence
+from typing import Any, cast
+
+import numpy as np
+import pandas as pd
+from scipy import stats
+
+from app.analysis import NUMERICAL_FAILURES
+from app.analysis.randomness import all_diagnostics, finite
+from app.logs.logger import applogger
+from app.utils.coercion import column_of
+from app.utils.config import get_constant
+from app.utils.i18n import _
+
+#: The alternatives SciPy's tests accept.
+
+
+# ----------------------------------------------------------------------
+# Result rows
+# ----------------------------------------------------------------------
+def result_row(test: str, n: int, statistic: Any, pvalue: Any, note: str = "") -> dict[str, Any]:
+    """One line of a test table."""
+    return {"test": test, "n": int(n), "statistic": statistic, "pvalue": pvalue, "note": note}
+
+
+def note_row(test: str, n: int, note: str) -> dict[str, Any]:
+    """A test that could not run, and why."""
+    return {"test": test, "n": int(n), "statistic": np.nan, "pvalue": np.nan, "note": note}
+
+
+def _statistic(result: Any) -> float:
+    return float(result[0])
+
+
+def _pvalue(result: Any) -> float:
+    return float(result[1])
+
+
+def _named_pvalue(result: Any) -> float:
+    return float(getattr(result, "pvalue", np.nan))
+
+
+# ----------------------------------------------------------------------
+# Descriptive statistics
+# ----------------------------------------------------------------------
+def describe(values: Any, *, trim_proportion: float = 0.1) -> dict[str, Any]:
+    """Location, spread and shape of one sample; ``{"n": 0}`` when empty."""
+    values = finite(values)
+    n = int(values.size)
+    if n == 0:
+        return {"n": 0}
+
+    q1, median, q3 = np.percentile(values, [25, 50, 75])
+    sem = float(stats.sem(values, nan_policy="omit")) if n > 1 else np.nan
+    ci_low = ci_high = np.nan
+    if n > 1 and np.isfinite(sem):
+        ci = stats.t.interval(0.95, df=n - 1, loc=float(np.mean(values)), scale=sem)
+        ci_low, ci_high = float(ci[0]), float(ci[1])
+
+    mode_res = stats.mode(values, keepdims=False)
+    try:
+        mode_value = float(mode_res.mode)
+        mode_count = int(mode_res.count)
+    except (TypeError, ValueError):
+        mode_value = np.nan
+        mode_count = 0
+
+    positive = values[values > 0]
+    entropy = np.nan
+    if positive.size > 0 and float(np.sum(positive)) > 0:
+        probs = positive / float(np.sum(positive))
+        entropy = float(stats.entropy(probs))
+
+    return {
+        "n": n,
+        "mean": float(np.mean(values)),
+        "trimmed_mean": float(stats.trim_mean(values, proportiontocut=trim_proportion)),
+        "gmean": float(stats.gmean(positive)) if positive.size == n else np.nan,
+        "hmean": float(stats.hmean(positive)) if positive.size == n else np.nan,
+        "median": float(median),
+        "mode": mode_value,
+        "mode_count": mode_count,
+        "std": float(np.std(values, ddof=1)) if n > 1 else np.nan,
+        "var": float(np.var(values, ddof=1)) if n > 1 else np.nan,
+        "sem": sem,
+        "min": float(np.min(values)),
+        "q1": float(q1),
+        "q3": float(q3),
+        "max": float(np.max(values)),
+        "range": float(np.max(values) - np.min(values)),
+        "iqr": float(stats.iqr(values)),
+        "mad": float(stats.median_abs_deviation(values, scale=1.4826)),
+        "skewness": float(stats.skew(values, bias=False)) if n > 2 else np.nan,
+        "kurtosis": float(stats.kurtosis(values, bias=False)) if n > 3 else np.nan,
+        "entropy": entropy,
+        "ci95_low": ci_low,
+        "ci95_high": ci_high,
+    }
+
+
+# ----------------------------------------------------------------------
+# One sample
+# ----------------------------------------------------------------------
+def one_sample_tests(values: Any, *, popmean: float = 0.0, alternative: str = "two-sided") -> list[dict[str, Any]]:
+    """Is the sample's centre *popmean*? t, Wilcoxon signed-rank and sign test."""
+    values = finite(values)
+    tests: list[dict[str, Any]] = []
+
+    if values.size > 1:
+        res = stats.ttest_1samp(values, popmean=popmean, alternative=alternative)
+        tests.append(result_row(_("One-sample t-test"), values.size, _statistic(res), _pvalue(res), f"mean = {popmean:g}"))
+
+    diff = values - float(popmean)
+    nonzero = diff[np.abs(diff) > 0]
+    if nonzero.size > 0:
+        try:
+            res = stats.wilcoxon(nonzero, alternative=alternative, zero_method="wilcox")
+            tests.append(result_row(_("Wilcoxon signed-rank"), nonzero.size, _statistic(res), _pvalue(res), f"median = {popmean:g}"))
+        except ValueError as exc:
+            tests.append(note_row(_("Wilcoxon signed-rank"), nonzero.size, str(exc)))
+
+        positives = int(np.sum(diff > 0))
+        trials = positives + int(np.sum(diff < 0))
+        if trials > 0:
+            res = stats.binomtest(positives, trials, p=0.5, alternative=alternative)
+            tests.append(result_row(_("Sign test"), trials, positives, _named_pvalue(res), "positive signs"))
+    return tests + interval_rows(values)
+
+
+def interval_rows(values: Any, *, confidence: float = 0.95, coverage: float = 0.95) -> list[dict[str, Any]]:
+    """Where the next value falls (prediction interval) and where most values fall (tolerance interval).
+
+    Both assume a normal sample. The prediction interval is mean +- t s sqrt(1 + 1/n); the tolerance
+    interval covers *coverage* of the population with *confidence*, by Howe's approximation of the k
+    factor (NIST/SEMATECH handbook, 7.2.6.3) - within 0.1% of the exact tables from n = 10 on. The
+    interval is the note; the statistic is its half-width in standard deviations.
+    """
+    values = finite(values)
+    n = int(values.size)
+    if n < 3:
+        return []
+    mean, sd = float(np.mean(values)), float(np.std(values, ddof=1))
+    t_factor = float(stats.t.ppf(0.5 + confidence / 2.0, n - 1)) * float(np.sqrt(1.0 + 1.0 / n))
+    z = float(stats.norm.ppf(0.5 + coverage / 2.0))
+    k_factor = z * float(np.sqrt((n - 1) * (1.0 + 1.0 / n) / stats.chi2.ppf(1.0 - confidence, n - 1)))
+    level, share = round(confidence * 100), round(coverage * 100)
+    return [
+        result_row(_("Prediction interval ({level}%)").format(level=level), n, t_factor, np.nan,
+                   f"next value in {mean - t_factor * sd:.6g} .. {mean + t_factor * sd:.6g}"),
+        result_row(_("Tolerance interval ({share}% of values, {level}% confidence)").format(share=share, level=level),
+                   n, k_factor, np.nan, f"{mean - k_factor * sd:.6g} .. {mean + k_factor * sd:.6g}; normal"),
+    ]
+
+
+# ----------------------------------------------------------------------
+# Normality
+# ----------------------------------------------------------------------
+def anderson_normality(
+    values: Any,
+    *,
+    method: str = "interpolate",
+    resamples: int = 9999,
+    batch: int | None = None,
+) -> tuple[Any, str]:
+    """Anderson-Darling against the normal, with the p-value *method* asked for."""
+    values = finite(values)
+    if method == "monte_carlo":
+        monte_carlo = stats.MonteCarloMethod(n_resamples=int(resamples), batch=batch)
+        return (
+            stats.anderson(values, dist="norm", method=monte_carlo),
+            f"Monte Carlo p-value; resamples={int(resamples):,}; batch={batch or 'Auto'}",
+        )
+    try:
+        return stats.anderson(values, dist="norm", method="interpolate"), "Interpolated p-value"
+    except ValueError:
+        return stats.anderson(values, dist="norm", method="interpolated"), "Interpolated p-value"
+    except TypeError:
+        # Older SciPy versions do not have the method parameter.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", FutureWarning)
+            return (
+                stats.anderson(values, dist="norm"),
+                "Critical values only; installed SciPy does not support p-value method",
+            )
+
+
+def normality_tests(
+    values: Any,
+    *,
+    anderson_method: str = "interpolate",
+    resamples: int = 9999,
+    batch: int | None = None,
+) -> list[dict[str, Any]]:
+    """Shapiro-Wilk, D'Agostino, skewness, kurtosis, Jarque-Bera, KS and Anderson-Darling."""
+    values = finite(values)
+    n = int(values.size)
+    tests: list[dict[str, Any]] = []
+
+    def run(name: str, func) -> None:
+        try:
+            res = func(values)
+            tests.append(result_row(name, n, _statistic(res), _pvalue(res)))
+        except NUMERICAL_FAILURES as exc:  # SciPy's ways of refusing a degenerate sample
+            tests.append(note_row(name, n, str(exc)))
+
+    if n >= 3:
+        run(_("Shapiro-Wilk normality"), stats.shapiro)
+    if n >= 8:
+        run("D'Agostino-Pearson normality", stats.normaltest)
+        run("Skewness test", stats.skewtest)
+    if n >= 5:
+        run(_("Kurtosis test"), stats.kurtosistest)
+    if n >= 2:
+        run(_("Jarque-Bera normality"), stats.jarque_bera)
+        std = float(np.std(values, ddof=1))
+        if std > 0:
+            z = (values - float(np.mean(values))) / std
+            try:
+                res = stats.kstest(z, "norm")
+                tests.append(result_row(_("Kolmogorov-Smirnov vs normal"), n, _statistic(res), _pvalue(res), "standardized sample"))
+            except NUMERICAL_FAILURES as exc:
+                tests.append(note_row(_("Kolmogorov-Smirnov vs normal"), n, str(exc)))
+        try:
+            res, note = anderson_normality(values, method=anderson_method, resamples=resamples, batch=batch)
+            tests.append(
+                result_row(
+                    "Anderson-Darling normality",
+                    n,
+                    float(getattr(res, "statistic", np.nan)),
+                    float(getattr(res, "pvalue", np.nan)),
+                    note,
+                )
+            )
+        except NUMERICAL_FAILURES as exc:
+            tests.append(note_row(_("Anderson-Darling normality"), n, str(exc)))
+    return tests
+
+
+# ----------------------------------------------------------------------
+# Randomness and serial independence
+# ----------------------------------------------------------------------
+def randomness_tests(
+    values: Any,
+    *,
+    lags: Sequence[int] = (1, 5, 10, 20),
+    model_df: int = 0,
+    centre: float | None = None,
+) -> list[dict[str, Any]]:
+    """Runs, turning points, Durbin-Watson and Ljung-Box diagnostics.
+
+    The order of *values* is meaningful.  Ordinary limitations, such as a
+    short or constant series, become ``note_row`` entries and warnings rather
+    than exceptions, consistently with the rest of this module.
+    """
+    values = finite(values)
+    try:
+        diagnostics = all_diagnostics(values, lags=lags, model_df=model_df, centre=centre)
+    except Exception as exc:
+        applogger.error(f"Randomness diagnostics failed: {exc}")
+        return [note_row(_("Randomness diagnostics"), values.size, str(exc))]
+    rows: list[dict[str, Any]] = []
+    for diagnostic in diagnostics:
+        name = _(diagnostic.test)
+        if diagnostic.available:
+            rows.append(result_row(name, diagnostic.n, diagnostic.statistic,
+                                   diagnostic.pvalue, diagnostic.note))
+        else:
+            applogger.warning(f"{diagnostic.test}: {diagnostic.note}")
+            rows.append(note_row(name, diagnostic.n, diagnostic.note))
+    return rows
+
+# ----------------------------------------------------------------------
+# Two samples measured on the same units (paired)
+# ----------------------------------------------------------------------
+def paired_values(
+    left_x: Any, left_y: Any, right_x: Any, right_y: Any
+) -> tuple[np.ndarray, np.ndarray, str]:
+    """Pair two samples on their shared x values, or by row order when none match."""
+    left_by_x: dict[float, float] = {}
+    for x_value, y_value in zip(left_x, left_y, strict=False):
+        if np.isfinite(x_value) and np.isfinite(y_value):
+            left_by_x.setdefault(float(x_value), float(y_value))
+
+    paired_left: list[float] = []
+    paired_right: list[float] = []
+    for x_value, y_value in zip(right_x, right_y, strict=False):
+        key = float(x_value)
+        if key in left_by_x and np.isfinite(y_value):
+            paired_left.append(left_by_x[key])
+            paired_right.append(float(y_value))
+    if paired_left:
+        return np.asarray(paired_left), np.asarray(paired_right), "common X values"
+
+    left_y, right_y = np.asarray(left_y, dtype=float), np.asarray(right_y, dtype=float)
+    n = min(left_y.size, right_y.size)
+    return left_y[:n], right_y[:n], "row order, truncated to common length"
+
+
+def paired_tests(a: Any, b: Any, *, alignment: str = "", alternative: str = "two-sided") -> list[dict[str, Any]]:
+    """Paired t, Wilcoxon signed-rank, sign test and normality of the differences."""
+    a, b = np.asarray(a, dtype=float), np.asarray(b, dtype=float)
+    keep = np.isfinite(a) & np.isfinite(b)
+    a, b = a[keep], b[keep]
+    n = int(a.size)
+    if n == 0:
+        return [note_row(_("Paired tests"), 0, "No paired observations.")]
+
+    diff = a - b
+    tests = [result_row(_("Paired difference summary"), n, float(np.mean(diff)), np.nan, f"mean difference; {alignment}")]
+    if n > 1:
+        res = stats.ttest_rel(a, b, alternative=alternative)
+        tests.append(result_row(_("Paired t-test"), n, _statistic(res), _pvalue(res), alignment))
+
+    nonzero = diff[np.abs(diff) > 0]
+    if nonzero.size > 0:
+        try:
+            res = stats.wilcoxon(a, b, alternative=alternative, zero_method="wilcox")
+            tests.append(result_row(_("Wilcoxon signed-rank paired test"), nonzero.size, _statistic(res), _pvalue(res), alignment))
+        except ValueError as exc:
+            tests.append(note_row(_("Wilcoxon signed-rank paired test"), nonzero.size, str(exc)))
+        positives = int(np.sum(diff > 0))
+        trials = positives + int(np.sum(diff < 0))
+        if trials > 0:
+            res = stats.binomtest(positives, trials, p=0.5, alternative=alternative)
+            tests.append(result_row(_("Sign test"), trials, positives, _named_pvalue(res), f"positive signs; {alignment}"))
+
+    if n >= 3:
+        try:
+            res = stats.shapiro(diff)
+            tests.append(result_row(_("Normality of paired differences"), n, _statistic(res), _pvalue(res), alignment))
+        except NUMERICAL_FAILURES as exc:
+            tests.append(note_row(_("Normality of paired differences"), n, str(exc)))
+    return tests
+
+
+def correlation_tests(a: Any, b: Any, *, alignment: str = "") -> list[dict[str, Any]]:
+    """Pearson, Spearman, Kendall and the least-squares slope of b on a."""
+    a, b = np.asarray(a, dtype=float), np.asarray(b, dtype=float)
+    keep = np.isfinite(a) & np.isfinite(b)
+    a, b = a[keep], b[keep]
+    n = int(a.size)
+    if n < 2:
+        return [note_row(_("Correlation tests"), n, "Need at least two paired observations.")]
+
+    tests: list[dict[str, Any]] = []
+    for name, func in (
+        ("Pearson correlation", stats.pearsonr),
+        ("Spearman rank correlation", stats.spearmanr),
+        ("Kendall tau", stats.kendalltau),
+    ):
+        try:
+            res = func(a, b)
+            tests.append(result_row(name, n, _statistic(res), _pvalue(res), alignment))
+        except NUMERICAL_FAILURES as exc:
+            tests.append(note_row(name, n, str(exc)))
+    try:
+        res = stats.linregress(a, b)
+        # LinregressResult: slope is [0], p-value [3] - its fields are not
+        # annotated, so they are read by position.
+        tests.append(result_row(_("Linear regression slope"), n, float(cast(float, res[0])), float(cast(float, res[3])), alignment))
+    except NUMERICAL_FAILURES as exc:
+        tests.append(note_row(_("Linear regression slope"), n, str(exc)))
+    return tests
+
+
+# ----------------------------------------------------------------------
+# Two independent samples
+# ----------------------------------------------------------------------
+def cohens_d(a: Any, b: Any) -> float:
+    """Standardised mean difference with the pooled standard deviation."""
+    a, b = finite(a), finite(b)
+    na, nb = a.size, b.size
+    if na < 2 or nb < 2:
+        return np.nan
+    pooled = ((na - 1) * np.var(a, ddof=1) + (nb - 1) * np.var(b, ddof=1)) / (na + nb - 2)
+    if pooled <= 0:
+        return np.nan
+    return float((np.mean(a) - np.mean(b)) / np.sqrt(pooled))
+
+
+def independent_tests(a: Any, b: Any, *, alternative: str = "two-sided") -> list[dict[str, Any]]:
+    """Two groups of different units: are their centres the same?
+
+    Welch's t first, because it does not assume equal variances and loses
+    almost nothing when they are equal - the reason it is the default in R
+    and the one SPSS and JMP print beside Student's. Levene's test says
+    whether the difference between the two matters here; Mann-Whitney is
+    the rank-based answer when the data are far from normal.
+    """
+    a, b = finite(a), finite(b)
+    na, nb = int(a.size), int(b.size)
+    n = na + nb
+    if na < 2 or nb < 2:
+        return [note_row(_("Independent-sample tests"), n, "Each group needs at least two values.")]
+
+    sizes = f"n = {na} + {nb}"
+    d = cohens_d(a, b)
+    tests = [
+        result_row(
+            _("Difference of means"),
+            n,
+            float(np.mean(a) - np.mean(b)),
+            np.nan,
+            f"{sizes}; Cohen's d = {d:.3g}" if np.isfinite(d) else sizes,
+        )
+    ]
+    res = stats.ttest_ind(a, b, equal_var=False, alternative=alternative)
+    welch_df = float(cast(Any, res).df)  # TtestResult.df is real; its stub does not list it
+    tests.append(result_row(_("Welch t-test"), n, _statistic(res), _pvalue(res), f"df = {welch_df:.4g}"))
+    res = stats.ttest_ind(a, b, equal_var=True, alternative=alternative)
+    tests.append(result_row(_("Student t-test (equal variances)"), n, _statistic(res), _pvalue(res), f"df = {na + nb - 2}"))
+    try:
+        res = stats.mannwhitneyu(a, b, alternative=alternative)
+        tests.append(result_row(_("Mann-Whitney U"), n, _statistic(res), _pvalue(res)))
+    except ValueError as exc:
+        tests.append(note_row(_("Mann-Whitney U"), n, str(exc)))
+    try:
+        res = stats.levene(a, b, center="median")
+        tests.append(result_row(_("Levene equal variances"), n, _statistic(res), _pvalue(res), "Brown-Forsythe (median)"))
+    except ValueError as exc:
+        tests.append(note_row(_("Levene equal variances"), n, str(exc)))
+    return tests
+
+
+# ----------------------------------------------------------------------
+# Several groups
+# ----------------------------------------------------------------------
+def group_tests(groups: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """Do two or more groups share one mean? ANOVA, Welch's ANOVA, Kruskal-Wallis.
+
+    Effect sizes go in the note: eta squared for the ANOVA (the share of the
+    variance the grouping explains), epsilon squared for Kruskal-Wallis.
+    """
+    samples = {name: finite(values) for name, values in groups.items()}
+    samples = {name: values for name, values in samples.items() if values.size}
+    k = len(samples)
+    n = int(sum(values.size for values in samples.values()))
+    if k < 2:
+        return [note_row(_("Group comparison"), n, "Needs at least two groups with values.")]
+    if any(values.size < 2 for values in samples.values()):
+        return [note_row(_("Group comparison"), n, "Every group needs at least two values.")]
+
+    arrays = list(samples.values())
+    tests: list[dict[str, Any]] = []
+
+    res = stats.f_oneway(*arrays)
+    everything = np.concatenate(arrays)
+    grand = float(np.mean(everything))
+    between = float(sum(v.size * (np.mean(v) - grand) ** 2 for v in arrays))
+    total = float(np.sum((everything - grand) ** 2))
+    eta2 = between / total if total > 0 else np.nan
+    tests.append(
+        result_row(
+            _("One-way ANOVA"), n, _statistic(res), _pvalue(res),
+            f"df = {k - 1}, {n - k}; eta² = {eta2:.3g}",
+        )
+    )
+
+    welch = welch_anova(arrays)
+    if welch is not None:
+        f_value, df1, df2, p_value = welch
+        tests.append(result_row(_("Welch ANOVA (unequal variances)"), n, f_value, p_value, f"df = {df1:.4g}, {df2:.4g}"))
+
+    try:
+        res = stats.kruskal(*arrays)
+        epsilon2 = float(res.statistic) / ((n ** 2 - 1) / (n + 1)) if n > 1 else np.nan
+        tests.append(result_row(_("Kruskal-Wallis"), n, _statistic(res), _pvalue(res), f"df = {k - 1}; epsilon² = {epsilon2:.3g}"))
+    except ValueError as exc:
+        tests.append(note_row(_("Kruskal-Wallis"), n, str(exc)))
+
+    try:
+        res = cast(Any, stats.median_test(*arrays))
+        tests.append(result_row(_("Mood median test"), n, float(res.statistic), float(res.pvalue),
+                                f"df = {k - 1}; grand median = {float(res.median):.6g}"))
+    except ValueError as exc:
+        tests.append(note_row(_("Mood median test"), n, str(exc)))
+
+    try:
+        res = stats.levene(*arrays, center="median")
+        tests.append(result_row(_("Levene equal variances"), n, _statistic(res), _pvalue(res), "Brown-Forsythe (median)"))
+    except ValueError as exc:
+        tests.append(note_row(_("Levene equal variances"), n, str(exc)))
+
+    try:
+        res = stats.fligner(*arrays)
+        tests.append(result_row(_("Fligner-Killeen equal variances"), n, _statistic(res), _pvalue(res),
+                                f"df = {k - 1}; rank-based, robust to non-normal data"))
+    except ValueError as exc:
+        tests.append(note_row(_("Fligner-Killeen equal variances"), n, str(exc)))
+    return tests
+
+
+def aligned_values(samples: Sequence[tuple[Any, Any]]) -> tuple[np.ndarray, str]:
+    """Several samples side by side, one row per subject: on the x values all share, or by row order.
+
+    The k-sample form of paired_values; rows with a missing value are left out.
+    """
+    by_x: list[dict[float, float]] = []
+    for xs, ys in samples:
+        column: dict[float, float] = {}
+        for x_value, y_value in zip(xs, ys, strict=False):
+            if np.isfinite(x_value) and np.isfinite(y_value):
+                column.setdefault(float(x_value), float(y_value))
+        by_x.append(column)
+    shared = sorted(set.intersection(*(set(column) for column in by_x))) if by_x else []
+    if shared:
+        return np.array([[column[x] for column in by_x] for x in shared]), "common X values"
+    columns = [np.asarray(ys, dtype=float) for _xs, ys in samples]
+    n = min((column.size for column in columns), default=0)
+    table = np.column_stack([column[:n] for column in columns]) if n else np.empty((0, len(columns)))
+    return table[np.isfinite(table).all(axis=1)], "row order, truncated to common length"
+
+
+def repeated_tests(table: Any, *, alignment: str = "") -> list[dict[str, Any]]:
+    """k >= 3 conditions measured on the same subjects (one row each): do they share one centre?
+
+    Friedman's test ranks within each row - the repeated-measures Kruskal-Wallis - and Kendall's W
+    is its effect size. Page's test asks the sharper question of a trend in the columns' order.
+    """
+    values = np.asarray(table, dtype=float)
+    n, k = values.shape if values.ndim == 2 else (0, 0)
+    if k < 3:
+        return [note_row(_("Repeated-measures tests"), n, "Needs at least three series.")]
+    if n < 2:
+        return [note_row(_("Repeated-measures tests"), n, "Needs at least two rows with every series.")]
+    tests: list[dict[str, Any]] = []
+    try:
+        res = stats.friedmanchisquare(*values.T)
+        w = float(res.statistic) / (n * (k - 1))
+        tests.append(result_row(_("Friedman test"), n, _statistic(res), _pvalue(res),
+                                f"df = {k - 1}; Kendall's W = {w:.3g}; {alignment}"))
+    except ValueError as exc:
+        tests.append(note_row(_("Friedman test"), n, str(exc)))
+    try:
+        res = stats.page_trend_test(values)
+        tests.append(result_row(_("Page trend test"), n, float(res.statistic), float(res.pvalue),
+                                f"increasing in the series' order; {res.method}"))
+    except ValueError as exc:
+        tests.append(note_row(_("Page trend test"), n, str(exc)))
+    return tests
+
+
+def welch_anova(arrays: Sequence[np.ndarray]) -> tuple[float, float, float, float] | None:
+    """Welch's heteroscedastic one-way ANOVA: (F, df1, df2, p), or None.
+
+    Written out rather than taken from a library: SciPy has none, and the
+    formula (Welch 1951) is short. None when a group has no variance, where
+    its weight would be infinite.
+    """
+    k = len(arrays)
+    sizes = np.array([a.size for a in arrays], dtype=float)
+    means = np.array([np.mean(a) for a in arrays], dtype=float)
+    variances = np.array([np.var(a, ddof=1) for a in arrays], dtype=float)
+    if k < 2 or np.any(variances <= 0) or np.any(sizes < 2):
+        return None
+    weights = sizes / variances
+    total_weight = float(np.sum(weights))
+    weighted_mean = float(np.sum(weights * means) / total_weight)
+    numerator = float(np.sum(weights * (means - weighted_mean) ** 2)) / (k - 1)
+    lam = float(np.sum((1 - weights / total_weight) ** 2 / (sizes - 1)))
+    denominator = 1 + 2 * (k - 2) * lam / (k ** 2 - 1)
+    f_value = numerator / denominator
+    df1 = float(k - 1)
+    df2 = float((k ** 2 - 1) / (3 * lam)) if lam > 0 else np.inf
+    p_value = float(stats.f.sf(f_value, df1, df2))
+    return float(f_value), df1, df2, p_value
+
+
+def tukey_hsd(groups: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """Tukey's honestly significant difference: every pair of groups.
+
+    Rows carry ``pair``, ``difference`` (first minus second), ``pvalue``
+    already adjusted for the number of pairs, and the 95% confidence
+    interval of the difference.
+    """
+    samples = {name: finite(values) for name, values in groups.items()}
+    samples = {name: values for name, values in samples.items() if values.size >= 2}
+    names = list(samples)
+    if len(names) < 2:
+        return []
+    result = stats.tukey_hsd(*samples.values())
+    interval = result.confidence_interval(confidence_level=0.95)
+    rows: list[dict[str, Any]] = []
+    for i, j in itertools.combinations(range(len(names)), 2):
+        rows.append(
+            {
+                "pair": f"{names[i]} - {names[j]}",
+                "difference": float(result.statistic[i, j]),
+                "pvalue": float(result.pvalue[i, j]),
+                "ci_low": float(interval.low[i, j]),
+                "ci_high": float(interval.high[i, j]),
+            }
+        )
+    return rows
+
+
+# ----------------------------------------------------------------------
+# Contingency tables (todo R-04)
+# ----------------------------------------------------------------------
+#: Monte Carlo tables for Fisher's test on tables larger than 2x2, and the
+#: seed that makes its p-value the same every run.
+FISHER_RESAMPLES: int = get_constant("fisher_resamples", 9999)
+FISHER_SEED: int = 0
+
+
+def contingency_table(rows: Any, columns: Any, weights: Any = None) -> pd.DataFrame:
+    """Counts of every (row, column) pair: a crosstab, missing values left out.
+
+    *weights* counts each line that many times, for a table already counted.
+    Levels are ordered numerically when they are all numbers, else as found.
+    """
+    frame = pd.DataFrame({
+        "row": np.asarray(rows, dtype=object),
+        "column": np.asarray(columns, dtype=object),
+        "weight": 1.0 if weights is None else np.asarray(weights, dtype=float),
+    })
+    frame = frame[frame["row"].notna() & frame["column"].notna() & np.isfinite(frame["weight"].to_numpy(dtype=float))]
+    # Integer codes and one bincount instead of a pivot_table groupby (PF-03).
+    row_codes, row_levels = pd.factorize(frame["row"], sort=False)
+    column_codes, column_levels = pd.factorize(frame["column"], sort=False)
+    counts = np.bincount(
+        row_codes * len(column_levels) + column_codes,
+        weights=column_of(frame, "weight").to_numpy(dtype=float),
+        minlength=len(row_levels) * len(column_levels),
+    ).reshape(len(row_levels), len(column_levels))
+    table = pd.DataFrame(counts, index=pd.Index(row_levels, name="row"), columns=pd.Index(column_levels, name="column"))
+    return table.reindex(index=_level_order(table.index), columns=_level_order(table.columns))
+
+
+def _level_order(levels: Any) -> list[Any]:
+    found = list(levels)
+    try:
+        return sorted(found, key=float)
+    except (TypeError, ValueError):
+        return found
+
+
+def contingency_tests(table: Any) -> list[dict[str, Any]]:
+    """Is the row variable independent of the column variable?
+
+    Pearson's chi-squared (with Yates' correction as well on a 2x2 table),
+    the likelihood-ratio G test, Fisher's exact test, and Cramér's V as the
+    effect size. The note warns when expected counts are too small for the
+    chi-squared approximation - more than a fifth of the cells under 5, or
+    any under 1 (Cochran) - which is when Fisher's row is the one to read.
+    """
+    counts = np.asarray(table, dtype=float)
+    n = int(round(float(counts.sum())))
+    if counts.ndim != 2 or min(counts.shape) < 2:
+        return [note_row(_("Contingency table"), n, "Needs at least two levels of each variable.")]
+    counts = counts[counts.sum(axis=1) > 0][:, counts.sum(axis=0) > 0]
+    if min(counts.shape) < 2:
+        return [note_row(_("Contingency table"), n, "Needs at least two levels of each variable with counts.")]
+
+    rows: list[dict[str, Any]] = []
+    # By position, as the rest of this module reads SciPy's results: the
+    # stubs declare them as tuples.
+    statistic, pvalue, dof_raw, expected_raw = cast(tuple[Any, Any, Any, Any], stats.chi2_contingency(counts, correction=False))
+    expected = np.asarray(expected_raw, dtype=float)
+    small = float(np.mean(expected < 5.0))
+    caution = "; expected counts too small - read Fisher" if small > 0.2 or np.any(expected < 1.0) else ""
+    dof = int(dof_raw)
+    chi2 = float(statistic)
+    cramer = float(np.sqrt(chi2 / (counts.sum() * (min(counts.shape) - 1)))) if counts.sum() > 0 else np.nan
+    rows.append(result_row(
+        _("Pearson chi-squared"), n, chi2, float(pvalue), f"df = {dof}; Cramér's V = {cramer:.3g}{caution}",
+    ))
+    if counts.shape == (2, 2):
+        yates = stats.chi2_contingency(counts, correction=True)
+        rows.append(result_row(_("Chi-squared, Yates' correction"), n, _statistic(yates), _pvalue(yates), "df = 1"))
+    likelihood = stats.chi2_contingency(counts, correction=False, lambda_="log-likelihood")
+    rows.append(result_row(_("Likelihood-ratio G"), n, _statistic(likelihood), _pvalue(likelihood), f"df = {dof}"))
+    if counts.shape == (2, 2):
+        rows.extend(_two_by_two_tests(counts, n))
+
+    integers = np.rint(counts)
+    if not np.allclose(integers, counts):
+        rows.append(note_row(_("Fisher exact"), n, "Needs whole counts."))
+    elif counts.shape == (2, 2):
+        fisher = stats.fisher_exact(integers.astype(int))
+        rows.append(result_row(_("Fisher exact"), n, _statistic(fisher), _pvalue(fisher), "statistic: odds ratio"))
+    else:
+        method = stats.MonteCarloMethod(n_resamples=FISHER_RESAMPLES, rng=np.random.default_rng(FISHER_SEED))
+        fisher = stats.fisher_exact(integers.astype(int), method=method)
+        rows.append(result_row(
+            _("Fisher exact"), n, _statistic(fisher), _pvalue(fisher),
+            f"Monte Carlo, {FISHER_RESAMPLES} tables; statistic: probability of the table",
+        ))
+    return rows
+
+
+def _two_by_two_tests(counts: np.ndarray, n: int) -> list[dict[str, Any]]:
+    """The two-proportion z test of the rows' first-column shares, and McNemar's test of the table read as paired.
+
+    The z test is Pearson's chi-squared without correction in another form (z squared is its statistic); it
+    comes with the difference it tests. McNemar's test reads the table as the same subjects measured twice,
+    rows the first time and columns the second: only the discordant cells b and c carry information. It
+    answers a different question from the others, which treat the rows as two independent groups - read it
+    only for paired data.
+    """
+    from statsmodels.stats.contingency_tables import mcnemar
+    from statsmodels.stats.proportion import proportions_ztest
+
+    rows: list[dict[str, Any]] = []
+    first, second = counts[0, 0], counts[1, 0]
+    sizes = counts.sum(axis=1)
+    if np.all(sizes > 0) and np.allclose(counts, np.rint(counts)):
+        z_value, p_value = proportions_ztest([first, second], sizes)
+        rows.append(result_row(
+            _("Two-proportion z"), n, float(z_value), float(p_value),
+            f"{first / sizes[0]:.4g} against {second / sizes[1]:.4g} in the first column; difference {first / sizes[0] - second / sizes[1]:.4g}",
+        ))
+    b, c = float(counts[0, 1]), float(counts[1, 0])
+    if np.allclose(counts, np.rint(counts)):
+        exact = b + c < 25
+        result = cast(Any, mcnemar(counts.astype(int), exact=exact, correction=True))
+        rows.append(result_row(
+            _("McNemar (paired)"), n, float(result.statistic), float(result.pvalue),
+            f"discordant cells {b:g} and {c:g}; {'exact binomial' if exact else 'chi-squared with continuity correction'}; "
+            "only if the rows and columns are the same subjects twice",
+        ))
+    return rows
+
+
+def two_by_two_measures(table: Any) -> list[dict[str, Any]]:
+    """Risk difference, relative risk and odds ratio of a 2x2 table, each with its 95% confidence interval.
+
+    Rows are the groups (exposed first), the first column is the outcome: the risk of a row is its first
+    column's share. Risk difference is the first row's risk minus the second's (Wald interval); the relative
+    risk and the odds ratio have log-scale Wald intervals. A zero cell gets 0.5 added to every cell for the odds
+    ratio and the relative risk (Haldane-Anscombe), as the note says. Returns [] for any other shape.
+    """
+    from statsmodels.stats.contingency_tables import Table2x2
+
+    counts = np.asarray(table, dtype=float)
+    if counts.shape != (2, 2) or np.any(counts.sum(axis=1) <= 0):
+        return []
+    sizes = counts.sum(axis=1)
+    risks = counts[:, 0] / sizes
+    difference = float(risks[0] - risks[1])
+    se = float(np.sqrt(risks[0] * (1 - risks[0]) / sizes[0] + risks[1] * (1 - risks[1]) / sizes[1]))
+    out = [{"measure": _("Risk difference"), "estimate": difference, "low": difference - 1.959964 * se,
+            "high": difference + 1.959964 * se, "note": f"risks {risks[0]:.4g} and {risks[1]:.4g}"}]
+    corrected = bool(np.any(counts == 0))
+    shown = counts + 0.5 if corrected else counts
+    measures = cast(Any, Table2x2(shown))
+    note = "0.5 added to every cell (a zero cell)" if corrected else ""
+    for name, estimate, interval in (
+        (_("Relative risk"), measures.riskratio, measures.riskratio_confint()),
+        (_("Odds ratio"), measures.oddsratio, measures.oddsratio_confint()),
+    ):
+        out.append({"measure": name, "estimate": float(estimate), "low": float(interval[0]),
+                    "high": float(interval[1]), "note": note})
+    return out
+
+
+def cochrans_q(columns: Any) -> dict[str, Any]:
+    """Cochran's Q: do k >= 3 binary columns, measured on the same rows, have the same share of successes?
+
+    *columns* is a table of 0/1 values - one column per condition, one row per subject. The McNemar test
+    for k = 2. Rows with a missing value are left out. Returns ``q``, ``df``, ``pvalue``, ``n`` (rows used),
+    ``shares`` (per column) and ``note``; raises ValueError when the data cannot be tested.
+    """
+    from statsmodels.stats.contingency_tables import cochrans_q as q_test
+
+    frame = pd.DataFrame(columns).apply(pd.to_numeric, errors="coerce").dropna()
+    if frame.shape[1] < 3:
+        raise ValueError("Cochran's Q needs at least three columns; McNemar's test is its two-column case.")
+    if not bool(frame.isin([0, 1]).to_numpy().all()):
+        raise ValueError("Cochran's Q needs columns that hold only 0 and 1.")
+    if len(frame) < 2:
+        raise ValueError("Cochran's Q needs at least two complete rows.")
+    mixed = frame[(frame.sum(axis=1) > 0) & (frame.sum(axis=1) < frame.shape[1])]
+    result = q_test(frame.to_numpy(dtype=int))
+    note = f"{len(mixed)} of {len(frame)} rows differ between the columns and carry the information"
+    return {"q": float(result.statistic), "df": int(result.df), "pvalue": float(result.pvalue), "n": len(frame),
+            "shares": {str(c): float(column_of(frame, c).mean()) for c in frame.columns}, "note": note}
+
+
+def stratified_2x2(rows: Any, columns: Any, strata: Any, weights: Any = None) -> dict[str, Any]:
+    """The Mantel-Haenszel analysis of a 2x2 table repeated over strata: one odds ratio across them.
+
+    Gives the common odds ratio with its 95% interval, the Cochran-Mantel-Haenszel test that it is 1, the
+    Breslow-Day test (with Tarone's correction) that every stratum has the same odds ratio - when it fails,
+    one pooled odds ratio hides a difference - and each stratum's own table and odds ratio. Strata that are not
+    2x2 (a level missing) are left out and counted in ``note``. Raises ValueError when no stratum is usable.
+    """
+    from statsmodels.stats.contingency_tables import StratifiedTable
+
+    frame = pd.DataFrame({
+        "r": np.asarray(rows, dtype=object), "c": np.asarray(columns, dtype=object),
+        "s": np.asarray(strata, dtype=object), "w": 1.0 if weights is None else np.asarray(weights, dtype=float),
+    }).dropna()
+    row_levels, column_levels = _level_order(column_of(frame, "r").unique()), _level_order(column_of(frame, "c").unique())
+    if len(row_levels) != 2 or len(column_levels) != 2:
+        raise ValueError("The Mantel-Haenszel analysis needs a 2x2 table: two levels of each variable.")
+    tables, labels, skipped = [], [], 0
+    for level in _level_order(column_of(frame, "s").unique()):
+        part = frame[frame["s"] == level]
+        counts = np.zeros((2, 2))
+        for i, row in enumerate(row_levels):
+            for j, column in enumerate(column_levels):
+                counts[i, j] = float(part.loc[(part["r"] == row) & (part["c"] == column), "w"].sum())
+        if counts.sum() > 0 and np.all(counts.sum(axis=0) > 0) and np.all(counts.sum(axis=1) > 0):
+            tables.append(counts)
+            labels.append(level)
+        else:
+            skipped += 1
+    if len(tables) < 2:
+        raise ValueError("The Mantel-Haenszel analysis needs at least two strata with both rows and both columns present.")
+    model = cast(Any, StratifiedTable(tables))
+    low, high = model.oddsratio_pooled_confint()
+    null = model.test_null_odds(correction=True)
+    equal = model.test_equal_odds(adjust=True)
+    per_stratum = []
+    for level, counts in zip(labels, tables):
+        a, b, c, d = (counts[0, 0], counts[0, 1], counts[1, 0], counts[1, 1])
+        odds = (a * d) / (b * c) if b * c > 0 else float("inf") if a * d > 0 else float("nan")
+        per_stratum.append({"stratum": level, "table": counts, "odds_ratio": float(odds)})
+    note = f"{len(tables)} strata" + (f"; {skipped} stratum/strata without both rows and columns left out" if skipped else "")
+    return {"odds_ratio": float(model.oddsratio_pooled), "low": float(low), "high": float(high),
+            "cmh": float(null.statistic), "cmh_p": float(null.pvalue),
+            "breslow_day": float(equal.statistic), "breslow_day_p": float(equal.pvalue),
+            "strata": per_stratum, "row_levels": row_levels, "column_levels": column_levels, "note": note}
+
+
+# ----------------------------------------------------------------------
+# Two-way ANOVA (todo R-04)
+# ----------------------------------------------------------------------
+def two_way_anova(first: Any, second: Any, response: Any) -> dict[str, Any]:
+    """Two factors and their interaction on one response: Type II ANOVA.
+
+    Type II sums of squares - each main effect adjusted for the other, the
+    interaction for both - which are what SPSS-like Type III give on a
+    balanced design and the sound choice on an unbalanced one (car::Anova's
+    default). Returns ``table`` (rows: source, ss, df, ms, F, p, partial
+    eta²), ``n``, ``balanced`` and ``note``; raises ValueError when the
+    design cannot be fitted.
+    """
+    from statsmodels.formula.api import ols
+    from statsmodels.stats.anova import anova_lm
+
+    frame = pd.DataFrame({
+        "a": np.asarray(first, dtype=object),
+        "b": np.asarray(second, dtype=object),
+        "y": np.asarray(response, dtype=float),
+    })
+    frame = frame[frame["a"].notna() & frame["b"].notna() & np.isfinite(frame["y"].to_numpy(dtype=float))]
+    frame["a"] = frame["a"].astype(str)
+    frame["b"] = frame["b"].astype(str)
+    if column_of(frame, "a").nunique() < 2 or column_of(frame, "b").nunique() < 2:
+        raise ValueError("Each factor needs at least two levels.")
+    cells = frame.groupby(["a", "b"]).size()
+    if len(cells) < column_of(frame, "a").nunique() * column_of(frame, "b").nunique():
+        raise ValueError("Some combinations of the two factors have no values: the interaction cannot be estimated.")
+    if len(frame) <= len(cells):
+        raise ValueError("Needs more than one value in some cell, to estimate the error.")
+
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            model = ols("y ~ C(a) * C(b)", data=frame).fit()
+            table = anova_lm(model, typ=2)
+    except NUMERICAL_FAILURES as exc:
+        raise ValueError(f"The two-way ANOVA could not be fitted: {exc}") from exc
+
+    # Plain floats by source: the pandas scalars do not type as numbers.
+    values: dict[Any, dict[Any, Any]] = table.astype(float).to_dict(orient="index")
+    residual_ss = float(values["Residual"]["sum_sq"])
+    names = {"C(a)": "A", "C(b)": "B", "C(a):C(b)": "A × B", "Residual": "Residual"}
+    rows = []
+    for key, label in names.items():
+        ss = float(values[key]["sum_sq"])
+        df = float(values[key]["df"])
+        is_error = key == "Residual"
+        rows.append({
+            "source": label,
+            "ss": ss,
+            "df": int(round(df)),
+            "ms": ss / df if df > 0 else np.nan,
+            "F": np.nan if is_error else float(values[key]["F"]),
+            "pvalue": np.nan if is_error else float(values[key]["PR(>F)"]),
+            "partial_eta2": np.nan if is_error else ss / (ss + residual_ss),
+        })
+    balanced = bool(cells.nunique() == 1)
+    return {
+        "table": rows,
+        "n": len(frame),
+        "balanced": balanced,
+        "note": "Type II sums of squares" + ("" if balanced else "; unbalanced design"),
+    }
+
+
+# ----------------------------------------------------------------------
+# Survival (todo R-04)
+# ----------------------------------------------------------------------
+def survival_summary(time: Any, event: Any, groups: Any = None, *, confidence: float = 0.95) -> dict[str, Any]:
+    """Kaplan-Meier per group, with medians, and the log-rank test between them.
+
+    Returns ``groups`` (rows: group, n, events, censored, median, median_low,
+    median_high) and ``logrank`` (a test row, or None with one group). The
+    median's interval is where the curve's confidence band crosses 50%.
+    """
+    from app.analysis.diagnostics import kaplan_meier, log_rank
+
+    times = np.asarray(time, dtype=float)
+    events = np.asarray(event, dtype=float)
+    labels = np.full(times.shape, "", dtype=object) if groups is None else np.asarray(groups, dtype=object)
+    ordered = [value for value in dict.fromkeys(labels.tolist()) if value is not None and value == value]
+    rows: list[dict[str, Any]] = []
+    pairs: list[tuple[np.ndarray, np.ndarray]] = []
+    for value in ordered:
+        mask = np.array([label == value for label in labels.tolist()], dtype=bool)
+        curve = kaplan_meier(times[mask], events[mask], confidence=confidence)
+        rows.append({
+            "group": str(value),
+            "n": curve.n,
+            "events": int(curve.events.sum()),
+            "censored": int(curve.censored_time.size),
+            "median": curve.median,
+            "median_low": _first_time_at_or_below(curve.time, curve.lower, 0.5),
+            "median_high": _first_time_at_or_below(curve.time, curve.upper, 0.5),
+        })
+        pairs.append((times[mask], events[mask]))
+    logrank = None
+    if len(pairs) > 1:
+        try:
+            test = log_rank(pairs)
+            logrank = result_row(_("Log-rank"), int(sum(row["n"] for row in rows)), test.statistic, test.pvalue, f"df = {test.dof}")
+        except ValueError as exc:
+            logrank = note_row(_("Log-rank"), int(sum(row["n"] for row in rows)), str(exc))
+    return {"groups": rows, "logrank": logrank}
+
+
+def _first_time_at_or_below(times: np.ndarray, values: np.ndarray, level: float) -> float:
+    below = np.nonzero(np.asarray(values) <= level)[0]
+    return float(times[below[0]]) if below.size else float("nan")

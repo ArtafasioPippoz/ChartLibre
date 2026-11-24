@@ -1,0 +1,11 @@
+# Italiano translation for the pack charts_more.
+# Message ids are the English source strings.
+
+msgid ""
+msgstr "Project-Id-Version: ChartLibre\nLanguage: it\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\n"
+
+msgid "More chart types"
+msgstr "Altri tipi di grafici"
+
+msgid "Sankey, treemap, ternary, wind rose, radar, ridgeline, calendar heatmap, cell plot, dumbbell, slope, waterfall, timeline, broken bar, event plot, lollipop, 3D bars and triangular meshes."
+msgstr "Sankey, treemap, ternario, rosa dei venti, radar, ridgeline, heatmap del calendario, grafico a celle, dumbbell, slope, cascata, cronologia, grafico a barre interrotte, grafico degli eventi, lollipop, barre 3D e mesh triangolari."

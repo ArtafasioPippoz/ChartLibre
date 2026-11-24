@@ -1,0 +1,955 @@
+"""Shewhart control charts for a chart series - variables and attributes.
+
+A control chart asks one question: is this process varying the way a stable
+process varies, or has something changed?  It answers it by drawing limits
+around the process's *own* variation and flagging the points that fall
+outside.
+
+Eight charts, in two families, because that is one decision a user should
+not have to make before they can find the tool:
+
+**Variables** - the measurement charts.  What makes these control charts
+rather than a scatter plot with error bars is where sigma comes from.  It is
+**never** the standard deviation of all the data: a process that has drifted
+has a large overall standard deviation precisely *because* it drifted, so
+limits built from it are wide enough to contain the drift and the chart
+declares the process fine.  Sigma is estimated instead from variation
+*within* subgroups - the average moving range for individual measurements,
+the average range or standard deviation within subgroups otherwise - which
+is unaffected by shifts between them.  That is the whole idea, and it is the
+one thing easy to get wrong.
+
+**Attributes** - the count charts, the half the variables charts do not
+cover.  These plot a proportion or a count rather than a measurement, so the
+limits come from the distribution the count follows rather than from a
+within-subgroup spread:
+
+* **p** - fraction defective, ``d / n``.  Binomial.  Centre ``p̄ = Σd / Σn``,
+  limits ``p̄ ± L·√(p̄(1-p̄)/nᵢ)``: when the sample size varies, so does the
+  limit, and the chart draws a different band at every point.
+* **np** - number defective, ``d``, at a fixed ``n``.  Centre ``n·p̄``,
+  limits ``n·p̄ ± L·√(n·p̄(1-p̄))``.
+* **c** - defects in a unit of constant size.  Poisson.  ``c̄ ± L·√c̄``.
+* **u** - defects per unit, ``c / n``.  Poisson.  ``ū ± L·√(ū/nᵢ)`` - again
+  per point when ``n`` varies.
+
+The lower limit is clipped at zero on the count charts: a count cannot be
+negative, and an unclipped LCL below zero never signals.
+
+The variables estimators need the unbiasing constants d2, d3, c4, A2, D3,
+D4, B3 and B4.  They are tabulated below rather than computed: c4 has a
+closed form in gamma functions, but d2 and d3 are integrals over the range
+distribution with no elementary form, and every SPC text ships the same
+table.  Using anything else would put this chart's limits at odds with every
+other tool's.
+
+Violations are reported by the Nelson rules, which catch the patterns that
+stay inside the limits - a run on one side, a trend, a hug of the centre
+line - and are what a chart is for beyond spotting the obvious outlier.
+Which rules are *legal* depends on the chart, and that is the one thing the
+two families have to disagree about: see
+:func:`app.analysis.control_charts.find_violations`.
+"""
+
+from __future__ import annotations
+
+from app import SVG
+from app.styles.style import field_label
+from collections.abc import Sequence
+from dataclasses import dataclass, field
+from typing import Any, ClassVar
+
+import numpy as np
+import pandas as pd
+from PySide6.QtWidgets import QComboBox, QWidget
+
+from app.analysis import special_charts as special
+from app.analysis.capability import Capability, capability, parse_limit
+from app.analysis.control_charts import (
+    CHART_C,
+    CHART_INDIVIDUALS,
+    CHART_MOVING_RANGE,
+    CHART_NP,
+    CHART_P,
+    CHART_U,
+    CHART_XBAR_R,
+    CHART_XBAR_S,
+    Violation,
+    attribute_chart,
+    variables_chart,
+)
+from app.data.data_source import parse_roles, resolve_role_column, row_value
+from app.data.series_frame import SeriesFrame
+from app.logs.logger import applogger
+from app.plugin_api import reading_guide
+from app.plugin_api.data_operations.dialog_base import (
+    DataOperationDialogBase,
+    OperationModel,
+    ResultSeriesSpec,
+)
+from app.plugin_api.data_operations.parameter_spec import (
+    BoolParam,
+    ChoiceParam,
+    FloatParam,
+    IntParam,
+    TextParam,
+)
+from app.plugin_api.data_operations.results import TableResult
+from app.utils import report_html
+from app.utils.coercion import to_numbers
+from app.utils.config import get_constant
+from app.utils.i18n import _
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class ControlChartModel(OperationModel):
+    #: An attribute chart - a count per point - rather than a variables
+    #: chart, a measurement per point. The combo lists measurements above a
+    #: line and counts below it: picking a chart is one decision, and a user
+    #: who knows they have counts should not have to say so twice.
+    attribute: bool = False
+    #: Averages several readings into each plotted point.
+    subgrouped: bool = False
+    #: Reads a sample-size column. ``c`` is the exception among the
+    #: attribute charts - it assumes a constant area of opportunity, so there
+    #: is nothing to divide by.
+    needs_size_column: bool = False
+    #: On the binomial: a proportion, bounded above by its sample size.
+    binomial: bool = False
+
+
+#: The charts offered, in combo order.
+CONTROL_CHARTS: dict[str, ControlChartModel] = {
+    CHART_INDIVIDUALS: ControlChartModel(
+        doc_title="Individuals control chart",
+        doc_url="https://en.wikipedia.org/wiki/Shewhart_individuals_control_chart",
+    ),
+    CHART_MOVING_RANGE: ControlChartModel(
+        doc_title="Moving range",
+        doc_url="https://en.wikipedia.org/wiki/Shewhart_individuals_control_chart",
+    ),
+    CHART_XBAR_R: ControlChartModel(
+        doc_title="X-bar and R chart",
+        doc_url="https://en.wikipedia.org/wiki/X%CC%84_and_R_chart",
+        subgrouped=True,
+    ),
+    CHART_XBAR_S: ControlChartModel(
+        doc_title="X-bar and s chart",
+        doc_url="https://en.wikipedia.org/wiki/X%CC%84_and_s_chart",
+        subgrouped=True,
+    ),
+    CHART_P: ControlChartModel(
+        doc_title="p-chart",
+        doc_url="https://en.wikipedia.org/wiki/P-chart",
+        group="attributes",
+        attribute=True,
+        needs_size_column=True,
+        binomial=True,
+    ),
+    CHART_NP: ControlChartModel(
+        doc_title="np-chart",
+        doc_url="https://en.wikipedia.org/wiki/Np-chart",
+        group="attributes",
+        attribute=True,
+        needs_size_column=True,
+        binomial=True,
+    ),
+    CHART_C: ControlChartModel(
+        doc_title="c-chart",
+        doc_url="https://en.wikipedia.org/wiki/C-chart",
+        group="attributes",
+        attribute=True,
+    ),
+    CHART_U: ControlChartModel(
+        doc_title="u-chart",
+        doc_url="https://en.wikipedia.org/wiki/U-chart",
+        group="attributes",
+        attribute=True,
+        needs_size_column=True,
+    ),
+}
+CONTROL_CHARTS.update({
+    special.CHART_EWMA: ControlChartModel(
+        doc_title="EWMA chart", doc_url="https://en.wikipedia.org/wiki/EWMA_chart", group="small shifts"),
+    special.CHART_CUSUM: ControlChartModel(
+        doc_title="CUSUM", doc_url="https://en.wikipedia.org/wiki/CUSUM", group="small shifts"),
+    special.CHART_LEVEY_JENNINGS: ControlChartModel(
+        doc_title="Levey-Jennings chart and Westgard rules", group="laboratory",
+        doc_url="https://en.wikipedia.org/wiki/Laboratory_quality_control"),
+    special.CHART_G: ControlChartModel(
+        doc_title="g chart (rare events)", group="rare events",
+        doc_url="https://support.minitab.com/en-us/minitab/help-and-how-to/quality-and-process-improvement/control-charts/how-to/rare-event-charts/g-chart/before-you-start/overview/"),
+    special.CHART_T: ControlChartModel(
+        doc_title="t chart (rare events)", group="rare events",
+        doc_url="https://support.minitab.com/en-us/minitab/help-and-how-to/quality-and-process-improvement/control-charts/how-to/rare-event-charts/t-chart/before-you-start/overview/"),
+})
+SUBGROUPED = tuple(name for name, chart in CONTROL_CHARTS.items() if chart.subgrouped)
+#: The charts that take a target mean and a sigma (each estimated from the data when left empty).
+REFERENCED = (special.CHART_EWMA, special.CHART_CUSUM, special.CHART_LEVEY_JENNINGS)
+#: The charts with a process sigma to judge capability by: measurements, not their moving range or counts.
+CAPABLE = (CHART_INDIVIDUALS, CHART_XBAR_R, CHART_XBAR_S)
+
+
+#: Below this an attribute chart's limits are too soft to trust; the report
+#: says so rather than refusing to draw them.
+RECOMMENDED_SUBGROUPS = get_constant("control_chart_recommended_subgroups", 20)
+
+
+@dataclass(slots=True)
+class ControlChartResult(TableResult):
+    """One control chart - of either family - for one source series.
+
+    ``upper``/``lower``/``sigma`` are scalars: the constant value on every
+    variables chart and on np/c, and the *mean* band on a p or u chart whose
+    limits genuinely move with the sample size - kept scalar rather than
+    dropped so the many existing checks against a variables chart's own
+    limits (``result.upper == ...``) still read the single number they
+    always meant. ``*_band`` are the same thing per point, always populated
+    (a repeated value where the chart has no reason to vary): ``to_frame``
+    and the violation pass need the real band, not its average, and only a
+    p/u chart's is not just that scalar broadcast.
+    """
+
+    source_name: str
+    result_name: str
+    chart: str
+    x: np.ndarray
+    y: np.ndarray
+    center: float
+    upper: float
+    lower: float
+    sigma: float
+    upper_band: np.ndarray
+    lower_band: np.ndarray
+    sigma_band: np.ndarray
+    subgroup_size: int
+    violations: list[Violation] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
+    #: Against the specification limits, when any were given.
+    capability: Capability | None = None
+
+    @property
+    def model_name(self) -> str:
+        return self.chart
+
+    @property
+    def limits_vary(self) -> bool:
+        """True when the band moves point to point (a p or u chart on an
+        uneven sample size), which is what makes the zone rules illegal."""
+        return bool(self.sigma_band.size and np.ptp(self.sigma_band) > 0.0)
+
+    def to_df(self) -> pd.DataFrame:
+        """Every line the chart may draw, as columns of one table.
+
+        Written whether or not the corresponding checkbox is ticked: the
+        columns cost almost nothing, and holding them means turning a line on
+        later is a descriptor change rather than a recomputation.
+
+        The zone columns are the one- and two-sigma lines, which is what
+        divides a Shewhart chart into the A/B/C zones the run rules are
+        phrased in - "two of three beyond two sigma" is a statement about a
+        line the reader should be able to see.
+        """
+        flagged = {violation.index for violation in self.violations}
+        size = self.x.size
+        # The specification limits as lines on an individuals chart only: an
+        # X-bar chart plots means, which a limit for single parts does not judge.
+        limits = {}
+        if self.capability is not None and self.chart == CHART_INDIVIDUALS:
+            limits = {name: np.full(size, np.nan if value is None else value)
+                      for name, value in (("lsl", self.capability.lsl), ("usl", self.capability.usl),
+                                          ("target", self.capability.target))}
+        return pd.DataFrame(
+            {
+                "x": self.x,
+                "y": self.y,
+                "center": np.full(size, self.center),
+                "ucl": self.upper_band,
+                "lcl": self.lower_band,
+                "zone_2_upper": self.center + 2.0 * self.sigma_band,
+                "zone_2_lower": self.center - 2.0 * self.sigma_band,
+                "zone_1_upper": self.center + self.sigma_band,
+                "zone_1_lower": self.center - self.sigma_band,
+                "violation": [int(i in flagged) for i in range(size)],
+                # The flagged points as their own column, NULL elsewhere, so a
+                # series can plot them alone. A WHERE clause would work for
+                # apply, but the preview writes the same table and a second
+                # query over it is a second scan for no gain.
+                "violation_y": [
+                    float(value) if index in flagged else None
+                    for index, value in enumerate(self.y)
+                ],
+                **limits,
+                # CUSUM's second sum, -C-: drawn beside C+ (the points).
+                **({"cusum_low": self.metadata["low"]} if "low" in self.metadata else {}),
+            }
+        )
+
+
+class SeriesControlChartDialog(DataOperationDialogBase):
+    """Draw a Shewhart control chart - variables or attributes - for a series."""
+
+    MODELS = CONTROL_CHARTS
+    MODEL_LABEL = "Chart"
+    MODEL_TOOLTIP = "Measurements above the line, counts below it."
+
+    Name: str = "Control Chart"
+    Description = "Monitor process stability (I-MR, X-bar, p, np, c, u)"
+
+    #: Computed on a worker thread: see DataOperationDialogBase.evaluate.
+    RUN_IN_BACKGROUND = True
+
+    # The points are a time order, so they must be in x order: every estimator
+    # here reads consecutive differences, and a shuffled series produces a
+    # moving range that describes the sort order rather than the process.
+    INPUT_REQUIRES_SORTED_X = True
+    # Not unique: several readings on one date (a day's samples, stored as a date
+    # string without the time) are each a point of the chart, in the order they
+    # were taken - averaging them into one made 40 readings a chart of 20 and
+    # changed every limit. The sort is stable, so equal dates keep their order.
+    INPUT_REQUIRES_UNIQUE_X = False
+    # A moving range needs a predecessor, and two points give one range - too
+    # few to estimate anything, but enough not to crash. Nelson's run rules
+    # want far more; the report says so when the series is short.
+    INPUT_MINIMUM_POINTS = 3
+
+    #: The Charts tab's "Draw on": a chart of its own by default - limits and
+    #: zones drawn over the source series would crowd it.
+    DESTINATIONS = (DataOperationDialogBase.DEST_NEW_AXIS, DataOperationDialogBase.DEST_NEW_FIGURE,
+                    DataOperationDialogBase.DEST_SAME_AXIS)
+    DEFAULT_DESTINATION = DataOperationDialogBase.DEST_NEW_AXIS
+
+    PARAMS = (
+        IntParam(
+            "subgroup",
+            "Subgroup size",
+            tooltip=(
+                "Consecutive points averaged into each plotted subgroup. "
+                "Rational subgrouping: choose it so variation within a "
+                "subgroup is only common-cause noise."
+            ),
+            default_value=5,
+            minimum=2,
+            maximum=25,
+            visible_for={"model": SUBGROUPED},
+        ),
+        FloatParam(
+            "sigma_limit",
+            "Limits at sigma",
+            tooltip=(
+                "3 is the Shewhart convention: on a stable normal process it "
+                "gives about one false alarm per 370 points, which balances "
+                "missed signals against chasing noise."
+            ),
+            default_value=3.0,
+            minimum=1.0,
+            maximum=6.0,
+            decimals=2,
+            step=0.5,
+        ),
+        BoolParam(
+            "nelson",
+            "Nelson rules",
+            tooltip=(
+                "Flags runs, trends and other patterns that stay inside the "
+                "limits - the signals a limits-only chart misses. The zone "
+                "rules switch themselves off on a chart whose limits move."
+            ),
+            default_value=True,
+        ),
+        FloatParam("ewma_lambda", "EWMA weight (lambda)", default_value=0.2, minimum=0.01, maximum=1.0, decimals=2,
+                   step=0.05, visible_for={"model": (special.CHART_EWMA,)},
+                   tooltip="The newest value's weight: 0.05-0.25 for small shifts (smaller, smaller shifts); 1 is "
+                           "an individuals chart. Limits at the sigma above (2.7-3 with 0.1-0.2)."),
+        FloatParam("cusum_k", "CUSUM k (sigma)", default_value=0.5, minimum=0.0, maximum=3.0, decimals=2, step=0.25,
+                   visible_for={"model": (special.CHART_CUSUM,)},
+                   tooltip="Half the shift to detect, in sigmas: 0.5 for a shift of one sigma."),
+        FloatParam("cusum_h", "CUSUM h (sigma)", default_value=5.0, minimum=0.5, maximum=20.0, decimals=2, step=0.5,
+                   visible_for={"model": (special.CHART_CUSUM,)},
+                   tooltip="The decision interval: 4 or 5 sigmas, with k = 0.5."),
+        TextParam("process_mean", "Mean (target)", placeholder="from the data",
+                  visible_for={"model": REFERENCED},
+                  tooltip="EWMA and CUSUM: the target the process should stay at. Levey-Jennings: the control "
+                          "material's assigned mean. Empty: the data's own."),
+        TextParam("process_sigma", "Sigma", placeholder="from the data",
+                  visible_for={"model": REFERENCED},
+                  tooltip="EWMA and CUSUM: the process sigma (empty: the moving range's). Levey-Jennings: the "
+                          "material's assigned standard deviation (empty: the data's)."),
+        BoolParam(
+            "draw_center",
+            "Centre line",
+            tooltip="The process mean the limits are built around.",
+            default_value=True, tab="charts"),
+        BoolParam(
+            "draw_limits",
+            "Control limits",
+            tooltip=(
+                "The upper and lower limits. Without them the chart is a run "
+                "chart - the points, but nothing to judge them against."
+            ),
+            default_value=True, tab="charts"),
+        BoolParam(
+            "draw_zones",
+            "1 and 2 sigma lines",
+            tooltip=(
+                "The A/B/C zones the run rules are phrased in: \"two of three "
+                "beyond two sigma\" is a statement about a line worth seeing."
+            ),
+            default_value=False, tab="charts"),
+        BoolParam(
+            "draw_violations",
+            "Highlight flagged",
+            tooltip="Draws the signalling points again as separate markers.",
+            default_value=True, tab="charts"),
+        BoolParam(
+            "exclude_violations",
+            "Exclude flagged points",
+            tooltip=(
+                "Recomputes the limits without the points they flagged - the "
+                "trial-limits-then-revised-limits pass every SPC text runs. "
+                "Use only when the flagged points have an assigned cause you "
+                "have removed; otherwise it hides the problem."
+            ),
+            default_value=False, advanced=True),
+        TextParam("lsl", "Lower spec (LSL)", placeholder="none",
+                  tooltip="With a specification limit the report gives the process capability: Cp, Cpk, Pp, "
+                          "Ppk and the share out of specification. Empty when there is none.",
+                  visible_for={"model": CAPABLE}),
+        TextParam("usl", "Upper spec (USL)", placeholder="none",
+                  tooltip="With a specification limit the report gives the process capability: Cp, Cpk, Pp, "
+                          "Ppk and the share out of specification. Empty when there is none.",
+                  visible_for={"model": CAPABLE}),
+        TextParam("target", "Target", placeholder="none", tooltip="For Cpm; needs both limits.",
+                  visible_for={"model": CAPABLE}),
+        ChoiceParam("distribution", "Distribution", choices=(
+            ("Normal", "normal"), ("Best fit (AIC)", "best"), ("Lognormal", "lognormal"),
+            ("Weibull", "weibull"), ("Gamma", "gamma")),
+                    tooltip="The process' distribution for the capability. Not normal: the percentile method "
+                            "(ISO 22514-4) - Pp and Ppk from the fitted distribution's 0.135% and 99.865% points.",
+                    visible_for={"model": CAPABLE}),
+    )
+
+    Icon = SVG.CONTROL_CHART
+    Keywords: str = (
+        "carta di controllo spc statistical process control controllo statistico di processo shewhart "
+        "i-mr x-bar xbar r chart p chart c chart u chart limits limiti stability stabilita capability "
+        "capacità di processo process capability cp cpk pp ppk cpm spec limits limiti di specifica "
+        "lsl usl ppm"
+    )
+    Goals: ClassVar[list[str]] = ["process", "anomalies"]
+    Category: str = "Quality and Process"
+    Order: int = 60
+
+    WINDOW_SIZE = (800, 680)
+    SELECTS_ALL_SERIES = True
+
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self._refresh_size_columns()
+
+    # ------------------------------------------------------------------
+    # UI
+    # ------------------------------------------------------------------
+
+    def init_operation_widgets(self) -> None:
+        self._size_column_combo = QComboBox(self)
+        self._parameter_form = None
+
+    def build_parameter_selector(self) -> QWidget:
+        """The declared parameters, plus the one that cannot be declared.
+
+        Everything in ``PARAMS`` is built by the base class and shown or
+        hidden per chart by ``visible_for``.  The sample-size column is the
+        exception: its choices are the selected series' own columns, which
+        are not known until a series is picked, so it is an ordinary combo
+        appended to the same form and gated by hand in ``_refresh_visibility``.
+        """
+        widget = super().build_parameter_selector()
+
+        self._size_column_combo.setToolTip(
+            _("The column holding the sample size (units inspected) at each point.")
+        )
+        if self._parameter_form is not None:
+            self._parameter_form.addRow(
+                field_label(_("Sample size column")), self._size_column_combo
+            )
+        return widget
+
+    def connect_common_signals(self) -> None:
+        # Not super(): the base connects selection_changed straight to
+        # mark_results_stale, but the size-column combo has to be
+        # repopulated from the new selection first.
+        changed = getattr(self.series_selector, "selection_changed", None)
+        if changed is not None:
+            changed.connect(self._on_selection_changed)
+
+    def _on_selection_changed(self, *_args: Any) -> None:
+        self._refresh_size_columns()
+        self.mark_results_stale()
+
+    def connect_operation_signals(self) -> None:
+        super().connect_operation_signals()
+        self._size_column_combo.currentIndexChanged.connect(self.mark_results_stale)
+
+    def _refresh_visibility(self, *_ignored: Any) -> None:
+        super()._refresh_visibility()
+        self.set_row_visible(
+            self._size_column_combo, CONTROL_CHARTS[self._chart()].needs_size_column
+        )
+
+    def _refresh_size_columns(self) -> None:
+        """Fill the sample-size combo with the selected series' columns."""
+        wanted = self._size_column_combo.currentText()
+        columns: list[str] = []
+        for row in self.selected_series():
+            result = self._safe_columns(row)
+            if result is None:
+                continue
+            for column in result.columns:
+                if column not in columns:
+                    columns.append(column)
+
+        self._size_column_combo.blockSignals(True)
+        self._size_column_combo.clear()
+        self._size_column_combo.addItems(columns)
+        if wanted in columns:
+            self._size_column_combo.setCurrentText(wanted)
+        elif "n" in columns:
+            self._size_column_combo.setCurrentText("n")
+        self._size_column_combo.blockSignals(False)
+
+    def _chart(self) -> str:
+        return self.current_model(CHART_INDIVIDUALS)
+
+    # ------------------------------------------------------------------
+    # Input
+    # ------------------------------------------------------------------
+    def _safe_columns(self, row: Any) -> SeriesFrame | None:
+        query = str(row_value(row, "sql_query", "query", default="")).strip()
+        if not query:
+            return None
+        try:
+            return self._repo.series_frame(query)
+        except Exception:
+            return None
+
+    @staticmethod
+    def _numbers(values: pd.Series) -> np.ndarray:
+        """A column as float64, NaN for anything that is not a number."""
+        return to_numbers(values).to_numpy(dtype=float)
+
+    @classmethod
+    def _looks_numeric(cls, values: pd.Series) -> bool:
+        """True when coercing *values* produces at least one real number.
+
+        The fallback-column heuristic below needs to tell "this column is
+        usable as counts" from "this column is text": a column that coerces
+        to all-NaN is exactly the text case.
+        """
+        coerced = cls._numbers(values)
+        return bool(coerced.size) and not bool(np.all(np.isnan(coerced)))
+
+    def _series_counts(
+        self, row: Any, name: str, chart: str,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Return ``(x, counts, sizes)`` for one series, aligned and finite.
+
+        Only the attribute charts come through here; the variables charts
+        read x/y through the shared ``series_xy``, which they can because
+        they need no third column. Read through series_frame, the cached
+        reader the charts use, so no DataFrame is built and the query runs
+        once for the chart and this dialog together. The one column that
+        might be a timestamp - x - goes to numeric_x, which knows dates.
+        """
+        columns_result = self._safe_columns(row)
+        if columns_result is None or columns_result.empty:
+            raise ValueError("the series query returned no rows")
+
+        roles = parse_roles(row_value(row, "roles", default={}))
+        columns = list(columns_result.columns)
+
+        y_col = resolve_role_column(columns, roles, "y") or "y"
+        if y_col not in columns:
+            numeric = [c for c in columns if self._looks_numeric(columns_result[c])]
+            y_col = numeric[-1] if numeric else columns[-1]
+        counts = self._numbers(columns_result[y_col])
+
+        x_col = resolve_role_column(columns, roles, "x") or "x"
+        x_values = (
+            self.numeric_x(columns_result[x_col], name)
+            if x_col in columns
+            else np.arange(counts.size, dtype=float)
+        )
+
+        if CONTROL_CHARTS[chart].needs_size_column:
+            size_col = self._size_column_combo.currentText().strip()
+            size_col = size_col or str(roles.get("n") or roles.get("sample_size") or "")
+            if size_col not in columns:
+                raise ValueError(
+                    "pick the column holding the sample size in the parameters pane"
+                )
+            sizes = self._numbers(columns_result[size_col])
+        else:
+            sizes = np.ones(counts.size, dtype=float)
+
+        finite = np.isfinite(x_values) & np.isfinite(counts) & np.isfinite(sizes)
+        finite &= sizes > 0
+        x_values, counts, sizes = x_values[finite], counts[finite], sizes[finite]
+        if x_values.size < self.INPUT_MINIMUM_POINTS:
+            raise ValueError(
+                f"only {x_values.size} usable point(s); at least "
+                f"{self.INPUT_MINIMUM_POINTS} are needed"
+            )
+        if np.any(counts < 0):
+            raise ValueError("the count column has negative values")
+        if CONTROL_CHARTS[chart].binomial and np.any(counts > sizes):
+            raise ValueError("a subgroup has more defectives than its sample size")
+
+        order = np.argsort(x_values, kind="stable")
+        return x_values[order], counts[order], sizes[order]
+
+    # ------------------------------------------------------------------
+    # Computation
+    # ------------------------------------------------------------------
+
+    def read_series(self, row: Any, name: str) -> Any:
+        chart = self._chart()
+        if CONTROL_CHARTS[chart].attribute:
+            return self._series_counts(row, name, chart)
+        return self.series_xy(row, name)
+
+    def compute_series(self, name: str, data: Any, settings: tuple[str, dict[str, Any]]) -> Any:
+        """The chart, or (the chart, its capability) when specification limits are given."""
+        chart, params = settings
+        common = {
+            "sigma_limit": float(params.get("sigma_limit", 3.0)),
+            "nelson": bool(params.get("nelson", True)),
+            "exclude_violations": bool(params.get("exclude_violations", False)),
+        }
+        if CONTROL_CHARTS[chart].attribute:
+            x_values, counts, sizes = data
+            return attribute_chart(
+                chart, x_values, counts, sizes, recommended_subgroups=RECOMMENDED_SUBGROUPS, **common
+            )
+        x_values, y_values = data
+        if chart in special.SPECIAL_CHARTS:
+            return self._special(chart, x_values, y_values, params)
+        built = variables_chart(
+            chart, x_values, y_values, subgroup=int(params.get("subgroup", 5)), **common
+        )
+        limits = {key: parse_limit(params.get(key)) for key in ("lsl", "usl", "target")}
+        if chart not in CAPABLE or (limits["lsl"] is None and limits["usl"] is None):
+            return built
+        # The chart's own sigma is the within one: moving range or subgroups.
+        return built, capability(y_values, sigma_within=built.sigma, **limits,
+                                 distribution=str(params.get("distribution") or "normal"))
+
+    @staticmethod
+    def _special(chart: str, x_values: np.ndarray, y_values: np.ndarray, params: dict[str, Any]) -> Any:
+        """EWMA, CUSUM, Levey-Jennings, g or t (app.analysis.special_charts)."""
+        mean, sigma = parse_limit(params.get("process_mean")), parse_limit(params.get("process_sigma"))
+        width = float(params.get("sigma_limit", 3.0))
+        if chart == special.CHART_EWMA:
+            return special.ewma_chart(x_values, y_values, lam=float(params.get("ewma_lambda", 0.2)), width=width,
+                                      target=mean, sigma=sigma)
+        if chart == special.CHART_CUSUM:
+            return special.cusum_chart(x_values, y_values, k=float(params.get("cusum_k", 0.5)),
+                                       h=float(params.get("cusum_h", 5.0)), target=mean, sigma=sigma)
+        if chart == special.CHART_LEVEY_JENNINGS:
+            return special.levey_jennings_chart(x_values, y_values, mean=mean, sd=sigma)
+        if chart == special.CHART_G:
+            return special.g_chart(x_values, y_values, width=width)
+        return special.t_chart(x_values, y_values, width=width, nelson=bool(params.get("nelson", False)))
+
+    def finish_series(
+        self, name: str, outcome: Any, settings: tuple[str, dict[str, Any]]
+    ) -> ControlChartResult:
+        chart, _params = settings
+        outcome, capable = outcome if isinstance(outcome, tuple) else (outcome, None)
+        for note in outcome.notes:
+            applogger.warning(f"{name}: {note}")
+        tag = chart.split(" ")[0] if CONTROL_CHARTS[chart].attribute else chart
+        return ControlChartResult(
+            source_name=name,
+            result_name=f"{name} - {tag}",
+            chart=chart,
+            x=outcome.x,
+            y=outcome.y,
+            center=outcome.center,
+            upper=outcome.upper,
+            lower=outcome.lower,
+            sigma=outcome.sigma,
+            upper_band=outcome.upper_band,
+            lower_band=outcome.lower_band,
+            sigma_band=outcome.sigma_band,
+            subgroup_size=outcome.subgroup_size,
+            violations=outcome.violations,
+            metadata=outcome.details,
+            capability=capable,
+        )
+
+    # ------------------------------------------------------------------
+    # Results
+    # ------------------------------------------------------------------
+
+    #: Shared by every series this operation draws, so that
+    #: remove_previous_generated_series takes the whole chart away rather than
+    #: leaving orphaned limit lines behind when it is re-applied.
+    def _series_style(self, result: ControlChartResult, **overrides: Any) -> dict[str, Any]:
+        style: dict[str, Any] = {
+            **self.generated_style_filter,
+            "source_name": result.source_name,
+            "chart": result.chart,
+        }
+        style.update(overrides)
+        return style
+
+    def result_series_spec(
+        self,
+        axis_id: int,
+        table_name: str,
+        result: ControlChartResult,
+    ) -> ResultSeriesSpec:
+        """The plotted values themselves - the series the chart is about."""
+        del axis_id
+        return ResultSeriesSpec(
+            name=result.result_name,
+            sql_query=f'SELECT x, y FROM "{table_name}" ORDER BY x',
+            roles={"x": "x", "y": "y"},
+            style=self._series_style(
+                result,
+                linestyle="-",
+                linewidth=1.2,
+                marker="o",
+                markersize=4.0,
+            ),
+        )
+
+    def result_series_specs(
+        self,
+        axis_id: int,
+        table_name: str,
+        result: ControlChartResult,
+    ) -> Sequence[ResultSeriesSpec]:
+        """The points, plus whichever reference lines are switched on.
+
+        A control chart is the points *and* the lines: without limits it is a
+        run chart, which shows the same numbers and answers a different
+        question. Hence the lines default to on and this is not a one-series
+        operation.
+
+        Order matters to the drawing: the reference lines go first so the data
+        is drawn over them, and the flagged points go last so they sit on top
+        of everything. On a p or u chart the limit columns step from point to
+        point rather than being flat, which is the honest picture of a band
+        that really does move with the sample size.
+        """
+        params = self.parameter_values()
+        specs: list[ResultSeriesSpec] = []
+
+        def line(column: str, name: str, **style: Any) -> ResultSeriesSpec:
+            return ResultSeriesSpec(
+                name=f"{result.result_name} - {name}",
+                # Aliased to y so the renderer's x/y roles need no special
+                # case: every one of these is an ordinary two-column series.
+                sql_query=f'SELECT x, {column} AS y FROM "{table_name}" ORDER BY x',
+                roles={"x": "x", "y": "y"},
+                # Out of the legend by default, as the signals below: the
+                # lines are read off the chart; a legend of them only crowds
+                # it (the series' Show in legend brings one back).
+                style=self._series_style(result, marker="", show_in_legend=False, **style),
+            )
+
+        if bool(params.get("draw_zones", False)):
+            for column, label in (
+                ("zone_2_upper", "+2s"),
+                ("zone_2_lower", "-2s"),
+                ("zone_1_upper", "+1s"),
+                ("zone_1_lower", "-1s"),
+            ):
+                specs.append(
+                    line(column, label, linestyle=":", linewidth=0.7, color="#9e9e9e")
+                )
+
+        if bool(params.get("draw_limits", True)):
+            specs.append(
+                line("ucl", "UCL", linestyle="--", linewidth=1.1, color="#c62828")
+            )
+            specs.append(
+                line("lcl", "LCL", linestyle="--", linewidth=1.1, color="#c62828")
+            )
+
+        if bool(params.get("draw_center", True)):
+            specs.append(
+                line("center", "CL", linestyle="-", linewidth=1.0, color="#2e7d32")
+            )
+
+        capable = result.capability
+        if capable is not None and result.chart == CHART_INDIVIDUALS:
+            for column, label, value in (("lsl", "LSL", capable.lsl), ("usl", "USL", capable.usl),
+                                         ("target", _("Target"), capable.target)):
+                if value is not None:
+                    specs.append(line(column, label, linestyle="-." if column != "target" else ":",
+                                      linewidth=1.2, color="#6a1b9a"))
+
+        specs.append(self.result_series_spec(axis_id, table_name, result))
+        if "low" in result.metadata:
+            specs.append(ResultSeriesSpec(
+                name=f"{result.result_name} - C-",
+                sql_query=f'SELECT x, cusum_low AS y FROM "{table_name}" ORDER BY x',
+                roles={"x": "x", "y": "y"},
+                style=self._series_style(result, linestyle="-", linewidth=1.2, marker="o", markersize=3.0,
+                                         color="#1565c0"),
+            ))
+
+        if bool(params.get("draw_violations", True)) and result.violations:
+            specs.append(
+                ResultSeriesSpec(
+                    name=f"{result.result_name} - signals",
+                    # violation_y is NULL for every point that did not signal,
+                    # so this draws only the flagged ones without a second
+                    # table or a WHERE clause the preview would have to repeat.
+                    sql_query=(
+                        f'SELECT x, violation_y AS y FROM "{table_name}" '
+                        f"WHERE violation_y IS NOT NULL ORDER BY x"
+                    ),
+                    roles={"x": "x", "y": "y"},
+                    style=self._series_style(
+                        result,
+                        linestyle="",
+                        marker="o",
+                        markersize=9.0,
+                        color="#c62828",
+                        show_in_legend=False,
+                    ),
+                )
+            )
+
+        return specs
+
+    RESULT_TABLE_PREFIX = 'ControlChart'
+    RESULT_TABLE_VARIANT = 'chart'
+
+    def results_subtitle(self, results: Sequence[ControlChartResult]) -> str:
+        return self._chart()
+
+    def how_to_read(self, results: Sequence[ControlChartResult]) -> list[str]:
+        result = results[0]
+        lines = [reading_guide.control_limits(result.center, result.lower, result.upper,
+                                              signals=len(result.violations or ()))]
+        indices = result.capability.indices if result.capability is not None else {}
+        for name in ("Cpk", "Ppk"):
+            if name in indices:
+                lines.append(reading_guide.cpk(indices[name], name=name))
+                break
+        return lines
+
+    def result_section(self, result: ControlChartResult) -> str:
+        """The chart of one series: its limits, zones, signals, the verdict and the capability."""
+        varies = result.limits_vary
+        summary_rows: list[tuple[str, Any]] = [
+            (_("Control chart"), result.chart),
+            (_("Points plotted"), result.y.size),
+        ]
+        if not CONTROL_CHARTS[result.chart].attribute:
+            summary_rows.append((_("Subgroup size"), result.subgroup_size))
+        summary_rows.append(
+            (_("Centre line"), report_html.format_number(result.center))
+        )
+        summary_rows += [
+            (
+                _("Mean upper limit") if varies else _("Upper control limit"),
+                report_html.format_number(result.upper),
+            ),
+            (
+                _("Mean lower limit") if varies else _("Lower control limit"),
+                report_html.format_number(result.lower),
+            ),
+            (_("Sigma estimate"), report_html.format_number(result.sigma)),
+            (_("Estimator"), result.metadata.get("estimator", "")),
+        ]
+        summary_rows += [
+            (str(key), report_html.format_number(value)
+             if isinstance(value, float) else value)
+            for key, value in result.metadata.items()
+            if key != "estimator" and not isinstance(value, np.ndarray)  # a series (CUSUM's C-) is drawn, not listed
+        ]
+        summary = report_html.summary_table(summary_rows)
+
+        if varies:
+            zones = report_html.note(
+                _(
+                    "The limits move with the sample size, so the zone "
+                    "rules (Nelson 5-8) do not apply and were not run."
+                )
+            )
+        else:
+            zones = ""
+
+        if result.violations:
+            table = report_html.table(
+                (_("Point"), "x", "y", _("Rule"), _("Signal")),
+                [
+                    (
+                        str(violation.index + 1),
+                        report_html.format_number(violation.x),
+                        report_html.format_number(violation.y),
+                        ", ".join(str(rule) for rule in violation.rules),
+                        "; ".join(_(text) for text in violation.descriptions),
+                    )
+                    for violation in result.violations
+                ],
+                align=("right", "right", "right", "right", "left"),
+            )
+            verdict = report_html.note(
+                _(
+                    "{count} of {total} points signal. The process is not "
+                    "in statistical control."
+                ).format(count=len(result.violations), total=result.y.size)
+            )
+        else:
+            table = ""
+            verdict = report_html.note(
+                _(
+                    "No points signal. The process is in statistical "
+                    "control - which says it is stable, not that it meets "
+                    "any specification."
+                )
+            )
+
+        return report_html.section(result.source_name, summary, zones, verdict, table,
+                                   self._capability_html(result))
+
+    @staticmethod
+    def _capability_html(result: ControlChartResult) -> str:
+        """Cp, Cpk, Pp, Ppk..., and how much is out of specification; "" without limits."""
+        capable = result.capability
+        if capable is None:
+            return ""
+        parts = []
+        if result.violations:
+            parts.append(report_html.note(_("The process is not in statistical control: capability describes a "
+                                            "stable process, so read these indices with care.")))
+        limits = [(_(label), report_html.format_number(value)) for label, value in
+                  (("LSL", capable.lsl), ("USL", capable.usl), ("Target", capable.target)) if value is not None]
+        normal = capable.distribution == "normal"
+        parts.append(report_html.summary_table([
+            *limits,
+            *(() if normal else ((_("Distribution"), _(capable.distribution.capitalize())),)),
+            (_("Mean"), report_html.format_number(capable.mean)),
+            *(((_("Sigma (within)"), report_html.format_number(capable.sigma_within)),) if normal else ()),
+            (_("Sigma (overall)"), report_html.format_number(capable.sigma_overall)),
+            *((name, report_html.format_number(value)) for name, value in capable.indices.items()),
+        ]))
+        outside = capable.outside
+        parts.append(report_html.table(
+            tuple(_(c) for c in outside.columns),
+            [(_(row[0]), *(report_html.format_number(v) for v in row[1:])) for row in outside.itertuples(index=False)],
+            align=("left", *("right",) * (len(outside.columns) - 1)),
+        ))
+        if not normal:
+            parts.append(report_html.note(_("Percentile method (ISO 22514-4): the fitted distribution's 0.135% and "
+                                            "99.865% points stand for -/+3 sigma, its median for the mean.")))
+        if result.y.size < 30:
+            parts.append(report_html.note(_("Fewer than 30 points: the capability indices are rough estimates.")))
+        return report_html.section(_("Process capability"), *parts)

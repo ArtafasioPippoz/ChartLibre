@@ -1,0 +1,538 @@
+"""Forms for the table tools: group and aggregate, computed column, fill, find and replace.
+
+Each one only collects choices and hands them back; the work itself is done
+by the repository (``app/data/repo/table_tools.py``), so it is the same with
+or without a dialog in front of it.
+"""
+from __future__ import annotations
+
+from app.styles.style import field_label
+from collections.abc import Sequence
+from typing import Any
+
+import pandas as pd
+from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtGui import QFontDatabase
+from PySide6.QtWidgets import (
+    QAbstractItemView,
+    QCheckBox,
+    QComboBox,
+    QFormLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
+    QPlainTextEdit,
+    QTableView,
+    QToolButton,
+    QVBoxLayout,
+    QWidget,
+)
+
+from app.data.repo._common import _is_ident, _quote_ident
+from app.data.repo.project import AGGREGATES
+from app.dialogs.two_panels_dialog_base import PanelDialog, SettingsTableDialog
+from app.styles.style import (
+    action_presentation,
+    apply_fusion_for_item_view_styling,
+    create_action_button,
+    load_icon,
+    stdSizeAndlayout,
+)
+from app.utils.i18n import _
+from app.utils.import_cleaning import DATE_ORDERS, DEFAULT_MISSING, FORMAT, convert_dates, date_kind, parse_missing
+from app.widgets.table_preview import DataFrameTableModel
+
+
+def _aggregate_label(func: str) -> str:
+    """How an aggregate reads in the form; the SQL name is the item's data."""
+    return {
+        "COUNT": _("Count"),
+        "SUM": _("Sum"),
+        "AVG": _("Mean"),
+        "MIN": _("Minimum"),
+        "MAX": _("Maximum"),
+        "COUNT_DISTINCT": _("Distinct values"),
+    }.get(func, func)
+
+
+def _error_label(parent: QWidget) -> QLabel:
+    label = QLabel(parent)
+    label.setWordWrap(True)
+    label.setProperty("muted", True)
+    return label
+
+
+def _preview_view(parent: QWidget) -> QTableView:
+    view = QTableView(parent)
+    view.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+    view.setAlternatingRowColors(True)
+    view.verticalHeader().setVisible(False)
+    apply_fusion_for_item_view_styling(view)
+    return view
+
+
+class _MeasureRow(QWidget):
+    """One measure: an aggregate of a column, with a button to remove it."""
+
+    changed = Signal()
+    remove_requested = Signal(object)
+
+    def __init__(self, columns: Sequence[str], numeric: set[str], parent: QWidget) -> None:
+        super().__init__(parent)
+        self._numeric = numeric
+        row = QHBoxLayout(self)
+        row.setContentsMargins(0, 0, 0, 0)
+        self.aggregate = QComboBox(self)
+        for func in AGGREGATES:
+            self.aggregate.addItem(_aggregate_label(func), func)
+        self.column = QComboBox(self)
+        self.column.addItem(_("(rows)"), None)
+        for column in columns:
+            self.column.addItem(column, column)
+        remove = QToolButton(self)
+        icon, text, _tooltip = action_presentation("delete")
+        remove.setIcon(icon)
+        remove.setToolTip(_("Remove this measure"))
+        remove.setAccessibleName(text)
+        remove.setAutoRaise(True)
+        remove.clicked.connect(lambda: self.remove_requested.emit(self))
+        row.addWidget(self.aggregate, 1)
+        row.addWidget(QLabel(_("of"), self), 0)
+        row.addWidget(self.column, 2)
+        row.addWidget(remove, 0)
+        self.aggregate.currentIndexChanged.connect(self._on_aggregate)
+        self.column.currentIndexChanged.connect(lambda _i: self.changed.emit())
+
+    def _on_aggregate(self, _index: int) -> None:
+        # "(rows)" only means something to Count: anything else needs a
+        # column, and a number is what Sum or Mean can use.
+        if self.aggregate.currentData() != "COUNT" and self.column.currentData() is None:
+            for i in range(1, self.column.count()):
+                if self.column.itemData(i) in self._numeric:
+                    self.column.setCurrentIndex(i)
+                    break
+            else:
+                if self.column.count() > 1:
+                    self.column.setCurrentIndex(1)
+        self.changed.emit()
+
+    def set_measure(self, func: str, column: str | None) -> None:
+        self.aggregate.setCurrentIndex(max(0, self.aggregate.findData(func)))
+        index = self.column.findData(column) if column is not None else 0
+        self.column.setCurrentIndex(max(0, index))
+
+    def value(self) -> tuple[str, str | None]:
+        return str(self.aggregate.currentData()), self.column.currentData()
+
+
+class GroupAggregateDialog(SettingsTableDialog):
+    """Summarise a table into a new one: grouping columns, measures, a preview.
+
+    The form only collects the choices; the repository writes the table
+    (``group_aggregate``) and computes the preview from the same SELECT, so
+    what is shown is what will be written.
+    """
+
+    def __init__(
+        self,
+        repo: Any,
+        table: str,
+        parent: QWidget | None = None,
+        *,
+        initial_group: str | None = None,
+    ) -> None:
+        # The choices on the left, the table they make on the right.
+        super().__init__(
+            parent,
+            title=_("Group and aggregate '{table}'").format(table=table),
+            icon=load_icon("table_group_aggregate"),
+            settings_width=340,
+            sections=True,
+        )
+        self._repo = repo
+        self._table = str(table)
+
+        full_schema = repo._schema(self._table)
+        schema = [(name, kind) for name, kind in full_schema if name != "Hide"]
+        self._table_columns = [name for name, _kind in schema]
+        self._numeric = {
+            name for name, kind in schema
+            if any(word in kind.upper() for word in ("INT", "REAL", "FLOA", "DOUB", "NUM"))
+        }
+        self._has_hide = "Hide" in {name for name, _kind in full_schema}
+
+        groups_card = self.add_settings_card(_("Group by"))
+        side = groups_card.layout()
+        self.groups = QListWidget(groups_card)
+        # Fusion draws the check boxes; the native macOS style drew the
+        # unchecked ones as nothing at all, and the checked ones barely.
+        apply_fusion_for_item_view_styling(self.groups)
+        for column in self._table_columns:
+            item = QListWidgetItem(column, self.groups)
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+            item.setCheckState(
+                Qt.CheckState.Checked if column == initial_group else Qt.CheckState.Unchecked
+            )
+        self.groups.setMaximumHeight(170)
+        self.groups.itemChanged.connect(lambda _item: self._schedule())
+        side.addWidget(self.groups)
+        hint = QLabel(_("One row per distinct combination. None checked: one row of totals."), groups_card)
+        hint.setProperty("muted", True)
+        hint.setWordWrap(True)
+        side.addWidget(hint)
+
+        measures_card = self.add_settings_card(_("Measures"), stretch=1)
+        side = measures_card.layout()
+        self._measure_box = QVBoxLayout()
+        side.addLayout(self._measure_box)
+        add_row = QHBoxLayout()
+        add = create_action_button(
+            parent=measures_card,
+            action_id="add",
+            action=lambda: self._add_measure(),
+            presentation=(action_presentation("add")[0], _("Add measure"), _("Add another column to the summary")),
+        )
+        add_row.addWidget(add)
+        add_row.addStretch(1)
+        side.addLayout(add_row)
+        self._measures: list[_MeasureRow] = []
+        self._add_measure("COUNT", None)
+
+        # A plain row, not a QFormLayout: on macOS a form centres itself
+        # and leaves the name box a few characters wide.
+        side.addStretch(1)
+        table_card = self.add_settings_card(_("New table"))
+        side = table_card.layout()
+        options = QHBoxLayout()
+        side.addLayout(options)
+        options.addWidget(QLabel(field_label(_("Name")), self), 0)
+        self.name = QLineEdit(self)
+        self.name.textChanged.connect(lambda _t: self._schedule())
+        options.addWidget(self.name, 1)
+        self.include_hidden = QCheckBox(_("Include hidden rows"), self)
+        self.include_hidden.setToolTip(_("Rows marked Hide are left out unless this is checked, as they are from the charts."))
+        self.include_hidden.setVisible(self._has_hide)
+        self.include_hidden.toggled.connect(lambda _c: self._schedule())
+        side.addWidget(self.include_hidden)
+
+        preview = self.add_content_card(_("Preview"), stretch=1).layout()
+        self._preview = _preview_view(self)
+        preview.addWidget(self._preview, 1)
+        self._status = _error_label(self)
+        preview.addWidget(self._status, 0)
+
+        self._ok = self.add_action("apply", self.accept, default=True)
+        self._ok.setText(_("Create table"))
+        self.add_action("close", self.reject)
+
+        self._timer = QTimer(self)
+        self._timer.setSingleShot(True)
+        self._timer.setInterval(150)
+        self._timer.timeout.connect(self._refresh_preview)
+        self._refresh_preview()
+
+    # -- measures -----------------------------------------------------------
+    def _add_measure(self, func: str | None = None, column: str | None = None) -> None:
+        row = _MeasureRow(self._table_columns, self._numeric, self)
+        if func is None:
+            # A second measure is usually a number summarised: the mean of
+            # the first numeric column that is not a grouping column.
+            groups = set(self.chosen_groups())
+            first = next((c for c in self._table_columns if c in self._numeric and c not in groups), None)
+            func, column = ("AVG", first) if first else ("COUNT", None)
+        row.set_measure(func, column)
+        row.changed.connect(self._schedule)
+        row.remove_requested.connect(self._remove_measure)
+        self._measures.append(row)
+        self._measure_box.addWidget(row)
+        self._schedule()
+
+    def _remove_measure(self, row: _MeasureRow) -> None:
+        if len(self._measures) <= 1:
+            return
+        self._measures.remove(row)
+        row.deleteLater()
+        self._schedule()
+
+    # -- results ------------------------------------------------------------
+    def chosen_groups(self) -> list[str]:
+        return [
+            self.groups.item(i).text()
+            for i in range(self.groups.count())
+            if self.groups.item(i).checkState() == Qt.CheckState.Checked
+        ]
+
+    def measures(self) -> list[tuple[str, str | None]]:
+        return [row.value() for row in self._measures]
+
+    def table_name(self) -> str:
+        return self.name.text().strip() or self._repo.group_table_name(self._table, self.chosen_groups())
+
+    # -- preview ------------------------------------------------------------
+    def _schedule(self) -> None:
+        if hasattr(self, "_timer"):
+            self._timer.start()
+
+    def _refresh_preview(self) -> None:
+        self.name.setPlaceholderText(self._repo.group_table_name(self._table, self.chosen_groups()))
+        problem = self._name_problem()
+        try:
+            frame, total = self._repo.group_aggregate_preview(
+                self._table,
+                self.chosen_groups(),
+                self.measures(),
+                include_hidden=self.include_hidden.isChecked(),
+            )
+        except Exception as exc:
+            self._preview.setModel(None)
+            self._status.setText(str(exc))
+            self._ok.setEnabled(False)
+            return
+        old = self._preview.model()
+        self._preview.setModel(DataFrameTableModel(frame, self._preview))
+        if old is not None:
+            old.deleteLater()
+        self._preview.resizeColumnsToContents()
+        shown = _("{count} row(s) in the new table.").format(count=total)
+        if total > len(frame):
+            shown += " " + _("The first {count} are shown.").format(count=len(frame))
+        self._status.setText(problem or shown)
+        self._ok.setEnabled(problem is None)
+
+    def _name_problem(self) -> str | None:
+        name = self.name.text().strip()
+        if not name:
+            return None
+        if self._repo.free_table_name(name) != name:
+            return _("A table or query named '{name}' already exists.").format(name=name)
+        return None
+
+
+class ComputedColumnDialog(SettingsTableDialog):
+    """A new column computed per row from a SQL expression, with a preview."""
+
+    def __init__(self, repo: Any, table: str, parent: QWidget | None = None) -> None:
+        # The new column and the table's columns on the left; the expression
+        # and what it gives on the right.
+        super().__init__(
+            parent,
+            title=_("Add computed column"),
+            icon=load_icon("table_computed_column"),
+            settings_width=280,
+            sections=True,
+        )
+        self._repo = repo
+        self._table = str(table)
+
+        form = QFormLayout()
+        stdSizeAndlayout(form)
+        self.add_settings_card(_("New column")).layout().addLayout(form)
+        self.name = QLineEdit(self)
+        self.name.setPlaceholderText("new_column")
+        form.addRow(field_label(_("Name")), self.name)
+        self.kind = QComboBox(self)
+        self.kind.addItem(_("Automatic"), None)
+        for kind in ("REAL", "INTEGER", "TEXT"):
+            self.kind.addItem(kind, kind)
+        self.kind.setToolTip(_("Automatic keeps each value as the expression gives it."))
+        form.addRow(field_label(_("Type")), self.kind)
+
+        self.expression = QPlainTextEdit(self)
+        self.expression.setFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
+        self.expression.setPlaceholderText("2 * salary_eur\nage / 10.0\nCASE WHEN x > 0 THEN 'up' ELSE 'down' END")
+        self.expression.setTabChangesFocus(True)
+        self.add_content_card(_("Expression"), stretch=1).layout().addWidget(self.expression, 1)
+
+        self.columns = QListWidget(self)
+        self.columns.setToolTip(_("Double-click a column to insert it at the cursor."))
+        for name in repo.get_columns(self._table):
+            self.columns.addItem(str(name))
+        self.columns.itemDoubleClicked.connect(self._insert_column)
+        self.add_settings_card(_("Columns"), stretch=1).layout().addWidget(self.columns, 1)
+
+        preview = self.add_content_card(_("Preview (first rows)"), stretch=1).layout()
+        self._preview = _preview_view(self)
+        preview.addWidget(self._preview, 1)
+        self._status = _error_label(self)
+        preview.addWidget(self._status, 0)
+
+        self._ok = self.add_action("apply", self.accept, default=True)
+        self._ok.setText(_("Add column"))
+        self.add_action("close", self.reject)
+
+        self._timer = QTimer(self)
+        self._timer.setSingleShot(True)
+        self._timer.setInterval(250)
+        self._timer.timeout.connect(self._refresh_preview)
+        self.expression.textChanged.connect(self._timer.start)
+        self.name.textChanged.connect(lambda _t: self._timer.start())
+        self._refresh_preview()
+
+    def _insert_column(self, item: QListWidgetItem) -> None:
+        name = item.text()
+        self.expression.insertPlainText(name if _is_ident(name) else _quote_ident(name))
+        self.expression.setFocus()
+
+    def column_name(self) -> str:
+        return self.name.text().strip()
+
+    def column_type(self) -> str | None:
+        return self.kind.currentData()
+
+    def expression_text(self) -> str:
+        return self.expression.toPlainText().strip()
+
+    def _refresh_preview(self) -> None:
+        name, expression = self.column_name(), self.expression_text()
+        old = self._preview.model()
+        self._preview.setModel(None)
+        if old is not None:
+            old.deleteLater()
+        if not expression:
+            self._status.setText(_("Type an expression; it is evaluated once for every row."))
+            self._ok.setEnabled(False)
+            return
+        try:
+            values = self._repo.preview_expression(self._table, expression)
+        except Exception as exc:
+            self._status.setText(str(exc))
+            self._ok.setEnabled(False)
+            return
+        self._preview.setModel(
+            DataFrameTableModel(pd.DataFrame({name or "new_column": values}), self._preview)
+        )
+        self._preview.horizontalHeader().setStretchLastSection(True)
+        problem = None
+        if not name:
+            problem = _("Type a name for the new column first.")
+        elif name in {self.columns.item(i).text() for i in range(self.columns.count())}:
+            problem = _("'{name}' is already a column of this table.").format(name=name)
+        self._status.setText(problem or "")
+        self._ok.setEnabled(problem is None)
+
+
+#: Fill methods as shown, paired with the repository's own names.
+FILL_CHOICES: tuple[tuple[str, str], ...] = (
+    ("A value", "constant"),
+    ("The column mean", "mean"),
+    ("The column median", "median"),
+    ("The previous value", "previous"),
+    ("Linear interpolation", "linear"),
+    ("Nothing: leave them empty (NULL)", "null"),
+)
+
+
+class FillMissingDialog(PanelDialog):
+    """How to fill one column's empty cells: NULL, blank text, and the codes that stand for no value."""
+
+    def __init__(self, column: str, parent: QWidget | None = None) -> None:
+        super().__init__(parent, title=_("Fill empty cells in '{column}'").format(column=column), size=None)
+        form = QFormLayout()
+        stdSizeAndlayout(form)
+        self.add_card(_("Fill"), "fillMissingCard").layout().addLayout(form)
+        self.method = QComboBox(self)
+        for label, key in FILL_CHOICES:
+            self.method.addItem(_(label), key)
+        form.addRow(field_label(_("Fill with")), self.method)
+        self.value = QLineEdit(self)
+        form.addRow(field_label(_("Value")), self.value)
+        # The import's codes, so that a code means the same here as when the file was read.
+        self.codes = QLineEdit(", ".join(DEFAULT_MISSING), self)
+        self.codes.setPlaceholderText(_("-999, NA, n/a"))
+        self.codes.setToolTip(_("Values that stand for \"no value\", separated by commas: filled like the empty "
+                                "cells. Text is matched whatever its case (na is NA); a number by its value "
+                                "(-999 is -999.0). Empty cells - NULL and blank text - are always filled."))
+        self.codes.setCursorPosition(0)  # the list from its start, not its last codes
+        form.addRow(field_label(_("Also missing")), self.codes)
+        self.method.currentIndexChanged.connect(self._follow_method)
+        self._follow_method()
+        self.add_action("apply", self.accept, default=True)
+        self.add_action("close", self.reject)
+
+    def _follow_method(self, *_args: object) -> None:
+        """A value is typed only to fill with one."""
+        self.value.setEnabled(self.method.currentData() == "constant")
+
+    def missing_codes(self) -> list[str]:
+        """The codes typed in Also missing."""
+        return parse_missing(self.codes.text())
+
+
+class DateToolDialog(PanelDialog):
+    """How to read one column's dates: the order, or a format; the column is then written as ISO text."""
+
+    def __init__(self, column: str, samples: Sequence[Any], parent: QWidget | None = None) -> None:
+        super().__init__(parent, title=_("Read '{column}' as dates").format(column=column), size=None)
+        self._samples = pd.Series([str(value) for value in samples], dtype="string")
+        form = QFormLayout()
+        stdSizeAndlayout(form)
+        self.add_card(_("Dates"), "dateToolCard").layout().addLayout(form)
+        self.order = QComboBox(self)
+        for key, label in DATE_ORDERS:
+            self.order.addItem(_(label), key)
+        self.order.setToolTip(_("How the dates are written. Auto reads it from the values."))
+        form.addRow(field_label(_("Order")), self.order)
+        self.format = QLineEdit(self)
+        self.format.setPlaceholderText("DD.MM.YYYY HH:mm")
+        self.format.setToolTip(_("The dates' format: YYYY year, MM month, DD day, HH:mm:ss time, MMM month name "
+                                 "(or strftime codes: %Y, %m, %d, %H:%M:%S, %b)."))
+        form.addRow(field_label(_("Format")), self.format)
+        self.preview = QLabel(self)
+        self.preview.setTextFormat(Qt.TextFormat.PlainText)
+        self.preview.setFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
+        self.preview.setToolTip(_("The first values, as they are now and as they will be written: ISO text, "
+                                  "which reads the same in any language."))
+        form.addRow(field_label(_("Preview")), self.preview)
+        self.order.currentIndexChanged.connect(self._refresh)
+        self.format.textChanged.connect(self._refresh)
+        self._refresh()
+        self.add_action("apply", self.accept, default=True)
+        self.add_action("close", self.reject)
+
+    def date_order(self) -> str:
+        return str(self.order.currentData())
+
+    def date_format(self) -> str:
+        return self.format.text().strip()
+
+    def _refresh(self, *_args: object) -> None:
+        """Format only with Format...; the first values, before and after."""
+        self.format.setEnabled(self.date_order() == FORMAT)
+        shown = self._samples.dropna().head(6)
+        if shown.empty:
+            self.preview.setText(_("No values"))
+            return
+        try:
+            kind = date_kind(shown, self.date_order(), self.date_format())
+            after = convert_dates(shown, kind, self.date_order(), self.date_format())
+        except (ValueError, TypeError):
+            self.preview.setText(_("This format cannot be read."))
+            return
+        self.preview.setText("\n".join(
+            f"{before}  ->  {'?' if pd.isna(now) else now}" for before, now in zip(shown, after, strict=True)
+        ))
+
+
+class FindReplaceDialog(PanelDialog):
+    """What to find, what to put instead, and where."""
+
+    def __init__(self, column: str | None, parent: QWidget | None = None) -> None:
+        super().__init__(parent, title=_("Find and replace"), size=None)
+        form = QFormLayout()
+        stdSizeAndlayout(form)
+        self.add_card(_("Find and replace"), "findReplaceCard").layout().addLayout(form)
+        self.find_edit = QLineEdit(self)
+        form.addRow(field_label(_("Find")), self.find_edit)
+        self.replace_edit = QLineEdit(self)
+        form.addRow(field_label(_("Replace with")), self.replace_edit)
+        self.scope = QComboBox(self)
+        if column:
+            self.scope.addItem(_("Column '{column}'").format(column=column), column)
+        self.scope.addItem(_("Whole table"), None)
+        form.addRow(field_label(_("In")), self.scope)
+        self.whole_cell = QCheckBox(_("Only cells that match exactly"), self)
+        form.addRow("", self.whole_cell)
+        self.add_action("apply", self.accept, default=True)
+        self.add_action("close", self.reject)

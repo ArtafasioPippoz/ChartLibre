@@ -1,0 +1,65 @@
+# Deutsch translation for the pack data_formats.
+# Message ids are the English source strings.
+
+msgid ""
+msgstr "Project-Id-Version: ChartLibre\nLanguage: de\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\n"
+
+msgid "A GPX file's track, route and waypoints: latitude, longitude, elevation, time."
+msgstr "Track, Route und Wegpunkte einer GPX-Datei: Breitengrad, Längengrad, Höhe, Zeit."
+
+msgid "A MATLAB .mat file (v4 to v7): each numeric variable a dataset, or all of one length side by side."
+msgstr "Eine MATLAB .mat Datei (v4 bis v7): jede numerische Variable ein Datensatz, oder alle einer Länge nebeneinander."
+
+msgid "A NetCDF file (.nc): the variables of each set of dimensions as one table."
+msgstr "Eine NetCDF-Datei (.nc): die Variablen jedes Satzes von Dimensionen als eine Tabelle."
+
+msgid "A Prism XML project: each data table a dataset, replicates as numbered columns."
+msgstr "Ein Prism XML-Projekt: Jede Datentabelle ist ein Datensatz, der als nummerierte Spalten repliziert wird."
+
+msgid "A WAV recording: time and one column per channel."
+msgstr "Eine WAV-Aufzeichnung: Zeit und eine Spalte pro Kanal."
+
+msgid "An Apache Arrow IPC file (Feather)."
+msgstr "Eine Apache Arrow IPC-Datei (Feather)."
+
+msgid "An Apache Parquet file."
+msgstr "Eine Apache Parquet Datei."
+
+msgid "Columnar and scientific"
+msgstr "Kolumnar und wissenschaftlich"
+
+msgid "Columnar and scientific data files: Parquet, Feather/Arrow, NetCDF, MATLAB, WAV audio, GPS tracks (GPX) and GraphPad Prism."
+msgstr "Säulen- und wissenschaftliche Datendateien: Parkett, Feder / Pfeil, NetCDF, MATLAB, WAV-Audio, GPS-Tracks (GPX) und GraphPad Prism."
+
+msgid "Data formats"
+msgstr "Datenformate"
+
+msgid "Feather / Arrow"
+msgstr "Feder/Pfeil"
+
+msgid "GPS track (GPX)"
+msgstr "GPS-Track (GPX)"
+
+msgid "GraphPad Prism (.pzfx)"
+msgstr "GraphPad Prism (.pzfx)"
+
+msgid "Lab instruments"
+msgstr "Laborgeräte"
+
+msgid "MATLAB"
+msgstr "MATLAB"
+
+msgid "NetCDF"
+msgstr "NetCDF"
+
+msgid "Other"
+msgstr "andere"
+
+msgid "Parquet"
+msgstr "Parkett"
+
+msgid "Statistics software"
+msgstr "Statistiksoftware"
+
+msgid "WAV audio"
+msgstr "WAV-Audio"

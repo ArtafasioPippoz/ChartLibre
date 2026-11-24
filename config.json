@@ -1,0 +1,1542 @@
+{
+  "actions": {
+    "add": {
+      "text": "Add",
+      "description": "Add an item",
+      "SFSymbol": "plus",
+      "SegoeFluent": "E710",
+      "ThemeIcon": "list-add"
+    },
+    "add.vertical": {
+      "text": "Add vertical line",
+      "description": "Add a vertical line to the selected axis",
+      "SFSymbol": "guidepoint.vertical",
+      "SegoeFluent": "U+007C",
+      "ThemeIcon": "list-add"
+    },
+    "add.horizontal": {
+      "text": "Add horizontal line",
+      "description": "Add a horizontal line to the selected axis",
+      "SFSymbol": "guidepoint.horizontal",
+      "SegoeFluent": "E949",
+      "ThemeIcon": "list-add"
+    },
+    "add.annotation": {
+      "text": "Add annotation",
+      "description": "Add an annotation to the selected axis",
+      "SFSymbol": "text.bubble",
+      "SegoeFluent": "E932",
+      "ThemeIcon": "list-add"
+    },
+    "crosshair": {
+      "text": "Crosshair",
+      "description": "Show a synced crosshair across every axes of this figure",
+      "SFSymbol": "dot.crosshair",
+      "SegoeFluent": "E7C8",
+      "ThemeIcon": "edit-find"
+    },
+    "add_series": {
+      "text": "Add series",
+      "description": "Add a series to the selected axis",
+      "SFSymbol": "plus.circle",
+      "SegoeFluent": "E710",
+      "ThemeIcon": "list-add"
+    },
+    "apply": {
+      "text": "OK",
+      "description": "Apply the changes",
+      "SFSymbol": "checkmark.circle",
+      "SegoeFluent": "E73E",
+      "ThemeIcon": "object-select"
+    },
+    "clear": {
+      "text": "Clear",
+      "description": "Clear the content",
+      "SFSymbol": "xmark.circle",
+      "SegoeFluent": "E894",
+      "ThemeIcon": "edit-clear"
+    },
+    "back": {
+      "text": "Back",
+      "description": "The previous step",
+      "SFSymbol": "chevron.left",
+      "SegoeFluent": "E72B",
+      "ThemeIcon": "go-previous"
+    },
+    "next": {
+      "text": "Next",
+      "description": "The next step",
+      "SFSymbol": "chevron.right",
+      "SegoeFluent": "E72A",
+      "ThemeIcon": "go-next"
+    },
+    "close": {
+      "text": "Cancel",
+      "description": "Close the current window",
+      "shortcut": "Ctrl+W",
+      "SFSymbol": "xmark.circle",
+      "SegoeFluent": "E711",
+      "ThemeIcon": "window-close"
+    },
+    "connect_database": {
+      "text": "Connect",
+      "description": "Connect to the database and list its tables",
+      "SFSymbol": "antenna.radiowaves.left.and.right",
+      "SegoeFluent": "E703",
+      "ThemeIcon": "network-transmit-receive"
+    },
+    "nav_sql_workpad": {
+      "text": "SQL workpad",
+      "description": "SQL on the project's tables; changes are made on a copy and kept only with Apply",
+      "SFSymbol": "terminal",
+      "SegoeFluent": "E756",
+      "ThemeIcon": [
+        "x-office-database"
+      ]
+    },
+    "database_info": {
+      "text": "Database Info",
+      "description": "Tables, size and import links for the current database",
+      "SFSymbol": "cylinder.split.1x2",
+      "SegoeFluent": "EDA2",
+      "ThemeIcon": [
+        "x-office-database",
+        "drive-harddisk"
+      ]
+    },
+    "copy": {
+      "text": "Copy",
+      "description": "Copy to the clipboard",
+      "shortcut": "Ctrl+C",
+      "SFSymbol": "doc.on.doc",
+      "SegoeFluent": "E8C8",
+      "ThemeIcon": "edit-copy"
+    },
+    "create_renderer": {
+      "text": "Create Renderer",
+      "description": "Scaffold the new chart-type file",
+      "SFSymbol": "doc.badge.plus",
+      "SegoeFluent": "E710",
+      "ThemeIcon": "document-new"
+    },
+    "create_data_operation": {
+      "text": "Create Operation",
+      "description": "Scaffold the new data-operation file",
+      "SFSymbol": "doc.badge.plus",
+      "SegoeFluent": "E710",
+      "ThemeIcon": "document-new"
+    },
+    "create_function": {
+      "text": "Create Function",
+      "description": "Scaffold the new fit-function file",
+      "SFSymbol": "doc.badge.plus",
+      "SegoeFluent": "E710",
+      "ThemeIcon": "document-new"
+    },
+    "credits": {
+      "text": "Credits",
+      "description": "Who made this, and what it is made of",
+      "SFSymbol": "info.circle",
+      "SegoeFluent": "E946",
+      "ThemeIcon": "help-about"
+    },
+    "delete": {
+      "text": "Delete",
+      "description": "Delete the selection",
+      "SFSymbol": "trash",
+      "SegoeFluent": "E74D",
+      "ThemeIcon": "edit-delete"
+    },
+    "dismiss": {
+      "text": "Close",
+      "description": "Close this window",
+      "SFSymbol": "xmark.circle",
+      "SegoeFluent": "E711",
+      "ThemeIcon": "window-close"
+    },
+    "dont_run": {
+      "text": "Don't run",
+      "description": "Leave the functions not run: what they draw stays empty",
+      "SFSymbol": "xmark.circle",
+      "SegoeFluent": "E711",
+      "ThemeIcon": "window-close"
+    },
+    "trust_functions": {
+      "text": "Trust and run",
+      "description": "Run these functions, now and whenever they are drawn or fitted on this computer",
+      "SFSymbol": "checkmark.shield",
+      "SegoeFluent": "E8FB",
+      "ThemeIcon": "media-playback-start"
+    },
+    "down": {
+      "text": "Down",
+      "description": "Down",
+      "SFSymbol": "chevron.down",
+      "SegoeFluent": "e70d",
+      "ThemeIcon": "go-down"
+    },
+    "edit": {
+      "text": "Edit",
+      "description": "Edit",
+      "shortcut": "Ctrl+X",
+      "SFSymbol": "pencil",
+      "SegoeFluent": "E70F",
+      "ThemeIcon": "document-edit"
+    },
+    "edit_localization": {
+      "text": "Edit Localization",
+      "description": "Browse and edit the translation catalogue without a .po editor",
+      "SFSymbol": "globe",
+      "SegoeFluent": "E774",
+      "ThemeIcon": "preferences-desktop-locale"
+    },
+    "data_operation_builder": {
+      "text": "Data Operation Builder",
+      "description": "Scaffold a new data-operation dialog from a template",
+      "SFSymbol": "puzzlepiece.extension",
+      "SegoeFluent": "EA86",
+      "ThemeIcon": "applications-development"
+    },
+    "function_creator": {
+      "text": "Function Creator",
+      "description": "Scaffold a new curve-fit / analytic function",
+      "SFSymbol": "function",
+      "SegoeFluent": "E9D2",
+      "ThemeIcon": "accessories-calculator"
+    },
+    "renderer_helper": {
+      "text": "Renderer Helper",
+      "description": "Scaffold a new chart-type axis renderer from a template",
+      "SFSymbol": "paintbrush.pointed",
+      "SegoeFluent": "EB9F",
+      "ThemeIcon": "applications-graphics"
+    },
+    "export_csv": {
+      "text": "Export CSV",
+      "description": "Export as a CSV file",
+      "SFSymbol": "text.document",
+      "SegoeFluent": "e8a5",
+      "ThemeIcon": "document-save-as"
+    },
+    "fetch_url": {
+      "text": "Fetch",
+      "description": "Download the data at this web address",
+      "SFSymbol": "arrow.down.circle",
+      "SegoeFluent": "E896",
+      "ThemeIcon": "emblem-downloads"
+    },
+    "hide_points": {
+      "text": "Hide",
+      "description": "Hide the selected points from this series",
+      "SFSymbol": "eye.slash",
+      "SegoeFluent": "E890",
+      "ThemeIcon": "list-remove"
+    },
+    "import": {
+      "text": "Import from File, Clipboard and Web...",
+      "description": "Import data from a CSV or Excel file, another database, a web address or the clipboard",
+      "SFSymbol": "square.and.arrow.down",
+      "SegoeFluent": "E8B5",
+      "ThemeIcon": "document-open"
+    },
+    "import_database": {
+      "text": "Database",
+      "description": "Import a table from another SQLite database",
+      "SFSymbol": "cylinder",
+      "SegoeFluent": "EDA2",
+      "ThemeIcon": [
+        "x-office-database",
+        "drive-harddisk"
+      ]
+    },
+    "info": {
+      "text": "Info",
+      "description": "Show details",
+      "SFSymbol": "info.circle",
+      "SegoeFluent": "E946",
+      "ThemeIcon": "dialog-information"
+    },
+    "insert": {
+      "text": "Insert",
+      "description": "Insert at the cursor",
+      "SFSymbol": "plus",
+      "SegoeFluent": "e710",
+      "ThemeIcon": "list-add"
+    },
+    "live_updates": {
+      "text": "Live updates",
+      "description": "Redraw this chart on a timer, for a source table a rig or an import keeps filling in",
+      "SFSymbol": "dot.radiowaves.left.and.right",
+      "SegoeFluent": "E72C",
+      "ThemeIcon": "view-refresh"
+    },
+    "load_demo": {
+      "text": "Load demo",
+      "description": "Open one of the sample projects",
+      "SFSymbol": "wand.and.stars",
+      "SegoeFluent": "e8a5",
+      "ThemeIcon": "document-new"
+    },
+    "log_viewer": {
+      "text": "Log viewer",
+      "description": "Open the application log viewer",
+      "SFSymbol": "doc.text.magnifyingglass",
+      "SegoeFluent": "F000",
+      "ThemeIcon": "document-properties"
+    },
+    "measure": {
+      "text": "Measure",
+      "description": "Measure the distance and slope between two points",
+      "SFSymbol": "ruler",
+      "SegoeFluent": "E9D2",
+      "ThemeIcon": "accessories-calculator"
+    },
+    "nav_chart_options": {
+      "text": "Chart Options",
+      "description": "Show chart options",
+      "SFSymbol": "slider.horizontal.3",
+      "SegoeFluent": "f8a6",
+      "ThemeIcon": "preferences-system"
+    },
+    "nav_workspace": {
+      "text": "Workspace",
+      "description": "Show workspace",
+      "SFSymbol": "house",
+      "SegoeFluent": "e80f",
+      "ThemeIcon": "go-home"
+    },
+    "nav_help": {
+      "text": "Help",
+      "description": "User manual and credits",
+      "SFSymbol": "questionmark.circle",
+      "SegoeFluent": "E897",
+      "ThemeIcon": "help-about"
+    },
+    "nav_new_table": {
+      "text": "New table",
+      "description": "Create a new table",
+      "SFSymbol": "rectangle.badge.plus",
+      "SegoeFluent": "ECC8",
+      "ThemeIcon": "document-new"
+    },
+    "nav_guided": {
+      "text": "Guided analysis",
+      "description": "Find the function for what you want to find out",
+      "SFSymbol": "lightbulb",
+      "SegoeFluent": "EA80",
+      "ThemeIcon": "dialog-information"
+    },
+    "packs": {
+      "text": "Packages",
+      "description": "Extension packs: more analyses, chart types and file readers, switched on or off",
+      "SFSymbol": "shippingbox",
+      "SegoeFluent": "E7B8",
+      "ThemeIcon": "folder-open"
+    },
+    "nav_assistant": {
+      "text": "Assistant",
+      "description": "Ask an AI about the project's data - and, as Settings allow, have it run analyses or change the data",
+      "SFSymbol": "bubble.left.and.text.bubble.right",
+      "SegoeFluent": "E8BD",
+      "ThemeIcon": "dialog-question"
+    },
+    "assistant_send": {
+      "text": "Send",
+      "description": "Send the question to the assistant",
+      "SFSymbol": "paperplane",
+      "SegoeFluent": "E724",
+      "ThemeIcon": "mail-send"
+    },
+    "assistant_new": {
+      "text": "New conversation",
+      "description": "Start again: the assistant forgets this conversation",
+      "SFSymbol": "square.and.pencil",
+      "SegoeFluent": "E70F",
+      "ThemeIcon": "document-new"
+    },
+    "nav_analysis": {
+      "text": "Analysis",
+      "description": "Models of a table's columns",
+      "SFSymbol": "chart.dots.scatter",
+      "SegoeFluent": "E9D9",
+      "ThemeIcon": "accessories-calculator"
+    },
+    "nav_data": {
+      "text": "Data",
+      "description": "Show data tables",
+      "SFSymbol": "tablecells",
+      "SegoeFluent": "f232",
+      "ThemeIcon": "x-office-spreadsheet"
+    },
+    "nav_file": {
+      "text": "File",
+      "description": "Show file menu",
+      "SFSymbol": "folder",
+      "SegoeFluent": "e8e5",
+      "ThemeIcon": "open-menu"
+    },
+    "new": {
+      "text": "New",
+      "description": "Create a new database",
+      "shortcut": "Ctrl+N",
+      "SFSymbol": "doc.badge.plus",
+      "SegoeFluent": "e8a5",
+      "ThemeIcon": "document-new"
+    },
+    "new_plot": {
+      "text": "Plot",
+      "description": "Create a new plot tab",
+      "SFSymbol": "chart.xyaxis.line",
+      "SegoeFluent": "E9D2",
+      "ThemeIcon": [
+        "office-chart-line",
+        "x-office-spreadsheet"
+      ]
+    },
+    "recent_project": {
+      "text": "Recent project",
+      "description": "Open this project",
+      "SFSymbol": "doc.fill",
+      "SegoeFluent": "E8A5",
+      "ThemeIcon": "text-x-generic"
+    },
+    "open": {
+      "text": "Open",
+      "description": "Open a database",
+      "shortcut": "Ctrl+O",
+      "SFSymbol": "folder",
+      "SegoeFluent": "E8E5",
+      "ThemeIcon": "document-open"
+    },
+    "optimize_db": {
+      "text": "Optimize DB",
+      "description": "Check the database, report problems, and compact it",
+      "SFSymbol": "wrench.and.screwdriver",
+      "SegoeFluent": "EA99",
+      "ThemeIcon": "applications-system"
+    },
+    "paste": {
+      "text": "Paste",
+      "description": "Paste from the clipboard",
+      "shortcut": "Ctrl+V",
+      "SFSymbol": "doc.on.clipboard",
+      "SegoeFluent": "E77F",
+      "ThemeIcon": "edit-paste"
+    },
+    "preview": {
+      "text": "Preview",
+      "description": "Preview the result",
+      "SFSymbol": "eye",
+      "SegoeFluent": "E890",
+      "ThemeIcon": "document-print-preview"
+    },
+    "query": {
+      "text": "Create Query Table",
+      "description": "Create a table from a database query",
+      "SFSymbol": "text.magnifyingglass",
+      "SegoeFluent": "F003",
+      "ThemeIcon": "edit-find"
+    },
+    "query_builder": {
+      "text": "Query Builder",
+      "description": "Write, validate and save SQL queries",
+      "SFSymbol": "text.magnifyingglass",
+      "SegoeFluent": "F003",
+      "ThemeIcon": "edit-find"
+    },
+    "project_info": {
+      "text": "Project info...",
+      "description": "Author, date and notes, kept in the project file",
+      "SFSymbol": "info.circle",
+      "SegoeFluent": "E946",
+      "ThemeIcon": "document-properties"
+    },
+    "project_report": {
+      "text": "Project report...",
+      "description": "Every figure, table and operation, in one HTML or PDF file",
+      "SFSymbol": "doc.text.image",
+      "SegoeFluent": "E8A5",
+      "ThemeIcon": "document-export"
+    },
+    "graph_template": {
+      "text": "Templates",
+      "description": "Save this figure's look - style, axes, series colours and markers - and put it on other figures",
+      "SFSymbol": "paintbrush",
+      "SegoeFluent": "E790",
+      "ThemeIcon": "applications-graphics"
+    },
+    "project_images": {
+      "text": "Pictures...",
+      "description": "The pictures kept in the project for markers drawn as pictures: add, rename, remove, credit",
+      "SFSymbol": "photo.on.rectangle",
+      "SegoeFluent": "E8B9",
+      "ThemeIcon": "insert-image"
+    },
+    "project_history": {
+      "text": "Project history...",
+      "description": "Every operation applied in this project, oldest first: what was run, on which series, with which settings",
+      "SFSymbol": "clock.arrow.circlepath",
+      "SegoeFluent": "E81C",
+      "ThemeIcon": "document-open-recent"
+    },
+    "operation_history": {
+      "text": "History",
+      "description": "The operations applied to or from this table",
+      "SFSymbol": "clock.arrow.circlepath",
+      "SegoeFluent": "E81C",
+      "ThemeIcon": "document-open-recent"
+    },
+    "rcparam_open": {
+      "text": "Open",
+      "description": "Load a .mplstyle file into the editor",
+      "SFSymbol": "folder",
+      "SegoeFluent": "E8E5",
+      "ThemeIcon": "document-open"
+    },
+    "rcparam_reset": {
+      "text": "Reset",
+      "description": "Take away the selected property's change: Matplotlib's default applies, and it is not saved in the style",
+      "SFSymbol": "arrow.clockwise",
+      "SegoeFluent": "E72C",
+      "ThemeIcon": "edit-undo"
+    },
+    "rcparam_save": {
+      "text": "Save",
+      "description": "Save the overrides as a .mplstyle file",
+      "SFSymbol": "square.and.arrow.down",
+      "SegoeFluent": "E74E",
+      "ThemeIcon": "document-save"
+    },
+    "reload": {
+      "text": "Reload",
+      "description": "Reload from the source",
+      "SFSymbol": "arrow.clockwise",
+      "SegoeFluent": "E72C",
+      "ThemeIcon": "view-refresh"
+    },
+    "rename": {
+      "text": "Rename",
+      "description": "Rename the selection",
+      "SFSymbol": "pencil",
+      "SegoeFluent": "E70F",
+      "ThemeIcon": "document-edit"
+    },
+    "reset_kwargs_to_defaults": {
+      "text": "Reset to style",
+      "description": "Reset every drawing option here to what the active style sheet says",
+      "SFSymbol": "arrow.clockwise",
+      "SegoeFluent": "E72C",
+      "ThemeIcon": "edit-undo"
+    },
+    "run": {
+      "text": "Run",
+      "description": "Run the query",
+      "shortcut": "Ctrl+R",
+      "SFSymbol": "play.circle",
+      "SegoeFluent": "e768",
+      "ThemeIcon": "media-playback-start"
+    },
+    "operation_stop": {
+      "text": "Stop",
+      "description": "Stop the calculation at its next step; nothing is changed",
+      "SFSymbol": "stop.circle",
+      "SegoeFluent": "E71A",
+      "ThemeIcon": "process-stop"
+    },
+    "operation_revert": {
+      "text": "Revert",
+      "description": "Put every entry back to its default value",
+      "SFSymbol": "arrow.uturn.backward",
+      "SegoeFluent": "E7A7",
+      "ThemeIcon": "document-revert"
+    },
+    "run_fit": {
+      "text": "Fit",
+      "description": "Optimise the parameters and preview the result",
+      "SFSymbol": "function",
+      "SegoeFluent": "e9d9",
+      "ThemeIcon": "accessories-calculator"
+    },
+    "save": {
+      "text": "Save",
+      "description": "Save to a file",
+      "SFSymbol": "square.and.arrow.up",
+      "SegoeFluent": "E703",
+      "ThemeIcon": "document-save"
+    },
+    "results_export_html": {
+      "text": "Export as HTML...",
+      "description": "Save the report as an HTML page",
+      "SFSymbol": "square.and.arrow.up",
+      "SegoeFluent": "E703",
+      "ThemeIcon": "document-save"
+    },
+    "results_export_pdf": {
+      "text": "Export as PDF...",
+      "description": "Save the report as a PDF document",
+      "SFSymbol": "doc.richtext",
+      "SegoeFluent": "EA90",
+      "ThemeIcon": "document-print"
+    },
+    "save_as": {
+      "text": "Save As...",
+      "description": "Save the current database under a new name, and switch to it",
+      "shortcut": "Ctrl+Shift+S",
+      "SFSymbol": "square.and.arrow.up.on.square",
+      "SegoeFluent": "E703",
+      "ThemeIcon": "document-save-as"
+    },
+    "select_points": {
+      "text": "Select points",
+      "description": "Drag a rectangle over the chart to select points, for hiding or splitting into a new series",
+      "SFSymbol": "lasso",
+      "SegoeFluent": "E8B0",
+      "ThemeIcon": "edit-select-all"
+    },
+    "select_all": {
+      "text": "Select all",
+      "description": "Select all items",
+      "shortcut": "Ctrl+A",
+      "SFSymbol": "checkmark",
+      "SegoeFluent": "e73e",
+      "ThemeIcon": "edit-select-all"
+    },
+    "settings": {
+      "text": "Settings",
+      "description": "Open the application settings",
+      "SFSymbol": "gearshape",
+      "SegoeFluent": "E713",
+      "ThemeIcon": "preferences-system"
+    },
+    "save_as_table": {
+      "text": "Save as table",
+      "description": "Write what the statement returns as a new table",
+      "SFSymbol": "tablecells.badge.ellipsis",
+      "SegoeFluent": "E8A5",
+      "ThemeIcon": "document-save-as"
+    },
+    "sql_write": {
+      "text": "Write SQL",
+      "description": "Put this operation's statement in the editor and run it",
+      "SFSymbol": "square.and.pencil",
+      "SegoeFluent": "E70F",
+      "ThemeIcon": "document-edit"
+    },
+    "undo": {
+      "text": "Undo",
+      "description": "Take back the last change to the database",
+      "SFSymbol": "arrow.uturn.backward",
+      "SegoeFluent": "E7A7",
+      "ThemeIcon": "edit-undo"
+    },
+    "up": {
+      "text": "Up",
+      "description": "Up",
+      "SFSymbol": "chevron.up",
+      "SegoeFluent": "e70e",
+      "ThemeIcon": "go-up"
+    },
+    "search_functions": {
+      "text": "Search functions…",
+      "description": "Find an analysis, a data operation, a chart type or a table tool by what it does (Ctrl+K)",
+      "SFSymbol": "magnifyingglass",
+      "SegoeFluent": "E721",
+      "ThemeIcon": "edit-find"
+    },
+    "user_manual": {
+      "text": "User manual",
+      "description": "Open the user manual",
+      "SFSymbol": "book",
+      "SegoeFluent": "E897",
+      "ThemeIcon": "help-contents"
+    },
+    "web_source_add": {
+      "text": "Add source",
+      "description": "Add a web source of your own to the quick-pick list",
+      "SFSymbol": "plus",
+      "SegoeFluent": "E710",
+      "ThemeIcon": "list-add"
+    },
+    "web_source_delete": {
+      "text": "Delete source",
+      "description": "Remove the selected web source from the quick-pick list",
+      "SFSymbol": "trash",
+      "SegoeFluent": "E74D",
+      "ThemeIcon": "list-remove"
+    },
+    "web_sources": {
+      "text": "Web source",
+      "description": "A few ready-made web sources to try - pick one to fill the URL below",
+      "SFSymbol": "globe",
+      "SegoeFluent": "E774",
+      "ThemeIcon": "applications-internet"
+    },
+    "chart_home": {
+      "text": "Reset view",
+      "description": "Back to the chart's whole view",
+      "SFSymbol": "house",
+      "SegoeFluent": "E80F",
+      "ThemeIcon": "go-home"
+    },
+    "chart_back": {
+      "text": "Previous view",
+      "description": "The view before the last pan or zoom",
+      "SFSymbol": "arrow.backward",
+      "SegoeFluent": "E72B",
+      "ThemeIcon": "go-previous"
+    },
+    "chart_forward": {
+      "text": "Next view",
+      "description": "The view after this one, when you went back",
+      "SFSymbol": "arrow.forward",
+      "SegoeFluent": "E72A",
+      "ThemeIcon": "go-next"
+    },
+    "chart_pan": {
+      "text": "Pan",
+      "description": "Drag to move the view; right-drag to zoom. x or y held fixes that axis",
+      "SFSymbol": "arrow.up.and.down.and.arrow.left.and.right",
+      "SegoeFluent": "E7C2",
+      "ThemeIcon": "transform-move"
+    },
+    "chart_zoom": {
+      "text": "Zoom to rectangle",
+      "description": "Drag a rectangle to zoom into it. x or y held fixes that axis",
+      "SFSymbol": "plus.magnifyingglass",
+      "SegoeFluent": "E71E",
+      "ThemeIcon": "zoom-in"
+    },
+    "zoom_fit": {
+      "text": "Zoom to fit",
+      "description": "Fit the whole chart in the panel",
+      "SFSymbol": "arrow.up.left.and.arrow.down.right",
+      "SegoeFluent": "E9A6",
+      "ThemeIcon": "zoom-fit-best"
+    },
+    "duplicate_table": {
+      "text": "Duplicate table",
+      "description": "Copy this table, rows and columns, under a new name",
+      "SFSymbol": "plus.square.on.square",
+      "SegoeFluent": "E8C8",
+      "ThemeIcon": "edit-copy"
+    },
+    "column_stats": {
+      "text": "Column statistics",
+      "description": "Count, empty cells, distinct values, and min, max, mean and median",
+      "SFSymbol": "chart.bar.xaxis",
+      "SegoeFluent": "E9D2",
+      "ThemeIcon": "view-statistics"
+    },
+    "column_info": {
+      "text": "Column Info...",
+      "description": "Name, type, modelling type, label, unit, missing value codes and value labels of the column",
+      "SFSymbol": "info.circle",
+      "SegoeFluent": "E946",
+      "ThemeIcon": "dialog-information"
+    },
+    "table_edit": {
+      "text": "Edit table...",
+      "description": "Edit cells, add or delete rows and columns, change a column's type, and manage the Hide and ClusterId columns",
+      "SFSymbol": "square.and.pencil",
+      "SegoeFluent": "E70F",
+      "ThemeIcon": "document-edit"
+    },
+    "table_group_aggregate": {
+      "text": "Group and aggregate...",
+      "description": "Summarise this table by one or more columns into a new table",
+      "SFSymbol": "square.stack.3d.up",
+      "SegoeFluent": "E8FD",
+      "ThemeIcon": "view-list-tree"
+    },
+    "export_rows": {
+      "text": "Export rows...",
+      "description": "Save the selected cells, or every visible row, as CSV or Excel",
+      "SFSymbol": "square.and.arrow.up",
+      "SegoeFluent": "EDE1",
+      "ThemeIcon": "document-export"
+    },
+    "chart_from_columns": {
+      "text": "New chart from selected columns",
+      "description": "Open New plot with the selected columns as x, y and z",
+      "SFSymbol": "chart.xyaxis.line",
+      "SegoeFluent": "E9D9",
+      "ThemeIcon": "office-chart-line"
+    },
+    "table_add_row": {
+      "text": "Add row",
+      "description": "Add an empty row at the end of the table",
+      "SFSymbol": "plus.rectangle",
+      "SegoeFluent": "E710",
+      "ThemeIcon": "list-add"
+    },
+    "table_insert_row": {
+      "text": "Insert row above",
+      "description": "Add an empty row above the selected one",
+      "SFSymbol": "arrow.up.to.line",
+      "SegoeFluent": "E74A",
+      "ThemeIcon": "go-up"
+    },
+    "table_delete_rows": {
+      "text": "Delete rows",
+      "description": "Delete every row with a selected cell",
+      "SFSymbol": "minus.rectangle",
+      "SegoeFluent": "E738",
+      "ThemeIcon": "list-remove"
+    },
+    "table_add_column": {
+      "text": "Add column",
+      "description": "Add the named column at the end of the table",
+      "SFSymbol": "plus.square",
+      "SegoeFluent": "E710",
+      "ThemeIcon": "list-add"
+    },
+    "table_insert_column": {
+      "text": "Insert column before",
+      "description": "Add the named column immediately before the selected one",
+      "SFSymbol": "arrow.left.to.line",
+      "SegoeFluent": "E72B",
+      "ThemeIcon": "go-previous"
+    },
+    "table_rename_column": {
+      "text": "Rename column",
+      "description": "Rename the selected column (or double-click its header)",
+      "SFSymbol": "pencil",
+      "SegoeFluent": "E70F",
+      "ThemeIcon": "document-edit"
+    },
+    "table_computed_column": {
+      "text": "Add computed column...",
+      "description": "Add a column computed for every row from a SQL expression",
+      "SFSymbol": "function",
+      "SegoeFluent": "E8EF",
+      "ThemeIcon": "accessories-calculator"
+    },
+    "table_delete_column": {
+      "text": "Delete column",
+      "description": "Delete the selected column and everything in it",
+      "SFSymbol": "minus.square",
+      "SegoeFluent": "E738",
+      "ThemeIcon": "list-remove"
+    },
+    "table_cast_column": {
+      "text": "Change type",
+      "description": "Convert the selected column to another type",
+      "SFSymbol": "textformat",
+      "SegoeFluent": "E8D2",
+      "ThemeIcon": "format-text-bold"
+    },
+    "table_sort_ascending": {
+      "text": "Sort ascending",
+      "description": "Reorder the rows by the selected column, smallest first",
+      "SFSymbol": "arrow.up",
+      "SegoeFluent": "E74A",
+      "ThemeIcon": "view-sort-ascending"
+    },
+    "table_sort_descending": {
+      "text": "Sort descending",
+      "description": "Reorder the rows by the selected column, largest first",
+      "SFSymbol": "arrow.down",
+      "SegoeFluent": "E74B",
+      "ThemeIcon": "view-sort-descending"
+    },
+    "table_fill_missing": {
+      "text": "Fill empty cells...",
+      "description": "Fill the selected column's empty cells: a value, the mean or median, the previous value, or by interpolation",
+      "SFSymbol": "square.and.pencil",
+      "SegoeFluent": "E70F",
+      "ThemeIcon": "document-edit"
+    },
+    "table_dates": {
+      "text": "Read as dates...",
+      "description": "Read the selected column's text as dates, in the order or format you give, and write them as ISO text that reads the same in any language",
+      "SFSymbol": "calendar",
+      "SegoeFluent": "E787",
+      "ThemeIcon": "appointment-new"
+    },
+    "table_find_replace": {
+      "text": "Find and replace...",
+      "description": "Replace text in the selected column or in the whole table",
+      "SFSymbol": "magnifyingglass",
+      "SegoeFluent": "E721",
+      "ThemeIcon": "edit-find-replace"
+    },
+    "table_restore": {
+      "text": "Restore",
+      "description": "Put the table back as it was when this editor was opened",
+      "SFSymbol": "arrow.uturn.backward",
+      "SegoeFluent": "E7A7",
+      "ThemeIcon": "edit-undo"
+    },
+    "table_select_rows": {
+      "text": "Select rows",
+      "description": "Mark Selected the rows where the selected column compares to a value",
+      "SFSymbol": "checkmark.circle",
+      "SegoeFluent": "E73E",
+      "ThemeIcon": "edit-select-all"
+    },
+    "table_selected_ensure": {
+      "text": "Ensure Selected",
+      "description": "Add the Selected column if this table does not have one",
+      "SFSymbol": "checkmark.square",
+      "SegoeFluent": "E73A",
+      "ThemeIcon": "list-add"
+    },
+    "table_selected_reset": {
+      "text": "Reset Selected",
+      "description": "Set Selected back to 0 on every row, so no row is selected",
+      "SFSymbol": "square",
+      "SegoeFluent": "E739",
+      "ThemeIcon": "edit-clear"
+    },
+    "table_selected_invert": {
+      "text": "Invert Selected",
+      "description": "Swap selected and unselected rows",
+      "SFSymbol": "arrow.left.arrow.right.square",
+      "SegoeFluent": "E8AB",
+      "ThemeIcon": "object-flip-horizontal"
+    },
+    "table_hide_ensure": {
+      "text": "Ensure Hide",
+      "description": "Add the Hide column if this table does not have one",
+      "SFSymbol": "eye.slash",
+      "SegoeFluent": "ED1A",
+      "ThemeIcon": "view-hidden"
+    },
+    "table_hide_rows": {
+      "text": "Hide rows",
+      "description": "Hide the rows where the selected column compares to a value",
+      "SFSymbol": "line.3.horizontal.decrease.circle",
+      "SegoeFluent": "E71C",
+      "ThemeIcon": "view-filter"
+    },
+    "preview_hide_rows": {
+      "text": "Hide selected rows",
+      "description": "Leave the selected rows out of every chart and analysis",
+      "SFSymbol": "eye.slash",
+      "SegoeFluent": "ED1A",
+      "ThemeIcon": "view-hidden"
+    },
+    "preview_show_rows": {
+      "text": "Show selected rows",
+      "description": "Bring the selected hidden rows back into the charts and analyses",
+      "SFSymbol": "eye",
+      "SegoeFluent": "E7B3",
+      "ThemeIcon": "view-visible"
+    },
+    "table_hide_reset": {
+      "text": "Reset Hide",
+      "description": "Set Hide back to 0 on every row, so nothing is hidden",
+      "SFSymbol": "eye",
+      "SegoeFluent": "E7B3",
+      "ThemeIcon": "view-visible"
+    },
+    "table_hide_invert": {
+      "text": "Invert Hide",
+      "description": "Swap hidden and shown rows",
+      "SFSymbol": "arrow.left.arrow.right",
+      "SegoeFluent": "E8AB",
+      "ThemeIcon": "object-flip-horizontal"
+    },
+    "table_cluster_ensure": {
+      "text": "Ensure ClusterId",
+      "description": "Add the ClusterId column if this table does not have one",
+      "SFSymbol": "circle.grid.3x3",
+      "SegoeFluent": "E80A",
+      "ThemeIcon": "view-grid"
+    },
+    "table_cluster_reset": {
+      "text": "Reset clusters",
+      "description": "Clear every cluster label",
+      "SFSymbol": "circle.slash",
+      "SegoeFluent": "E894",
+      "ThemeIcon": "edit-clear"
+    },
+    "table_more": {
+      "text": "Managed columns",
+      "description": "Hide marks rows the charts skip; ClusterId is written by the Clustering operation.",
+      "SFSymbol": "ellipsis.circle",
+      "SegoeFluent": "E712",
+      "ThemeIcon": "view-more"
+    },
+    "chart_previous": {
+      "text": "Previous chart",
+      "description": "Show the chart above this one in the list",
+      "shortcut": "Ctrl+[",
+      "SFSymbol": "arrow.left.circle",
+      "SegoeFluent": "E76B",
+      "ThemeIcon": "go-previous"
+    },
+    "chart_next": {
+      "text": "Next chart",
+      "description": "Show the chart below this one in the list",
+      "shortcut": "Ctrl+]",
+      "SFSymbol": "arrow.right.circle",
+      "SegoeFluent": "E76C",
+      "ThemeIcon": "go-next"
+    },
+    "chart_jump": {
+      "text": "Charts",
+      "description": "Jump to any chart in this project",
+      "SFSymbol": "chevron.up.chevron.down",
+      "SegoeFluent": "E70D",
+      "ThemeIcon": "view-list-details"
+    },
+    "sidebar_toggle": {
+      "text": "Sidebar",
+      "description": "Show or hide the sidebar",
+      "SFSymbol": "sidebar.left",
+      "SegoeFluent": "E8A0",
+      "ThemeIcon": "view-sidebar"
+    }
+  },
+  "messages": {
+    "figure.confirm_style_to_all": {
+      "level": "question",
+      "title": "Apply to all figures",
+      "text": "Give all {count} figures of the project this style? Their own styles are replaced (Undo brings them back)."
+    },
+    "axis.confirm_delete": {
+      "level": "question",
+      "title": "Delete axis",
+      "text": "Delete the axis '{axis}'?"
+    },
+    "history.confirm_delete": {
+      "level": "question",
+      "title": "Delete history",
+      "text": "Forget {count} recorded operation(s)? The tables they made stay, but how they were made cannot be read again."
+    },
+    "log.confirm_clear": {
+      "level": "question",
+      "title": "Clear the log",
+      "text": "Empty the application log? What it holds now cannot be read again."
+    },
+    "chart.confirm_delete": {
+      "level": "question",
+      "title": "Delete chart",
+      "text": "Delete this chart?"
+    },
+    "chart.export_view_empty": {
+      "level": "info",
+      "title": "Export view",
+      "text": "Nothing visible to export - zoom out, or check the chart has data."
+    },
+    "chart.no_series": {
+      "level": "warning",
+      "title": "Series",
+      "text": "Add at least one series before applying."
+    },
+    "chart.axis_series_limit": {
+      "level": "warning",
+      "title": "Series",
+      "text": "{chart} draws {limit} series per axis, and this axis already has {existing}. Choose 'Add new axis' instead, or remove {wanted} series."
+    },
+    "chart.renderer_not_found": {
+      "level": "warning",
+      "title": "Series",
+      "text": "Series '{series}': the renderer could not be loaded."
+    },
+    "chart.role_missing": {
+      "level": "warning",
+      "title": "Roles",
+      "text": "Series '{series}': select the required role '{role}'."
+    },
+    "chart.save_failed": {
+      "level": "warning",
+      "title": "Save failed",
+      "text": "Could not save the chart."
+    },
+    "chart.series_empty_sql": {
+      "level": "warning",
+      "title": "Series",
+      "text": "Series '{series}' has no SQL."
+    },
+    "database.fix_problems": {
+      "level": "question",
+      "title": "Database check",
+      "text": "{report}\n\nFix them now? Tables you made or imported are never touched, and Undo puts everything back."
+    },
+    "database.check_found_problems": {
+      "level": "warning",
+      "title": "Database check",
+      "text": "{report}"
+    },
+    "database.connection_missing_file": {
+      "level": "warning",
+      "title": "Connect to database",
+      "text": "Enter the path to a SQLite database file."
+    },
+    "database.create_failed": {
+      "level": "error",
+      "title": "New database",
+      "text": "Could not create the database:\n{error}"
+    },
+    "chart.group_failed": {
+      "level": "error",
+      "title": "Group by",
+      "text": "Could not split the series by '{column}':\n{reason}"
+    },
+    "chart.too_many_groups": {
+      "level": "warning",
+      "title": "Group by",
+      "text": "'{column}' takes more than {limit} different values - one series each would make an unreadable chart. Group by a column with fewer values, such as a category."
+    },
+    "chart.create_failed": {
+      "level": "error",
+      "title": "New chart",
+      "text": "Could not make the chart:\n{reason}"
+    },
+    "chart.histogram_failed": {
+      "level": "error",
+      "title": "Histogram",
+      "text": "Could not make the histogram:\n{reason}"
+    },
+    "chart.histogram_no_numbers": {
+      "level": "info",
+      "title": "Histogram",
+      "text": "The column '{column}' holds no numbers, so there is nothing to draw a histogram of."
+    },
+    "database.open_failed": {
+      "level": "error",
+      "title": "Open database",
+      "text": "Could not open the database:\n{error}"
+    },
+    "database.save_as_failed": {
+      "level": "error",
+      "title": "Save database as",
+      "text": "Could not save the database as a new file:\n{error}"
+    },
+    "demo.build_failed": {
+      "level": "error",
+      "title": "Load demo",
+      "text": "Could not load the demo project:\n{error}"
+    },
+    "dev.confirm_remove_language": {
+      "level": "question",
+      "title": "Remove language",
+      "text": "Remove {language}? Its translations go to the Trash."
+    },
+    "dev.validation_error": {
+      "level": "warning",
+      "title": "Renderer Helper",
+      "text": "{detail}"
+    },
+    "dev.renderer_created": {
+      "level": "info",
+      "title": "Renderer Helper",
+      "text": "\"{name}\" was written to {path} and is already discoverable - it will appear in the chart picker. Open it and fill in render_axis with real drawing code."
+    },
+    "dev.renderer_create_failed": {
+      "level": "warning",
+      "title": "Renderer Helper",
+      "text": "{path} was written, but it did not check out as a valid renderer: {error}. Fix the file directly and reopen it."
+    },
+    "dev.data_operation_created": {
+      "level": "info",
+      "title": "Data Operation Builder",
+      "text": "\"{name}\" was written to {path} and is already discoverable - it will appear in the Analysis panel. Open it and replace compute_results with the real computation."
+    },
+    "dev.data_operation_create_failed": {
+      "level": "warning",
+      "title": "Data Operation Builder",
+      "text": "{path} was written, but it did not check out as a valid operation: {error}. Fix the file directly and reopen it."
+    },
+    "dev.function_created": {
+      "level": "info",
+      "title": "Function Creator",
+      "text": "\"{name}\" was written to {path} and is already discoverable - it will appear in the Fit dialog's model list. Open it and replace execute() with the real formula."
+    },
+    "dev.function_create_failed": {
+      "level": "warning",
+      "title": "Function Creator",
+      "text": "{path} was written, but it did not check out as a valid function: {error}. Fix the file directly and reopen it."
+    },
+    "dev.localization_auto_translated": {
+      "level": "info",
+      "title": "Edit Localization",
+      "text": "{count} translation(s) filled in - review them before saving."
+    },
+    "dev.localization_auto_translate_partial": {
+      "level": "warning",
+      "title": "Edit Localization",
+      "text": "{count} translation(s) filled in - review them before saving.\n\nNote: {reasons}."
+    },
+    "import.clipboard_empty": {
+      "level": "info",
+      "title": "Clipboard",
+      "text": "Clipboard is empty or not tabular text."
+    },
+    "import.clipboard_failed": {
+      "level": "error",
+      "title": "Clipboard",
+      "text": "Could not read the clipboard:\n{error}"
+    },
+    "import.database_failed": {
+      "level": "error",
+      "title": "Import from database",
+      "text": "Could not read from the database:\n{error}"
+    },
+    "import.database_no_tables": {
+      "level": "warning",
+      "title": "Import from database",
+      "text": "This database has no tables to import."
+    },
+    "import.database_no_databases": {
+      "level": "warning",
+      "title": "Connect to database",
+      "text": "This server reported no databases you can open. Type the name if you know it."
+    },
+    "import.database_no_table_selected": {
+      "level": "warning",
+      "title": "Import from database",
+      "text": "Select a table to import."
+    },
+    "import.database_query_invalid": {
+      "level": "warning",
+      "title": "Import from database",
+      "text": "{reason}"
+    },
+    "import.web_failed": {
+      "level": "error",
+      "title": "Import from web",
+      "text": "Could not fetch the data:\n{error}"
+    },
+    "import.web_invalid_url": {
+      "level": "warning",
+      "title": "Import from web",
+      "text": "Enter a valid http:// or https:// URL."
+    },
+    "import.web_source_incomplete": {
+      "level": "warning",
+      "title": "Add source",
+      "text": "Enter both a name and a URL."
+    },
+    "import.failed": {
+      "level": "error",
+      "title": "Import",
+      "text": "Import failed:\n{error}"
+    },
+    "import.no_columns_selected": {
+      "level": "warning",
+      "title": "Import",
+      "text": "All columns are empty or set to Ignore."
+    },
+    "column_info.no_name": {
+      "level": "warning",
+      "title": "Column Info",
+      "text": "Please enter a name for the column."
+    },
+    "column_info.failed": {
+      "level": "error",
+      "title": "Column Info",
+      "text": "The column could not be changed: {error}"
+    },
+    "column_info.cast_failed": {
+      "level": "warning",
+      "title": "Column Info",
+      "text": "{count} value(s) could not be read as {kind} and were left empty."
+    },
+    "import.no_table_name": {
+      "level": "warning",
+      "title": "Import",
+      "text": "Please enter a table name."
+    },
+    "import.nothing_to_import": {
+      "level": "info",
+      "title": "Import",
+      "text": "Nothing to import."
+    },
+    "import.preview_failed": {
+      "level": "error",
+      "title": "Preview",
+      "text": "Could not build the preview:\n{error}"
+    },
+    "manual.unavailable": {
+      "level": "warning",
+      "title": "User manual",
+      "text": "The user manual could not be opened:\n{path}"
+    },
+    "preview.hide_rows_failed": {
+      "level": "error",
+      "title": "Hide rows failed",
+      "text": "{error}"
+    },
+    "preview.rows_selected": {
+      "level": "info",
+      "title": "Select rows",
+      "text": "{count} rows are now marked Selected."
+    },
+    "preview.rows_hidden": {
+      "level": "info",
+      "title": "Hide rows",
+      "text": "{count} rows are now hidden."
+    },
+    "query.confirm_delete": {
+      "level": "question",
+      "title": "Delete query",
+      "text": "Delete the saved query '{name}'?\n\nCharts built on it keep their data: each holds a copy of its SQL."
+    },
+    "function.confirm_delete": {
+      "level": "question",
+      "title": "Delete function",
+      "text": "Delete the stored function '{name}'?\n\nNo chart draws it."
+    },
+    "function.confirm_delete_drawn": {
+      "level": "question",
+      "title": "Delete function",
+      "text": "Delete the stored function '{name}'?\n\n{count} chart(s) draw it and will be empty:\n{charts}"
+    },
+    "query.confirm_overwrite": {
+      "level": "question",
+      "title": "Save query",
+      "text": "A query named '{name}' already exists. Replace it?"
+    },
+    "query.invalid": {
+      "level": "warning",
+      "title": "Query Builder",
+      "text": "The query is not valid and was not saved:\n\n{error}"
+    },
+    "query.name_is_a_table": {
+      "level": "warning",
+      "title": "Query Builder",
+      "text": "'{name}' is already a table name.\n\nA query with that name could never be selected, because a table of the same name always wins."
+    },
+    "query.needs_a_name": {
+      "level": "warning",
+      "title": "Query Builder",
+      "text": "A query needs a name."
+    },
+    "query.save_failed": {
+      "level": "error",
+      "title": "Query Builder",
+      "text": "Could not save the query:\n{error}"
+    },
+    "series.confirm_delete": {
+      "level": "question",
+      "title": "Delete series",
+      "text": "Delete the series '{series}'?"
+    },
+    "series.estimate_failed": {
+      "level": "warning",
+      "title": "Data operation",
+      "text": "{series}: {error}"
+    },
+    "series.needs_two_series": {
+      "level": "info",
+      "title": "Data operation",
+      "text": "{method} needs two series.\n\nSelect the reference series first, then the one to compare it with."
+    },
+    "series.no_axis_selected": {
+      "level": "info",
+      "title": "Data operation",
+      "text": "No axis selected."
+    },
+    "series.no_fit_results": {
+      "level": "info",
+      "title": "No fit results",
+      "text": "Run Fit first, then use this button to update the initial parameters."
+    },
+    "series.no_parameters": {
+      "level": "info",
+      "title": "No parameters",
+      "text": "The latest fit has no parameters to copy."
+    },
+    "outliers.colour_present": {
+      "level": "warning",
+      "title": "Outliers",
+      "text": "\"{series}\" already has {existing}, so the outliers were not coloured and nothing was changed.\n\nRemove that colour first, or choose Hide instead."
+    },
+    "series.no_series_selected": {
+      "level": "info",
+      "title": "Data operation",
+      "text": "No series selected."
+    },
+    "catalog.select_a_table": {
+      "level": "info",
+      "title": "Search",
+      "text": "Select a table in the Tables panel first."
+    },
+    "series.outliers_need_a_table": {
+      "level": "warning",
+      "title": "Data operation",
+      "text": "Outlier detection needs a table, and these series read from a saved query:\n\n{series}\n\nHiding an outlier marks a row in the source table, which a query result does not have. Import the query result as a table first."
+    },
+    "series.preview_failed": {
+      "level": "error",
+      "title": "Preview failed",
+      "text": "{error}"
+    },
+    "series.roles_missing": {
+      "level": "warning",
+      "title": "Data operation",
+      "text": "This operation needs both an x and a y role.\n\nThese series cannot be processed:\n\n{series}\n\nSet the missing roles in Series properties, then try again."
+    },
+    "series.some_failed": {
+      "level": "warning",
+      "title": "Data operation",
+      "text": "Some series could not be processed:\n\n{errors}"
+    },
+    "source.confirm_delete_many": {
+      "level": "question",
+      "title": "Delete",
+      "text": "Delete {count} selected items?\n\n{sources}\n\nCharts built on a saved query will stop finding their data."
+    },
+    "chart.animation_export_failed": {
+      "level": "error",
+      "title": "Save animation",
+      "text": "The animation could not be saved:\n{error}"
+    },
+    "model.confirm_delete": {
+      "level": "question",
+      "title": "Delete model",
+      "text": "Delete the model \u201c{name}\u201d? The tables it predicted stay."
+    },
+    "model.trust": {
+      "level": "question",
+      "title": "Trust model",
+      "text": "\u201c{name}\u201d is a pickled model ({kind}) that was not made on this computer. Running it runs the code inside it.\n\nTrust it only if you know where it comes from. Trust it?"
+    },
+    "pack.trust": {
+      "level": "question",
+      "title": "Trust pack",
+      "text": "\u201c{name}\u201d (from: {author}) did not come with ChartLibre. A pack is Python code that runs with your rights on this computer.\n\nSwitch it on only if you know where it comes from. Trust it?"
+    },
+    "settings.restart": {
+      "level": "question",
+      "title": "Restart",
+      "text": "The changes ({what}) apply the next time ChartLibre starts."
+    },
+    "pack.not_added": {
+      "level": "warning",
+      "title": "Add a pack",
+      "text": "\u201c{name}\u201d was not added.\n\n{why}"
+    },
+    "project.save_untitled": {
+      "level": "question",
+      "title": "Save project",
+      "text": "Do you want to save the project \u201c{name}\u201d?\n\nIf you don't save it, it goes to the Trash."
+    },
+    "startup.default_database_failed": {
+      "level": "error",
+      "title": "Welcome",
+      "text": "Could not create a database in your home folder:\n{error}\n\nPick one to open instead."
+    },
+    "style.apply_callback_failed": {
+      "level": "warning",
+      "title": "Apply",
+      "text": "The apply callback failed:\n{error}"
+    },
+    "style.apply_failed": {
+      "level": "warning",
+      "title": "Apply",
+      "text": "Could not build the temporary style:\n{error}"
+    },
+    "style.invalid_entries": {
+      "level": "warning",
+      "title": "Invalid entries",
+      "text": "{entries} invalid row(s) will be skipped."
+    },
+    "style.load_failed": {
+      "level": "error",
+      "title": "Load error",
+      "text": "Could not load the style:\n{error}"
+    },
+    "style.no_property_selected": {
+      "level": "info",
+      "title": "Reset",
+      "text": "Select a property first."
+    },
+    "style.preview_failed": {
+      "level": "error",
+      "title": "Preview error",
+      "text": "Could not render the preview:\n{error}"
+    },
+    "style.save_failed": {
+      "level": "error",
+      "title": "Save error",
+      "text": "Could not save the style:\n{error}"
+    },
+    "table.confirm_delete": {
+      "level": "question",
+      "title": "Delete table",
+      "text": "Delete the table '{table}'?"
+    },
+    "table.confirm_delete_many": {
+      "level": "question",
+      "title": "Delete tables",
+      "text": "Delete {count} selected tables?\n\n{tables}"
+    }
+  },
+  "constants": {
+    "max_recent_databases": 30,
+    "max_grid_cells": 4000000,
+    "max_table_rows": 200,
+    "default_downsample_threshold": 1000,
+    "max_point_markers": 20000,
+    "web_fetch_max_bytes": 209715200,
+    "unbounded_span": 10.0,
+    "default_iterations": 20000,
+    "max_undo_entries": 10,
+    "overlay_table_min_height": 120,
+    "overlay_widget_column_width": 122,
+    "toolbar_icon_size": [
+      24,
+      24
+    ],
+    "default_aspect_ratio": 1.7777777777777777,
+    "chart_area_min_height": 160,
+    "notes_min_height": 0,
+    "notes_first_open_min_height": 80,
+    "notes_initial_fraction": 0.3,
+    "pick_tolerance_points": 5.0,
+    "fixed_mode_screen_dpi": 100.0,
+    "live_refresh_interval_ms": 2000,
+    "auto_apply_delay_ms": 400,
+    "properties_redraw_debounce_ms": 120,
+    "snapshot_coalesce_seconds": 2.0,
+    "chart_pane_min_width": 260,
+    "chart_selection_timeout_ms": 15000,
+    "max_problems_shown": 20,
+    "query_builder_preview_row_limit": 500,
+    "query_preview_row_limit": 1000,
+    "control_chart_recommended_subgroups": 20,
+    "sql_query_visible_lines": 6,
+    "dialog_size_small": [
+      560,
+      360
+    ],
+    "dialog_size_medium": [
+      900,
+      640
+    ],
+    "dialog_size_large": [
+      1020,
+      700
+    ],
+    "combo_min_contents_length": 6,
+    "splitter_handle_width": 6,
+    "panel_min_width": 240,
+    "panel_default_width": 340,
+    "chart_max_groups": 50,
+    "chart_max_separate_axes": 24,
+    "query_recode_values": 200,
+    "query_max_new_columns": 500,
+    "doe_preview_rows": 500,
+    "guided_max_group_levels": 20,
+    "guided_max_questions": 3,
+    "search_results_limit": 12,
+    "series_cache_entries": 64,
+    "project_preview_dpi": 200,
+    "quick_answer_alpha": 0.05,
+    "fisher_resamples": 9999,
+    "fit_model_cv_folds": 5,
+    "fit_model_profile_points": 21,
+    "partition_dependence_factors": 4,
+    "regression_curve_points": 200,
+    "change_max_pairs": 4000,
+    "background_busy_delay_ms": 300,
+    "num_recent_charts": 3,
+    "font_scale_min_percent": 50,
+    "font_scale_max_percent": 300,
+    "font_scale_step_percent": 10
+  }
+}

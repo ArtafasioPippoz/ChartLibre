@@ -1,0 +1,479 @@
+"""Read-only HTML results pane used by the data-operation dialogs.
+
+Displays formatted operation output and supports copying it to the clipboard as
+HTML, which makes results pasteable into reports.
+
+The widget deliberately mirrors part of the QLabel API (``setText``,
+``setWordWrap``, ``setAlignment``, ``setTextInteractionFlags``) so it can be
+dropped in wherever a label used to be, without every caller learning a new
+interface. The layout-only setters are accepted and ignored.
+
+Important behavior:
+- ``setText(...)`` always treats content as plain text and escapes it.
+- ``setHtml(...)`` always treats content as HTML markup.
+- ``setContent(...)`` auto-detects whether the input looks like HTML and routes
+  it to ``setHtml(...)`` or ``setText(...)``.
+"""
+from __future__ import annotations
+
+import atexit
+import html
+import re
+import weakref
+from pathlib import Path
+from typing import cast
+
+import shiboken6
+from PySide6.QtCore import QEvent, QMimeData, QObject, QPoint, Qt, QTimer, QUrl, Signal
+from PySide6.QtGui import QColor, QDesktopServices
+from PySide6.QtWidgets import (
+    QApplication,
+    QFileDialog,
+    QSizePolicy,
+    QTextBrowser,
+    QVBoxLayout,
+    QWidget,
+)
+
+from app.styles.style import (
+    action_menu_item,
+    create_menu,
+    mark_editor_panel,
+    stdSizeAndlayout,
+)
+from app.utils.i18n import _
+
+_HTML_TAG_RE = re.compile(
+    r"</?\s*("
+    r"html|head|body|style|div|section|article|main|header|footer|"
+    r"span|p|br|hr|"
+    r"table|thead|tbody|tfoot|tr|td|th|caption|colgroup|col|"
+    r"ul|ol|li|"
+    r"h[1-6]|"
+    r"strong|b|em|i|u|small|code|pre|blockquote|"
+    r"a|img"
+    r")\b",
+    re.IGNORECASE,
+)
+
+_HTML_ENTITY_RE = re.compile(
+    r"&(?:nbsp|amp|lt|gt|quot|apos|#[0-9]+|#x[0-9a-fA-F]+);"
+)
+
+
+try:
+    from PySide6.QtWebEngineCore import QWebEnginePage
+
+    class _ExternalLinksPage(QWebEnginePage):
+        """A page whose links open in the system browser, not in the pane.
+
+        What QTextBrowser.setOpenExternalLinks does for the fallback viewer.
+        Without it a clicked link - the Credits page is made of them -
+        replaces the report with the website, in a pane with no back button.
+        """
+
+        def acceptNavigationRequest(self, url, navigation_type, is_main_frame):
+            if navigation_type == QWebEnginePage.NavigationType.NavigationTypeLinkClicked:
+                _open_link(self.parent(), url.toString())
+                return False
+            return super().acceptNavigationRequest(url, navigation_type, is_main_frame)
+
+except ImportError:  # QtWebEngine is optional; QTextBrowser needs no page.
+    pass
+
+
+def _open_link(pane: object, url: str) -> None:
+    """A link clicked in a report: a "What next?" one to the pane's owner, any other to the browser.
+
+    Handed on from the event loop, not from inside Chromium's navigation
+    callback: what it opens - a dialog, its event loop - must not run there.
+    """
+    from app.plugin_api.data_operations.next_steps import is_step_url
+
+    if not is_step_url(url):
+        QDesktopServices.openUrl(QUrl(url))
+        return
+
+    def deliver() -> None:
+        if isinstance(pane, HtmlResultsView) and shiboken6.isValid(pane):
+            pane.link_requested.emit(url)
+
+    QTimer.singleShot(0, deliver)
+
+
+def looks_like_html(value: str) -> bool:
+    """Return True when text appears to contain real HTML markup.
+
+    The test intentionally checks for known tags rather than any ``<...>``
+    sequence, because plain text such as ``x < 5`` should remain plain text.
+    HTML entities are treated as HTML too, because many report builders emit
+    escaped content inside otherwise minimal markup.
+    """
+    text = str(value or "")
+    return bool(_HTML_TAG_RE.search(text) or _HTML_ENTITY_RE.search(text))
+
+
+def plain_to_html(text: str) -> str:
+    """Escape plain text and wrap it in a minimal HTML document.
+
+    Public because anything that has to hand plain text to something expecting
+    markup needs exactly this, and doing it by hand is how unescaped ``<`` ends
+    up truncating a report at the first angle bracket.
+    """
+    escaped = html.escape(str(text or ""), quote=True).replace("\n", "<br>")
+    return (
+        "<!doctype html>"
+        "<html>"
+        "<head>"
+        "<meta charset='utf-8'>"
+        "<style>"
+        "body { font-family: Segoe UI, Arial, sans-serif; font-size: 10pt; }"
+        "table { border-collapse: collapse; }"
+        "th, td { padding: 4px 8px; border: 1px solid #d0d0d0; }"
+        "th { font-weight: 600; }"
+        "</style>"
+        "</head>"
+        f"<body>{escaped}</body>"
+        "</html>"
+    )
+
+
+#: Every web view still alive, so they can be torn down in order before Qt is.
+_WEB_VIEWS: weakref.WeakSet[QWidget] = weakref.WeakSet()
+_RELEASE_HOOKED = False
+#: Views taken out of closed windows, held until their deferred deletion (or
+#: release_web_views at exit): parentless, a collected wrapper would delete
+#: them at whatever moment Python's collector ran.
+_PARKED: list[QObject] = []
+
+
+def release_web_views() -> None:
+    """Delete every live web view's page, then the view, now - not at exit.
+
+    Left to the end of the process, a QWebEngineView goes after the profile
+    and the scene its page renders into ("Release of profile requested but
+    WebEnginePage still not deleted"), and Qt crashes deleting it
+    (QQuickWindow::~QQuickWindow on a destroyed window: SIGSEGV). Deleting
+    the page first and the view straight after, while the application is
+    still whole, is the order QtWebEngine expects. Run on aboutToQuit and
+    at interpreter exit, so tests and scripts that never call exec() are
+    covered too.
+    """
+    try:
+        import shiboken6
+        from PySide6.QtCore import QCoreApplication
+    except ImportError:  # pragma: no cover - PySide6 is always there
+        return
+    views = [view for view in list(_WEB_VIEWS) if shiboken6.isValid(view)]
+    _WEB_VIEWS.clear()
+    for view in views:
+        page = view.page() if hasattr(view, "page") else None
+        if page is not None and shiboken6.isValid(page):
+            shiboken6.delete(page)
+        if shiboken6.isValid(view):
+            shiboken6.delete(view)
+    if views and QCoreApplication.instance() is not None:
+        QCoreApplication.sendPostedEvents(None, int(QEvent.Type.DeferredDelete))
+    _PARKED.clear()
+
+
+def _hook_release() -> None:
+    """Arrange for release_web_views to run before Qt goes away, once."""
+    global _RELEASE_HOOKED
+    if _RELEASE_HOOKED:
+        return
+    _RELEASE_HOOKED = True
+    from PySide6.QtCore import QCoreApplication
+
+    app = QCoreApplication.instance()
+    if app is not None:
+        app.aboutToQuit.connect(release_web_views)
+    atexit.register(release_web_views)
+
+
+def write_html_pdf(html: str, path: str | Path, *, title: str = "") -> Path:
+    """*html* laid out on A4 pages and written as a PDF (its pictures, inline data: images, kept)."""
+    from PySide6.QtCore import QMarginsF, QSizeF
+    from PySide6.QtGui import QPageLayout, QPageSize, QPdfWriter, QTextDocument
+
+    target = Path(path)
+    if target.suffix.lower() != ".pdf":
+        target = target.with_name(target.name + ".pdf")
+    writer = QPdfWriter(str(target))
+    writer.setResolution(300)
+    writer.setTitle(title)
+    writer.setCreator("ChartLibre")
+    writer.setPageLayout(QPageLayout(QPageSize(QPageSize.PageSizeId.A4), QPageLayout.Orientation.Portrait,
+                                     QMarginsF(15, 15, 15, 15), QPageLayout.Unit.Millimeter))
+    document = QTextDocument()
+    document.setHtml(html)
+    page = writer.pageLayout().paintRect(QPageLayout.Unit.Point)
+    document.setPageSize(QSizeF(page.width(), page.height()))
+    document.print_(writer)
+    return target
+
+
+class HtmlResultsView(QWidget):
+    """Reusable HTML results pane with Copy-as-HTML support."""
+
+    clear_requested = Signal()
+    #: A "What next?" link (app.plugin_api.data_operations.next_steps) was clicked.
+    link_requested = Signal(str)
+    # Also on the class: the filter can be called on a pane whose attributes the collector has
+    # already cleared (a closed window not deleted yet).
+    _watched_window: QWidget | None = None
+    _parked = False
+    #: True while _unpark_viewer makes the viewer: the window may be hidden and shown under it.
+    _making_viewer = False
+
+    def __init__(self, parent: QWidget | None = None, *, lazy: bool = False) -> None:
+        """Build the pane: the viewer and a small custom context menu.
+
+        *lazy*: no viewer until the pane is first shown. For a pane a window builds and may never show
+        (every chart's notes): a web view costs a tenth of a second and a Chromium page. Not for a
+        dialog's report: its web view must go with the dialog, in the order _park_viewer keeps, and one
+        made late changed that order (a window deleted twice when the test suite closed them all).
+        """
+        super().__init__(parent)
+        self.setMinimumHeight(0)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Ignored)
+        self._html = ""
+        self._plain_text = ""
+
+        root = QVBoxLayout(self)
+        stdSizeAndlayout(root)
+
+        self._view: QWidget | None = None
+        self._watched_window: QWidget | None = None
+        self._parked = True
+
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self._show_context_menu)
+        if not lazy:
+            self._unpark_viewer()
+
+    @property
+    def _viewer(self) -> QWidget:
+        """The viewer, made when first needed; once parked, the deleted one until the pane is shown again."""
+        if self._view is None:
+            self._unpark_viewer()
+        return cast(QWidget, self._view)
+
+    # ------------------------------------------------------------------
+    # A closed window's web view goes at once, from the event loop
+    # ------------------------------------------------------------------
+    # A closed dialog is deleted when Python's collector reaches it - at any
+    # moment, even inside Chromium's own call into the page's
+    # acceptNavigationRequest of another view, and Chromium aborts when a web
+    # view is destroyed there (SIGTRAP in ~WebContentsAdapter, seen in the full
+    # test run). So when the window hides, its view and page leave it and are
+    # deleted by the event loop, page first; a window shown again gets a new
+    # view with the same report.
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        window = self.window()
+        if window is not self._watched_window and window is not self:
+            if self._watched_window is not None:
+                self._watched_window.removeEventFilter(self)
+            window.installEventFilter(self)
+            self._watched_window = window
+        if self._parked and not self._making_viewer:
+            self._unpark_viewer()
+
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:
+        if (watched is self._watched_window and event.type() == QEvent.Type.Hide
+                and not self._watched_window.isMinimized() and not self._making_viewer):
+            self._park_viewer()
+        return super().eventFilter(watched, event)
+
+    def _park_viewer(self) -> None:
+        # Parked already: hidden again before this pane was shown (a window shown again with the
+        # pane on another tab, then closed) - its view is gone, deleted by the loop.
+        if self._parked or self._view is None or not shiboken6.isValid(self._view):
+            return
+        view = self._view
+        page = view.page() if hasattr(view, "page") else None
+        if page is None:
+            return  # a QTextBrowser needs none of this
+        self._parked = True
+        for item in (page, view):
+            item.setParent(None)
+            _PARKED.append(item)
+            item.deleteLater()
+        # Only those the loop has deleted: a dropped wrapper of a live one would delete it itself.
+        _PARKED[:] = [item for item in _PARKED if shiboken6.isValid(item)]
+
+    def _unpark_viewer(self) -> None:
+        # The viewer's own menu too: QWebEngineView and QTextBrowser both have a standard one, and
+        # CustomContextMenu on the viewer itself is what leaves only Copy and the two exports.
+        #
+        # _making_viewer: the first web view put in a window already on screen makes Qt build the window
+        # again - hidden and shown in the middle of this very call. Without the flag that Hide parked the
+        # view just made and that Show made another, without end: the process died of it when a project
+        # opened on a chart with its notes shown (a lazy pane's first view is made here, in showEvent).
+        self._parked = False
+        self._making_viewer = True
+        try:
+            view = self._view = self._create_viewer()
+            mark_editor_panel(view)
+            layout = self.layout()
+            if layout is not None:
+                layout.addWidget(view, 1)
+            view.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+            view.customContextMenuRequested.connect(self._show_context_menu)
+            if self._html:
+                self.setHtml(self._html, plain_source=self._plain_text)
+        finally:
+            self._making_viewer = False
+
+    def _show_context_menu(self, pos: QPoint) -> None:
+        """Show the HTML results context menu."""
+        source = self.sender()
+        anchor = source if isinstance(source, QWidget) else self
+
+        has_content = bool(self._html.strip() or self._plain_text.strip())
+        # Copy, then the two ways out to a file: the report's own buttons are these (no Copy button below it).
+        menu = create_menu(
+            self,
+            [
+                action_menu_item("copy", self.copy_html_to_clipboard, enabled=has_content, shortcut=None),
+                action_menu_item("results_export_html", self.save_html_to_file, enabled=has_content,
+                                 shortcut=None),
+                action_menu_item("results_export_pdf", self.save_pdf_to_file, enabled=has_content, shortcut=None),
+            ],
+        )
+        menu.exec(anchor.mapToGlobal(pos))
+
+    def _create_viewer(self) -> QWidget:
+        """Return the best available HTML viewer.
+
+        QtWebEngine renders CSS and tables properly but is a large optional
+        dependency, so QTextBrowser is the fallback. QTextBrowser understands
+        enough of the HTML subset for these operation result reports.
+        """
+        try:
+            from PySide6.QtWebEngineWidgets import QWebEngineView
+
+            # The page first, a child of this pane rather than of the view: Qt
+            # deletes a widget's children in the order they were made, so when
+            # the window goes - closed and collected at any moment - the page
+            # is deleted before its view, the order QtWebEngine needs. Owned
+            # by the view, it went after it, and Chromium aborted (SIGTRAP in
+            # ~WebContentsAdapter).
+            page = _ExternalLinksPage(self)
+            view = QWebEngineView(self)
+            view.setPage(page)
+            # The report is a white page: a white frame around it, not the
+            # theme's grey.
+            page.setBackgroundColor(QColor("white"))
+            view.setStyleSheet("QWebEngineView { background: white; }")
+            _WEB_VIEWS.add(view)
+            _hook_release()
+            return cast(QWidget, view)
+        except (ImportError, RuntimeError):
+            pass
+
+        browser = QTextBrowser(self)
+        browser.setStyleSheet("QTextBrowser { background: white; color: black; }")
+        browser.setOpenLinks(False)  # each link through _open_link, as the web view's
+        browser.anchorClicked.connect(lambda url: _open_link(self, url.toString()))
+        browser.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextBrowserInteraction
+            | Qt.TextInteractionFlag.TextSelectableByMouse
+        )
+        return browser
+
+    def setText(self, text: str) -> None:
+        """Show plain text, escaped and line-broken into HTML."""
+        self._plain_text = str(text or "")
+        self.setHtml(plain_to_html(self._plain_text), plain_source=self._plain_text)
+
+    def setHtml(self, markup: str, *, plain_source: str = "") -> None:
+        """Show HTML markup directly."""
+        self._html = str(markup or "")
+        self._plain_text = str(plain_source or "")
+        if self._parked:
+            return  # shown again, the new view gets it
+
+        setter = getattr(self._viewer, "setHtml", None) or getattr(
+            self._viewer,
+            "setText",
+            None,
+        )
+        if callable(setter):
+            setter(self._html)
+
+    def setContent(self, content: str) -> None:
+        """Render HTML if content looks like markup, otherwise render as text.
+
+        Use this from shared dialog code when callers may pass either plain text
+        summaries or rich HTML reports.
+        """
+        value = str(content or "")
+        if looks_like_html(value):
+            self.setHtml(value)
+        else:
+            self.setText(value)
+
+    def text(self) -> str:
+        """Return the plain-text form, or HTML when HTML was set directly."""
+        return self._plain_text if self._plain_text else self._html
+
+    def setWordWrap(self, _enabled: bool) -> None:
+        """Accepted for QLabel compatibility; the viewer always wraps."""
+        return None
+
+    def setAlignment(self, _alignment: Qt.AlignmentFlag) -> None:
+        """Accepted for QLabel compatibility; alignment comes from the markup."""
+        return None
+
+    def setTextInteractionFlags(self, _flags: Qt.TextInteractionFlag) -> None:
+        """Accepted for QLabel compatibility; the viewer sets its own flags."""
+        return None
+
+    def request_clear(self) -> None:
+        """Clear locally and notify an owning panel that it may collapse us."""
+        self.clear()
+        self.clear_requested.emit()
+
+    def clear(self) -> None:
+        """Clear the current HTML and plain-text content."""
+        self._plain_text = ""
+        self.setHtml("")
+
+    def save_html_to_file(self) -> None:
+        """Save the current HTML content to an .html file."""
+        if not (self._html.strip() or self._plain_text.strip()):
+            return
+        file_path, _unused = QFileDialog.getSaveFileName(
+            self,
+            _("Export as HTML"),
+            "results.html",
+            "HTML files (*.html *.htm);;Text files (*.txt);;All files (*)",
+        )
+        if not file_path:
+            return
+        path = str(file_path)
+        content = self._html if self._html.strip() else plain_to_html(self._plain_text)
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(content)
+
+    def save_pdf_to_file(self) -> None:
+        """Export as PDF: the report laid out on A4 pages, as Project > Report writes one."""
+        file_path, _selected = QFileDialog.getSaveFileName(self, _("Export as PDF"), "results.pdf",
+                                                           "PDF files (*.pdf);;All files (*)")
+        if file_path:
+            write_html_pdf(self._html if self._html.strip() else plain_to_html(self._plain_text), file_path)
+
+    def copy_html_to_clipboard(self) -> None:
+        """Put both an HTML and a plain-text flavour on the clipboard.
+
+        Rich-text targets such as Word or Outlook take the HTML. Plain-text
+        targets get readable text instead of raw markup when possible.
+        """
+        mime = QMimeData()
+        mime.setHtml(self._html)
+        mime.setText(self._plain_text or self._html)
+        QApplication.clipboard().setMimeData(mime)
+
+    looks_like_html = staticmethod(looks_like_html)

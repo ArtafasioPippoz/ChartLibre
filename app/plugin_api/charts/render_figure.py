@@ -1,0 +1,2180 @@
+"""Render a figure descriptor tree onto a Matplotlib figure.
+
+Responsibilities and non-responsibilities are deliberately split: this module
+creates axes, loads series data, dispatches to renderers, and applies layout.
+It does **not** own figure width, height, or DPI - those belong to ChartPanel
+and to rcParams, so the same descriptor renders identically on screen and on
+export.
+
+Series data is read through ``SqliteRepo.series_frame`` so that repeated
+renders of an unchanged database are served from cache - and, since todo.txt
+P2-17, without a ``pd.DataFrame`` built on the way: see
+``app.data.series_frame`` for what a series looks like now.
+"""
+from __future__ import annotations
+
+import math
+from collections.abc import Callable, Generator, Iterator
+from contextlib import contextmanager
+from contextvars import ContextVar
+from dataclasses import replace
+from pathlib import Path
+from tempfile import NamedTemporaryFile
+from typing import Any, Literal
+
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.figure import Figure
+from matplotlib.ticker import NullLocator
+
+from app.data.descriptors import AxisDescriptor, FigureDescriptor, SeriesDescriptor
+from app.data.series_frame import SeriesFrame
+from app.data.sqlite_repo import ROW_ID, SqliteRepo
+from app.logs.logger import applogger
+from app.plugin_api.charts import (
+    axis_options,
+    broken_axis,
+    panel_labels,
+    secondary_axis,
+)
+from app.plugin_api.charts.base import SeriesData
+from app.plugin_api.charts.text_lines import display_text, multialignment
+from app.scanners.axis_renderer_scanner import get_renderer, import_class_from_file
+from app.utils.coercion import column_of, to_numbers
+from app.utils.config import MPLSTYLES_DIR, get_constant, get_value
+from app.utils.mpl_latex import filter_latex_style_text
+
+LayoutMode = Literal["constrained", "compressed", "tight", "none"]
+
+
+# ----------------------------------------------------------------------
+# Context helpers
+# ----------------------------------------------------------------------
+#: Settings key: the .mplstyle (name, no extension) a figure without its own style uses.
+DEFAULT_MPL_STYLE_KEY = "default_mpl_style"
+
+
+@contextmanager
+def _figure_style_context(
+    fig_desc: FigureDescriptor,
+) -> Generator[None, None, None]:
+    """Apply raw mplstyle text from figure options, if present.
+
+    LaTeX-dependent entries are stripped when no TeX installation is available,
+    otherwise every text draw in the figure would raise.
+    """
+    style_text = _figure_style_text(fig_desc)
+    if not style_text.strip():
+        yield
+        return
+
+    style_text = filter_latex_style_text(style_text)
+
+    temp_path: Path | None = None
+    try:
+        with NamedTemporaryFile(
+            mode="w",
+            suffix=".mplstyle",
+            delete=False,
+            encoding="utf-8",
+        ) as handle:
+            handle.write(style_text)
+            temp_path = Path(handle.name)
+
+        with plt.style.context(str(temp_path)):  # pyright: ignore[reportGeneralTypeIssues]
+            yield
+    finally:
+        if temp_path is not None:
+            temp_path.unlink(missing_ok=True)
+
+
+def _figure_style_text(fig_desc: FigureDescriptor) -> str:
+    """The .mplstyle text a figure is drawn with: its own, or the one chosen in Settings."""
+    options = fig_desc.options if isinstance(fig_desc.options, dict) else {}
+    style_text = options.get("mpl_style")
+    if not isinstance(style_text, str) or not style_text.strip():
+        # A figure with no style of its own takes the one chosen in Settings.
+        style_text = default_style_text()
+    return style_text if isinstance(style_text, str) else ""
+
+
+def default_style_text() -> str:
+    """The .mplstyle chosen in Settings as every new figure's default; empty for Matplotlib's.
+
+    The setting is the style's path under mplstyles without its extension:
+    "ChartLibreDefault", or "Apps/jmp-classic" for one in a subfolder.
+    """
+    name = str(get_value(DEFAULT_MPL_STYLE_KEY) or "").strip()
+    if not name:
+        return ""
+    path = MPLSTYLES_DIR / f"{name}.mplstyle"
+    try:
+        return path.read_text(encoding="utf-8")
+    except OSError:
+        applogger.warning("Default style %s not found in %s", name, MPLSTYLES_DIR)
+        return ""
+
+
+# ----------------------------------------------------------------------
+# Public renderer entry point
+# ----------------------------------------------------------------------
+#: While an animation draws one of its frames: what each series' query becomes (SqliteRepo.sql_animation_frame).
+_frame_filter: ContextVar[Callable[[str], str] | None] = ContextVar("animation_frame", default=None)
+
+
+@contextmanager
+def animation_frame(sql_filter: Callable[[str], str] | None) -> Iterator[None]:
+    """Render inside this to draw one frame of an animation: every series' query goes through *sql_filter*."""
+    token = _frame_filter.set(sql_filter)
+    try:
+        yield
+    finally:
+        _frame_filter.reset(token)
+
+
+def render_figure_from_descriptor(
+    *,
+    figure: Figure,
+    descriptor: FigureDescriptor,
+    repo: SqliteRepo,
+) -> None:
+    """Render a full figure from a project descriptor; pictures (picture markers) come from *repo*."""
+    from app.plugin_api.charts.picture_markers import pictures_from
+
+    with pictures_from(getattr(repo, "get_image", None)):
+        _render_figure_from_descriptor(figure=figure, descriptor=descriptor, repo=repo)
+
+
+def _render_figure_from_descriptor(
+    *,
+    figure: Figure,
+    descriptor: FigureDescriptor,
+    repo: SqliteRepo,
+) -> None:
+    """Render a full figure from a project descriptor.
+
+    The renderer deliberately does not own figure width, height, or DPI.  Those
+    values are owned by ChartPanel and rcParams.  This function only creates
+    axes, renders series, applies runtime options, and applies final layout.
+    """
+    figure.clear()
+    _set_layout_engine_safely(figure, "none")
+
+    with _figure_style_context(descriptor):
+        _apply_figure_options(figure, descriptor)
+        figure_threshold = _figure_downsample_threshold(descriptor)
+        downsample_threshold = figure_threshold
+
+        all_axes = list(descriptor.axes or [])
+        twin_targets = _twin_targets(all_axes)
+        base_axes = [a for a in all_axes if int(a.id) not in twin_targets]
+        twin_axes = [a for a in all_axes if int(a.id) in twin_targets]
+
+        axes_with_positions, rows, cols, spans_valid = _normalized_axes_for_grid(
+            replace(descriptor, axes=base_axes)
+        )
+        axes_flat, shared_axes = _create_axes_grid(
+            figure=figure,
+            descriptor=descriptor,
+            axes_with_positions=axes_with_positions,
+            rows=rows,
+            cols=cols,
+            respect_spans=spans_valid,
+        )
+
+        ax_by_id: dict[int, Any] = {}
+        for axis_desc, axis_index in axes_with_positions:
+            ax = axes_flat[axis_index]
+            if ax is None:
+                applogger.error(
+                    "No subplot was created for axis id=%r at render position=%r.",
+                    axis_desc.id,
+                    axis_index,
+                )
+                return
+            ax_by_id[int(axis_desc.id)] = ax
+
+        # Overlapping ("twin") axes share their target's x-axis and grid
+        # cell, with their own independent y-scale on the right - the same
+        # pairing ``ax.twinx()`` builds by hand, but reached through an axis
+        # option instead of a second call site every dual-scale chart would
+        # otherwise need. Created after every base axis exists, since a twin
+        # is built from its target rather than placed on the grid itself -
+        # which is also why it never enters ``_normalized_axes_for_grid``:
+        # twin and target sharing a cell is the point, not a layout conflict.
+        for axis_desc in twin_axes:
+            target_ax = ax_by_id.get(twin_targets[int(axis_desc.id)])
+            if target_ax is None:
+                applogger.error(
+                    "Twin axis id=%r names a target that was not rendered.",
+                    axis_desc.id,
+                )
+                continue
+            ax_by_id[int(axis_desc.id)] = target_ax.twinx()
+
+        for axis_desc in all_axes:
+            ax = ax_by_id.get(int(axis_desc.id))
+            if ax is None:
+                # Already reported above, for a base axis; a twin whose
+                # target failed to render was already reported too.
+                continue
+            # Tagged so _normalize_axes_fill_policy can match figure.axes
+            # back to their descriptor by id - it cannot rely on the two
+            # lists sharing an order once axes are created out of order
+            # for one (base axes, then their twins).
+            ax._chartlibre_axis_id = int(axis_desc.id)
+
+            chart_type = str(axis_desc.name or "").strip()
+            downsample_threshold = _axis_downsample_threshold(axis_desc, figure_threshold)
+            series_list = _build_series_data_list(
+                repo=repo,
+                axis_desc=axis_desc,
+                downsample_threshold=(
+                    0
+                    if chart_type in _GRID_REQUIRED_CHART_TYPES
+                    else downsample_threshold * DENSE_DOWNSAMPLE_FACTOR
+                    if _dense_chart(chart_type)
+                    else max(downsample_threshold, POINT_DOWNSAMPLE_THRESHOLD)
+                    if chart_type in _POINT_CHART_TYPES and downsample_threshold > 0
+                    else downsample_threshold
+                ),
+            )
+            renderer = get_renderer(chart_type)
+            if renderer is None:
+                # Said on the chart itself: an empty axis told the user nothing. A chart type of a pack that
+                # is switched off names the pack (app.utils.packs); the other axes are still drawn.
+                from app.utils import packs
+                from app.utils.i18n import tr
+
+                applogger.error("Renderer not found for chart_type=%r.", chart_type)
+                note = packs.needed_note("charts", chart_type) or tr(
+                    "The chart type “{name}” is not installed.").format(name=chart_type)
+                ax.set_axis_off()
+                put_text = ax.text2D if hasattr(ax, "text2D") else ax.text  # a 3D axis: text() wants a z too
+                put_text(0.5, 0.5, f"{chart_type}\n\n{note}", ha="center", va="center", wrap=True,
+                         transform=ax.transAxes)
+                continue
+
+            # A band (a fit's confidence or prediction band) is a filled
+            # region between two columns, whatever the axis draws: the chart
+            # type belongs to the axis, and a band has to sit on the same axis
+            # as the curve and the points it describes. Drawn first, so the
+            # data stays on top of it.
+            bands = [sd for sd in series_list if sd.style.get("draw_as") == "band"]
+            if bands:
+                series_list = [sd for sd in series_list if sd.style.get("draw_as") != "band"]
+                for band in bands:
+                    _draw_band(ax, band)
+
+            before = {id(artist) for artist in ax.get_children()}
+            try:
+                renderer_instance = import_class_from_file(renderer)()  # type: ignore
+                renderer_instance.render_axis(
+                    ax=ax,
+                    series=series_list,
+                    options=axis_desc.options if isinstance(axis_desc.options, dict) else {},
+                )
+            except Exception:
+                applogger.exception(
+                    "Renderer failed for axis id=%r chart_type=%r.",
+                    axis_desc.id,
+                    chart_type,
+                )
+                return
+
+            _apply_axis_runtime_options(ax=ax, axis_desc=axis_desc)
+            _apply_column_labels(ax=ax, axis_desc=axis_desc, repo=repo)
+            _apply_column_date_patterns(ax=ax, axis_desc=axis_desc, repo=repo)
+            _keep_dates_in_range(ax, axis_desc)
+            _tag_untagged_series(ax, before, series_list)
+            _apply_axis_legend(ax, axis_desc.options if isinstance(axis_desc.options, dict) else {})
+            _apply_series_effects(ax, series_list)
+
+        _apply_shared_z_ranges(all_axes, ax_by_id)
+        _clear_redundant_shared_axis_labels(shared_axes)
+        _apply_font_scale(figure, descriptor, all_axes, ax_by_id)
+        _legend_text_lines(figure)
+        for axis_desc in all_axes:
+            ax = ax_by_id.get(int(axis_desc.id))
+            if ax is not None:
+                _fit_x_tick_labels(figure, ax, axis_desc.options if isinstance(axis_desc.options, dict) else {})
+        _apply_layout(figure, descriptor)
+        _normalize_axes_fill_policy(figure, descriptor)
+        _apply_panel_labels(figure, descriptor, base_axes, ax_by_id)
+        _apply_text_effects(figure, descriptor, all_axes, ax_by_id)
+        _apply_sketch(figure, descriptor)
+
+
+#: Most points, bars or wedges one series draws with its effect (dev/plans/path_effects_plan.txt, G): each effect
+#: draws them all again, a glow four times. Downsampling keeps a series far below this unless it is switched off.
+PATH_EFFECT_MAX_POINTS = get_constant("path_effect_max_points", 50_000)
+
+
+def _drawn_points(artist: Any) -> int:
+    """How many points, paths or shapes *artist* draws: what an effect draws again."""
+    for getter in ("get_xdata", "get_offsets", "get_paths"):
+        method = getattr(artist, getter, None)
+        if method is not None:
+            try:
+                return len(method())
+            except TypeError:
+                continue
+    return 1
+
+
+def _tag_untagged_series(ax: Any, before: set[int], series_list: list[Any]) -> None:
+    """A renderer that does not tag what its series draw (SeriesArtistTags) still gets the effects of its series.
+
+    With one series, everything the renderer drew is that series'. With several, an artist or a container (bars,
+    error bars) is a series' when its label is the series' name - or "name: something", the way a chart labels a
+    series' traces; what has no such label stays without the effect, as there is no telling whose it is.
+    """
+    wanted = [str(sd.name) for sd in series_list if (getattr(sd, "style", None) or {}).get("path_effects")]
+    if not wanted:
+        return
+    new = [artist for artist in ax.get_children() if id(artist) not in before]
+    if any(hasattr(artist, "_chartlibre_series") for artist in new):
+        return
+    if len(series_list) == 1:
+        for artist in new:
+            artist._chartlibre_series = wanted[0]
+        return
+
+    def owner(label: object) -> str | None:
+        text = str(label or "")
+        return next((name for name in wanted if text == name or text.startswith(name + ": ")), None)
+
+    for artist in new:
+        name = owner(artist.get_label())
+        if name is not None:
+            artist._chartlibre_series = name
+    for container in getattr(ax, "containers", []):  # bars, error bars: of one series, as the label of one of them says
+        parts = [artist for part in container for artist in (part if isinstance(part, (list, tuple)) else [part])]
+        name = owner(container.get_label()) or next(
+            (artist._chartlibre_series for artist in parts if hasattr(artist, "_chartlibre_series")), None)
+        if name is not None:
+            for artist in parts:
+                if id(artist) not in before and not hasattr(artist, "_chartlibre_series"):
+                    artist._chartlibre_series = name
+
+
+def _apply_series_effects(ax: Any, series_list: list[Any]) -> None:
+    """Each series' "path_effects" - an outline, a shadow, a glow - on what it drew and on its legend entry
+    (dev/plans/path_effects_plan.txt, C2 and F).
+
+    What a series drew is what its renderer tagged with its name (SeriesArtistTags); a renderer that does not tag
+    draws without the effect. Its texts (value labels) take the text effect instead.
+    """
+    from matplotlib.lines import Line2D
+    from matplotlib.text import Text
+
+    from app.plugin_api.charts.base import in_legend
+    from app.plugin_api.charts.path_effects import to_matplotlib
+
+    wanted: dict[str, str] = {}
+    for sd in series_list:
+        text = str((getattr(sd, "style", None) or {}).get("path_effects") or "").strip()
+        if text:
+            wanted[str(sd.name)] = text
+    if not wanted:
+        return
+
+    def effects_for(artist: Any, text: str) -> list[Any] | None:
+        return to_matplotlib(text, "line" if isinstance(artist, Line2D) else "patch")
+
+    mine: dict[str, list[Any]] = {}
+    for artist in ax.get_children():
+        name = getattr(artist, "_chartlibre_series", None)
+        if name in wanted and not isinstance(artist, Text):
+            mine.setdefault(name, []).append(artist)
+    for name, artists in mine.items():
+        drawn = sum(_drawn_points(artist) for artist in artists)
+        if drawn > PATH_EFFECT_MAX_POINTS:
+            applogger.warning("Effect %r of series %r left out: %d points, more than %d (path_effect_max_points) "
+                              "would each be drawn again.", wanted[name], name, drawn, PATH_EFFECT_MAX_POINTS)
+            del wanted[name]
+
+    refused: set[str] = set()
+    by_label: dict[str, str] = {}
+    for artist in (artist for artists in mine.values() for artist in artists):
+        name = artist._chartlibre_series
+        if name not in wanted:
+            continue
+        effects = effects_for(artist, wanted[name])
+        if effects is None:
+            refused.add(name)
+            continue
+        artist.set_path_effects(effects)
+        if in_legend(artist):
+            by_label[str(artist.get_label())] = wanted[name]
+    for container in ax.containers:  # bars: the legend entry is the container's
+        names = {getattr(patch, "_chartlibre_series", None) for patch in getattr(container, "patches", None) or []}
+        name = next((name for name in names if name in wanted), None)
+        label = str(container.get_label())
+        if name is not None and name not in refused and label and not label.startswith("_"):
+            by_label[label] = wanted[name]
+    for name in refused:
+        applogger.warning("Effect %r of series %r is not one that can be drawn: left out.", wanted[name], name)
+    for legend in (ax.get_legend(), *getattr(ax.figure, "legends", [])):
+        if legend is None:
+            continue
+        for handle, text in zip(legend.legend_handles, legend.get_texts()):
+            spec = by_label.get(text.get_text())
+            if spec and handle is not None and (effects := effects_for(handle, spec)):
+                handle.set_path_effects(effects)
+
+
+def _axes_texts(ax: Any) -> list[Any]:
+    """Every piece of text an axes draws: titles, axis labels and offsets, tick labels, its texts (annotations,
+    data labels, panel letters) and its legend's."""
+    texts = [ax.title, getattr(ax, "_left_title", None), getattr(ax, "_right_title", None)]
+    for axis_name in ("xaxis", "yaxis", "zaxis"):
+        axis = getattr(ax, axis_name, None)
+        if axis is None:
+            continue
+        texts += [axis.label, axis.get_offset_text()]
+        for tick in [*axis.get_major_ticks(), *axis.get_minor_ticks()]:
+            texts += [tick.label1, tick.label2]
+    texts.extend(ax.texts)
+    legend = ax.get_legend()
+    if legend is not None:
+        texts += [*legend.get_texts(), legend.get_title()]
+    return [text for text in texts if text is not None]
+
+
+def _apply_text_effects(
+    figure: Figure,
+    descriptor: FigureDescriptor,
+    axes: list[AxisDescriptor],
+    ax_by_id: dict[int, Any],
+) -> None:
+    """The halo, outline, shadow or glow of the texts (dev/plans/path_effects_plan.txt, C1).
+
+    The figure's "text_effect" is every text's - its title's, its legends', and each axis' that has none of its
+    own -; an axis' "text_effect" replaces it there ("none" takes it away). A figure with none of its own takes its
+    style's ("# chartlibre.text_effect: ..." in the .mplstyle text, H); "none" takes that away too. A tick label made later, when the view
+    is zoomed, copies the first tick's effect (matplotlib's Axis._copy_tick_props), so zooming keeps it.
+    """
+    from app.plugin_api.charts.path_effects import style_text_effect, to_matplotlib
+
+    options = descriptor.options if isinstance(descriptor.options, dict) else {}
+    figure_text = str(options.get("text_effect") or "").strip() or style_text_effect(_figure_style_text(descriptor))
+    figure_effects = to_matplotlib(figure_text, "text") if figure_text else []
+    if figure_effects is None:
+        applogger.warning("Text effect %r of the figure is not one that can be drawn: left out.", figure_text)
+        figure_effects = []
+    known: set[int] = set()
+    for axis_desc in axes:
+        ax = ax_by_id.get(int(axis_desc.id))
+        if ax is None:
+            continue
+        known.add(id(ax))
+        axis_options = axis_desc.options if isinstance(axis_desc.options, dict) else {}
+        own = str(axis_options.get("text_effect") or "").strip()
+        effects = to_matplotlib(own, "text") if own else figure_effects
+        if effects is None:
+            applogger.warning("Text effect %r of axis id=%r is not one that can be drawn: left out.",
+                              own, axis_desc.id)
+            effects = figure_effects
+        if effects:
+            for text in _axes_texts(ax):
+                text.set_path_effects(effects)
+    if not figure_effects:
+        return
+    for ax in figure.axes:  # a colorbar's axes, which no descriptor knows, take the figure's
+        if id(ax) not in known:
+            for text in _axes_texts(ax):
+                text.set_path_effects(figure_effects)
+    for text in [getattr(figure, "_suptitle", None), *figure.texts,
+                 *(text for legend in getattr(figure, "legends", []) for text in [*legend.get_texts(),
+                                                                                   legend.get_title()])]:
+        if text is not None:
+            text.set_path_effects(figure_effects)
+
+
+def _apply_panel_labels(
+    figure: Figure,
+    descriptor: FigureDescriptor,
+    base_axes: list[AxisDescriptor],
+    ax_by_id: dict[int, Any],
+) -> None:
+    """The figure's panel letters, on its base axes in grid order (a twin shares its target's letter)."""
+    options = descriptor.options if isinstance(descriptor.options, dict) else {}
+    if not options.get("panel_labels"):
+        return
+    ordered = sorted(base_axes, key=lambda axis_desc: (int(axis_desc.index), int(axis_desc.id)))
+    panel_labels.apply_panel_labels([ax_by_id[int(a.id)] for a in ordered if int(a.id) in ax_by_id], options)
+
+
+def _twin_targets(axes: list[AxisDescriptor]) -> dict[int, int]:
+    """Return {twin axis id: target axis id} for every valid ``twin_of``.
+
+    An axis option rather than a descriptor column - see ``_axis_span`` for
+    the same reasoning. A target has to be another axis in the same figure,
+    which rules out a stale id left over from a deleted axis; it also has to
+    not itself be a twin, which rules out a chain (twin-of-a-twin) that
+    ``ax.twinx()`` cannot express - such an axis is drawn as an ordinary grid
+    axis instead of being silently dropped.
+    """
+    axis_ids = {int(axis_desc.id) for axis_desc in axes}
+    targets: dict[int, int] = {}
+    for axis_desc in axes:
+        options = axis_desc.options if isinstance(axis_desc.options, dict) else {}
+        raw_target = options.get("twin_of")
+        if raw_target is None or isinstance(raw_target, bool):
+            continue
+        try:
+            target_id = int(raw_target)
+        except (TypeError, ValueError):
+            continue
+        axis_id = int(axis_desc.id)
+        if target_id == axis_id or target_id not in axis_ids:
+            continue
+        targets[axis_id] = target_id
+
+    return {
+        axis_id: target_id
+        for axis_id, target_id in targets.items()
+        if target_id not in targets
+    }
+
+
+# ----------------------------------------------------------------------
+# Axes creation / normalization
+# ----------------------------------------------------------------------
+def _compact_grid_for_axis_count(axis_count: int) -> tuple[int, int]:
+    """Return a compact grid that can contain axis_count axes."""
+    axis_count = max(1, int(axis_count))
+    if axis_count == 1:
+        return 1, 1
+
+    ncols = int(math.ceil(math.sqrt(axis_count)))
+    nrows = int(math.ceil(axis_count / ncols))
+    return max(1, nrows), max(1, ncols)
+
+
+def _axis_span(axis_desc: AxisDescriptor) -> tuple[int, int]:
+    """Return (row_span, col_span) for one axis, at least 1x1.
+
+    Spans let an axis occupy more than one grid cell - the mechanism behind
+    every non-uniform layout the Figure options panel offers (one wide plot
+    over two narrow ones, an L-shape, and so on). They live in
+    ``axis_desc.options`` rather than as descriptor columns because they are
+    just another rendering option, no different from a scale or a spine.
+    """
+    options = axis_desc.options if isinstance(axis_desc.options, dict) else {}
+    row_span = options.get("row_span", 1)
+    col_span = options.get("col_span", 1)
+    try:
+        row_span = max(1, int(row_span))
+    except (TypeError, ValueError):
+        row_span = 1
+    try:
+        col_span = max(1, int(col_span))
+    except (TypeError, ValueError):
+        col_span = 1
+    return row_span, col_span
+
+
+def _axis_footprint(
+    *, axis_index: int, row_span: int, col_span: int, rows: int, cols: int
+) -> set[tuple[int, int]] | None:
+    """Return the set of (row, col) cells one axis occupies, or None if it
+    does not fit inside the grid starting from its top-left cell."""
+    if cols <= 0:
+        return None
+    row = axis_index // cols
+    col = axis_index % cols
+    if row + row_span > rows or col + col_span > cols:
+        return None
+    return {(r, c) for r in range(row, row + row_span) for c in range(col, col + col_span)}
+
+
+def _normalized_axes_for_grid(
+    descriptor: FigureDescriptor,
+) -> tuple[list[tuple[AxisDescriptor, int]], int, int, bool]:
+    """Return axes with safe zero-based positions, rows, columns, and whether
+    their row_span/col_span options can be trusted.
+
+    An axis normally fills exactly one grid cell. ``row_span``/``col_span`` in
+    its options let it fill a rectangle of cells instead, so the figure is no
+    longer limited to a uniform grid - e.g. one axis spanning the whole top
+    row with two narrower axes below it. Positions and spans are validated
+    together: if any axis would fall outside the grid or overlap another
+    axis's footprint, every axis falls back to one cell each in a compact
+    grid, exactly as an out-of-range axis_index already did. The returned
+    ``spans_valid`` flag tells the caller whether that fallback happened -
+    when it did, the stale row_span/col_span values in the (now repositioned)
+    axes must be ignored rather than reapplied to their new, smaller cells.
+    """
+    axes = list(descriptor.axes or [])
+
+    base_rows = max(1, int(descriptor.nrows or 1))
+    base_cols = max(1, int(descriptor.ncols or 1))
+    base_total = base_rows * base_cols
+
+    if not axes:
+        return [], base_rows, base_cols, True
+
+    rows = base_rows
+    cols = base_cols
+    if base_total < len(axes):
+        rows, cols = _compact_grid_for_axis_count(len(axes))
+
+    used: set[tuple[int, int]] = set()
+    valid_layout = True
+
+    for axis_desc in axes:
+        axis_index = int(axis_desc.index)
+        if axis_index < 0 or axis_index >= rows * cols:
+            valid_layout = False
+            break
+        row_span, col_span = _axis_span(axis_desc)
+        footprint = _axis_footprint(
+            axis_index=axis_index, row_span=row_span, col_span=col_span, rows=rows, cols=cols
+        )
+        if footprint is None or footprint & used:
+            valid_layout = False
+            break
+        used |= footprint
+
+    if valid_layout:
+        return [(axis_desc, int(axis_desc.index)) for axis_desc in axes], rows, cols, True
+
+    ordered_axes = sorted(
+        axes,
+        key=lambda axis_desc: (int(axis_desc.index), int(axis_desc.id)),
+    )
+    rows, cols = _compact_grid_for_axis_count(len(ordered_axes))
+    normalized = [(axis_desc, index) for index, axis_desc in enumerate(ordered_axes)]
+
+    applogger.warning(
+        "Normalized stale axis indexes/spans for figure id=%r: grid %sx%s, axes=%s",
+        descriptor.id,
+        rows,
+        cols,
+        [(int(axis.id), int(axis.index), new_index) for axis, new_index in normalized],
+    )
+
+    return normalized, rows, cols, False
+
+
+def _subplot_kwargs_for_axis(
+    *,
+    axis_desc: AxisDescriptor,
+    first_ax: Any | None,
+    created_by_id: dict[int, Any],
+) -> dict[str, Any]:
+    """Build add_subplot keyword arguments for one axis."""
+    options = axis_desc.options if isinstance(axis_desc.options, dict) else {}
+    subplot = options.get("subplot", {})
+    subplot = subplot if isinstance(subplot, dict) else {}
+
+    kwargs: dict[str, Any] = {}
+
+    projection = subplot.get("projection") or options.get("projection")
+    if isinstance(projection, str) and projection.strip():
+        kwargs["projection"] = projection.strip()
+    else:
+        # A renderer that can only draw on one kind of axes says so (``Projection``): Radar and Wind Rose are polar.
+        entry = get_renderer(str(axis_desc.name or ""))
+        if entry and entry.get("projection"):
+            kwargs["projection"] = str(entry["projection"])
+
+    sharex = subplot.get("sharex", options.get("sharex"))
+    sharey = subplot.get("sharey", options.get("sharey"))
+
+    if isinstance(sharex, int) and sharex in created_by_id:
+        kwargs["sharex"] = created_by_id[sharex]
+    elif sharex is True and first_ax is not None:
+        kwargs["sharex"] = first_ax
+
+    if isinstance(sharey, int) and sharey in created_by_id:
+        kwargs["sharey"] = created_by_id[sharey]
+    elif sharey is True and first_ax is not None:
+        kwargs["sharey"] = first_ax
+
+    if bool(options.get("polar", False)):
+        kwargs["projection"] = "polar"
+
+    return kwargs
+
+
+def _create_axes_grid(
+    *,
+    figure: Figure,
+    descriptor: FigureDescriptor,
+    axes_with_positions: list[tuple[AxisDescriptor, int]],
+    rows: int,
+    cols: int,
+    respect_spans: bool = True,
+) -> tuple[list[Any], set[Any]]:
+    """Create all axes from a GridSpec using normalized positions.
+
+    Returns the flat axes list and the set of axes on either side of a
+    sharex/sharey pairing - the caller uses the latter for
+    ``_clear_redundant_shared_axis_labels`` once every axis has been drawn
+    and labelled.
+
+    A GridSpec is used instead of the plain ``add_subplot(rows, cols, n)``
+    numbering so that an axis whose options carry ``row_span``/``col_span``
+    can occupy a rectangle of cells rather than exactly one - the mechanism
+    that lets a figure use a layout other than a uniform grid.  A 1x1 span
+    behaves exactly like the old numbered subplot, so every figure without
+    spans renders identically to before.
+
+    ``respect_spans=False`` forces every axis to one cell.  ``_normalized_
+    axes_for_grid`` sets this when it had to fall back to a compact grid: the
+    axes were repositioned into smaller cells that their original spans no
+    longer fit, so honouring stale span values here would overlap axes again
+    instead of resolving the conflict that triggered the fallback.
+    """
+    rows = max(1, int(rows))
+    cols = max(1, int(cols))
+    total = rows * cols
+
+    axes_flat: list[Any] = [None] * total
+    created_by_id: dict[int, Any] = {}
+    first_ax: Any | None = None
+    gridspec = figure.add_gridspec(rows, cols)
+    # Every axis on either side of a sharex/sharey pairing, deferred to one
+    # pass after the loop: an axis created early in the loop can still gain a
+    # shared partner created later, so acting inside the loop could act on a
+    # pairing that had not been discovered yet.
+    shared_axes: set[Any] = set()
+
+    for axis_desc, axis_index in axes_with_positions:
+        axis_index = int(axis_index)
+        if axis_index < 0 or axis_index >= total:
+            applogger.error(
+                "Axis id=%r normalized to invalid position %r for grid %sx%s.",
+                axis_desc.id,
+                axis_index,
+                rows,
+                cols,
+            )
+            return axes_flat, shared_axes
+
+        axis_id = int(axis_desc.id)
+        row = axis_index // cols
+        col = axis_index % cols
+        row_span, col_span = _axis_span(axis_desc) if respect_spans else (1, 1)
+        # Defensive clamp: normalization already validates footprints for the
+        # common case, but a span edited directly in a project file should
+        # degrade to a smaller subplot rather than raise.
+        row_span = max(1, min(row_span, rows - row))
+        col_span = max(1, min(col_span, cols - col))
+
+        kwargs = _subplot_kwargs_for_axis(
+            axis_desc=axis_desc,
+            first_ax=first_ax,
+            created_by_id=created_by_id,
+        )
+
+        ax = figure.add_subplot(
+            gridspec[row : row + row_span, col : col + col_span], **kwargs
+        )
+        axes_flat[axis_index] = ax
+        created_by_id[axis_id] = ax
+
+        if "sharex" in kwargs or "sharey" in kwargs:
+            shared_axes.add(ax)
+            shared_axes.update(kwargs[key] for key in ("sharex", "sharey") if key in kwargs)
+
+        if first_ax is None:
+            first_ax = ax
+
+    # A shared-scale grid reads as one instrument split into panels, not
+    # several unrelated charts that happen to agree - which needs the panels
+    # touching, and the repeated tick labels between them gone, not just the
+    # numbers agreeing. Matches Matplotlib's own convention for this (see the
+    # sharex/sharey examples in the subplots_axes_and_figures gallery, which
+    # pair sharex/sharey with gridspec_kw={"hspace": 0, "wspace": 0}).
+    vertical_space, horizontal_space = _shared_axis_spacing(descriptor)
+    _close_gaps_between_shared_neighbours(
+        gridspec,
+        axes_flat,
+        vertical_space=vertical_space,
+        horizontal_space=horizontal_space,
+    )
+
+    for ax in shared_axes:
+        ax.label_outer()
+
+    return axes_flat, shared_axes
+
+
+#: Figure option keys for the gap left between shared, adjacent axes.
+#: "Vertical" is the gap between stacked rows (Matplotlib's hspace) and
+#: "horizontal" the gap between side-by-side columns (wspace), named for
+#: the direction the gap runs rather than for the axis it separates.
+#: 0.0 - flush, the Matplotlib gallery's own shared-axis convention - is
+#: the default, which is what this did unconditionally before the two were
+#: settable.
+OPT_SHARED_VERTICAL_SPACE = "shared_vertical_space"
+OPT_SHARED_HORIZONTAL_SPACE = "shared_horizontal_space"
+
+
+def _shared_axis_spacing(descriptor: FigureDescriptor) -> tuple[float, float]:
+    """Return this figure's (vertical, horizontal) shared-axis spacing."""
+    options = descriptor.options if isinstance(descriptor.options, dict) else {}
+
+    def _read(key: str) -> float:
+        try:
+            value = float(options.get(key, 0.0) or 0.0)
+        except (TypeError, ValueError):
+            return 0.0
+        # Matplotlib reads these as a fraction of the average axis size; a
+        # negative one would overlap the panels rather than space them.
+        return max(0.0, value)
+
+    return _read(OPT_SHARED_VERTICAL_SPACE), _read(OPT_SHARED_HORIZONTAL_SPACE)
+
+
+def _close_gaps_between_shared_neighbours(
+    gridspec: Any,
+    axes_flat: list[Any],
+    *,
+    vertical_space: float = 0.0,
+    horizontal_space: float = 0.0,
+) -> None:
+    """Set a GridSpec's row/column gap only where every neighbour agrees.
+
+    A GridSpec has one wspace and one hspace for the whole grid, not a gap
+    per row or column, so this cannot be "close the gap here but not there" -
+    the earlier version zeroed both the moment *any* axis anywhere shared an
+    axis with *any* other, which also closed the gap between two axes that
+    happened to sit next to each other but shared nothing at all, as soon as
+    the figure had a sharex/sharey pairing anywhere in it. Zeroing now
+    requires every actually-adjacent pair - touching edges, in the row or
+    column direction that gap runs - to be in the same Matplotlib sharex (for
+    hspace) or sharey (for wspace) group; one adjacent pair that disagrees
+    leaves that gap at the engine's own default rather than mislabel an
+    unrelated pair as attached.
+
+    "Adjacent" is read from each axis's own SubplotSpec rather than from the
+    axis_index grid, so a row/col-spanning axis (Main + secondary, say) is
+    handled the same as a plain 1x1 one.
+    """
+    axes = [ax for ax in axes_flat if ax is not None]
+
+    vertical_pairs: list[tuple[Any, Any]] = []
+    horizontal_pairs: list[tuple[Any, Any]] = []
+    for i, a in enumerate(axes):
+        spec_a = a.get_subplotspec()
+        if spec_a is None:
+            continue
+        for b in axes[i + 1 :]:
+            spec_b = b.get_subplotspec()
+            if spec_b is None:
+                continue
+            cols_overlap = (
+                spec_a.colspan.start < spec_b.colspan.stop
+                and spec_b.colspan.start < spec_a.colspan.stop
+            )
+            rows_overlap = (
+                spec_a.rowspan.start < spec_b.rowspan.stop
+                and spec_b.rowspan.start < spec_a.rowspan.stop
+            )
+            touching_vertically = (
+                spec_a.rowspan.stop == spec_b.rowspan.start
+                or spec_b.rowspan.stop == spec_a.rowspan.start
+            )
+            touching_horizontally = (
+                spec_a.colspan.stop == spec_b.colspan.start
+                or spec_b.colspan.stop == spec_a.colspan.start
+            )
+            if cols_overlap and touching_vertically:
+                vertical_pairs.append((a, b))
+            if rows_overlap and touching_horizontally:
+                horizontal_pairs.append((a, b))
+
+    if vertical_pairs and all(
+        a.get_shared_x_axes().joined(a, b) for a, b in vertical_pairs
+    ):
+        gridspec.update(hspace=vertical_space)
+    if horizontal_pairs and all(
+        a.get_shared_y_axes().joined(a, b) for a, b in horizontal_pairs
+    ):
+        gridspec.update(wspace=horizontal_space)
+
+
+def _apply_shared_z_ranges(
+    axes: list[AxisDescriptor], ax_by_id: dict[int, Any]
+) -> None:
+    """Use one common final Z range when any 3D axis enables Share Z.
+
+    Matplotlib has no native ``sharez`` subplot argument. The checked axis is
+    therefore the source, and its final Z limits are copied to every other 3D
+    axis after renderers, scales and manual limits have run. If several axes
+    are checked, the first checked 3D axis in descriptor order is the source.
+    """
+    source = next(
+        (
+            ax_by_id.get(int(desc.id))
+            for desc in axes
+            if isinstance(desc.options, dict)
+            and bool(desc.options.get("sharez"))
+            and hasattr(ax_by_id.get(int(desc.id)), "get_zlim")
+        ),
+        None,
+    )
+    if source is None:
+        return
+    try:
+        shared_limits = source.get_zlim()
+    except Exception:
+        applogger.exception("Failed to read the shared Z range")
+        return
+    for desc in axes:
+        ax = ax_by_id.get(int(desc.id))
+        if ax is None or ax is source or not hasattr(ax, "set_zlim"):
+            continue
+        try:
+            ax.set_zlim(*shared_limits)
+        except Exception:
+            applogger.exception("Failed to share the Z range for axis id=%r", desc.id)
+
+
+def _clear_redundant_shared_axis_labels(shared_axes: set[Any]) -> None:
+    """Blank the axis label text and title label_outer() leaves standing.
+
+    label_outer() (called in _create_axes_grid, right after each axis is
+    created) only strips tick *numbers*; the axis label text - "body mass
+    (g)", "Count" - and the axis title are separate artists it never
+    touches, and every panel in a shared row/column keeps repeating both.
+    This runs after every axis has been drawn and given its label/title by
+    _apply_axis_runtime_options, which is what a call this early would
+    otherwise be overwritten by: blanked here, on exactly the same x/y
+    edges label_outer() already used, so the one label left standing is the
+    one whose tick numbers are also there.
+
+    The title uses a different edge: it sits at the top of a panel, so it
+    is kept only on the first row of each column rather than on the "outer"
+    edge xlabel/ylabel use - Matplotlib's own shared-axis gallery example
+    (subplots_axes_and_figures/shared_axis_demo) has no per-panel title at
+    all, one suptitle only, which is part of why it reads as one attached
+    instrument rather than several separate charts. Safe to clear: every
+    shared-grid demo that gives each panel a distinguishing title also
+    carries the same name in that panel's own legend, so nothing is lost,
+    only the repetition.
+    """
+    for ax in shared_axes:
+        spec = ax.get_subplotspec()
+        if spec is None:
+            continue
+        if not spec.is_last_row():
+            ax.set_xlabel("")
+        if not spec.is_first_col():
+            ax.set_ylabel("")
+        if not spec.is_first_row():
+            ax.set_title("")
+
+
+# ----------------------------------------------------------------------
+# Series loading
+# ----------------------------------------------------------------------
+#: Figure option key for the row-count above which a series query is
+#: decimated before it is ever materialised in Python - see
+#: _figure_downsample_threshold and SqliteRepo.downsampled_series_frame. A
+#: figure that has never set it is decimated past DEFAULT_DOWNSAMPLE_THRESHOLD;
+#: an explicit 0 turns it off.
+OPT_DOWNSAMPLE_THRESHOLD = "downsample_threshold"
+
+#: Applied when a figure descriptor carries no downsample_threshold of its
+#: own. Keeps a redraw quick on a large series while leaving the shape of
+#: any ordinary curve untouched (it only decimates *past* this many points).
+DEFAULT_DOWNSAMPLE_THRESHOLD = get_constant("default_downsample_threshold", 1_000)
+
+#: Chart types whose renderer needs a *complete* x/y/z grid (pivot_to_grid,
+#: app/plugin_api/charts/grids.py) and refuses anything less. Row-based downsampling
+#: (SqliteRepo.downsampled_series_frame) keeps one row out of every stride
+#: after ORDER BY x - fine for an ordinary curve, but on a grid table an odd
+#: number of rows per x-block shifts which y-values survive from one block
+#: to the next, so the surviving rows are no longer a full Cartesian product
+#: of x and y. pivot_to_grid then rightly refuses them, and the renderer
+#: draws nothing instead of the smaller-but-complete grid it should. Grid
+#: datasets are also typically far smaller than the row counts downsampling
+#: exists for, so these chart types simply skip it rather than decimating by
+#: unique x/y instead - not worth the extra machinery yet.
+#: Wafer Map too: its contour is a grid, and each die or defect a datum of its own.
+_GRID_REQUIRED_CHART_TYPES = frozenset({"Surface Plot", "Contour Plot", "Wafer Map"})
+
+#: The renderers' categories whose data is a grid, a mesh or a cloud in 3D: thinned only past this factor
+#: times the figure's threshold - a thinned mesh has holes, a thinned cloud loses its surface, but a
+#: million-row one still has to draw.
+_DENSE_CATEGORIES = frozenset({"Gridded data", "Irregularly gridded data", "3D and volumetric data", "3D"})
+DENSE_DOWNSAMPLE_FACTOR = get_constant("dense_downsample_factor", 100)
+
+
+def _dense_chart(chart_type: str) -> bool:
+    """Whether *chart_type* is a grid, a mesh or a 3D chart (by its category), or needs a z."""
+    entry = get_renderer(chart_type) or {}
+    return str(entry.get("category") or "") in _DENSE_CATEGORIES or "z" in (entry.get("required") or [])
+
+
+#: Charts where every point is a datum - an outlier, a member of a cluster -
+#: rather than a sample of a curve: thinned out only past a far higher count,
+#: since a scatter of a few thousand points draws quickly anyway.
+_POINT_CHART_TYPES = frozenset({"Scatter Plot"})
+POINT_DOWNSAMPLE_THRESHOLD = get_constant("point_downsample_threshold", 20_000)
+
+
+def _figure_downsample_threshold(descriptor: FigureDescriptor) -> int:
+    """Return this figure's configured downsample threshold, 0 if disabled."""
+    options = descriptor.options if isinstance(descriptor.options, dict) else {}
+    raw = options.get(OPT_DOWNSAMPLE_THRESHOLD, DEFAULT_DOWNSAMPLE_THRESHOLD)
+    try:
+        threshold = int(raw)
+    except (TypeError, ValueError):
+        return DEFAULT_DOWNSAMPLE_THRESHOLD
+    return max(0, threshold)
+
+
+def _axis_downsample_threshold(axis_desc: AxisDescriptor, figure_threshold: int) -> int:
+    """The axis' own "Max points" (axis option), else the figure's - where it was kept before."""
+    options = axis_desc.options if isinstance(axis_desc.options, dict) else {}
+    raw = options.get(OPT_DOWNSAMPLE_THRESHOLD)
+    if raw in (None, ""):
+        return figure_threshold
+    try:
+        return max(0, int(raw))
+    except (TypeError, ValueError):
+        return figure_threshold
+
+
+def _build_series_data_list(
+    *,
+    repo: SqliteRepo,
+    axis_desc: AxisDescriptor,
+    downsample_threshold: int = 0,
+) -> list[SeriesData]:
+    """Build the list of visible series for one axis."""
+    output: list[SeriesData] = []
+
+    for series_desc in list(axis_desc.series or []):
+        style = _series_style(series_desc)
+        if not bool(style.get("visible", True)):
+            continue
+
+        df = _load_series_df(
+            repo=repo, series_desc=series_desc, downsample_threshold=downsample_threshold
+        )
+        roles = series_desc.roles if isinstance(series_desc.roles, dict) else {}
+        ids = None
+        if ROW_ID in df.columns:
+            ids = to_numbers(column_of(df, ROW_ID)).to_numpy()
+            df = df.drop_column(ROW_ID)
+        output.append(
+            SeriesData(
+                name=str(series_desc.name or ""),
+                df=df,
+                style=style,
+                roles=dict(roles),
+                ids=ids,
+            )
+        )
+
+    return output
+
+
+def _draw_band(ax: Any, series: SeriesData) -> None:
+    """Fill between the series' ``y`` and ``y2`` columns over ``x``."""
+    roles, style, frame = series.roles, series.style, series.df
+    columns = [str(roles.get(role) or role) for role in ("x", "y", "y2")]
+    if not all(column in frame for column in columns):
+        applogger.warning("Band %r needs x, y and y2 columns; not drawn.", series.name)
+        return
+    x, low, high = (
+        to_numbers(column_of(frame, column)).to_numpy(dtype=float) for column in columns
+    )
+    keep = np.isfinite(x) & np.isfinite(low) & np.isfinite(high)
+    order = np.argsort(x[keep], kind="stable")
+    ax.fill_between(
+        x[keep][order],
+        low[keep][order],
+        high[keep][order],
+        color=style.get("color") or "0.45",
+        alpha=float(style.get("alpha", 0.2)),
+        linewidth=0,
+        label=style.get("label") or series.name,
+        zorder=float(style.get("zorder", 0.8)),
+    )
+
+
+def _load_series_df(
+    *,
+    repo: SqliteRepo,
+    series_desc: SeriesDescriptor,
+    downsample_threshold: int = 0,
+) -> SeriesFrame:
+    """Load one series' data from its SQL query.
+
+    Goes through ``SqliteRepo.series_frame`` (or ``downsampled_series_frame``
+    when a threshold is set) so repeated renders of an unchanged database are
+    served from cache: SQLite row materialisation is ~89 % of the render
+    cost and cannot be optimised away in pure Python. Kept name-compatible
+    with its longtime callers even though it no longer returns a DataFrame -
+    see ``app.data.series_frame`` for what changed and why.
+    """
+    sql = str(series_desc.sql_query or "").strip()
+    if not sql:
+        applogger.error(
+            "SQL query is empty for series id=%r name=%r.",
+            series_desc.id,
+            series_desc.name,
+        )
+        return SeriesFrame()
+
+    try:
+        # Show only Selected on the series' table: its other rows out of view (R-07).
+        sql = repo.sql_selected_only(sql)
+        frame_filter = _frame_filter.get()
+        if frame_filter is not None:  # one frame of an animation: its rows only
+            sql = frame_filter(sql)
+        if downsample_threshold > 0:
+            total = repo.series_row_count(sql)  # cached: the count the thinning sizes its stride by
+            if total > downsample_threshold:
+                applogger.warning(
+                    "Series '%s': %d rows, about %d drawn (one in %d). Raise the figure's downsample threshold "
+                    "(0: none) to draw them all.",
+                    series_desc.name, total, downsample_threshold, -(-total // downsample_threshold))
+            return repo.downsampled_series_frame(sql, threshold=downsample_threshold)
+        return repo.series_frame(sql)
+    except Exception:
+        applogger.exception(
+            "Failed to load SQL data for series id=%r name=%r.",
+            series_desc.id,
+            series_desc.name,
+        )
+        return SeriesFrame()
+
+
+def _series_style(series_desc: SeriesDescriptor) -> dict[str, Any]:
+    """Return a normalized series style dictionary."""
+    style = series_desc.options
+    if isinstance(style, dict):
+        return dict(style)
+    return {}
+
+
+# ----------------------------------------------------------------------
+# Figure / axis options
+# ----------------------------------------------------------------------
+def _apply_figure_options(figure: Figure, fig_desc: FigureDescriptor) -> None:
+    """Apply figure-level options that do not own physical metrics.
+
+    Figure face and edge colours are re-read from the active rcParams here.
+    Why: Matplotlib freezes those two on the Figure at construction time, and
+    ChartPanel constructs its Figure once and reuses it for the life of the
+    panel, so ``figure.facecolor`` in a user's style file would otherwise have
+    no visible effect at all.
+    """
+    options = fig_desc.options if isinstance(fig_desc.options, dict) else {}
+
+    try:
+        figure.set_facecolor(plt.rcParams["figure.facecolor"])
+        figure.set_edgecolor(plt.rcParams["figure.edgecolor"])
+    except Exception:
+        applogger.exception("Failed to apply figure colours from rcParams")
+
+    try:
+        figure.set_frameon(bool(options.get("frameon", True)))
+    except Exception:
+        applogger.exception("Failed to apply figure frameon")
+
+    # Border (Figure properties): a line round the whole figure, in the axes' edge colour.
+    # Twice the width wanted: half of a line on the figure's edge falls outside it.
+    if options.get("border"):
+        figure.patch.set_edgecolor(plt.rcParams["axes.edgecolor"])
+        figure.patch.set_linewidth(2.0 * float(plt.rcParams["axes.linewidth"]))
+
+    suptitle = options.get("suptitle")
+    if isinstance(suptitle, str) and suptitle.strip():
+        align = multialignment(options, "suptitle_multialignment")
+        figure.suptitle(display_text(suptitle.strip()), **({"multialignment": align} if align else {}))
+
+
+#: Allowed range for the "font_scale" option of a figure and of an axis.
+FONT_SCALE_RANGE: tuple[float, float] = (0.5, 3.0)
+
+
+def font_scale_option(options: Any) -> float:
+    """The "font_scale" of a figure's or an axis's options, clamped; 1.0 when unset."""
+    try:
+        value = float((options or {}).get("font_scale", 1.0))
+    except (TypeError, ValueError, AttributeError):
+        return 1.0
+    low, high = FONT_SCALE_RANGE
+    return min(max(value, low), high) if value == value else 1.0
+
+
+def _scale_axes_text(ax: Any, factor: float) -> None:
+    """Multiply the size of every piece of text an axes draws by *factor*."""
+    texts = [ax.title, getattr(ax, "_left_title", None), getattr(ax, "_right_title", None)]
+    for axis_name in ("xaxis", "yaxis", "zaxis"):
+        axis = getattr(ax, axis_name, None)
+        if axis is None:
+            continue
+        texts.append(axis.label)
+        texts.append(axis.get_offset_text())
+        for which in ("major", "minor"):
+            ticks = axis.get_major_ticks() if which == "major" else axis.get_minor_ticks()
+            if ticks:
+                size = ticks[0].label1.get_fontsize()
+                axis.set_tick_params(which=which, labelsize=size * factor)
+    texts.extend(ax.texts)
+    legend = ax.get_legend()
+    if legend is not None:
+        texts.extend(legend.get_texts())
+        texts.append(legend.get_title())
+    for text in texts:
+        if text is not None:
+            text.set_fontsize(text.get_fontsize() * factor)
+
+
+def _apply_font_scale(
+    figure: Figure,
+    descriptor: FigureDescriptor,
+    axes: list[AxisDescriptor],
+    ax_by_id: dict[int, Any],
+) -> None:
+    """Grow or shrink all text: the figure's "font_scale" times each axis's own.
+
+    Applied once per render, on a figure that render_figure_from_descriptor
+    has just cleared and rebuilt, so the factor never compounds. Axes the
+    descriptor does not know (a colorbar's) take the figure's factor.
+    """
+    figure_factor = font_scale_option(descriptor.options)
+    known: set[int] = set()
+    for axis_desc in axes:
+        ax = ax_by_id.get(int(axis_desc.id))
+        if ax is None or id(ax) in known:
+            continue
+        known.add(id(ax))
+        factor = figure_factor * font_scale_option(axis_desc.options)
+        if abs(factor - 1.0) > 1e-9:
+            try:
+                _scale_axes_text(ax, factor)
+            except Exception:
+                applogger.exception("Failed to scale the fonts of axis id=%r", axis_desc.id)
+    if abs(figure_factor - 1.0) <= 1e-9:
+        return
+    for ax in figure.axes:
+        if id(ax) not in known:
+            _scale_axes_text(ax, figure_factor)
+    # figure.texts already holds the suptitle; each text is scaled once.
+    for text in {id(t): t for t in figure.texts}.values():  # pyright: ignore[reportAttributeAccessIssue]
+        text.set_fontsize(text.get_fontsize() * figure_factor)
+
+
+def _apply_column_labels(ax: Any, axis_desc: AxisDescriptor, repo: SqliteRepo) -> None:
+    """Name an axis after its column's label and unit (Column Info), when nothing else has named it.
+
+    Only an axis whose label field is empty and which the renderer left unlabelled:
+    what was typed, or what a renderer says, wins. The first series with a described
+    column gives the name; a query that is not a plain SELECT from one table gives none.
+    """
+    from app.data import column_metadata
+    from app.data.data_source import parse_roles
+
+    options = axis_desc.options if isinstance(axis_desc.options, dict) else {}
+    if bool(options.get("hide_axis", options.get("hidden", False))) or getattr(ax, "_chartlibre_axis_off", False):
+        return
+    wanted = {}
+    for role, current, field_label in (
+        ("x", ax.get_xlabel, axis_desc.x_label), ("y", ax.get_ylabel, axis_desc.y_label),
+    ):
+        typed = options.get(f"{role}_label", field_label)
+        if not (isinstance(typed, str) and typed.strip()) and not str(current() or "").strip():
+            wanted[role] = None
+    if not wanted:
+        return
+    infos: dict[str, dict[str, Any]] = {}
+    try:
+        for series_desc in list(axis_desc.series or []):
+            roles = parse_roles(series_desc.roles)  # a dict, or the JSON text a descriptor holds
+            table = column_metadata.source_table_of(str(series_desc.sql_query or ""))
+            if table is None:
+                continue
+            if table not in infos:
+                infos[table] = column_metadata.column_info(repo, table)
+            for role in [r for r, label in wanted.items() if label is None]:
+                column = str(roles.get(role) or "")
+                label = column_metadata.axis_label_of(column, infos[table].get(column)) if column else ""
+                if label:
+                    wanted[role] = label
+    except Exception:
+        applogger.exception("Could not read the column labels of axis id=%r", axis_desc.id)
+        return
+    if wanted.get("x"):
+        ax.set_xlabel(display_text(wanted["x"]))
+    if wanted.get("y"):
+        ax.set_ylabel(display_text(wanted["y"]))
+
+
+def _apply_column_date_patterns(ax: Any, axis_desc: AxisDescriptor, repo: SqliteRepo) -> None:
+    """The ticks of a date axis written in the pattern of its column's Column Info (Date / time format).
+
+    Only an axis that is a date axis - the renderer put matplotlib's date formatter on it - and whose first
+    described column sets a pattern; an axis without one keeps matplotlib's own, which adapts to the zoom.
+    """
+    from matplotlib import dates as mdates
+    from matplotlib.ticker import FuncFormatter
+
+    from app.data import column_metadata
+    from app.data.data_source import parse_roles
+    from app.utils.date_format import is_valid_pattern, localized_strftime
+
+    date_formatters = (mdates.DateFormatter, mdates.ConciseDateFormatter, mdates.AutoDateFormatter)
+    wanted = {role: axis for role, axis in (("x", ax.xaxis), ("y", ax.yaxis))
+              if isinstance(axis.get_major_formatter(), date_formatters)}
+    if not wanted:
+        return
+    try:
+        infos: dict[str, dict[str, Any]] = {}
+        patterns: dict[str, str] = {}
+        for series_desc in list(axis_desc.series or []):
+            roles = parse_roles(series_desc.roles)
+            table = column_metadata.source_table_of(str(series_desc.sql_query or ""))
+            if table is None:
+                continue
+            if table not in infos:
+                infos[table] = column_metadata.column_info(repo, table)
+            for role in wanted:
+                column = str(roles.get(role) or "")
+                pattern = column_metadata.axis_date_pattern(infos[table].get(column)) if column else ""
+                if pattern and role not in patterns and is_valid_pattern(pattern):
+                    patterns[role] = pattern
+    except Exception:
+        applogger.exception("Could not read the date patterns of axis id=%r", axis_desc.id)
+        return
+    for role, pattern in patterns.items():
+        wanted[role].set_major_formatter(
+            FuncFormatter(lambda value, _position, pattern=pattern: localized_strftime(mdates.num2date(value), pattern))
+        )
+
+
+def _apply_axis_runtime_options(ax: Any, axis_desc: AxisDescriptor) -> None:
+    """Apply axis options after the chart renderer has drawn the axis."""
+    options = axis_desc.options if isinstance(axis_desc.options, dict) else {}
+
+    # "\n" typed in a field is a new line; how the lines align is the axis' own choice.
+    lines = {"multialignment": align} if (align := multialignment(options)) else {}
+    title = axis_options.axis_title(options, axis_desc.title or "")
+    if title:
+        from app.plugin_api.charts import picture_markers
+
+        title, title_pictures = picture_markers.split_title(title)  # {image:name} puts a picture beside the title
+        ax.set_title(display_text(title), **lines)
+        if title_pictures:
+            picture_markers.draw_title_pictures(ax, title_pictures)
+
+    xlabel = options.get("x_label", axis_desc.x_label)
+    ylabel = options.get("y_label", axis_desc.y_label)
+    zlabel = options.get("z_label", axis_desc.z_label)
+
+    # Only non-empty labels are applied.  Why: some renderers set a meaningful
+    # default label themselves (the histogram labels its count axis), and an
+    # empty descriptor field means "nothing specified", not "clear it".
+    if isinstance(xlabel, str) and xlabel.strip():
+        ax.set_xlabel(display_text(xlabel), **lines)
+    if isinstance(ylabel, str) and ylabel.strip():
+        ax.set_ylabel(display_text(ylabel), **lines)
+    if isinstance(zlabel, str) and zlabel.strip() and hasattr(ax, "set_zlabel"):
+        ax.set_zlabel(display_text(zlabel), **lines)
+
+    # A renderer that is a drawing rather than a plot (the fishbone) marks
+    # its axes so the frame and ticks it switched off stay off.
+    if bool(options.get("hide_axis", options.get("hidden", False))) or getattr(ax, "_chartlibre_axis_off", False):
+        ax.set_axis_off()
+    else:
+        ax.set_axis_on()
+
+    # Order is not free here:
+    #   scale -> limits -> inversion.
+    # set_xscale() resets the view interval, so it has to run before the limits
+    # are applied, and set_xlim() rewrites the direction, so inversion has to
+    # run after them.  Applying these in any other order silently loses one of
+    # the three settings.
+    _apply_scales(ax, options)
+    broken_axis.apply_breaks(ax, options)
+    _apply_limits(ax, options)
+    _apply_inversion(ax, options)
+    secondary_axis.apply_secondary_axes(ax, options)
+
+    _apply_ticks(ax, options)
+    _apply_intervals(ax, options)
+    _apply_grid(ax, options)
+    _apply_spines(ax, options)
+    _apply_pickradius(ax, options)
+    _apply_aspect_options(ax, options)
+
+
+# Matplotlib scales that need no extra arguments beyond the base, and "reciprocal":
+# the 1/x scale (an Arrhenius plot's 1/T), built on Matplotlib's function scale.
+SUPPORTED_AXIS_SCALES: tuple[str, ...] = ("linear", "log", "symlog", "logit", "reciprocal")
+
+#: How a scale is named in a list, where its own name is not what people read.
+AXIS_SCALE_LABELS: dict[str, str] = {"reciprocal": "1/x"}
+
+
+def _reciprocal(values: Any) -> Any:
+    """1/x for the reciprocal scale: it is its own inverse; zero maps to infinity and is not drawn."""
+    with np.errstate(divide="ignore", invalid="ignore"):
+        return 1.0 / np.asarray(values, dtype=float)
+
+
+def _apply_scales(ax: Any, options: dict[str, Any]) -> None:
+    """Apply per-axis scale, with a log base where the scale accepts one.
+
+    z is included and costs nothing on a 2D axes: ``set_zscale`` is not there
+    to be found, and the getattr below already skips a setter that is missing.
+    """
+    for axis_name, setter_name in (
+        ("x", "set_xscale"),
+        ("y", "set_yscale"),
+        ("z", "set_zscale"),
+    ):
+        raw = options.get(f"{axis_name}_scale", "linear")
+        scale = str(raw or "linear").strip().lower()
+        if scale == "linear":
+            continue
+
+        if scale not in SUPPORTED_AXIS_SCALES:
+            applogger.warning("Unknown %s scale: %r", axis_name, raw)
+            continue
+
+        setter = getattr(ax, setter_name, None)
+        if setter is None:
+            continue
+
+        kwargs: dict[str, Any] = {}
+        if scale in {"log", "symlog"}:
+            base = options.get(f"{axis_name}_scale_base", options.get("scale_base"))
+            if base is not None:
+                try:
+                    base_value = float(base)
+                    if base_value > 1.0:
+                        kwargs["base"] = base_value
+                except (TypeError, ValueError):
+                    applogger.warning("Invalid log base for %s axis: %r", axis_name, base)
+        if scale == "symlog":
+            threshold = options.get(f"{axis_name}_linthresh", options.get("linthresh"))
+            if threshold is not None:
+                try:
+                    threshold_value = float(threshold)
+                    if threshold_value > 0.0:
+                        kwargs["linthresh"] = threshold_value
+                except (TypeError, ValueError):
+                    applogger.warning("Invalid linthresh for %s axis: %r", axis_name, threshold)
+
+        try:
+            if scale == "reciprocal":
+                setter("function", functions=(_reciprocal, _reciprocal))
+            else:
+                setter(scale, **kwargs)
+        except Exception:
+            applogger.exception("Failed to set %s scale to %r", axis_name, scale)
+
+
+def _apply_inversion(ax: Any, options: dict[str, Any]) -> None:
+    """Point each axis in the requested direction.
+
+    Uses the absolute ``set_inverted`` rather than ``invert_xaxis``: the latter
+    toggles, so re-rendering an already inverted axis would flip it back.
+
+    ``zaxis`` is looked up rather than named, because a 2D axes has none - and
+    "invert z" on a scatter plot has to be a setting that does nothing, not
+    one that raises.
+    """
+    axes_objects = [("x", ax.xaxis), ("y", ax.yaxis)]
+    z_axis = getattr(ax, "zaxis", None)
+    if z_axis is not None:
+        axes_objects.append(("z", z_axis))
+
+    for axis_name, axis_object in axes_objects:
+        wanted = bool(options.get(f"invert_{axis_name}", False))
+        try:
+            if bool(axis_object.get_inverted()) != wanted:
+                axis_object.set_inverted(wanted)
+        except Exception:
+            applogger.exception("Failed to set %s axis direction", axis_name)
+
+
+def _wanted_minor_ticks(options: dict[str, Any], axis: str) -> bool | None:
+    """Return True to force minor ticks on *axis*, False to remove them, None
+    to leave the style sheet alone.
+
+    A minor grid counts as wanting them: a grid on ticks that do not exist
+    draws nothing, which reads as a broken setting rather than an empty one.
+    """
+    setting = axis_options.tick_setting(options, axis, "minor")
+    if setting == axis_options.OFF:
+        return False
+    if setting != axis_options.AUTO:
+        return True
+
+    grid = axis_options.grid_setting(options, axis, "minor")
+    if grid not in (axis_options.AUTO, axis_options.OFF):
+        return True
+    return None
+
+
+def _apply_minor_ticks(ax: Any, options: dict[str, Any]) -> None:
+    """Turn minor ticks on or off per axis.
+
+    ``minorticks_on`` is per *axes* and picks the locator that suits each
+    scale - AutoMinorLocator is simply wrong on a log axis - so the way to get
+    them on one axis only is to switch both on and then take back the one that
+    was asked to stay off.
+    """
+    wanted = {axis: _wanted_minor_ticks(options, axis) for axis in axis_options.AXES}
+    if any(state is True for state in wanted.values()):
+        try:
+            ax.minorticks_on()
+        except Exception:
+            applogger.exception("Failed to enable minor ticks")
+
+    for axis, state in wanted.items():
+        if state is not False:
+            continue
+        axis_object = ax.xaxis if axis == "x" else ax.yaxis
+        try:
+            axis_object.set_minor_locator(NullLocator())
+        except Exception:
+            applogger.exception("Failed to remove minor ticks from %s", axis)
+
+
+#: More major ticks than this from one interval is a step that does not fit the range: left automatic.
+MAX_INTERVAL_TICKS: int = 1000
+
+
+def _apply_intervals(ax: Any, options: dict[str, Any]) -> None:
+    """A major tick every *interval* on each axis that has one (Scale: Interval); the others keep
+    Matplotlib's ticks.
+
+    Not on a log scale, where an even step means nothing, nor on an axis of categories, whose ticks are
+    its categories; nor when the step would draw more than MAX_INTERVAL_TICKS ticks over the range.
+    """
+    from matplotlib.category import UnitData
+    from matplotlib.ticker import MultipleLocator
+
+    for axis in axis_options.LIMIT_AXES:
+        step = axis_options.manual_interval(options, axis)
+        coordinate = getattr(ax, f"{axis}axis", None)
+        if step is None or coordinate is None:
+            continue
+        scale = getattr(ax, f"get_{axis}scale", lambda: "linear")()
+        if scale != "linear":
+            applogger.warning("The %s interval is for a linear scale; the %s scale keeps its own ticks.", axis, scale)
+            continue
+        if isinstance(getattr(coordinate, "units", None), UnitData):
+            applogger.warning("The %s axis shows categories: its ticks are the categories, not an interval.", axis)
+            continue
+        low, high = getattr(ax, f"get_{axis}lim")()
+        if abs(high - low) / step > MAX_INTERVAL_TICKS:
+            applogger.warning("A %s interval of %g makes more than %d ticks over %g to %g: left automatic.",
+                              axis, step, MAX_INTERVAL_TICKS, low, high)
+            continue
+        try:
+            coordinate.set_major_locator(MultipleLocator(step))
+        except Exception:
+            applogger.exception("Failed to set the %s tick interval", axis)
+
+
+def _apply_ticks(ax: Any, options: dict[str, Any]) -> None:
+    """Apply the four tick settings, then tick size and label rotation."""
+    _apply_minor_ticks(ax, options)
+
+    for axis in axis_options.AXES:
+        # tick_params(axis="z") is a ValueError on a 2D axes, and every 2D
+        # chart would log one per tick class. Skipped instead: the setting is
+        # kept in the descriptor for a projection that may yet become 3d.
+        if axis == "z" and not hasattr(ax, "zaxis"):
+            continue
+
+        for which in axis_options.WHICH:
+            setting = axis_options.tick_setting(options, axis, which)
+            if setting == axis_options.AUTO:
+                continue
+
+            if setting == axis_options.OFF:
+                # Length zero rather than hiding the labels with them: "no
+                # ticks" is about the marks, and a chart with no numbers on it
+                # is a different request.
+                _tick_params(ax, axis=axis, which=which, length=0.0)
+                _hide_3d_tick_marks(ax, axis)
+                continue
+
+            if setting != axis_options.ON:
+                _tick_params(ax, axis=axis, which=which, direction=setting)
+
+    _apply_tick_sizes(ax, options)
+
+
+def _hide_3d_tick_marks(ax: Any, axis: str) -> None:
+    """The tick marks of a 3D axes' axis off: mplot3d draws them as lines whose length is its own _axinfo factors,
+    so tick_params(length=0) leaves them on."""
+    info = getattr(getattr(ax, f"{axis}axis", None), "_axinfo", None)
+    tick = info.get("tick") if isinstance(info, dict) else None
+    if isinstance(tick, dict):
+        tick["inward_factor"] = 0.0
+        tick["outward_factor"] = 0.0
+
+
+def _apply_tick_sizes(ax: Any, options: dict[str, Any]) -> None:
+    """Each coordinate's tick length and label rotation, major and minor apart.
+
+    Keys: ``{axis}_tick_length`` / ``{axis}_tick_rotation`` for the major
+    ticks, ``{axis}_minor_tick_length`` / ``{axis}_minor_tick_rotation`` for
+    the minor ones. A figure saved before them has one ``tick_length`` for
+    every tick and ``x_tick_rotation`` for the x labels; those still apply.
+    """
+    legacy_length = options.get("tick_length")
+    for axis in axis_options.AXES:
+        if axis == "z" and not hasattr(ax, "zaxis"):
+            continue
+        for which, prefix in (("major", f"{axis}_"), ("minor", f"{axis}_minor_")):
+            length = options.get(f"{prefix}tick_length")
+            if length is None and which == "major":
+                length = legacy_length
+            if length is not None:
+                try:
+                    _tick_params(ax, axis=axis, which=which, length=float(length))
+                except (TypeError, ValueError):
+                    applogger.warning("Invalid %s %s tick length: %r", axis, which, length)
+            rotation = options.get(f"{prefix}tick_rotation")
+            if rotation in (None, 0, 0.0):
+                continue
+            try:
+                angle = float(rotation)
+            except (TypeError, ValueError):
+                applogger.warning("Invalid %s %s tick rotation: %r", axis, which, rotation)
+                continue
+            labels = getattr(ax, f"get_{axis}ticklabels")(minor=which == "minor")
+            for label in labels:
+                label.set_rotation(angle)
+                # Rotated x labels overlap the axis unless they are anchored
+                # at the end that stays next to the tick.
+                if axis == "x":
+                    label.set_horizontalalignment("right")
+
+
+#: The figure's "sketch" presets: matplotlib's (scale, length, randomness); "xkcd" is plt.xkcd()'s.
+SKETCH_PRESETS: dict[str, tuple[float, float, float]] = {"light": (0.8, 120.0, 1.5), "xkcd": (1.0, 100.0, 2.0)}
+
+
+def _apply_sketch(figure: Figure, descriptor: FigureDescriptor) -> None:
+    """The hand-drawn look of the figure's "sketch" option: every line, bar, frame and image outline wobbles."""
+    params = SKETCH_PRESETS.get(str((descriptor.options or {}).get("sketch") or ""))
+    if params is None:
+        return
+    for artist in figure.findobj():
+        try:
+            artist.set_sketch_params(*params)
+        except (AttributeError, TypeError, ValueError):
+            continue  # a text has none
+
+
+def _apply_axis_legend(ax: Any, options: dict[str, Any]) -> None:
+    """The axis' legend as its properties ask: hidden, shown, placed, in columns, with a title, a frame, a size.
+
+    The chart type drew the legend; this draws it again from the same entries when something is asked of it, so
+    "auto" everywhere leaves it as it was.
+    """
+    show = str(options.get("legend_show") or "auto")
+    location = str(options.get("legend_loc") or "")
+    columns = int(options.get("legend_columns") or 0)
+    title = str(options.get("legend_title") or "")
+    size = int(options.get("legend_size") or 0)
+    frame = bool(options.get("legend_frame", True))
+    legend = ax.get_legend()
+    if show == "hide":
+        if legend is not None:
+            legend.remove()
+        return
+    if legend is None and show == "show":
+        handles, _labels = ax.get_legend_handles_labels()
+        if handles:
+            ax.legend()
+        legend = ax.get_legend()
+    if legend is None or not (location or columns or title or size or not frame):
+        return
+    kwargs: dict[str, Any] = {"frameon": frame}
+    if location == "outside right":
+        kwargs.update(loc="upper left", bbox_to_anchor=(1.01, 1.0), borderaxespad=0.0)
+    elif location == "outside bottom":
+        kwargs.update(loc="upper center", bbox_to_anchor=(0.5, -0.12), borderaxespad=0.0)
+    elif location:
+        kwargs["loc"] = location
+    if columns:
+        kwargs["ncols"] = columns
+    if size:
+        kwargs["fontsize"] = size
+    kwargs["title"] = title or legend.get_title().get_text() or None
+    try:
+        handles = list(legend.legend_handles)
+        labels = [text.get_text() for text in legend.get_texts()]
+        ax.legend(handles, labels, **kwargs)
+    except Exception:
+        applogger.exception("The legend of an axis could not be redrawn.")
+
+
+def _legend_text_lines(figure: Figure) -> None:
+    """Every legend's entries and title with their typed "\n" made line breaks.
+
+    A legend is drawn by the chart type, from the series' names, after the
+    names were typed; done here once, every chart type's legend follows.
+    """
+    legends = [ax.get_legend() for ax in figure.axes] + list(getattr(figure, "legends", []))
+    for legend in legends:
+        if legend is None:
+            continue
+        for text in [*legend.get_texts(), legend.get_title()]:
+            shown = text.get_text()
+            if "\\" in shown:
+                text.set_text(display_text(shown))
+
+
+def _x_labels_overlap(ax: Any, renderer: Any, angle: float = 0.0) -> bool:
+    """True when two neighbouring x tick labels touch (a 2 px gap is enough).
+
+    Turned labels are parallel lines: they clear each other when the gap
+    between their ticks, across the slant, is more than a line of text -
+    their boxes, square to the axes, overlap long before the text does.
+    """
+    labels = sorted((label for label in ax.get_xticklabels() if label.get_visible() and label.get_text()),
+                    key=lambda label: label.get_window_extent(renderer).x0)
+    if len(labels) < 2:
+        return False
+    if angle:
+        import math
+
+        centres = sorted(ax.transData.transform((tick, 0))[0] for tick in ax.get_xticks()
+                         if ax.get_xlim()[0] <= tick <= ax.get_xlim()[1] or ax.get_xlim()[1] <= tick <= ax.get_xlim()[0])
+        gap = min((b - a for a, b in zip(centres, centres[1:])), default=ax.bbox.width)
+        line = max(renderer.points_to_pixels(label.get_fontsize()) * 1.2 for label in labels)
+        return gap * math.sin(math.radians(angle)) < line + 2
+    boxes = [label.get_window_extent(renderer) for label in labels]
+    return any(left.x1 + 2 > right.x0 for left, right in zip(boxes, boxes[1:]))
+
+
+#: The days since 1970 matplotlib can write as dates: the years 1 to 9999.
+_DATE_DAYS = (-719162.0, 2932896.0)
+
+
+def _keep_dates_in_range(ax: Any, axis_desc: AxisDescriptor) -> None:
+    """Keep a date axis' view within the years matplotlib can write.
+
+    A series whose x is numbers on an axis of dates is read as days: a fit
+    written in seconds once put its curve at the year -215941, every tick
+    failed and the whole figure with them - nothing drawn, the chart's own
+    series included. The view keeps to the x that are dates; what is outside
+    them is left out of sight, and the log says so.
+    """
+    from matplotlib.dates import DateLocator
+
+    if not isinstance(ax.xaxis.get_major_locator(), DateLocator):
+        return
+    low, high = sorted(ax.get_xlim())
+    if _DATE_DAYS[0] <= low and high <= _DATE_DAYS[1]:
+        return
+    xs = [np.asarray(line.get_xdata(orig=False), dtype=float) for line in ax.get_lines()]
+    for collection in ax.collections:
+        xs.append(np.asarray(collection.get_offsets(), dtype=float).reshape(-1, 2)[:, 0])
+        xs.extend(np.asarray(path.vertices, dtype=float)[:, 0] for path in collection.get_paths())
+    x = np.concatenate(xs) if xs else np.array([])
+    x = x[np.isfinite(x) & (x >= _DATE_DAYS[0]) & (x <= _DATE_DAYS[1])]
+    if x.size:
+        pad = (x.max() - x.min()) * 0.02 or 1.0
+        ax.set_xlim(x.min() - pad, x.max() + pad)
+    else:
+        ax.set_xlim(0.0, 1.0)
+    applogger.warning("Axis id=%r: x values that are not dates (outside the years 1-9999) are left out of view.",
+                      axis_desc.id)
+
+
+def _fit_x_tick_labels(figure: Figure, ax: Any, options: dict[str, Any]) -> None:
+    """Labels of x that would overlap: on two or three lines, else turned 30 degrees, else 90.
+
+    Only with the rotation left at 0 (a chosen angle is kept), on a 2D axes
+    whose renderer did not turn them itself. Wrapping first, at the spaces,
+    as long category labels ("Machine set-up") read best level; a label with
+    no space, or still too wide, turns. Measured at the figure's size, and
+    again whenever the canvas is resized.
+    """
+    if hasattr(ax, "zaxis") or options.get("x_tick_rotation") not in (None, 0, 0.0) or not ax.xaxis.get_visible():
+        return
+    if any(label.get_rotation() for label in ax.get_xticklabels() if label.get_text()):
+        return  # turned by the renderer already
+    ax._chartlibre_fit_x = ax.xaxis.get_major_formatter()
+    _refit_x_tick_labels(figure, ax)
+    canvas = getattr(figure, "canvas", None)
+    if canvas is not None and not getattr(figure, "_chartlibre_fit_x_connected", False):
+        figure._chartlibre_fit_x_connected = True
+        canvas.mpl_connect("resize_event", lambda _event, fig=figure: [
+            _refit_x_tick_labels(fig, each) for each in fig.axes if getattr(each, "_chartlibre_fit_x", None) is not None])
+
+
+def _refit_x_tick_labels(figure: Figure, ax: Any) -> None:
+    """Back to level, unwrapped labels; then wrapped or turned if they overlap at the size now."""
+    formatter = ax._chartlibre_fit_x
+    try:
+        import textwrap
+
+        from matplotlib.ticker import FuncFormatter
+
+        ax.xaxis.set_major_formatter(formatter)
+        for label in ax.get_xticklabels():
+            label.set_rotation(0.0)
+            label.set_horizontalalignment("center")
+            label.set_rotation_mode("default")
+        renderer = figure._get_renderer()
+        if not _x_labels_overlap(ax, renderer):
+            return
+        labels = [label for label in ax.get_xticklabels() if label.get_text()]
+        if any(" " in label.get_text().strip() for label in labels):
+            positions = sorted(ax.get_xticks())
+            spacing_px = abs(ax.transData.transform((positions[1], 0))[0]
+                             - ax.transData.transform((positions[0], 0))[0]) if len(positions) > 1 else ax.bbox.width
+            char_px = max(label.get_window_extent(renderer).width / max(len(label.get_text()), 1) for label in labels)
+            width = max(int(spacing_px / max(char_px, 1.0)) - 1, 4)
+            ax.xaxis.set_major_formatter(FuncFormatter(
+                lambda value, pos, inner=formatter, chars=width:
+                textwrap.fill(str(inner(value, pos)), chars, break_long_words=False)))
+            if not _x_labels_overlap(ax, renderer) and \
+                    max(label.get_text().count("\n") for label in ax.get_xticklabels()) <= 2:
+                return
+            ax.xaxis.set_major_formatter(formatter)
+        for angle, align in ((30.0, "right"), (90.0, "center")):
+            for label in ax.get_xticklabels():
+                label.set_rotation(angle)
+                label.set_horizontalalignment(align)
+                label.set_rotation_mode("anchor" if angle != 90.0 else "default")
+            if not _x_labels_overlap(ax, renderer, angle):
+                return
+    except Exception:
+        applogger.exception("Could not fit the x tick labels")
+
+
+def _tick_params(ax: Any, **kwargs: Any) -> None:
+    """Call ``tick_params`` and report a failure rather than raising."""
+    try:
+        ax.tick_params(**kwargs)
+    except Exception:
+        applogger.exception("Failed to apply tick parameters: %r", kwargs)
+
+
+def _apply_grid(ax: Any, options: dict[str, Any]) -> None:
+    """Apply the per-axis, per-class grid settings.
+
+    Each one is applied, including the ones that say off: the previous
+    version returned early when the grid was not wanted, so it could only ever
+    add a grid. Against a style sheet with ``axes.grid: True`` - which the
+    shipped ones have - that made "no grid" impossible to express.
+
+    A 3D axes goes elsewhere entirely; see :func:`_apply_grid_3d`.
+    """
+    if hasattr(ax, "zaxis"):
+        _apply_grid_3d(ax, options)
+        return
+
+    for axis in axis_options.AXES:
+        if axis == "z":
+            continue
+        for which in axis_options.WHICH:
+            setting = axis_options.grid_setting(options, axis, which)
+            if setting == axis_options.AUTO:
+                continue
+
+            try:
+                if setting == axis_options.OFF:
+                    ax.grid(False, which=which, axis=axis)
+                elif setting == axis_options.ON:
+                    ax.grid(True, which=which, axis=axis)
+                else:
+                    ax.grid(True, which=which, axis=axis, linestyle=setting)
+            except Exception:
+                applogger.exception(
+                    "Failed to apply the %s %s grid", axis, which
+                )
+
+
+def _apply_grid_3d(ax: Any, options: dict[str, Any]) -> None:
+    """Apply one grid setting to a 3D axes, which is all it has.
+
+    ``Axes3D.grid`` is ``grid(visible=True, **kwargs)``: the axis and the tick
+    class are accepted and discarded, and the single flag draws or hides all
+    three panes together. Passing the six settings through the 2D loop
+    therefore did not do nothing - it did something misleading, applying
+    whichever combination happened to be last.
+
+    So the six are resolved into the one answer Matplotlib can take. The first
+    setting that is not "from the style", read x then y then z and major
+    before minor, decides for the box; a line style decides as "on", because
+    Matplotlib will not take a style here either. When every setting is AUTO
+    the style sheet keeps charge, which is what AUTO means everywhere else.
+    """
+    decided: str | None = None
+    for axis in axis_options.AXES:
+        for which in axis_options.WHICH:
+            setting = axis_options.grid_setting(options, axis, which)
+            if setting != axis_options.AUTO:
+                decided = setting
+                break
+        if decided is not None:
+            break
+
+    if decided is None:
+        return
+
+    visible = decided != axis_options.OFF
+    try:
+        ax.grid(visible)
+    except Exception:
+        applogger.exception("Failed to apply the 3D grid")
+        return
+
+    if decided not in (axis_options.ON, axis_options.OFF):
+        applogger.info(
+            "A 3D axes has one grid for the whole box, so the %r line style "
+            "was applied as simply 'on'.",
+            decided,
+        )
+
+
+def _apply_spines(ax: Any, options: dict[str, Any]) -> None:
+    """Show or hide individual spines."""
+    spines = getattr(ax, "spines", None)
+    if spines is None:
+        return
+
+    for name in ("top", "right", "bottom", "left"):
+        key = f"hide_spine_{name}"
+        if key not in options:
+            continue
+        if name not in spines:  # a polar axes has other spines, a 3D one none: nothing to hide there
+            continue
+        try:
+            spines[name].set_visible(not bool(options.get(key)))
+        except Exception:
+            applogger.exception("Failed to set visibility of the %s spine", name)
+
+
+def _apply_limits(ax: Any, options: dict[str, Any]) -> None:
+    """Apply the view range: the xlim/ylim pairs, then the manual limits.
+
+    The pairs come first because the mode is the later, finer answer: it says
+    which axis is manual at all, and either end of a manual axis may be left
+    empty to keep that end automatic - ``set_xlim`` takes None for exactly
+    that.
+    """
+    xlim = options.get("xlim")
+    ylim = options.get("ylim")
+
+    if isinstance(xlim, (list, tuple)) and len(xlim) == 2:
+        try:
+            ax.set_xlim(float(xlim[0]), float(xlim[1]))
+        except (TypeError, ValueError):
+            applogger.warning("Invalid xlim: %r", xlim)
+
+    if isinstance(ylim, (list, tuple)) and len(ylim) == 2:
+        try:
+            ax.set_ylim(float(ylim[0]), float(ylim[1]))
+        except (TypeError, ValueError):
+            applogger.warning("Invalid ylim: %r", ylim)
+
+    for axis in axis_options.LIMIT_AXES:
+        setter = getattr(ax, f"set_{axis}lim", None)
+        if setter is None:
+            # A 2D axes and a z limit: stored, ignored, and kept - switching
+            # the projection to 3d later must find the range still there.
+            continue
+
+        if axis_options.is_automatic(options, axis):
+            continue
+
+        low = axis_options.manual_limit(options, axis, "min")
+        high = axis_options.manual_limit(options, axis, "max")
+        if low is None and high is None:
+            continue
+
+        if low is not None and high is not None:
+            if low == high:
+                applogger.warning(
+                    "Ignoring the manual %s limits: both ends are %g", axis, low
+                )
+                continue
+            if low > high:
+                # Reversed limits invert the axis, which has its own control
+                # and would then be applied twice. Order them and say so.
+                applogger.warning(
+                    "Manual %s limits were reversed (%g, %g); using them in "
+                    "order. Use the axis direction option to invert.",
+                    axis,
+                    low,
+                    high,
+                )
+                low, high = high, low
+
+        try:
+            setter(low, high)
+        except Exception:
+            applogger.exception("Failed to set the manual %s limits", axis)
+
+
+def _apply_pickradius(ax: Any, options: dict[str, Any]) -> None:
+    """Apply optional pickradius if supported by the axis."""
+    pickradius = options.get("pickradius")
+    if pickradius is None:
+        return
+
+    try:
+        ax.pickradius = float(pickradius)
+    except (AttributeError, TypeError, ValueError):
+        applogger.info("Ignoring unsupported pickradius=%r", pickradius)
+
+
+def _apply_aspect_options(ax: Any, options: dict[str, Any]) -> None:
+    """Apply optional aspect and adjustable axis options."""
+    aspect = options.get("aspect")
+    if aspect is not None:
+        try:
+            if isinstance(aspect, str):
+                ax.set_aspect(aspect.strip())
+            else:
+                ax.set_aspect(float(aspect))
+        except (TypeError, ValueError):
+            applogger.warning("Invalid axis aspect: %r", aspect)
+
+    adjustable = options.get("adjustable")
+    if isinstance(adjustable, str) and adjustable.strip():
+        try:
+            ax.set_adjustable(adjustable.strip())
+        except ValueError:
+            applogger.warning("Invalid axis adjustable value: %r", adjustable)
+
+
+def _apply_layout(figure: Figure, fig_desc: FigureDescriptor) -> None:
+    """Apply final figure layout.
+
+    Figure option example:
+        {
+            "layout_mode": "none",
+            "margins": {
+                "left": 0.04,
+                "right": 0.99,
+                "bottom": 0.06,
+                "top": 0.97,
+                "wspace": 0.08,
+                "hspace": 0.08
+            }
+        }
+    """
+    options = fig_desc.options if isinstance(fig_desc.options, dict) else {}
+    # A figure that names no engine gets "tight": forgiving on the simple
+    # figures most charts are, and needs no per-figure margins block.
+    raw_mode = str(options.get("layout_mode", "tight") or "tight").strip().lower()
+
+    if raw_mode == "constrained":
+        _set_layout_engine_safely(figure, "constrained")
+        return
+
+    if raw_mode == "compressed":
+        _set_layout_engine_safely(figure, "compressed")
+        return
+
+    if raw_mode == "tight":
+        _set_layout_engine_safely(figure, "tight")
+        return
+
+    _set_layout_engine_safely(figure, "none")
+    _apply_subplot_margins(figure, options)
+
+
+def _apply_subplot_margins(figure: Figure, options: dict[str, Any]) -> None:
+    """Apply explicit subplot margins for layout_mode='none'."""
+    margins = options.get("margins")
+    margins = margins if isinstance(margins, dict) else {}
+
+    left = _float_option(margins, "left", 0.04)
+    right = _float_option(margins, "right", 0.99)
+    bottom = _float_option(margins, "bottom", 0.06)
+    top = _float_option(margins, "top", 0.97)
+    wspace = _float_option(margins, "wspace", 0.08)
+    hspace = _float_option(margins, "hspace", 0.08)
+
+    try:
+        figure.subplots_adjust(
+            left=left,
+            right=right,
+            bottom=bottom,
+            top=top,
+            wspace=wspace,
+            hspace=hspace,
+        )
+    except Exception:
+        applogger.exception("Failed to apply subplot margins")
+
+
+def _normalize_axes_fill_policy(figure: Figure, fig_desc: FigureDescriptor) -> None:
+    """Prevent fixed-aspect axes from shrinking their axes box by default."""
+    fig_options = fig_desc.options if isinstance(fig_desc.options, dict) else {}
+    preserve_all = bool(fig_options.get("preserve_aspect_box", False))
+
+    # Matched by the id tagged onto each axes in render_figure_from_descriptor,
+    # not by position: a twin axis is created after every base axis, so
+    # figure.axes and fig_desc.axes no longer share one order once a figure
+    # has any twins at all.
+    options_by_id = {
+        int(axis_desc.id): axis_desc.options if isinstance(axis_desc.options, dict) else {}
+        for axis_desc in list(fig_desc.axes or [])
+    }
+
+    for ax in list(figure.axes):
+        try:
+            axis_id = getattr(ax, "_chartlibre_axis_id", None)
+            axis_options = options_by_id.get(axis_id, {}) if axis_id is not None else {}
+            # The axis' option, or the renderer's own (a wafer is a circle, its box square: keep_aspect_box).
+            if preserve_all or bool(axis_options.get("preserve_aspect_box", False)) \
+                    or getattr(ax, "_chartlibre_keep_aspect_box", False):
+                continue
+
+            # A polar axes keeps its own box (it overrides get_data_ratio, so "datalim" is refused).
+            if ax.get_aspect() != "auto" and ax.get_adjustable() == "box" and ax.name != "polar":
+                ax.set_adjustable("datalim")
+
+            ax.set_anchor("C")
+        except Exception:
+            applogger.exception("Failed to normalize axes fill policy")
+
+
+def _set_layout_engine_safely(figure: Figure, mode: LayoutMode) -> None:
+    """Set Matplotlib layout engine without letting layout failure stop render.
+
+    ``mode == "none"`` passes Python ``None``, not the string ``"none"``: the
+    two are not equivalent past this call, only right now. The string leaves
+    a ``PlaceHolderLayoutEngine`` in place - matplotlib's own marker that
+    *some* layout engine used to be set - and ``subplots_adjust`` refuses to
+    touch a figure carrying one, forever, no matter how many times "none" is
+    set again. Only actual ``None`` clears the engine outright, which is what
+    switching to manual spacing needs: this figure's chart tab keeps the same
+    Matplotlib Figure across every redraw, so a figure that had ever used
+    "constrained" would otherwise have its manual margins silently ignored
+    from that point on.
+    """
+    try:
+        figure.set_layout_engine(None if mode == "none" else mode)  # pyright: ignore[reportArgumentType]
+    except Exception:
+        applogger.exception("Failed to set Matplotlib layout engine: %s", mode)
+
+
+def _float_option(options: dict[str, Any], key: str, default: float) -> float:
+    """Read a float option safely."""
+    value = options.get(key, default)
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        applogger.warning("Invalid float option %s=%r, using %r", key, value, default)
+        return default

@@ -1,0 +1,10 @@
+{
+  "id": "vector_fields",
+  "name": "Vector fields and geometry",
+  "version": "1.0.0",
+  "description": "Vector fields - divergence, curl, streamlines - with the Quiver and Quiver 3D charts, and Geometry: rotate, move and scale a series.",
+  "author": "ChartLibre",
+  "needs_app": "0.2.0",
+  "packages": [],
+  "default": true
+}

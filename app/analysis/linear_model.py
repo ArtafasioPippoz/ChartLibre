@@ -1,0 +1,1098 @@
+"""Least-squares models of a designed experiment, the way JMP's Fit Model reports them.
+
+No Qt here: the Fit Model dialog runs :func:`fit_models` on a worker thread.
+
+A model is a list of *terms* over the factors: ``("A",)`` a main effect,
+``("A", "B")`` an interaction, ``("A", "A")`` a quadratic. Continuous factors
+are coded to -1..+1 between their low and high (the design's, or else the
+data's own range), so every estimate is half the effect over that range and
+estimates of different factors compare directly - JMP's scaled estimates.
+Nominal factors enter with sum-to-zero contrasts, one estimate per level but
+the last, which is minus the sum of the others.
+
+Each response gets, like JMP's report:
+
+- the parameter estimates, with standard error, t ratio and p-value;
+- the effect tests (type III, one F test per term, all its levels at once);
+- the analysis of variance of the whole model, and the summary of fit
+  (RSquare, RSquare Adj, root mean square error, mean, observations);
+- the lack-of-fit test, when replicated runs give a pure error to test
+  against;
+- the predicted values and residuals, raw and studentized.
+
+``reduce`` drops terms backwards, the least significant first, until every
+term left has p <= alpha - never a term a higher-order one still contains
+(A stays while A*B or A*A is in the model).
+"""
+from __future__ import annotations
+
+import math
+import warnings
+from collections.abc import Callable, Sequence
+from dataclasses import dataclass, field
+from typing import Any, cast
+
+import numpy as np
+import pandas as pd
+
+from app.analysis import Stopped
+from app.analysis.models import PICKLED, Feature, SavedModel
+from app.utils.coercion import column_of, to_numbers
+from app.utils.config import get_constant
+
+CONTINUOUS = "continuous"
+NOMINAL = "nominal"
+
+Term = tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class Factor:
+    """A factor: its column, its modelling type, and (continuous) the range coded to -1..+1."""
+
+    name: str
+    kind: str = CONTINUOUS
+    low: float | None = None
+    high: float | None = None
+
+
+@dataclass(slots=True)
+class ModelSpec:
+    factors: list[Factor]
+    responses: list[str]
+    terms: list[Term]
+    reduce: bool = False
+    alpha: float = 0.05
+    #: How the responses are modelled - JMP's personalities: "standard"
+    #: (least squares), "stepwise", "glm", "nominal" (logistic), "ordinal".
+    personality: str = "standard"
+    #: Stepwise: "backward" (drop) or "forward" (add) - see :data:`STEPWISE`.
+    direction: str = "backward"
+    #: Generalized linear model: the response's distribution - see :data:`FAMILIES`.
+    family: str = "normal"
+    #: Generalized regression: the penalty - see :data:`PENALTIES`.
+    penalty: str = "lasso"
+    #: Least squares: how the parameter estimates' standard errors are found - see :data:`STD_ERRORS`.
+    std_errors: str = "classical"
+    #: With ``std_errors == "cluster"``: the column whose values name the clusters of rows.
+    cluster: str = ""
+
+
+@dataclass(slots=True)
+class ResponseFit:
+    """One response's model and report."""
+
+    response: str
+    terms: list[Term]
+    removed: list[Term]
+    estimates: pd.DataFrame
+    effect_tests: pd.DataFrame
+    anova: pd.DataFrame
+    summary: dict[str, float]
+    lack_of_fit: pd.DataFrame | None
+    rows: pd.Index
+    predicted: pd.Series
+    residuals: pd.Series
+    studentized: pd.Series
+    coding: dict[str, tuple[float, float]] = field(default_factory=dict)
+    #: The prediction profile: for each continuous factor in the model, the
+    #: predicted response from -1 to +1 coded with the others at their centre
+    #: (nominal ones at their most frequent level), and its 95% confidence
+    #: band. Columns Factor, Coded, Value, Predicted, Lower, Upper.
+    profile: pd.DataFrame = field(default_factory=pd.DataFrame)
+    #: The fitted model as a SavedModel (least squares only, so far): keep it, or score new rows with it.
+    model: Any = None
+    #: A note for the report when the model cannot test anything (no error
+    #: degrees of freedom, say).
+    note: str = ""
+    #: The personality that fitted this, and how its whole-model table and
+    #: its tests' p-values are titled (an ANOVA and Prob > F for least
+    #: squares, a likelihood-ratio test and Prob > ChiSq for the others).
+    personality: str = "standard"
+    whole_title: str = "Analysis of variance"
+    p_column: str = "Prob > F"
+    #: A categorical response's levels, in the order modelled; the first is
+    #: the one whose probability the predictions give.
+    levels: list[str] = field(default_factory=list)
+    #: The effect tests' column the effects are ranked and charted by:
+    #: LogWorth, or for a penalized fit (no p-values) the standardized size.
+    importance_column: str = "LogWorth"
+    #: A categorical response's ROC curves (Level, FPR, TPR), their areas, and its
+    #: confusion matrix (actual by most probable level) - AN-19.
+    roc: pd.DataFrame = field(default_factory=pd.DataFrame)
+    auc: dict[str, float] = field(default_factory=dict)
+    confusion: pd.DataFrame | None = None
+    #: Least squares: tests of the residuals - heteroskedasticity, autocorrelation, functional form,
+    #: normality - as Test, Statistic, Prob, Note (G-25).
+    diagnostics: pd.DataFrame = field(default_factory=pd.DataFrame)
+    #: What the standard errors in the estimates are ("" for the classical ones).
+    std_errors_note: str = ""
+
+
+#: The personalities: key, name as JMP names it.
+PERSONALITIES: tuple[tuple[str, str], ...] = (
+    ("standard", "Standard Least Squares"),
+    ("stepwise", "Stepwise"),
+    ("glm", "Generalized Linear Model"),
+    ("nominal", "Nominal Logistic"),
+    ("ordinal", "Ordinal Logistic"),
+    ("generalized", "Generalized Regression"),
+)
+#: Generalized regression's penalties (JMP's estimation methods), its strength chosen by cross-validation.
+PENALTIES: tuple[tuple[str, str], ...] = (
+    ("lasso", "Lasso"),
+    ("ridge", "Ridge"),
+    ("elastic", "Elastic Net"),
+)
+#: Folds of the cross-validation that chooses the penalty.
+CV_FOLDS = get_constant("fit_model_cv_folds", 5)
+#: Generalized linear model families, each with its canonical link (log for Gamma).
+FAMILIES: tuple[tuple[str, str], ...] = (
+    ("normal", "Normal"),
+    ("binomial", "Binomial"),
+    ("poisson", "Poisson"),
+    ("gamma", "Gamma"),
+)
+#: How a least-squares fit's standard errors are found: the classical ones, the heteroskedasticity-consistent
+#: ones (HC1, HC3: a robust choice for small samples), or clustered on a column's values.
+STD_ERRORS: tuple[tuple[str, str], ...] = (
+    ("classical", "Classical"),
+    ("HC1", "Robust (HC1)"),
+    ("HC3", "Robust (HC3)"),
+    ("cluster", "Clustered"),
+)
+STEPWISE: tuple[tuple[str, str], ...] = (("backward", "Backward"), ("forward", "Forward"))
+#: The personalities whose response is a category rather than a number.
+CATEGORICAL_RESPONSE = frozenset({"nominal", "ordinal"})
+
+
+# ----------------------------------------------------------------------
+# Terms
+# ----------------------------------------------------------------------
+
+
+def term_label(term: Term) -> str:
+    """How a term reads in a report: A, A*B, A*A."""
+    return "*".join(term)
+
+
+def main_effects(factors: Sequence[Factor]) -> list[Term]:
+    return [(f.name,) for f in factors]
+
+
+def factorial(factors: Sequence[Factor], degree: int = 2) -> list[Term]:
+    """Main effects and every interaction up to *degree* factors."""
+    from itertools import combinations
+
+    names = [f.name for f in factors]
+    terms: list[Term] = []
+    for size in range(1, max(1, degree) + 1):
+        terms.extend(combinations(names, size))
+    return terms
+
+
+def response_surface(factors: Sequence[Factor]) -> list[Term]:
+    """Main effects, two-factor interactions, and the square of each continuous factor."""
+    terms = factorial(factors, 2)
+    terms.extend((f.name, f.name) for f in factors if f.kind == CONTINUOUS)
+    return terms
+
+
+def _contained(small: Term, big: Term) -> bool:
+    """Whether *small* is a lower-order part of *big* (A in A*B, A in A*A)."""
+    if len(small) >= len(big):
+        return False
+    remaining = list(big)
+    for name in small:
+        if name not in remaining:
+            return False
+        remaining.remove(name)
+    return True
+
+
+# ----------------------------------------------------------------------
+# Fitting
+# ----------------------------------------------------------------------
+
+
+def coding(factor: Factor, values: pd.Series) -> tuple[float, float]:
+    """(centre, half range) of a continuous factor: from its low/high, else from the data."""
+    numbers = to_numbers(values).dropna()
+    low = factor.low if factor.low is not None else (float(numbers.min()) if len(numbers) else 0.0)
+    high = factor.high if factor.high is not None else (float(numbers.max()) if len(numbers) else 1.0)
+    half = (high - low) / 2.0
+    return (low + high) / 2.0, half if half else 1.0
+
+
+def fit_models(
+    frame: pd.DataFrame, spec: ModelSpec, *, should_stop: Callable[[], bool] | None = None
+) -> list[ResponseFit]:
+    """Fit *spec*'s model to each of its responses in *frame*."""
+    if not spec.factors:
+        raise ValueError("choose at least one factor")
+    if not spec.responses:
+        raise ValueError("choose at least one response")
+    if not spec.terms:
+        raise ValueError("the model has no terms")
+    fits = []
+    for response in spec.responses:
+        if should_stop is not None and should_stop():
+            raise Stopped()
+        if spec.personality == "glm":
+            fits.append(_fit_glm(frame, spec, response))
+        elif spec.personality == "generalized":
+            fits.append(_fit_penalized(frame, spec, response))
+        elif spec.personality in CATEGORICAL_RESPONSE:
+            fits.append(_fit_logistic(frame, spec, response))
+        else:
+            fits.append(_fit_one(frame, spec, response, should_stop=should_stop))
+    return fits
+
+
+def _check(should_stop: Callable[[], bool] | None) -> None:
+    """Raise Stopped when Stop was pressed: called between the slow steps of a fit."""
+    if should_stop is not None and should_stop():
+        raise Stopped()
+
+
+@dataclass(slots=True)
+class _Prepared:
+    """A response's rows, coded, and how each term is spelled in a formula."""
+
+    data: pd.DataFrame
+    safe: dict[str, str]
+    codes: dict[str, tuple[float, float]]
+    factors: dict[str, Factor]
+
+    def piece(self, term: Term) -> str:
+        if len(term) == 2 and term[0] == term[1] and self.factors[term[0]].kind == CONTINUOUS:
+            return f"I({self.safe[term[0]]}**2)"
+        return ":".join(
+            self.safe[name] if self.factors[name].kind == CONTINUOUS else f"C({self.safe[name]}, Sum)"
+            for name in term
+        )
+
+    def formula(self, terms: Sequence[Term]) -> str:
+        return "y ~ " + (" + ".join(self.piece(t) for t in terms) if terms else "1")
+
+
+def _prepare(frame: pd.DataFrame, spec: ModelSpec, response: str, *, categorical: bool) -> _Prepared:
+    safe = {f.name: f"x{index}" for index, f in enumerate(spec.factors)}
+    data = pd.DataFrame(index=frame.index)
+    if categorical:
+        data["y"] = frame[response].astype("string")
+    else:
+        data["y"] = to_numbers(column_of(frame, response))
+    codes: dict[str, tuple[float, float]] = {}
+    for f in spec.factors:
+        if f.kind == CONTINUOUS:
+            centre, half = coding(f, column_of(frame, f.name))
+            codes[f.name] = (centre, half)
+            data[safe[f.name]] = (to_numbers(column_of(frame, f.name)) - centre) / half
+        else:
+            data[safe[f.name]] = frame[f.name].astype("string")
+    data = data.dropna()
+    if len(data) < 2:
+        raise ValueError(f"{response}: fewer than two complete rows")
+    return _Prepared(data, safe, codes, {f.name: f for f in spec.factors})
+
+
+def _fit_one(frame: pd.DataFrame, spec: ModelSpec, response: str, *,
+             should_stop: Callable[[], bool] | None = None) -> ResponseFit:
+    """Least squares - standard, or stepwise backward or forward; *should_stop* polled between its steps."""
+    import statsmodels.formula.api as smf
+
+    prep = _prepare(frame, spec, response, categorical=False)
+    data, piece = prep.data, prep.piece
+    stepwise = spec.personality == "stepwise" or spec.reduce
+    terms = [tuple(t) for t in spec.terms]
+    removed: list[Term] = []
+
+    if stepwise and spec.direction == "forward":
+        # Forward: from the mean alone, add the most significant term whose
+        # lower-order parts are already in, while it is significant.
+        chosen: list[Term] = []
+        while True:
+            candidates = [
+                t for t in terms if t not in chosen
+                and all(other in chosen for other in terms if _contained(other, t))
+            ]
+            best: tuple[float, Term] | None = None
+            for term in candidates:
+                _check(should_stop)
+                trial = chosen + [term]
+                model = smf.ols(prep.formula(trial), data=data).fit()
+                if model.df_resid <= 0:
+                    continue
+                p = float(_effect_tests(model, trial, piece).iloc[-1]["Prob > F"])
+                if np.isfinite(p) and (best is None or p < best[0]):
+                    best = (p, term)
+            if best is None or best[0] > spec.alpha:
+                break
+            chosen.append(best[1])
+        removed = [t for t in terms if t not in chosen]
+        terms = chosen
+
+    while True:
+        _check(should_stop)
+        model = smf.ols(prep.formula(terms), data=data).fit()
+        tests = _effect_tests(model, terms, piece)
+        if not stepwise or spec.direction == "forward" or model.df_resid <= 0:
+            break
+        candidates = [
+            (p, t) for t, p in zip(terms, tests["Prob > F"])
+            if np.isfinite(p) and p > spec.alpha and not any(_contained(t, other) for other in terms if other != t)
+        ]
+        if not candidates or len(terms) == 1:
+            break
+        worst = max(candidates)[1]
+        terms.remove(worst)
+        removed.append(worst)
+
+    _check(should_stop)
+    robust, std_errors_note = _robust_refit(model, prep, terms, spec, frame)
+    _check(should_stop)
+    estimates = _estimates(robust if robust is not None else model, terms, piece)
+    estimates["VIF"] = _vif(model)
+    _check(should_stop)
+    diagnostics = _diagnostics(model)
+    anova, summary = _whole_model(model, column_of(data, "y"))
+    lack = _lack_of_fit(model, data, [prep.safe[f.name] for f in spec.factors])
+    _check(should_stop)
+    try:
+        studentized = pd.Series(model.get_influence().resid_studentized_internal, index=data.index)
+    except Exception:
+        studentized = pd.Series(np.nan, index=data.index)
+    _check(should_stop)
+    profile = _profile(model, data, spec.factors, prep.safe, prep.codes, terms)
+    note = ""
+    if model.df_resid <= 0:
+        note = "No degrees of freedom are left for error: the model has as many terms as runs, so nothing can be tested. Remove terms, or add runs."
+    return ResponseFit(
+        response=response,
+        terms=terms,
+        removed=removed,
+        estimates=estimates,
+        effect_tests=tests,
+        anova=anova,
+        summary=summary,
+        lack_of_fit=lack,
+        rows=data.index,
+        predicted=pd.Series(model.fittedvalues, index=data.index),
+        residuals=pd.Series(model.resid, index=data.index),
+        studentized=studentized,
+        coding=prep.codes,
+        profile=profile,
+        note=note,
+        personality=spec.personality,
+        diagnostics=diagnostics,
+        std_errors_note=std_errors_note,
+        model=_kept_linear(response, model, prep, spec, summary),
+    )
+
+
+def _robust_refit(model, prep: _Prepared, terms: list[Term], spec: ModelSpec, frame: pd.DataFrame):
+    """The least-squares fit again with the robust or clustered covariance asked for, and a note saying so.
+
+    (None, "") for the classical ones. The estimates are the same; the standard errors, t ratios and
+    p-values of the Parameter estimates table come from it. The effect tests and the analysis of
+    variance stay the classical ones - the note says so.
+    """
+    import statsmodels.formula.api as smf
+
+    kind = spec.std_errors
+    if kind == "classical" or model.df_resid <= 0:
+        return None, ""
+    if kind == "cluster":
+        if not spec.cluster or spec.cluster not in frame.columns:
+            return None, "Clustered standard errors need a column that names the clusters; the classical ones are shown."
+        groups = frame.loc[prep.data.index, spec.cluster]
+        keep = groups.notna()
+        data = prep.data.loc[keep]
+        codes = pd.factorize(groups[keep].astype(str))[0]
+        if len(set(codes)) < 2:
+            return None, "Clustered standard errors need at least two clusters; the classical ones are shown."
+        refit = smf.ols(prep.formula(terms), data=data).fit(cov_type="cluster", cov_kwds={"groups": codes})
+        dropped = int((~keep).sum())
+        note = (f"Standard errors clustered on {spec.cluster} ({len(set(codes))} clusters)"
+                + (f"; {dropped} row(s) without a cluster left out" if dropped else ""))
+    else:
+        refit = smf.ols(prep.formula(terms), data=prep.data).fit(cov_type=cast(Any, kind))
+        note = f"Standard errors robust to unequal variances ({kind})"
+    return refit, note + "; the effect tests and the analysis of variance are the classical ones."
+
+
+def _vif(model) -> np.ndarray:
+    """Variance inflation factor of each parameter (NaN for the intercept): 1 when the others do not explain it."""
+    from statsmodels.stats.outliers_influence import variance_inflation_factor
+
+    exog = np.asarray(model.model.exog, dtype=float)
+    names = list(model.params.index)
+    out = np.full(len(names), np.nan)
+    if exog.shape[1] < 3 or exog.shape[0] <= exog.shape[1]:
+        return np.where(np.array(names) == "Intercept", np.nan, 1.0) if exog.shape[1] < 3 else out
+    with np.errstate(all="ignore"):
+        for index, name in enumerate(names):
+            if name != "Intercept":
+                out[index] = float(variance_inflation_factor(exog, index))
+    return out
+
+
+def _diagnostics(model) -> pd.DataFrame:
+    """Breusch-Pagan, White, Durbin-Watson, Ramsey RESET and Jarque-Bera of one least-squares fit.
+
+    Each as a row: Test, Statistic, Prob, Note. A test the data cannot support (too few rows for the
+    White regression, no spread in the residuals) is a note, not an error.
+    """
+    from statsmodels.stats import diagnostic as diag
+    from statsmodels.stats.stattools import durbin_watson, jarque_bera
+
+    rows: list[tuple[str, float, float, str]] = []
+    n, k = int(model.nobs), int(len(model.params))
+    resid = np.asarray(model.resid, dtype=float)
+    exog = np.asarray(model.model.exog, dtype=float)
+
+    def add(name: str, run, note: str = "") -> None:
+        try:
+            statistic, p_value, extra = run()
+            rows.append((name, float(statistic), float(p_value), (extra or note)))
+        except Exception as exc:
+            rows.append((name, math.nan, math.nan, str(exc) or "not available"))
+
+    spread = float(np.ptp(resid)) if resid.size else 0.0
+    if n - k < 1 or spread == 0.0:
+        return pd.DataFrame(
+            [("Residual diagnostics", math.nan, math.nan, "No residual degrees of freedom or no spread in the residuals.")],
+            columns=["Test", "Statistic", "Prob", "Note"],
+        )
+    add("Breusch-Pagan (equal variances)",
+        lambda: (lambda r: (r[0], r[1], "LM test: do the residuals' variances depend on the factors?"))(diag.het_breuschpagan(resid, exog)))
+    add("White (equal variances)",
+        lambda: (lambda r: (r[0], r[1], "LM test with squares and cross products of the factors."))(diag.het_white(resid, exog)))
+    add("Durbin-Watson (autocorrelation)",
+        lambda: (durbin_watson(resid), math.nan, "In row order; 2 means no lag-1 correlation; no generic p-value."))
+    add("Ramsey RESET (functional form)",
+        lambda: (lambda r: (float(np.squeeze(r.fvalue)), float(np.squeeze(r.pvalue)),
+                            "F test of fitted^2 and fitted^3 added to the model: is a curve missing?"))(
+            diag.linear_reset(model, power=3, test_type="fitted", use_f=True)))
+    add("Jarque-Bera (normal residuals)",
+        lambda: (lambda r: (r[0], r[1], f"skewness = {r[2]:.3g}; kurtosis = {r[3]:.3g}"))(jarque_bera(resid)))
+    return pd.DataFrame(rows, columns=["Test", "Statistic", "Prob", "Note"])
+
+
+def _fit_penalized(frame: pd.DataFrame, spec: ModelSpec, response: str) -> ResponseFit:
+    """Generalized regression: least squares with a Lasso, Ridge or Elastic Net penalty (AN-16).
+
+    For many factors, or factors that move together, where least squares
+    overfits or cannot separate them. The design is the model's own (coded
+    factors, sum contrasts), its columns standardized so the penalty treats
+    them alike; the penalty's strength is the one that predicts best in
+    CV_FOLDS-fold cross-validation. Lasso and Elastic Net set some estimates
+    to exactly zero - the terms they leave out; Ridge shrinks all of them.
+    Shrunk estimates have no standard errors or p-values: the effects are
+    ranked by the size of their standardized estimates instead.
+    """
+    from patsy.highlevel import dmatrices
+    from sklearn.linear_model import ElasticNetCV, LassoCV, RidgeCV
+    from sklearn.model_selection import KFold
+
+    prep = _prepare(frame, spec, response, categorical=False)
+    terms = [tuple(t) for t in spec.terms]
+    # return_type="dataframe": pandas frames, whatever patsy's annotations say.
+    y_frame, x_frame = cast(Any, dmatrices(prep.formula(terms), prep.data, return_type="dataframe"))
+    y = y_frame.iloc[:, 0].to_numpy(float)
+    design = x_frame.drop(columns=["Intercept"], errors="ignore")
+    if design.shape[1] == 0 or len(y) < CV_FOLDS + 2:
+        raise ValueError(f"{response}: too few rows or terms for a penalized fit")
+    x = design.to_numpy(float)
+    mean, scale = x.mean(axis=0), x.std(axis=0)
+    scale[scale == 0] = 1.0
+    standard = (x - mean) / scale
+    folds = KFold(CV_FOLDS, shuffle=True, random_state=0)
+    if spec.penalty == "ridge":
+        model = cast(Any, RidgeCV(alphas=np.logspace(-4, 4, 81), cv=folds)).fit(standard, y)
+        alpha, l1_ratio = float(model.alpha_), 0.0
+    elif spec.penalty == "elastic":
+        model = cast(Any, ElasticNetCV)(l1_ratio=[0.1, 0.3, 0.5, 0.7, 0.9, 0.95, 1.0], cv=folds, max_iter=20000,
+                                        random_state=0).fit(standard, y)
+        alpha, l1_ratio = float(model.alpha_), float(model.l1_ratio_)
+    else:
+        model = LassoCV(cv=folds, max_iter=20000, random_state=0).fit(standard, y)
+        alpha, l1_ratio = float(model.alpha_), 1.0
+    standardized = np.asarray(model.coef_, dtype=float)
+    coefficients = standardized / scale
+    intercept = float(model.intercept_ - np.sum(coefficients * mean))
+    predicted = pd.Series(intercept + x @ coefficients, index=prep.data.index)
+    residuals = pd.Series(y, index=prep.data.index) - predicted
+    zero = np.isclose(standardized, 0.0)
+
+    # Each design column to its term, and its label as the other personalities spell it.
+    slices = {name: span for name, span in x_frame.design_info.term_name_slices.items() if name != "Intercept"}
+    offset = 1 if "Intercept" in x_frame.columns else 0
+    labels, effect_rows = ["Intercept"], []
+    names = list(design.columns)
+    column_term: dict[int, str] = {}
+    for term in terms:
+        span = slices.get(_patsy_name(prep.piece(term)))
+        if span is None:
+            continue
+        columns = range(span.start - offset, span.stop - offset)
+        label = term_label(term)
+        for column in columns:
+            levels = [part.split("[S.", 1)[1].rstrip("]") for part in names[column].split(":") if "[S." in part]
+            column_term[column] = label + ("[" + ",".join(levels) + "]" if levels else "")
+        sizes = standardized[list(columns)]
+        effect_rows.append((label, len(columns), int(np.count_nonzero(~np.isclose(sizes, 0.0))),
+                            float(np.sqrt(np.sum(sizes ** 2)))))
+    labels += [column_term.get(column, names[column]) for column in range(len(names))]
+    estimates = pd.DataFrame({
+        "Term": labels,
+        "Estimate": [intercept, *coefficients],
+        "Standardized": [np.nan, *standardized],
+        "Zeroed": ["", *("Yes" if flag else "" for flag in zero)],
+    })
+    tests = pd.DataFrame(effect_rows, columns=["Term", "DF", "Nonzero", "Std Magnitude"])
+    tests = tests.sort_values("Std Magnitude", ascending=False, kind="stable").reset_index(drop=True)
+    tests["LogWorth"] = np.nan
+    removed = [term for term, row in zip(terms, effect_rows) if row[2] == 0]
+
+    total = float(np.sum((y - y.mean()) ** 2))
+    error = float(np.sum(residuals.to_numpy() ** 2))
+    nonzero = int(np.count_nonzero(~zero))
+    anova = pd.DataFrame([("Model", nonzero, total - error), ("Error", len(y) - nonzero - 1, error),
+                          ("C. Total", len(y) - 1, total)], columns=["Source", "DF", "Sum of Squares"])
+    # The penalty's own judge: R² of predictions made for rows held out of the fit.
+    from sklearn.model_selection import cross_val_predict
+
+    held_out = cross_val_predict(_fixed_penalty(spec.penalty, alpha, l1_ratio), standard, y, cv=folds)
+    summary = {
+        "RSquare": 1.0 - error / total if total > 0 else math.nan,
+        "RSquare (cross-validated)": 1.0 - float(np.sum((y - held_out) ** 2)) / total if total > 0 else math.nan,
+        "Root Mean Square Error": math.sqrt(error / max(len(y) - nonzero - 1, 1)),
+        "Penalty (alpha)": alpha,
+        "L1 ratio": l1_ratio,
+        "Nonzero parameters": float(nonzero),
+        "Mean of Response": float(y.mean()),
+        "Observations": float(len(y)),
+    }
+    return ResponseFit(
+        response=response, terms=[t for t in terms if t not in removed], removed=removed,
+        estimates=estimates, effect_tests=tests, anova=anova, summary=summary, lack_of_fit=None,
+        rows=prep.data.index, predicted=predicted, residuals=residuals,
+        studentized=pd.Series(np.nan, index=prep.data.index), coding=prep.codes,
+        note=("Penalized estimates, shrunk towards zero by the penalty that predicted best in cross-validation: "
+              "they have no standard errors or p-values. The effects are ranked by the size of their "
+              "standardized estimates."),
+        personality="generalized", whole_title="Model fit", importance_column="Std Magnitude",
+    )
+
+
+def _fixed_penalty(penalty: str, alpha: float, l1_ratio: float):
+    """The plain estimator at the penalty cross-validation chose."""
+    from sklearn.linear_model import ElasticNet, Lasso, Ridge
+
+    if penalty == "ridge":
+        return Ridge(alpha=alpha)
+    if penalty == "elastic":
+        return ElasticNet(alpha=alpha, l1_ratio=l1_ratio, max_iter=20000)
+    return Lasso(alpha=alpha, max_iter=20000)
+
+
+def _chi_square_table(rows: list[tuple[str, int, float, float]], statistic: str) -> pd.DataFrame:
+    tests = pd.DataFrame(rows, columns=["Term", "DF", statistic, "Prob > ChiSq"])
+    tests["LogWorth"] = -np.log10(tests["Prob > ChiSq"].clip(lower=1e-300))
+    return tests
+
+
+def _whole_model_test(llf: float, llnull: float, df: int) -> pd.DataFrame:
+    """JMP's Whole Model Test: the likelihood ratio of the model against the intercept alone."""
+    from scipy import stats
+
+    chi2 = max(2.0 * (llf - llnull), 0.0)
+    p = float(stats.chi2.sf(chi2, df)) if df > 0 else math.nan
+    return pd.DataFrame(
+        [("Difference", df, llf - llnull, chi2, p), ("Full", math.nan, -llf, math.nan, math.nan),
+         ("Reduced", math.nan, -llnull, math.nan, math.nan)],
+        columns=["Model", "DF", "-LogLikelihood", "Chi-Square", "Prob > ChiSq"],
+    )
+
+
+def _fit_glm(frame: pd.DataFrame, spec: ModelSpec, response: str) -> ResponseFit:
+    """A generalized linear model: the response's family with its canonical link (log for Gamma)."""
+    import statsmodels.api as sm
+    import statsmodels.formula.api as smf
+
+    families = {
+        "normal": sm.families.Gaussian(),
+        "binomial": sm.families.Binomial(),
+        "poisson": sm.families.Poisson(),
+        "gamma": sm.families.Gamma(link=sm.families.links.Log()),
+    }
+    prep = _prepare(frame, spec, response, categorical=False)
+    terms = [tuple(t) for t in spec.terms]
+    model = smf.glm(prep.formula(terms), data=prep.data, family=families.get(spec.family, families["normal"])).fit()
+    wald = model.wald_test_terms(skip_single=False, scalar=True).table
+    rows = []
+    for term in terms:
+        name = _patsy_name(prep.piece(term))
+        line = wald.loc[name] if name in wald.index else None
+        rows.append((term_label(term), int(line["df_constraint"]) if line is not None else 1,
+                     float(line["statistic"]) if line is not None else math.nan,
+                     float(line["pvalue"]) if line is not None else math.nan))
+    estimates = _estimates(model, terms, prep.piece).rename(columns={"t Ratio": "z Ratio", "Prob > |t|": "Prob > |z|"})
+    null = smf.glm("y ~ 1", data=prep.data, family=model.family).fit()
+    summary = {
+        "Observations": float(model.nobs),
+        "Deviance": float(model.deviance),
+        "Pearson Chi-Square": float(model.pearson_chi2),
+        "AIC": float(model.aic),
+        "BIC": float(model.bic_llf),
+    }
+    return ResponseFit(
+        response=response, terms=terms, removed=[], estimates=estimates,
+        effect_tests=_chi_square_table(rows, "Wald Chi-Square"),
+        anova=_whole_model_test(float(model.llf), float(null.llf), int(model.df_model)),
+        summary=summary, lack_of_fit=None, rows=prep.data.index,
+        predicted=pd.Series(model.fittedvalues, index=prep.data.index),
+        residuals=pd.Series(model.resid_deviance, index=prep.data.index),
+        studentized=pd.Series(model.resid_pearson, index=prep.data.index),
+        coding=prep.codes, profile=_profile(model, prep.data, spec.factors, prep.safe, prep.codes, terms),
+        personality="glm", whole_title="Whole model test", p_column="Prob > ChiSq",
+    )
+
+
+def _levels(values: pd.Series) -> list[str]:
+    """A categorical response's levels: numerically when they are numbers, else alphabetically."""
+    distinct = list(dict.fromkeys(values.astype("string")))
+    numbers = to_numbers(pd.Series(distinct))
+    if numbers.notna().all():
+        return [distinct[i] for i in np.argsort(numbers.to_numpy(), kind="stable")]
+    return sorted(distinct)
+
+
+def _fit_logistic(frame: pd.DataFrame, spec: ModelSpec, response: str) -> ResponseFit:
+    """Nominal (binary or multinomial) or ordinal logistic regression, after JMP.
+
+    Each term's test is a likelihood ratio: the model refitted without it.
+    Predictions give the probability of the first level.
+    """
+    import statsmodels.api as sm
+    from patsy.highlevel import dmatrix
+    from statsmodels.miscmodels.ordinal_model import OrderedModel
+
+    prep = _prepare(frame, spec, response, categorical=True)
+    levels = _levels(column_of(prep.data, "y"))
+    if len(levels) < 2:
+        raise ValueError(f"{response}: a logistic model needs at least two levels")
+    terms = [tuple(t) for t in spec.terms]
+    ordinal = spec.personality == "ordinal"
+    codes = column_of(prep.data, "y").map(dict(zip(levels, range(len(levels))))).astype(int)
+    design = cast(Any, dmatrix(prep.formula(terms).split("~", 1)[1], prep.data, return_type="dataframe"))
+    slices = design.design_info.term_name_slices
+
+    unstable: list[bool] = []
+
+    def fit(columns: list[str]):
+        exog = design[columns]
+        if ordinal:
+            return OrderedModel(codes, exog.drop(columns=["Intercept"], errors="ignore"), distr="logit").fit(
+                method="bfgs", disp=0, maxiter=500)
+        model = sm.Logit((codes == 0).astype(int), exog) if len(levels) == 2 else sm.MNLogit(codes, exog)
+        try:
+            with warnings.catch_warnings(record=True) as caught:
+                warnings.simplefilter("always")
+                fitted = model.fit(disp=0, maxiter=200)
+            # statsmodels 0.15 no longer raises on separation: it warns.
+            if not any(issubclass(w.category, _separation_warnings()) for w in caught):
+                return fitted
+        except (np.linalg.LinAlgError, *_separation_errors()):
+            pass
+        # The effects separate the levels: Newton's Hessian is singular.
+        # As JMP, fit anyway by a gradient method and say it is unstable.
+        unstable.append(True)
+        return model.fit(method="bfgs", disp=0, maxiter=2000)
+
+    columns = list(design.columns)
+    from statsmodels.tools.sm_exceptions import (
+        ConvergenceWarning,
+        HessianInversionWarning,
+    )
+
+    with warnings.catch_warnings():
+        # Separation also overflows exp(), logs zeros and leaves the Hessian
+        # singular on the way: the report's note says it once, plainly.
+        for category in (RuntimeWarning, ConvergenceWarning, HessianInversionWarning):
+            warnings.simplefilter("ignore", category)
+        return _logistic_report(response, spec, prep, levels, terms, ordinal, codes, design, slices, fit,
+                                columns, unstable)
+
+
+def _separation_warnings() -> tuple[type[Warning], ...]:
+    """statsmodels' perfect-separation warning, the only signal from 0.15 on."""
+    try:
+        from statsmodels.tools.sm_exceptions import PerfectSeparationWarning
+    except ImportError:
+        return ()
+    return (PerfectSeparationWarning,)
+
+
+def _separation_errors() -> tuple[type[Exception], ...]:
+    """statsmodels' perfect-separation error, where the installed version still raises one."""
+    try:
+        from statsmodels.tools.sm_exceptions import PerfectSeparationError
+    except ImportError:
+        return ()
+    return (PerfectSeparationError,)
+
+
+def _logistic_report(response, spec, prep, levels, terms, ordinal, codes, design, slices, fit, columns,
+                     unstable) -> ResponseFit:
+    """The fitted logistic model, its likelihood-ratio tests and its estimates (see _fit_logistic)."""
+    from scipy import stats
+
+    full = fit(columns)
+    counts = codes.value_counts().to_numpy(dtype=float)
+    llnull = float((counts * np.log(counts / counts.sum())).sum())
+    width = 1 if ordinal or len(levels) == 2 else len(levels) - 1
+    rows = []
+    for term in terms:
+        span = slices.get(_patsy_name(prep.piece(term)))
+        if span is None:
+            continue
+        dropped = columns[span]
+        kept = [c for c in columns if c not in dropped]
+        if ordinal and not [c for c in kept if c != "Intercept"]:
+            reduced_llf = llnull
+        else:
+            reduced_llf = float(fit(kept).llf)
+        chi2 = max(2.0 * (float(full.llf) - reduced_llf), 0.0)
+        df = len(dropped) * width
+        rows.append((term_label(term), df, chi2, float(stats.chi2.sf(chi2, df))))
+
+    labels = _labels(columns, terms, prep.piece, slices)
+    params, errors, z, p = full.params, full.bse, full.tvalues, full.pvalues
+    if isinstance(params, pd.DataFrame):  # multinomial: one column per level after the first
+        records = []
+        for j, column in enumerate(params.columns):
+            level = levels[j + 1]
+            for name in params.index:
+                records.append((f"{labels.get(name, name)} [{level}]", params.loc[name, column],
+                                errors.loc[name, column], z.loc[name, column], p.loc[name, column]))
+        estimates = pd.DataFrame(records, columns=["Term", "Estimate", "Std Error", "z Ratio", "Prob > |z|"])
+    else:
+        names = list(params.index)
+        estimates = pd.DataFrame({
+            "Term": [labels.get(n, n) for n in names],
+            "Estimate": params.to_numpy(), "Std Error": np.asarray(errors), "z Ratio": np.asarray(z),
+            "Prob > |z|": np.asarray(p),
+        })
+
+    probabilities = np.asarray(full.predict(design[columns].drop(columns=["Intercept"], errors="ignore")
+                                            if ordinal else design[columns]))
+    first = probabilities if probabilities.ndim == 1 else probabilities[:, 0]
+    df_model = len(full.params) - (len(levels) - 1 if ordinal else width)
+    llf = float(full.llf)
+    summary = {
+        "Observations": float(len(codes)),
+        "-LogLikelihood": -llf,
+        "RSquare (U)": 1 - llf / llnull if llnull else math.nan,
+        "AICc": float(-2 * llf + 2 * len(np.ravel(full.params)) * len(codes) / max(len(codes) - len(np.ravel(full.params)) - 1, 1)),
+    }
+    profile = pd.DataFrame(columns=["Factor", "Coded", "Value", "Predicted", "Lower", "Upper"])
+    if not ordinal and len(levels) == 2 and not unstable:
+        profile = _probability_profile(full, design, prep, spec.factors, terms)
+    note = ("Unstable: the effects separate the response levels (quasi-complete separation), so the "
+            "estimates grow without bound and their standard errors mean little. Remove effects - "
+            "keep the main effects, say - or add runs." if unstable else "")
+    from app.analysis import explain
+
+    matrix = np.column_stack([first, 1.0 - first]) if probabilities.ndim == 1 else probabilities
+    actual = np.asarray(levels, dtype=object)[np.asarray(codes, dtype=int)]
+    roc_curves, areas = explain.roc(actual, matrix, levels)
+    for level, area in areas.items():
+        summary[f"AUC ({level})"] = area
+    return ResponseFit(
+        response=response, terms=terms, removed=[], estimates=estimates,
+        effect_tests=_chi_square_table(rows, "L-R Chi-Square"),
+        anova=_whole_model_test(llf, llnull, int(df_model)),
+        summary=summary, lack_of_fit=None, rows=prep.data.index,
+        predicted=pd.Series(first, index=prep.data.index),
+        residuals=pd.Series((codes == 0).astype(float).to_numpy() - first, index=prep.data.index),
+        studentized=pd.Series(np.nan, index=prep.data.index),
+        coding=prep.codes, profile=profile,
+        personality=spec.personality, whole_title="Whole model test", p_column="Prob > ChiSq", levels=levels,
+        note=note, roc=roc_curves, auc=areas, confusion=explain.confusion(actual, matrix, levels),
+    )
+
+
+def _labels(columns: list[str], terms: list[Term], piece, slices) -> dict[str, str]:
+    """Design column names (patsy's) to the report's: A, A*B, Cat[level]."""
+    labels = {"Intercept": "Intercept"}
+    for term in terms:
+        span = slices.get(_patsy_name(piece(term)))
+        if span is None:
+            continue
+        for column in columns[span]:
+            label = term_label(term)
+            levels = [part.split("[S.", 1)[1].rstrip("]") for part in column.split(":") if "[S." in part]
+            labels[column] = label + ("[" + ",".join(levels) + "]" if levels else "")
+    return labels
+
+
+def _probability_profile(model, design: pd.DataFrame, prep: _Prepared, factors, terms) -> pd.DataFrame:
+    """A binary logistic model's probability of the first level along each continuous factor."""
+    from patsy.build import build_design_matrices
+
+    used = {name for term in terms for name in term}
+    held = {prep.safe[f.name]: (0.0 if f.kind == CONTINUOUS else prep.data[prep.safe[f.name]].mode().iloc[0])
+            for f in factors}
+    grid = np.linspace(-1.0, 1.0, PROFILE_POINTS)
+    pieces = []
+    for f in factors:
+        if f.kind != CONTINUOUS or f.name not in used:
+            continue
+        new = pd.DataFrame({column: [value] * len(grid) for column, value in held.items()})
+        new[prep.safe[f.name]] = grid
+        exog = build_design_matrices([design.design_info], new, return_type="dataframe")[0]
+        p = np.asarray(model.predict(exog))
+        centre, half = prep.codes[f.name]
+        pieces.append(pd.DataFrame({"Factor": f.name, "Coded": grid, "Value": centre + grid * half,
+                                    "Predicted": p, "Lower": np.nan, "Upper": np.nan}))
+    return pd.concat(pieces, ignore_index=True) if pieces else pd.DataFrame(
+        columns=["Factor", "Coded", "Value", "Predicted", "Lower", "Upper"])
+
+
+#: Points along each factor in the prediction profile.
+PROFILE_POINTS = get_constant("fit_model_profile_points", 21)
+
+
+def _profile(model, data: pd.DataFrame, factors: Sequence[Factor], safe: dict[str, str],
+             codes: dict[str, tuple[float, float]], terms: list[Term]) -> pd.DataFrame:
+    """The predicted response along each continuous factor still in the model, the others held."""
+    used = {name for term in terms for name in term}
+    held = {}
+    for f in factors:
+        column = safe[f.name]
+        held[column] = 0.0 if f.kind == CONTINUOUS else data[column].mode().iloc[0]
+    grid = np.linspace(-1.0, 1.0, PROFILE_POINTS)
+    pieces = []
+    for f in factors:
+        if f.kind != CONTINUOUS or f.name not in used:
+            continue
+        new = pd.DataFrame({column: [value] * len(grid) for column, value in held.items()})
+        new[safe[f.name]] = grid
+        with np.errstate(all="ignore"):
+            frame = model.get_prediction(new).summary_frame(alpha=0.05)
+        centre, half = codes[f.name]
+        pieces.append(pd.DataFrame({
+            "Factor": f.name,
+            "Coded": grid,
+            "Value": centre + grid * half,
+            "Predicted": frame["mean"].to_numpy(),
+            "Lower": frame["mean_ci_lower"].to_numpy(),
+            "Upper": frame["mean_ci_upper"].to_numpy(),
+        }))
+    columns = ["Factor", "Coded", "Value", "Predicted", "Lower", "Upper"]
+    return pd.concat(pieces, ignore_index=True) if pieces else pd.DataFrame(columns=columns)
+
+
+def _patsy_name(piece_text: str) -> str:
+    """The name patsy gives the term *piece_text* (it rewrites ``I(x**2)`` as ``I(x ** 2)``)."""
+    from patsy.desc import ModelDesc
+
+    return ModelDesc.from_formula("y ~ " + piece_text).rhs_termlist[-1].name()
+
+
+def _term_slices(model) -> dict[str, slice]:
+    """Each formula term's columns among the estimates.
+
+    Read from the formula's design (``data.design_info``, ``data.model_spec``
+    from statsmodels 0.15); rebuilt from the
+    formula and its data when a model carries none - a statsmodels build or
+    a model path that does not keep it ("'PandasData' object has no
+    attribute 'design_info'").
+    """
+    inner = model.model
+    info = (getattr(inner.data, "design_info", None) or getattr(inner.data, "model_spec", None)
+            or getattr(inner, "design_info", None))
+    if info is None:
+        from patsy.highlevel import dmatrix
+
+        formula = str(getattr(inner, "formula", "") or "")
+        frame = getattr(inner.data, "frame", None)
+        if "~" not in formula or frame is None:
+            return {}
+        info = cast(Any, dmatrix(formula.split("~", 1)[1], frame, return_type="dataframe")).design_info
+    return dict(info.term_name_slices)
+
+
+def _effect_tests(model, terms: list[Term], piece) -> pd.DataFrame:
+    """One F test per term, all its estimates at once (type III, sum contrasts).
+
+    A Wald F test that the term's coefficients are all zero: with sum
+    contrasts, the type III test anova_lm(typ=3) makes - computed here so
+    it needs no more of the model than its estimates and the term's columns.
+    """
+    slices = _term_slices(model)
+    n_params = len(model.params)
+    mse = float(model.mse_resid) if model.df_resid > 0 else math.nan
+    rows = []
+    for term in terms:
+        span = slices.get(_patsy_name(piece(term)))
+        width = (span.stop - span.start) if span is not None else 1
+        if span is None or model.df_resid <= 0:
+            rows.append((term_label(term), width, math.nan, math.nan, math.nan))
+            continue
+        restriction = np.zeros((width, n_params))
+        for row, column in enumerate(range(span.start, span.stop)):
+            restriction[row, column] = 1.0
+        try:
+            test = model.f_test(restriction)
+            f_ratio, p_value = float(np.squeeze(test.fvalue)), float(np.squeeze(test.pvalue))
+        except Exception:
+            f_ratio = p_value = math.nan
+        rows.append((term_label(term), width, f_ratio * width * mse, f_ratio, p_value))
+    tests = pd.DataFrame(rows, columns=["Term", "DF", "Sum of Squares", "F Ratio", "Prob > F"])
+    tests["LogWorth"] = -np.log10(tests["Prob > F"].clip(lower=1e-300))
+    return tests
+
+
+def _estimates(model, terms: list[Term], piece) -> pd.DataFrame:
+    """The parameter estimates, named by term (and level, for a nominal factor's)."""
+    slices = _term_slices(model)
+    names = list(model.params.index)
+    labels = {"Intercept": "Intercept"}
+    for term in terms:
+        span = slices.get(_patsy_name(piece(term)))
+        if span is None:
+            continue
+        for column in names[span]:
+            label = term_label(term)
+            # A nominal factor's level, as patsy names it: C(x2, Sum)[S.Blue]
+            levels = [part.split("[S.", 1)[1].rstrip("]") for part in column.split(":") if "[S." in part]
+            if levels:
+                label += "[" + ",".join(levels) + "]"
+            labels[column] = label
+    with np.errstate(all="ignore"):
+        table = pd.DataFrame(
+            {
+                "Term": [labels.get(n, n) for n in names],
+                "Estimate": model.params.to_numpy(),
+                "Std Error": model.bse.to_numpy() if model.df_resid > 0 else np.nan,
+                "t Ratio": model.tvalues.to_numpy() if model.df_resid > 0 else np.nan,
+                "Prob > |t|": model.pvalues.to_numpy() if model.df_resid > 0 else np.nan,
+            }
+        )
+    return table
+
+
+def _whole_model(model, y: pd.Series) -> tuple[pd.DataFrame, dict[str, float]]:
+    total = float(((y - y.mean()) ** 2).sum())
+    error = float(model.ssr)
+    df_model, df_error = int(model.df_model), int(model.df_resid)
+    model_ss = total - error
+    rows = [("Model", df_model, model_ss), ("Error", df_error, error), ("C. Total", df_model + df_error, total)]
+    anova = pd.DataFrame(rows, columns=["Source", "DF", "Sum of Squares"])
+    with np.errstate(all="ignore"):
+        anova["Mean Square"] = anova["Sum of Squares"] / anova["DF"].replace(0, np.nan)
+        f = anova.loc[0, "Mean Square"] / anova.loc[1, "Mean Square"] if df_error > 0 else math.nan
+    anova["F Ratio"] = [f, math.nan, math.nan]
+    anova["Prob > F"] = [float(model.f_pvalue) if df_error > 0 else math.nan, math.nan, math.nan]
+    anova.loc[2, "Mean Square"] = math.nan
+    summary = {
+        "RSquare": float(model.rsquared),
+        "RSquare Adj": float(model.rsquared_adj) if df_error > 0 else math.nan,
+        "Root Mean Square Error": math.sqrt(error / df_error) if df_error > 0 else math.nan,
+        "Mean of Response": float(y.mean()),
+        "Observations": float(len(y)),
+    }
+    return anova, summary
+
+
+def _lack_of_fit(model, data: pd.DataFrame, factor_columns: list[str]) -> pd.DataFrame | None:
+    """Lack of fit against the pure error of replicated runs; None without replicates."""
+    groups = data.groupby(factor_columns, dropna=False, sort=False)["y"]
+    pure = float(((data["y"] - groups.transform("mean")) ** 2).sum())
+    df_pure = int(len(data) - groups.ngroups)
+    df_lack = int(model.df_resid) - df_pure
+    if df_pure <= 0 or df_lack <= 0:
+        return None
+    lack = float(model.ssr) - pure
+    f = (lack / df_lack) / (pure / df_pure) if pure > 0 else math.inf
+    from scipy import stats
+
+    p = float(stats.f.sf(f, df_lack, df_pure)) if math.isfinite(f) else 0.0
+    return pd.DataFrame(
+        [
+            ("Lack Of Fit", df_lack, lack, lack / df_lack, f, p),
+            ("Pure Error", df_pure, pure, pure / df_pure, math.nan, math.nan),
+            ("Total Error", df_lack + df_pure, float(model.ssr), float(model.ssr) / (df_lack + df_pure), math.nan, math.nan),
+        ],
+        columns=["Source", "DF", "Sum of Squares", "Mean Square", "F Ratio", "Prob > F"],
+    )
+
+
+def ranked_effects(effects: pd.DataFrame, column: str) -> pd.DataFrame:
+    """The effect tests, the most important first by *column* (LogWorth, or the F ratio's p); missing last."""
+    return effects.sort_values(column, ascending=False, na_position="last")
+
+
+# ----------------------------------------------------------------------
+# The model kept for later (ID01)
+# ----------------------------------------------------------------------
+@SavedModel.register
+class LinearFormModel(SavedModel):
+    """A least-squares model that can score new rows: the statsmodels result (its formula and design as fitted) and
+    how each factor was coded - a continuous one centred and scaled to -1..+1, a nominal one by its levels. Gives the
+    Prediction and its 95 % prediction interval. A pickled kind: kept in the project, run where it is trusted."""
+
+    KIND = "linear"
+    FORM = PICKLED
+
+    def __init__(self, response: str, features: list[Feature], results: Any, safe: dict[str, str],
+                 codes: dict[str, tuple[float, float]], *, summary: dict[str, Any], alpha: float = 0.05) -> None:
+        super().__init__(response, features, response_kind=CONTINUOUS, summary=summary)
+        self.results = results
+        self.safe = dict(safe)
+        self.codes = {name: (float(c), float(h)) for name, (c, h) in codes.items()}
+        self.alpha = float(alpha)
+
+    def predict_matrix(self, frame: pd.DataFrame) -> pd.DataFrame:
+        percent = f"{round((1 - self.alpha) * 100):d}%"
+        columns = ["Prediction", f"Lower ({percent})", f"Upper ({percent})"]
+        if frame.empty:
+            return pd.DataFrame(columns=columns)
+        data = pd.DataFrame(index=frame.index)
+        for feature in self.features:
+            if feature.kind == NOMINAL:
+                data[self.safe[feature.name]] = frame[feature.name].astype("string")
+            else:
+                centre, half = self.codes[feature.name]
+                data[self.safe[feature.name]] = (pd.to_numeric(frame[feature.name], errors="coerce") - centre) / half
+        try:
+            table = self.results.get_prediction(data).summary_frame(alpha=self.alpha)
+            return pd.DataFrame({columns[0]: table["mean"], columns[1]: table["obs_ci_lower"],
+                                 columns[2]: table["obs_ci_upper"]}, index=frame.index)
+        except Exception:  # no degrees of freedom left for an interval: the prediction alone
+            return pd.DataFrame({columns[0]: self.results.predict(data)}, index=frame.index).reindex(columns=columns)
+
+
+def _kept_linear(response: str, model: Any, prep: _Prepared, spec: ModelSpec, summary: dict[str, Any]) -> Any:
+    """The least-squares *model* as a LinearFormModel, or None for a personality that has none (a plain OLS only)."""
+    if spec.personality not in ("standard", "stepwise") and not spec.reduce:
+        return None
+    import copy
+
+    features = []
+    for factor in spec.factors:
+        column = prep.safe[factor.name]
+        levels = sorted({str(v) for v in prep.data[column].dropna()}) if factor.kind == NOMINAL else []
+        features.append(Feature(factor.name, NOMINAL if factor.kind == NOMINAL else CONTINUOUS, levels))
+    try:
+        kept = copy.deepcopy(model)
+        kept.remove_data()  # the rows are not part of a model that scores new ones
+    except Exception:
+        return None
+    return LinearFormModel(response, features, kept, prep.safe, prep.codes,
+                           summary={key: value for key, value in summary.items() if isinstance(value, (int, float))},
+                           alpha=spec.alpha)

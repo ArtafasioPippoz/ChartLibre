@@ -1,0 +1,36 @@
+name: Wrong or doubtful result
+description: A fit, test, filter or statistic gives a different answer from another tool you trust.
+labels: ["accuracy"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Numerical accuracy matters more than anything else here. A difference from R, SciPy, statsmodels, Origin, Prism or a textbook is a bug report we want, even if you are not sure which side is right.
+  - type: input
+    id: operation
+    attributes:
+      label: Which operation or chart?
+      placeholder: "Fit Y by X > Exponential decay"
+    validations:
+      required: true
+  - type: textarea
+    id: ours
+    attributes:
+      label: What ChartLibre gives
+      description: Paste the numbers (parameters, p-values, statistics...) and the settings you used.
+    validations:
+      required: true
+  - type: textarea
+    id: theirs
+    attributes:
+      label: What the other tool gives
+      description: Which tool and version, the exact command or menu path, and its numbers.
+    validations:
+      required: true
+  - type: textarea
+    id: data
+    attributes:
+      label: The data
+      description: A small data set that reproduces it, pasted or attached (public data only).
+    validations:
+      required: true

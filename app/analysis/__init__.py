@@ -1,0 +1,41 @@
+"""The calculations behind the data operations, without any Qt.
+
+Each module takes plain arrays and parameters and returns plain results, so
+the same code runs behind a dialog, in a test, in a script or on a worker
+thread. A dialog's job is to collect the parameters and present the result;
+the arithmetic lives here. See todo.txt R-01.
+"""
+
+
+class Stopped(BaseException):
+    """A calculation was asked to stop before it finished.
+
+    Raised by an engine when its ``should_stop`` callback says so - how an
+    operation running in the background is stopped. A BaseException, like
+    KeyboardInterrupt, on purpose: the optimisers and searches catch
+    Exception around every evaluation of a model - a sample the model cannot
+    evaluate is "bad, move on" - and would swallow a stop request as one
+    more bad sample.
+    """
+
+
+#: What a numerical library raises for data it cannot work with: a degenerate
+#: or singular sample (ValueError, numpy's LinAlgError among them), overflow
+#: or a division by zero (ArithmeticError), a solver that does not converge
+#: (RuntimeError). Caught where such data is a normal outcome to report; a
+#: TypeError, AttributeError or NameError is a bug, and propagates (todo R-12).
+NUMERICAL_FAILURES: tuple[type[Exception], ...] = (ValueError, ArithmeticError, RuntimeError)
+
+
+def odd_window(value: int, n_values: int, minimum: int = 3) -> int:
+    """An odd window length of at least *minimum*, no longer than the *n_values* there are.
+
+    A centred window needs an odd length; Outliers' rolling median and
+    Smoothing's filters both use this one.
+    """
+    window = max(minimum, int(value))
+    if window % 2 == 0:
+        window += 1
+    if window > n_values:
+        window = n_values if n_values % 2 == 1 else n_values - 1
+    return max(minimum, window)

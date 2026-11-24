@@ -1,0 +1,117 @@
+#import "helpers.typ": *
+
+= The main window <main-window>
+
+#figure(
+  image("../screenshots/screenshot_main_window.png", width: 100%),
+  caption: [The main window: the navigation rail on the left, the page it
+  selects beside it, and the chart panel on the right.],
+)
+
+#note[
+  The figures in this manual are taken in the *macOS native* style. On Windows the same screens wear the Fluent style: the panels, the pages and every control are the same and in the same place, but the navigation rail is a column of square tiles and the window draws its own title bar. On Linux the window follows the desktop's Qt style.
+]
+
+The window has three parts: the *navigation rail* at the far left, the *page* it selects, and the *chart panel*, which takes the rest of the window. The page and the chart panel are separated by a splitter you can drag.
+
+== Navigation rail
+
+#defs(
+  [*Workspace*], [Collapses the page to give the chart panel the whole window; click another item of the rail — Tables, Analysis… — to bring a page back.],
+  [*File*], [Projects, demos, import, save and export (see below).],
+  [*Tables*], [The tables and saved queries of the project, with a preview of the selected one (see @data-chapter).],
+  [*New table*], [A blank table, a designed experiment or a table built from others (see @data-chapter).],
+  [*Chart properties*], [The settings of the selected figure, axis and series (see @customizing). A click on the chart selects what it landed on: outside the axes the figure, on an axis that axis (on its ticks or label, that coordinate), on a line, points or bar that series; Shift-click adds a series to those edited together.],
+  [*Analysis*], [Every analysis and data operation, a frame per category as in JMP's Analyze menu: New chart, Distribution, Fit Y by X, Fit Model, the models, the multivariate methods, the control chart, the curve and signal operations, and the design of experiments (see @data-operations and @analysis-chapter).],
+  [*Guided analysis*], [Search, quick answers and suggestions, starting from what you want to find out (see @guided-analysis).],
+  [*Project*], [The project's information, history, database information and log - and, with *Developer mode* on in Settings, the tools for extending ChartLibre (see below).],
+)
+
+On Windows and Linux the rail ends with *Settings* and a *Menu* button (Undo, Help, Credits, ...); on macOS these live in the menu bar.
+
+== The File page
+
+#defs(
+  [*Project*], [*New* and *Open* a project.],
+  [*Save*], [*Save* and *Save As…* (see @getting-started), and *Export…*, the project report — the whole project as one HTML or PDF document (see @output).],
+  [*Demo*], [*Load demo* (see @demos).],
+  [*Open recent*], [The projects opened recently. Click one to see its preview, author, dates, size and the start of its notes — read from the file without opening it — then *Open* it (or double-click). *Clear list* forgets them.],
+)
+
+=== Project info
+
+*Project info…* — at the top of the *Project* page — holds what a project says about itself, kept inside the `.dhub` file so that it travels with it:
+
+#defs(
+  [*Author*], [Who made it. Remembered on the computer, and filled in for every new project.],
+  [*Created*], [When the project was created (for a project older than this record, when its file was).],
+  [*Notes*], [What the project is about, where the data came from, what is left to do.],
+  [*References*], [The bibliographic sources of the data and methods: a citation, and optionally a DOI and a web link each. Reports list them with working links.],
+  [*Preview*], [A picture of the project's first figure, `<project>.preview.png` beside the project file, drawn again each time the project is saved. The Load demo window shows the demos' previews the same way.],
+)
+
+The window opens by itself when a project is created, and when a project is saved without an author or notes — once per session: close it to fill it in another time.
+
+== The Project page
+
+#defs(
+  [*Project information*], [*Project info…*: author, dates, notes and references (see above).],
+  [*History*], [*Project history…* lists every operation applied in the project, oldest first: what was run, on which series, with which settings (see @history).],
+  [*Database information*], [The project file's path and size, everything SQLite reports about it (tables and rows, page usage and how much *Optimize DB* would reclaim, journal mode, SQLite version, file dates), and every table with its row count and import link. Exporting, renaming and refreshing a table from its link are in its menu on the Tables page.],
+  [*Optimize DB*], [Checks the project file for problems and offers to fix those it can — axes and series left from a deleted figure, series and import links of a table that is gone, the tables ChartLibre made for a chart since deleted (a table you made or imported is never touched; Undo puts everything back) — then compacts it: it can shrink a project noticeably after large tables were deleted.],
+)
+
+Then the *Log viewer* (see @log). With *Developer mode* on in Settings, the page also holds the tools for extending ChartLibre — *Edit Localization*, *Data Operation Builder*, *Function Creator*, *Renderer Helper* (see @advanced); they are hidden otherwise, being for people who add to the app rather than use it.
+
+== The chart panel
+
+The chart panel shows one *figure* at a time. The strip above the chart names the current figure: click it for the list of every figure of the project, or use the ‹ and › arrows to step to the previous or next one. Creating a chart, or running an operation that adds a figure, shows the new figure. Above the chart, a toolbar offers Matplotlib's navigation tools and shows the pointer's coordinates:
+
+#defs(
+  [*Home*], [Back to the initial view.],
+  [*Back / Forward*], [Step through the zoom and pan history.],
+  [*Pan*], [Drag to move the view; right-drag to zoom each axis separately.],
+  [*Zoom*], [Drag a rectangle to zoom in.],
+  [*Zoom to fit*], [Bring the whole chart back within the panel.],
+)
+
+Resting the pointer on a point shows a label with its series name and its x and y values. Very large series are *downsampled* for drawing (see the Figure options); the data itself is never changed.
+
+=== The chart menu
+
+Right-clicking the chart opens its menu:
+
+#defs(
+  [*Reload*], [Redraw the chart from the project, discarding zoom and pan.],
+  [*Copy*], [Copy the chart as a picture to the clipboard.],
+  [*Save figure*], [Save the chart as PNG, JPEG, SVG or PDF, at the figure's own DPI (see @output).],
+  [*Export report…*], [This chart alone, with its notes, as an HTML or PDF report (see @output).],
+  [*Export view as CSV…*], [The rows actually on screen now — after zoom and downsampling — as a CSV file, each row tagged with its axis and series.],
+  [*Templates*], [*Save this look as a template…*, *Apply a template…*, *Delete a template…* (see @templates).],
+  [*Crosshair*], [A guide line under the pointer, shared by every axis of the figure.],
+  [*Link zoom/pan across axes*], [Zooming or panning the x range of one axis applies it to every axis of the figure — for stacked time series.],
+  [*Select points*], [Turns the pointer into a rectangle selection tool (see below).],
+  [*Live updates*], [Redraws the chart on a timer, for a table that an external process keeps filling.],
+  [*Delete*], [Deletes the figure, after confirmation.],
+)
+
+Right-clicking *inside an axis* adds actions for the exact point clicked: *Add vertical line at x = …*, *Add horizontal line at y = …*, *Add annotation here…*, and *Measure from here* / *Measure to here*.
+
+=== Measuring, annotating and selecting points
+
+*Measure from here* and then *Measure to here* record a two-click measurement — distance, Δx, Δy and slope — kept on the chart like a reference line. Annotations, reference lines and measurements each have a tab in *Overlay properties* (in Chart properties) where they can be edited by exact values or deleted. An annotation can also be dragged on the chart.
+
+With *Select points* on, drag a rectangle over the chart: every point it covers, from every series of that axis, is selected. The menu then offers:
+
+#defs(
+  [*Hide N selected point(s)*], [Removes the points from the chart without touching the table: the series' query is narrowed to exclude them. Undo brings them back.],
+  [*New series from selection*], [Adds a series holding only the selected points — to isolate a peak or a cluster for its own analysis.],
+)
+
+The rows behind the selected points are also marked `Selected` in their table: every other chart of that table rings the same points, and the Data preview tints those rows and scrolls to the first. Rows marked `Selected` in the preview are ringed on the charts the same way. This works for series that read a table directly, or through a saved query that keeps the table's rows, with numeric x and y; a grouped or joined query has no rows of one table to point at.
+
+Every table has a hidden row id column, `_id`, numbered in row order when the table is created. It is what lets a point name its row: a series' query selects it, and your own queries can too (`SELECT "_id", ... FROM ...`). It is not shown in the table views or the column lists, and not exported.
+
+== Window size
+
+Every window of ChartLibre opens fully visible on the screen it appears on, shrinking if needed to fit a small laptop display. Each dialog remembers its size and position between sessions.

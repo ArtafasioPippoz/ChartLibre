@@ -1,0 +1,751 @@
+"""Application preferences, in one place the user can reach.
+
+These values all lived in ``config.json`` and could only be changed by editing
+it by hand - which meant that in practice they were never changed, and that a
+typo in one of them showed up as an unstyled window or an untranslated menu
+with nothing to point at.
+
+Everything here is machine-level and so belongs in user.json rather than in
+a .dhub file: it describes this installation, not any particular figure.
+
+Nothing here applies live, and the dialog says so rather than leaving the user
+to wonder.
+
+The style used to preview itself as you moved through the list, because seeing
+a stylesheet is the point of choosing it.  That had to go: applying a style
+re-polishes every widget in the application, and ``QApplication.setStyle`` for
+a Qt plugin destroys and rebuilds the QStyle underneath them all.  When one of
+those widgets is a ``QWebEngineView`` - the HTML results pane, when PySide6's
+addons are installed - the repolish reaches into Chromium's own delegate and
+takes the process down with a segmentation fault, in ``CrBrowserMain``, below
+anything Python can catch.
+
+The language never applied live either, for a duller reason: menus and labels
+read the catalogue when they are built, so switching mid-session translates
+whatever is constructed next and leaves the rest in the old language.
+"""
+from __future__ import annotations
+
+from collections.abc import Sequence
+from typing import Any
+
+from PySide6.QtCore import QSize, Qt
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import (
+    QSizePolicy,
+    QCheckBox,
+    QComboBox,
+    QFormLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
+    QPushButton,
+    QSpinBox,
+    QStackedWidget,
+    QVBoxLayout,
+    QWidget,
+)
+
+from app.data.repo._common import SQL_GUARD_KEY, sql_guard_enabled
+from app.workpad.engine import WORKPAD_FILTER_KEY, workpad_filter_enabled
+from app.dialogs.two_panels_dialog_base import PanelDialog
+from app.logs.logger import applogger
+from app.plugin_api.charts.render_figure import DEFAULT_MPL_STYLE_KEY
+from app.styles.style import (
+    APP_APPEARANCES,
+    CONFIG_APP_APPEARANCE,
+    CONFIG_APP_STYLE,
+    CardFrame,
+    tile_icon,
+    available_app_styles,
+    configure_combo_width,
+    load_icon,
+    resolve_app_appearance,
+    resolve_app_style,
+    stdSizeAndlayout,
+)
+from app.utils.config import (
+    CLEAR_LOG_KEY,
+    MPLSTYLES_DIR,
+    clear_log_at_start,
+    get_language,
+    get_value,
+    set_value,
+)
+from app.utils.i18n import AUTO_LANGUAGE, available_languages, platform_language, tr
+
+#: Config key and choices for the default chart export format.  The chart
+#: panel's save dialog offers all of them whatever is chosen here; this only
+#: decides which one it starts on, which is the one most saves use.
+CONFIG_SAVE_FORMAT: str = "save_format"
+
+#: Extension and file-dialog filter per format, in the order the save dialog
+#: lists them.  One table, so the dialog's choices and the save dialog's
+#: filters cannot come to disagree about what is supported.
+SAVE_FORMAT_FILTERS: dict[str, tuple[str, str]] = {
+    "PNG": ("png", "PNG Image (*.png)"),
+    "JPEG": ("jpg", "JPEG Image (*.jpg *.jpeg)"),
+    "SVG": ("svg", "SVG Vector (*.svg)"),
+    "PDF": ("pdf", "PDF Document (*.pdf)"),
+}
+SAVE_FORMATS: tuple[str, ...] = tuple(SAVE_FORMAT_FILTERS)
+DEFAULT_SAVE_FORMAT: str = "PNG"
+
+#: Language codes have no display names in the catalogue, so they are named
+#: here.  A code with no entry shows as itself rather than being hidden: a new
+#: locale folder should appear in this list the moment it is added, named or
+#: not.
+#:
+#: Deliberately not translated: a language is listed under its own name, so
+#: that someone who has landed in a language they cannot read can still find
+#: the one they can.
+LANGUAGE_NAMES: dict[str, str] = {
+    # Lingue già presenti (corretto 'pol' in 'pl')
+    "en": "English",
+    "it": "Italiano",
+    "fr": "Français",
+    "es": "Español",
+    "de": "Deutsch",
+    "pt": "Português",
+    "zh": "中文",
+    "pl": "Polski",
+    "ja": "日本語",
+    "ko": "한국어",
+    "ru": "Русский",
+    "ar": "العربية",
+    "hi": "हिन्दी",
+    "nl": "Nederlands",
+    "tr": "Türkçe",
+    "sv": "Svenska",
+}
+
+
+def language_choices() -> list[tuple[str, str]]:
+    """Return the (stored value, label) pairs for the language combo.
+
+    Auto comes first and is the honest default: it stores a sentinel rather
+    than the resolved code, so a machine that later changes its locale follows
+    it instead of staying on whatever it happened to be the day the setting
+    was saved.  The label names the language it currently resolves to, because
+    "Auto" on its own does not tell the user what they are about to get.
+    """
+    resolved = platform_language()
+    auto_label = tr("Auto") + f" ({LANGUAGE_NAMES.get(resolved, resolved)})"
+    return [
+        (AUTO_LANGUAGE, auto_label),
+        *((code, LANGUAGE_NAMES.get(code, code)) for code in available_languages()),
+    ]
+
+
+def normalized_save_format(value: object) -> str:
+    """Return a supported export format, defaulting rather than raising."""
+    clean = str(value or "").strip().upper()
+    if clean in ("JPG", "JPEG"):
+        return "JPEG"
+    return clean if clean in SAVE_FORMATS else DEFAULT_SAVE_FORMAT
+
+
+def _mpl_style_choices() -> list[tuple[str, str] | None]:
+    """The default-chart-style choices, grouped with separators.
+
+    ChartLibre's own default first, then Matplotlib's; then the shipped
+    folders - Apps, Journals - and any other folder after them, one group
+    each. A style is stored as its path under mplstyles without the
+    extension and shown as "Apps.jmp-classic", the way the Figure panel
+    names them.
+    """
+    paths = sorted(
+        path.relative_to(MPLSTYLES_DIR).with_suffix("")
+        for path in MPLSTYLES_DIR.rglob("*.mplstyle")
+    ) if MPLSTYLES_DIR.exists() else []
+
+    def entry(path: Any) -> tuple[str, str]:
+        return path.as_posix(), path.as_posix().replace("/", ".")
+
+    default = [path for path in paths if path.as_posix() == "ChartLibreDefault"]
+    top_level = [path for path in paths if len(path.parts) == 1 and path not in default]
+    folders: dict[str, list[Any]] = {}
+    for path in paths:
+        if len(path.parts) > 1:
+            folders.setdefault(path.parts[0], []).append(path)
+    # Apps, then Journals, then whatever else is there.
+    order = sorted(folders, key=lambda name: ({"apps": 0, "journals": 1}.get(name.lower(), 2), name.lower()))
+
+    choices: list[tuple[str, str] | None] = [entry(path) for path in default]
+    choices.append(("", tr("Matplotlib default")))
+    choices.extend(entry(path) for path in top_level)
+    for name in order:
+        choices.append(None)
+        choices.extend(entry(path) for path in folders[name])
+    return choices
+
+
+def _tile_icon(icon_id: str, colour: str, size: int = 24) -> QIcon:
+    """*icon_id*'s glyph on a lit tile of *colour* (style.tile_icon), as System Settings' sidebar."""
+    return tile_icon(load_icon(icon_id), colour, size)
+
+
+class _EditableChoice(QComboBox):
+    """A drop-down list that can also be typed in, read and set like a line (text, setText, setPlaceholderText)."""
+
+    def __init__(self, parent: QWidget, choices: Sequence[str], empty_label: str = "") -> None:
+        super().__init__(parent)
+        self.setEditable(True)
+        self.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+        self.addItem("")  # empty: the setting's default (or, for the fast model, the model above)
+        self.addItems(list(choices))
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        del empty_label
+
+    def text(self) -> str:
+        return self.currentText()
+
+    def setText(self, value: str) -> None:  # noqa: N802 - the QLineEdit name this stands in for
+        self.setCurrentText(value)
+
+    def setPlaceholderText(self, text: str) -> None:  # noqa: N802
+        line = self.lineEdit()
+        if line is not None:
+            line.setPlaceholderText(text)
+
+
+class SettingsDialog(PanelDialog):
+    """Read and write the machine-level preferences in user.json.
+
+    Nothing is written until Save, and nothing is applied until the next
+    start: a dialog that persisted on every keystroke would make Cancel a lie,
+    and one that applied a style live crashed the application - see the module
+    docstring.
+    """
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent, title=tr("Settings"), icon=load_icon("settings"), size="medium")
+
+        # Only to preselect the combo: nothing here changes the running app.
+        self._entry_style = resolve_app_style()
+        self._entry_appearance = resolve_app_appearance()
+        # The stored setting, not the resolved language: a user who chose Auto
+        # must find Auto selected when they reopen this, not the code it
+        # happened to resolve to on this machine.
+        self._entry_language = get_language()
+
+        # A titled frame per group, each with its own form; their label
+        # columns are given one width at the end, so the fields line up from
+        # one frame to the next as they did in a single form.
+        forms: list[QFormLayout] = []
+        card = self
+        form = self._section(tr("Appearance"), forms)
+
+        # Automatic, then the stylesheets shipped in app/styles: nothing else.
+        self._style_combo = self._combo(
+            card,
+            [(key, tr(label)) for key, label in available_app_styles()],
+            self._entry_style,
+        )
+        form.addRow(tr("App style"), self._style_combo)
+
+        # Light or dark, for whichever style: "Same as the system" follows the desktop's own setting.
+        self._appearance_combo = self._combo(
+            card,
+            [(key, tr(label)) for key, label in APP_APPEARANCES],
+            self._entry_appearance,
+        )
+        form.addRow(tr("Theme"), self._appearance_combo)
+
+        self._language_combo = self._combo(
+            card,
+            language_choices(),
+            self._entry_language,
+        )
+        form.addRow(tr("Language"), self._language_combo)
+
+        form = self._section(tr("Charts"), forms)
+
+        self._format_combo = self._combo(
+            card,
+            [(name, name) for name in SAVE_FORMATS],
+            normalized_save_format(get_value(CONFIG_SAVE_FORMAT)),
+        )
+        form.addRow(tr("Default export format"), self._format_combo)
+
+        self._mpl_style_combo = self._combo(
+            card,
+            _mpl_style_choices(),
+            str(get_value(DEFAULT_MPL_STYLE_KEY) or ""),
+        )
+        self._mpl_style_combo.setToolTip(tr("The chart style of every figure that has none of its own."))
+        form.addRow(tr("Default chart style"), self._mpl_style_combo)
+
+        # Every report's "How to read this" box (H-04): on for a new install - students first.
+        from app.plugin_api import reading_guide
+        from app.plugin_api.data_operations import next_steps
+
+        form = self._section(tr("Reports"), forms)
+        self._how_to_read_check = QCheckBox(tr("A \"How to read this\" box in every report"), card)
+        self._how_to_read_check.setToolTip(tr("Under each report's main result, two sentences on what its key "
+                                              "numbers - a p-value, R², a Cpk - say about these data."))
+        self._how_to_read_check.setChecked(reading_guide.enabled())
+        form.addRow(tr("Explain"), self._how_to_read_check)
+        self._what_next_check = QCheckBox(tr("A \"What next?\" section at the end of every table analysis"), card)
+        self._what_next_check.setToolTip(tr("Links that open the analysis that usually comes next, on the same "
+                                            "table and columns."))
+        self._what_next_check.setChecked(next_steps.enabled())
+        form.addRow(tr("Next"), self._what_next_check)
+        from app.utils import recent_analyses
+
+        self._recent_count = QSpinBox(card)
+        self._recent_count.setRange(0, recent_analyses.MAX_COUNT)
+        self._recent_count.setValue(recent_analyses.count())
+        self._recent_count.setToolTip(tr("How many of the analyses opened last the navigation bar lists under "
+                                         "Recent; 0 hides the section."))
+        form.addRow(tr("Recent analyses"), self._recent_count)
+
+        self._build_assistant_section(card, forms)
+
+        # Extension packs (app.utils.packs): more analyses, chart types and file readers, each on or off.
+        from app.widgets.packs_panel import PacksPanel
+
+        form = self._section(tr("Packages"), forms)
+        self._packs_panel = PacksPanel(card)
+        form.addRow(self._packs_panel)
+
+        # What most people never change, closed - unless the SQL guard is off, the one thing in it that is
+        # not as it came and matters (todo H-10). Developer mode alone does not open it: the Developer menu
+        # says it, and opened it made the window taller than a laptop's screen.
+        form = self._section(tr("Advanced"), forms)
+        # Red: switching it off lets typed SQL change the database.
+        self._sql_guard_check = QCheckBox(
+            tr("Refuse SQL that would change the database"), card
+        )
+        self._sql_guard_check.setProperty("destructive", True)
+        self._sql_guard_check.setToolTip(
+            tr(
+                "Checked when a query is saved or typed, and when a project is "
+                "opened: UPDATE, DELETE, DROP and the like are refused. Charts "
+                "are never slowed down by it."
+            )
+        )
+        self._sql_guard_check.setChecked(sql_guard_enabled())
+        form.addRow(tr("SQL guard"), self._sql_guard_check)
+        # Check and compact the open project's database (it was a button of the Project page and of the Database menu).
+        from PySide6.QtWidgets import QPushButton
+
+        self._optimize_button = QPushButton(tr("Optimize the project's database..."), card)
+        self._optimize_button.setToolTip(tr("Check the open project's database, offer to fix what is wrong, then "
+                                            "compact the file."))
+        self._optimize_button.setEnabled(callable(getattr(parent, "_on_optimize_db", None))
+                                         and getattr(parent, "_repo", None) is not None)
+        self._optimize_button.clicked.connect(lambda: parent._on_optimize_db())  # type: ignore[union-attr]
+        form.addRow(tr("Database"), self._optimize_button)
+        # The SymPy workpad's filter (it was a box on the workpad itself).
+        self._workpad_filter_check = QCheckBox(tr("Filter unsafe commands"), card)
+        self._workpad_filter_check.setProperty("destructive", True)  # off: imports, eval and open may run
+        self._workpad_filter_check.setToolTip(tr("Refuse imports, eval, exec, open and names starting with _ - "
+                                                 "against mistakes and lines pasted from the web, not a sandbox."))
+        self._workpad_filter_check.setChecked(workpad_filter_enabled())
+        form.addRow(tr("SymPy workpad"), self._workpad_filter_check)
+
+        # The application log: read here (it was a page of the Project panel), emptied at start if wanted.
+        form = self._section(tr("Log"), forms)
+        self._clear_log_check = QCheckBox(tr("Clear the log at start"), card)
+        self._clear_log_check.setToolTip(tr("The log file is emptied each time the application starts, so it holds "
+                                            "the current session only."))
+        self._clear_log_check.setChecked(clear_log_at_start())
+        form.addRow(tr("At start"), self._clear_log_check)
+        from PySide6.QtWidgets import QPushButton
+
+        view_log = QPushButton(tr("View the log…"), card)
+        view_log.setToolTip(tr("Read the application log, copy it or empty it."))
+        view_log.clicked.connect(self._view_log)
+        form.addRow("", view_log)
+
+        note = QLabel(tr("The style and the language are applied the next time the app starts."), self)
+        note.setProperty("muted", True)
+        note.setWordWrap(True)
+        self.body_layout.addWidget(note, 0)
+        _align_labels(forms)
+
+        self.add_action("save", self._save)
+
+    #: Each section's page, as macOS's System Settings draws one: (English title) -> (icon, tile colour, sentence).
+    SECTIONS: dict[str, tuple[str, str, str]] = {
+        "Appearance": ("nav_chart_options", "#3b82f6", "The application's style and language."),
+        "Charts": ("chart_from_columns", "#22a06b", "How new charts look and how they are exported."),
+        "Reports": ("project_report", "#e8860c", "What every analysis report adds to its results."),
+        "Assistant": ("nav_assistant", "#8b5cf6", "The AI assistant: its provider, its key and what it may do."),
+        "Packages": ("packs", "#c2410c", "Extension packs: more analyses, chart types and file readers."),
+        "Advanced": ("settings", "#8a8f98", "The SQL guard, the SymPy workpad's filter and the database."),
+        "Log": ("log_viewer", "#6b7280", "The application log: read it, copy it or empty it."),
+    }
+
+    def _pages(self) -> tuple[QListWidget, QStackedWidget]:
+        """The sidebar of sections and the page beside it, made once, on the first section."""
+        if getattr(self, "_sidebar", None) is None:
+            self._sidebar = QListWidget(self)
+            self._sidebar.setObjectName("settingsSidebar")
+            self._sidebar.setIconSize(QSize(24, 24))
+            self._sidebar.setFixedWidth(200)
+            self._sidebar.setSpacing(2)
+            self._sidebar.setFrameShape(QListWidget.Shape.NoFrame)
+            # System Settings' sidebar: a light grey column, the chosen row a rounded accent.
+            self._sidebar.setStyleSheet(
+                "QListWidget#settingsSidebar { background: rgba(127, 127, 127, 0.08); border-radius: 10px;"
+                " padding: 6px; }"
+                "QListWidget#settingsSidebar::item { padding: 4px 6px; border-radius: 7px; }"
+                "QListWidget#settingsSidebar::item:selected { background: palette(highlight);"
+                " color: palette(highlighted-text); }")
+            self._stack = QStackedWidget(self)
+            self._sidebar.currentRowChanged.connect(self._stack.setCurrentIndex)
+            row = QHBoxLayout()
+            row.setSpacing(16)
+            row.addWidget(self._sidebar)
+            row.addWidget(self._stack, 1)
+            self.body_layout.addLayout(row, 1)
+        return self._sidebar, self._stack
+
+    def _section(self, title: str, forms: list[QFormLayout]) -> QFormLayout:
+        """A section: a row of the sidebar, and its page - a heading with its icon and sentence, then the form."""
+        sidebar, stack = self._pages()
+        # The section by its English name: the callers pass the title translated (so the catalogue sweep
+        # finds it), and looked up as given every section of a translated interface fell back to the gear
+        # and lost its sentence.
+        name = tr(title)
+        title = next((key for key in self.SECTIONS if title in (key, tr(key))), title)
+        icon_id, colour, sentence = self.SECTIONS.get(title, ("settings", "#8a8f98", ""))
+        tile = _tile_icon(icon_id, colour)
+        item = QListWidgetItem(tile, name)
+        item.setSizeHint(QSize(180, 36))
+        sidebar.addItem(item)
+
+        page = QWidget(stack)
+        column = QVBoxLayout(page)
+        column.setContentsMargins(0, 0, 0, 0)
+        column.setSpacing(12)
+        heading = CardFrame(page, f"settings{title.replace(' ', '')}Heading")
+        heading_layout = heading.layout()
+        picture = QLabel(heading)
+        picture.setPixmap(_tile_icon(icon_id, colour, 56).pixmap(56, 56))
+        picture.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        heading_layout.addWidget(picture)
+        caption = QLabel(name, heading)
+        caption.setProperty("role", "title")
+        caption.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        heading_layout.addWidget(caption)
+        if sentence:
+            words = QLabel(tr(sentence), heading)
+            words.setProperty("muted", True)
+            words.setWordWrap(True)
+            words.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            heading_layout.addWidget(words)
+        column.addWidget(heading)
+        box = CardFrame(page, f"settings{title.replace(' ', '')}Card")
+        form = QFormLayout()
+        stdSizeAndlayout(form)
+        box.layout().addLayout(form)
+        column.addWidget(box)
+        column.addStretch(1)
+        stack.addWidget(page)
+        if sidebar.currentRow() < 0:
+            sidebar.setCurrentRow(0)
+        forms.append(form)
+        return form
+
+    # ------------------------------------------------------------------
+    # Construction helpers
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _combo(
+        parent: QWidget, choices: Sequence[tuple[str, str] | None], current: str
+    ) -> QComboBox:
+        """Return a combo of (stored value, shown label), on *current*.
+
+        A ``None`` entry is a separator line.
+
+        The stored value is carried as item data rather than being recovered
+        from the label, so translating a label cannot change what is written
+        to user.json.
+        """
+        combo = QComboBox(parent)
+        for choice in choices:
+            if choice is None:
+                combo.insertSeparator(combo.count())
+                continue
+            value, label = choice
+            combo.addItem(label, value)
+
+        index = combo.findData(current)
+        combo.blockSignals(True)
+        try:
+            combo.setCurrentIndex(index if index >= 0 else 0)
+        finally:
+            combo.blockSignals(False)
+        configure_combo_width(combo)
+        return combo
+
+    @staticmethod
+    def _value(combo: QComboBox) -> str:
+        return str(combo.currentData() or "")
+
+    # ------------------------------------------------------------------
+    # Behaviour
+    # ------------------------------------------------------------------
+    def _view_log(self) -> None:
+        """The log viewer, over this dialog (it also opens from the status bar)."""
+        from app.dialogs.log_viewer_dialog import LogViewerDialog
+
+        LogViewerDialog(self).exec()
+
+    def _build_assistant_section(self, card: QWidget, forms: list[QFormLayout]) -> None:
+        """The assistant: its provider, the key (kept by the system), what it may do and what it may send."""
+        from app.ai import settings as assistant
+        from app.scanners.ai_provider_scanner import ai_providers, provider_class
+
+        # Folded like Advanced: most people never open it.
+        form = self._section(tr("Assistant"), forms)
+        self._assistant_in_navigation = QCheckBox(tr("Show the Assistant in the navigation bar"), card)
+        self._assistant_in_navigation.setChecked(assistant.in_navigation())
+        form.addRow(tr("Navigation"), self._assistant_in_navigation)
+        names = [str(entry["value"]) for entry in ai_providers]
+        self._assistant_provider = self._combo(card, [(name, name) for name in names], assistant.provider_name())
+        form.addRow(tr("Provider"), self._assistant_provider)
+        self._assistant_key_names = {str(entry["value"]): provider_class(entry).KEY_NAME for entry in ai_providers}
+        self._assistant_key = QLineEdit(card)
+        self._assistant_key.setEchoMode(QLineEdit.EchoMode.PasswordEchoOnEdit)
+        key_name = self._assistant_key_names.get(assistant.provider_name(), "")
+        self._assistant_key_loaded = assistant.api_key(key_name) if key_name else ""
+        self._assistant_key.setText(self._assistant_key_loaded)
+        if assistant.keychain_available():
+            self._assistant_key.setToolTip(tr("Kept by the system's keychain on this computer - never in a file "
+                                              "or a project - and sent only to the provider."))
+        else:
+            self._assistant_key.setEnabled(False)
+            self._assistant_key.setPlaceholderText(tr("pip install keyring to keep it here"))
+            self._assistant_key.setToolTip(tr("Without the keyring package the key is read from the environment "
+                                              "(ANTHROPIC_API_KEY for Claude)."))
+        # Test: the smallest request the provider answers, with the key as typed - before it is saved.
+        self._assistant_check = QPushButton(tr("Try"), card)
+        self._assistant_check.setToolTip(tr("Sends the provider the smallest request it answers, with this key: "
+                                            "whether the key, the account's credit and the connection work."))
+        self._assistant_check.clicked.connect(self._check_assistant_key)
+        self._assistant_check_task: Any = None
+        self._assistant_check_result = QLabel(card)
+        self._assistant_check_result.setWordWrap(True)
+        self._assistant_check_result.setProperty("muted", True)
+        self._assistant_check_result.hide()
+        key_field = QWidget(card)
+        key_column = QVBoxLayout(key_field)
+        key_column.setContentsMargins(0, 0, 0, 0)
+        key_row = QHBoxLayout()
+        key_row.setContentsMargins(0, 0, 0, 0)
+        key_row.addWidget(self._assistant_key, 1)
+        key_row.addWidget(self._assistant_check)
+        key_column.addLayout(key_row)
+        key_column.addWidget(self._assistant_check_result)
+        form.addRow(tr("API key"), key_field)
+        # Each provider's own settings (Ollama's address and models...): the rows of the one chosen shown.
+        self._assistant_form = form
+        self._assistant_options: dict[str, dict[str, tuple[Any, str]]] = {}
+        for entry in ai_providers:
+            cls = provider_class(entry)
+            if cls is None:  # its file went, or did not load (logged): no settings to show for it
+                continue
+            rows: dict[str, tuple[Any, str]] = {}
+            reader = cls()
+            for spec in cls.OPTIONS:
+                value = reader.option(spec.key)
+                choices = reader.option_choices(spec.key)
+                # A drop-down list of what the provider has (Ollama's installed models), still typeable.
+                edit = _EditableChoice(card, choices, spec.default) if choices else QLineEdit(card)
+                edit.setText(value)
+                edit.setPlaceholderText(spec.default)
+                edit.setToolTip(tr(spec.tooltip))
+                form.addRow(tr(spec.label), edit)
+                rows[spec.key] = (edit, value)
+            self._assistant_options[str(entry["value"])] = rows
+        self._assistant_provider.currentIndexChanged.connect(self._assistant_provider_changed)
+        self._assistant_provider_changed()
+        self._assistant_permission = self._combo(card, [(key, tr(label)) for key, label in assistant.PERMISSIONS],
+                                                 assistant.permission())
+        self._assistant_permission.setToolTip(tr("What the assistant may do. Every change to the data is confirmed "
+                                                 "first and can be undone."))
+        form.addRow(tr("May"), self._assistant_permission)
+        self._assistant_consent = QCheckBox(tr("Send questions and data to the provider"), card)
+        self._assistant_consent.setToolTip(tr("The assistant sends your questions, the tables' columns and "
+                                              "summaries - and sample rows, below - to the provider. Nothing is "
+                                              "sent before this is checked."))
+        self._assistant_consent.setChecked(assistant.consented())
+        form.addRow(tr("Data"), self._assistant_consent)
+        self._assistant_rows = QSpinBox(card)
+        self._assistant_rows.setRange(0, 200)
+        self._assistant_rows.setValue(assistant.sample_rows())
+        self._assistant_rows.setSpecialValueText(tr("None"))
+        self._assistant_rows.setToolTip(tr("How many rows of a table the assistant may send as an example."))
+        form.addRow(tr("Sample rows"), self._assistant_rows)
+
+    def _assistant_provider_changed(self) -> None:
+        """A provider that needs no key (Demo): the key and its test are not for it."""
+        from app.ai import settings as assistant
+
+        chosen = self._value(self._assistant_provider)
+        needs_key = bool(self._assistant_key_names.get(chosen))
+        self._assistant_key.setEnabled(needs_key and assistant.keychain_available())
+        options = getattr(self, "_assistant_options", {})
+        self._assistant_check.setEnabled(needs_key or bool(options.get(chosen)))
+        self._assistant_check_result.hide()
+        for name, rows in options.items():
+            for edit, _value in rows.values():
+                self._assistant_form.setRowVisible(edit, name == chosen)
+
+    def _check_assistant_key(self) -> None:
+        """Try the key on a worker thread; say what came of it under the field."""
+        import shiboken6
+
+        from app.ai import settings as assistant
+        from app.scanners.ai_provider_scanner import ai_providers, provider_class
+        from app.utils.background import run_in_background
+
+        name = self._value(self._assistant_provider)
+        entry = next((entry for entry in ai_providers if entry["value"] == name), None)
+        cls = provider_class(entry) if entry is not None else None
+        if cls is None:
+            return
+        provider = cls()
+        # Its settings as typed, not saved yet: Try is for them too.
+        provider.overrides = {key: edit.text().strip() for key, (edit, _value)
+                              in self._assistant_options.get(name, {}).items()}
+        key = (self._assistant_key.text().strip() or assistant.api_key(provider.KEY_NAME)) if provider.KEY_NAME else ""
+
+        def say(text: str) -> None:
+            if shiboken6.isValid(self._assistant_check_result):  # the dialog may be closed by now
+                self._assistant_check_result.setText(text)
+                self._assistant_check_result.show()
+                self._assistant_check.setEnabled(True)
+                self._grow_to_fit()
+
+        # Asked once, and off the GUI thread when the answer comes from the network (a local server).
+        problem = "" if provider.CHECKS_NETWORK else provider.unavailable()
+        if problem or (provider.KEY_NAME and not key):
+            say(tr(problem) if problem else tr("Type the key first."))
+            return
+        self._assistant_check.setEnabled(False)
+        self._assistant_check_result.setText(tr("Trying the key...") if provider.KEY_NAME else tr("Trying..."))
+        self._assistant_check_result.show()
+        self._grow_to_fit()
+        self._assistant_check_task = run_in_background(
+            lambda _cancel: (provider.CHECKS_NETWORK and provider.unavailable()) or provider.check(key),
+            lambda problem: say(tr(problem) if problem else (
+                tr("The key works: {provider} answered.") if provider.KEY_NAME else tr("{provider} answered.")
+            ).format(provider=name)),
+            lambda error: say(str(error) or type(error).__name__),
+        )
+
+    def _grow_to_fit(self) -> None:
+        """Taller when a wrapped line appeared since it opened: a shown window does not grow for one itself."""
+        layout = self.layout()
+        if layout is None:
+            return
+        layout.activate()
+        height = (layout.totalHeightForWidth(self.width()) if layout.hasHeightForWidth()
+                  else layout.totalSizeHint().height())
+        if height > self.height():
+            self.resize(self.width(), height)
+
+    def _save_assistant(self) -> None:
+        from app.ai import settings as assistant
+
+        assistant.set_in_navigation(self._assistant_in_navigation.isChecked())
+        provider = self._value(self._assistant_provider)
+        assistant.save(provider=provider, permission_level=self._value(self._assistant_permission),
+                       consent=self._assistant_consent.isChecked(), rows=self._assistant_rows.value(),
+                       assistant_mode=assistant.mode())
+        key = self._assistant_key.text().strip()
+        key_name = self._assistant_key_names.get(provider, "")
+        if key_name and self._assistant_key.isEnabled() and key != self._assistant_key_loaded:
+            assistant.set_api_key(key_name, key)
+        from app.scanners.ai_provider_scanner import ai_providers, provider_class
+        from app.utils.config import set_value
+
+        for entry in ai_providers:
+            cls = provider_class(entry)
+            for option_key, (edit, loaded) in self._assistant_options.get(str(entry["value"]), {}).items():
+                if edit.text().strip() != loaded:
+                    set_value(cls.option_key(option_key), edit.text().strip())
+
+    def _save(self) -> None:
+        """Write every preference, then close.
+
+        Written one key at a time through ``set_value``, which re-reads and
+        re-writes the whole document each time.  That is slower than assembling
+        one write and entirely deliberate: this dialog is not the only writer
+        of user.json - dialog geometry is saved on close - and a single
+        blind write would drop whatever else changed while it was open.
+        """
+        style_key = self._value(self._style_combo)
+        restart_for = []
+        appearance = self._value(self._appearance_combo)
+        if style_key != self._entry_style or appearance != self._entry_appearance:
+            restart_for.append(tr("look"))
+        if self._packs_panel.restart_needed():
+            restart_for.append(tr("packs"))
+        set_value(CONFIG_APP_STYLE, style_key)
+        set_value(CONFIG_APP_APPEARANCE, appearance)
+        set_value("language", self._value(self._language_combo))
+        set_value(CONFIG_SAVE_FORMAT, self._value(self._format_combo))
+        set_value(DEFAULT_MPL_STYLE_KEY, self._value(self._mpl_style_combo))
+        set_value(SQL_GUARD_KEY, bool(self._sql_guard_check.isChecked()))
+        set_value(WORKPAD_FILTER_KEY, bool(self._workpad_filter_check.isChecked()))
+        from app.plugin_api import reading_guide
+        from app.plugin_api.data_operations import next_steps
+
+        set_value(reading_guide.SETTING_KEY, bool(self._how_to_read_check.isChecked()))
+        set_value(next_steps.SETTING_KEY, bool(self._what_next_check.isChecked()))
+        from app.utils import recent_analyses
+
+        set_value(recent_analyses.COUNT_KEY, int(self._recent_count.value()))
+        set_value(CLEAR_LOG_KEY, bool(self._clear_log_check.isChecked()))
+        self._save_assistant()
+        self._packs_panel.save()
+
+        applogger.info(
+            "Settings saved: style=%s language=%s format=%s",
+            style_key,
+            self._value(self._language_combo),
+            self._value(self._format_combo),
+        )
+        self.accept()
+        if restart_for and self._ask_restart(", ".join(restart_for)):
+            from app.utils.restart import restart
+
+            restart()
+
+    def _ask_restart(self, what: str) -> bool:
+        """The changes apply at the next start: restart now, or later. Two buttons that say what they do."""
+        from PySide6.QtWidgets import QMessageBox
+
+        from app.utils.messages import message
+
+        title, text = message("settings.restart").translated(what=what)
+        box = QMessageBox(self.parent())
+        box.setIcon(QMessageBox.Icon.Question)
+        box.setWindowTitle(title)
+        box.setText(text)
+        now = box.addButton(tr("Restart now"), QMessageBox.ButtonRole.AcceptRole)
+        box.addButton(tr("Later"), QMessageBox.ButtonRole.RejectRole)
+        box.setDefaultButton(now)
+        box.exec()
+        return box.clickedButton() is now
+
+
+def _align_labels(forms: list[QFormLayout]) -> None:
+    """One label width for every form, so their fields start at the same x."""
+    labels = []
+    for form in forms:
+        for row in range(form.rowCount()):
+            item = form.itemAt(row, QFormLayout.ItemRole.LabelRole)
+            if item is not None and item.widget() is not None:
+                labels.append(item.widget())
+    width = max((label.sizeHint().width() for label in labels), default=0)
+    for label in labels:
+        label.setMinimumWidth(width)

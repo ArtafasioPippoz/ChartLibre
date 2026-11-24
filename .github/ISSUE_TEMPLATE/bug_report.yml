@@ -1,0 +1,61 @@
+name: Bug report
+description: Something crashes, looks wrong, or does not work as expected.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you. ChartLibre is early software and reports from real use are the most valuable thing you can give it.
+        Please do not attach private or confidential data.
+  - type: textarea
+    id: steps
+    attributes:
+      label: What did you do?
+      description: Step by step, from a fresh start. Which chart type, data operation or dialog?
+      placeholder: |
+        1. Import the attached CSV
+        2. Create a Scatter chart with x = Time, y = Signal
+        3. Data > Fit > ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect, and what happened instead?
+      description: Paste any error text. Screenshots are welcome.
+    validations:
+      required: true
+  - type: textarea
+    id: data
+    attributes:
+      label: A small example, if you can share one
+      description: Drag in a trimmed-down `.dhub` project or a few rows of data that reproduce it.
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - macOS (Apple chip)
+        - macOS (Intel)
+        - Windows 11
+        - Windows 10
+        - Linux
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: ChartLibre version
+      description: Shown in the Credits window, e.g. 0.2.0.
+      placeholder: "0.2.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: How did you install it?
+      options:
+        - Ready-made download (Mac .dmg / Windows installer)
+        - Source folder (ChartLibre.app / ChartLibre.sh)
+        - From source with my own Python

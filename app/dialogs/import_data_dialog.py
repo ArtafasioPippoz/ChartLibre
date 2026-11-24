@@ -1,0 +1,1293 @@
+"""Dialog for importing CSV/Excel files into database tables.
+
+Handles source selection, read options (delimiter, encoding, header, skipped
+rows), per-column type overrides, and a live preview of the resulting table.
+The import itself is delegated to ``app.utils.import_runner`` so that a saved
+link can later be refreshed through exactly the same code path.
+"""
+from __future__ import annotations
+
+from app.styles.style import TidyMenu
+
+from app.styles.style import field_label
+import re
+from collections.abc import Callable
+from dataclasses import dataclass
+from pathlib import Path
+
+import pandas as pd
+from PySide6.QtCore import (
+    QAbstractTableModel,
+    QModelIndex,
+    QPersistentModelIndex,
+    Qt,
+    QTimer,
+)
+from PySide6.QtWidgets import (
+    QApplication,
+    QBoxLayout,
+    QCheckBox,
+    QComboBox,
+    QFileDialog,
+    QFormLayout,
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QMenu,
+    QScrollArea,
+    QSpinBox,
+    QTableWidget,
+    QTableWidgetItem,
+    QVBoxLayout,
+    QWidget,
+)
+
+from app.data.sqlite_repo import SqliteRepo
+from app.dialogs.two_panels_dialog_base import PanelDialog, SettingsTableDialog
+from app.logs.logger import applogger
+
+# -----------------------------------------------------------------------------
+# Reading helpers
+#
+# The actual reading of files and URLs lives in app.utils.data_sources
+# URL - lives in app.utils.data_sources, which has no Qt import: it is what
+# app.utils.import_runner.refresh_link calls into headlessly for "Update
+# link", and this dialog calls into live for the preview.  Imported here
+# (rather than qualified as data_sources.whatever at each call site) so that
+# existing external imports of these names from this module - the test suite
+# and app.main_window.main_window - keep working unchanged.
+# -----------------------------------------------------------------------------
+from app.plugin_api.importers.base import ALL_DATASETS, ImportedData
+from app.styles.style import (
+    TitledCard,
+    action_presentation,
+    create_action_button,
+    fit_spin_width,
+    load_icon,
+    mark_editor_panel,
+    mark_icon_only,
+    stdSizeAndlayout,
+)
+from app.utils import import_cleaning
+from app.utils.coercion import to_numbers
+from app.utils.config import (
+    get_import_data_dialog_config,
+    set_import_data_dialog_config,
+)
+from app.utils.data_sources import (
+    CLIPBOARD_SOURCE_NAME,
+    IMPORT_FILE_FILTER,
+    WebDataSource,
+    add_user_web_source,
+    file_datasets,
+    file_importer,
+    filename_from_url,
+    is_valid_web_url,
+    load_web_data_sources,
+    read_any_file,
+    read_clipboard_text,
+    read_imported,
+    read_web_url,
+    remove_user_web_source,
+    transpose_delimited_text,
+)
+from app.utils.i18n import _
+from app.utils.messages import show_message
+from app.widgets.pair_grid import PairGrid
+from app.widgets.table_preview import TablePreviewPanel
+
+#: The curated "Web source" quick-pick catalogue - see
+#: web_sources.json (in the ChartLibre folder) for the actual entries and
+#: app.utils.data_sources.WebDataSource for the shape of one.  Kept as a
+#: module-level name here too since the test suite and (previously) this
+#: dialog both import it from this module.
+
+
+# -----------------------------------------------------------------------------
+# Preview model
+# -----------------------------------------------------------------------------
+
+
+def local_date_order() -> str:
+    """This computer's own date order, for dates whose numbers do not tell (01/02/2024)."""
+    from PySide6.QtCore import QLocale
+
+    pattern = QLocale.system().dateFormat(QLocale.FormatType.ShortFormat).lower()
+    positions = {key: pattern.find(key) for key in ("d", "m", "y")}
+    if positions["y"] == 0:
+        return import_cleaning.YEAR_FIRST
+    if 0 <= positions["d"] < positions["m"]:
+        return import_cleaning.DAY_FIRST
+    return import_cleaning.MONTH_FIRST
+
+
+class DataFramePreviewModel(QAbstractTableModel):
+    """Lightweight preview model for DataFrames."""
+
+    def __init__(self, df: pd.DataFrame, *, max_rows: int = 500, max_cols: int = 200, parent=None) -> None:
+        super().__init__(parent)
+        self._df = df
+        self._cols = list(df.columns)[:max_cols]
+        self._nrows = min(len(df), max_rows)
+
+    def rowCount(self, parent: QModelIndex|QPersistentModelIndex = QModelIndex()) -> int:
+        return 0 if parent.isValid() else self._nrows
+
+    def columnCount(self, parent: QModelIndex|QPersistentModelIndex = QModelIndex()) -> int:
+        return 0 if parent.isValid() else len(self._cols)
+
+    def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole):
+        if role != Qt.ItemDataRole.DisplayRole:
+            return None
+        if orientation == Qt.Orientation.Horizontal:
+            return str(self._cols[section]) if 0 <= section < len(self._cols) else None
+        return str(section + 1)
+
+    def data(self, index: QModelIndex|QPersistentModelIndex, role: int = Qt.ItemDataRole.DisplayRole):
+        if not index.isValid() or role != Qt.ItemDataRole.DisplayRole:
+            return None
+        r = index.row()
+        c = index.column()
+        if r >= self._nrows or c >= len(self._cols):
+            return None
+        col = self._cols[c]
+        val = self._df.iloc[r][col]
+        return "" if pd.isna(val) else str(val)
+
+
+class _AddWebSourceDialog(PanelDialog):
+    """Collects a name, a URL and an optional note for one quick-pick entry.
+
+    Small enough, and specific enough to this one caller, to live next to
+    ``ImportDataDialog`` rather than in its own module - the same reasoning
+    ``DataFramePreviewModel`` above already follows.
+    """
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        # Its own height: three fields in a 360 px window left half of it empty.
+        super().__init__(parent, title=_("Add source"), size=None)
+        self.setMinimumWidth(460)
+        self.name = ""
+        self.url = ""
+        self.description = ""
+
+        form = QFormLayout()
+        stdSizeAndlayout(form)
+        self.add_card(_("Web source"), "addWebSourceCard").layout().addLayout(form)
+
+        self._name_field = QLineEdit(self)
+        stdSizeAndlayout(self._name_field)
+        form.addRow(_("Name"), self._name_field)
+
+        self._url_field = QLineEdit(self)
+        self._url_field.setPlaceholderText(_("https://example.com/data.csv"))
+        stdSizeAndlayout(self._url_field)
+        form.addRow(_("URL"), self._url_field)
+
+        self._description_field = QLineEdit(self)
+        stdSizeAndlayout(self._description_field)
+        form.addRow(_("Description"), self._description_field)
+
+        self.body_layout.addStretch(1)
+        self.add_action("apply", self._on_accept)
+        self.add_action("close", self.reject)
+
+    def _on_accept(self) -> None:
+        name = self._name_field.text().strip()
+        url = self._url_field.text().strip()
+        if not name or not url:
+            show_message(self, "import.web_source_incomplete")
+            return
+        if not is_valid_web_url(url):
+            show_message(self, "import.web_invalid_url")
+            return
+        self.name = name
+        self.url = url
+        self.description = self._description_field.text().strip()
+        self.accept()
+
+
+# -----------------------------------------------------------------------------
+# Import dialog
+# -----------------------------------------------------------------------------
+
+
+@dataclass(slots=True)
+class ImportResult:
+    table_name: str
+    rows: int
+    cols: int
+
+
+class ImportDataDialog(SettingsTableDialog):
+    """Import data from files or clipboard into the current SQLite database."""
+
+    SQLITE_TYPES = [
+        "Ignore",
+        "INTEGER",
+        "REAL",
+        "TEXT",
+        "BLOB",
+        "NUMERIC",
+        "DATE",
+        "TIME",
+        "DATETIME",
+    ]
+
+    ENCODINGS = [
+        "auto",
+        "utf-8",
+        "utf-8-sig",
+        "cp1252",
+        "latin-1",
+        "utf-16",
+    ]
+
+    def __init__(self, repo: SqliteRepo, parent: QWidget | None = None, *, web: bool = False) -> None:
+        """*web*: the dialog for a web address (New table > Import from the web) rather than a file."""
+        web_mode = web
+        super().__init__(
+            parent,
+            title=_("Import data"),
+            icon=load_icon("import"),
+            settings_width=420,
+            # A column of titled frames on the window's own ground, not one
+            # "Settings" frame with those frames on grey inside it (B-08).
+            sections=True,
+        )
+        self.settings_frame = self._settings_column
+        self._repo = repo
+        self.import_result: ImportResult | None = None
+        self._df: pd.DataFrame | None = None
+
+        # Which of the sources the preview and the import read from. Every
+        # path that sets one must clear the others, or the dialog shows one
+        # source's data under another's name - which is exactly what pasting
+        # after opening a file used to do.
+        self._source_mode: str = "none"  # none|file|clipboard|web
+        self._clipboard_text: str = ""
+        #: The clipboard is read with rows and columns swapped.
+        self._clipboard_transposed: bool = False
+        self._path: str = ""
+        self._picked_web_source: WebDataSource | None = None
+
+        # Size and root padding come from the shared dialog shell.
+
+        cfg = get_import_data_dialog_config()
+        self._desired_sheet = str(cfg.get("sheet", "") or "").strip()
+
+        # ---------------- Left panel ----------------
+        # The side panels' own layout: a title above each card (TitledCard),
+        # not inside it, and each row short enough for the panel's width -
+        # a row of five controls ran off the right edge and was cut off,
+        # since the panel does not scroll sideways.
+        left = QWidget(self.settings_frame)
+        left_layout = QVBoxLayout(left)
+        stdSizeAndlayout(left_layout)
+
+        source = self._build_source_card(left, cfg)
+        left_layout.addWidget(source)
+
+        # -- What the file says about its rows: the instrument, the setup, the units (closed; shown
+        # only for a file whose importer gives any). Kept with the table's information on OK.
+        self._metadata_card = TitledCard(left, _("Metadata"), "importMetadataCard", collapsible=True, collapsed=True)
+        self._metadata_text = QLabel("", self._metadata_card.card)
+        self._metadata_text.setWordWrap(True)
+        self._metadata_text.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        self._metadata_card.card.layout().addWidget(self._metadata_text)
+        self._metadata_card.setVisible(False)
+        left_layout.addWidget(self._metadata_card)
+
+        web = self._build_web_card(left)
+        left_layout.addWidget(web)
+        # One source per way in (B-09): a file here, the web from its own
+        # button on the New table page - the clipboard has its own too.
+        source.setVisible(not web_mode)
+        web.setVisible(web_mode)
+
+        self._read_card = self._build_read_card(left, cfg)
+        left_layout.addWidget(self._read_card)
+
+        left_layout.addWidget(self._build_values_card(left, cfg))
+
+        left_layout.addWidget(self._build_columns_card(left, cfg), 1)
+
+        # Scrolls rather than sets the dialog's minimum height: stacked, the
+        # cards needed 826 px, more than a 1366 x 768 laptop's screen has
+        # (the Columns card still takes whatever height is spare).
+        scroll = QScrollArea(self.settings_frame)
+        scroll.setObjectName("importSettingsScroll")
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        # The window's ground shows through: no grey band behind the frames.
+        scroll.setStyleSheet("QScrollArea#importSettingsScroll, QScrollArea#importSettingsScroll > QWidget > QWidget "
+                             "{ background: transparent; }")
+        left.setAutoFillBackground(False)
+        scroll.setWidget(left)
+        self.settings_frame.layout().addWidget(scroll, 1)
+
+        # ---------------- Right: preview ----------------
+        preview_card = self.add_content_card(_("Preview"), "importPreviewCard", stretch=1)
+        self._preview = TablePreviewPanel(preview_card, self._repo)
+        self._preview.refresh.connect(self._schedule_preview)
+        preview_card.layout().addWidget(self._preview, 1)
+
+        self._btn_ok = self.add_action("apply", self._on_accept, default=True)
+        self.add_action("close", self.reject)
+
+        # ---------------- Events & shortcuts ----------------
+
+        self._connect_option_signals()
+
+        self.file_name:str=""
+
+    def _build_source_card(self, left: QWidget, cfg: dict) -> TitledCard:
+        """The Source card: the file and, for a workbook, its sheet."""
+        # -- Source: a file (the clipboard has its own button on the New table page); Excel's sheet.
+        source = TitledCard(left, _("Source"), "importSourceCard")
+        source_layout = source.card.layout()
+        src_row = QHBoxLayout()
+        stdSizeAndlayout(src_row)
+        # Named for the source rather than the verb:
+        # "Open" and "Paste" indicate where the data comes from.
+        create_action_button(
+            parent=source.card, action_id="open", action=self._on_browse, layout=src_row,
+            presentation=(
+                action_presentation("open")[0], _("Browse…"),
+                _("Choose the file: CSV or other delimited text, Excel, JSON - or another program's "
+                  "or an instrument's: SPSS, Stata, MATLAB, Touchstone, SPICE, JCAMP-DX..."),
+            ),
+        )
+        src_row.addStretch(1)
+        source_layout.addLayout(src_row)
+        # Which reader a file other than text or Excel is read with (app/importers).
+        self._reader_label = QLabel("", source.card)
+        self._reader_label.setProperty("muted", True)
+        self._reader_label.setWordWrap(True)
+        self._reader_label.setVisible(False)
+        source_layout.addWidget(self._reader_label)
+        #: What the importer said about the file last read; None for text and Excel.
+        self._imported: ImportedData | None = None
+
+        # Excel worksheet selector (shown only for Excel files)
+        form = QFormLayout()
+        stdSizeAndlayout(form)
+        self._sheet = QComboBox(source.card)
+        self._sheet.setEnabled(False)
+        self._sheet.setVisible(False)
+        self._sheet.setToolTip(_("The worksheet, or the part of the file to read: a MATLAB variable, "
+                                 "a Prism table, a SPICE plot..."))
+        stdSizeAndlayout(self._sheet)
+        form.addRow(_("Sheet"), self._sheet)
+        self._sheet_label = form.labelForField(self._sheet)
+        if self._sheet_label is not None:
+            self._sheet_label.setVisible(False)
+        source_layout.addLayout(form)
+        return source
+
+    def _build_web_card(self, left: QWidget) -> TitledCard:
+        """The Web card: a quick-pick source or an address, then Fetch."""
+        # -- Web: a quick-pick source or an address, then Fetch.
+        web = TitledCard(left, _("Web"), "importWebCard")
+        web_layout = web.card.layout()
+        pick_row = QHBoxLayout()
+        stdSizeAndlayout(pick_row)
+        # A push button with a menu, not a combo: QMenu.addSection groups the
+        # catalogue by category, and the list is not held to a combo popup's
+        # fixed height.
+        self._web_source_button = create_action_button(
+            parent=web.card, action_id="web_sources", action=None, layout=pick_row
+        )
+        self._web_source_button.setEnabled(True)
+        self._web_source_menu = TidyMenu(self._web_source_button)
+        self._web_source_button.setMenu(self._web_source_menu)
+        self._rebuild_web_source_menu()
+        pick_row.addStretch(1)
+        self._btn_add_web_source = create_action_button(
+            parent=web.card, action_id="web_source_add", action=self._on_add_web_source, layout=pick_row
+        )
+        mark_icon_only(self._btn_add_web_source)
+        self._btn_delete_web_source = create_action_button(
+            parent=web.card,
+            action_id="web_source_delete",
+            action=self._on_delete_web_source,
+            layout=pick_row,
+        )
+        mark_icon_only(self._btn_delete_web_source)
+        self._btn_delete_web_source.setEnabled(False)
+        web_layout.addLayout(pick_row)
+
+        url_row = QHBoxLayout()
+        stdSizeAndlayout(url_row)
+        self._url = QLineEdit(web.card)
+        self._url.setPlaceholderText(_("https://example.com/data.csv"))
+        stdSizeAndlayout(self._url)
+        url_row.addWidget(self._url, 1)
+        create_action_button(
+            parent=web.card, action_id="fetch_url", action=self._on_fetch_url, layout=url_row
+        )
+        web_layout.addLayout(url_row)
+        return web
+
+    def _build_read_card(self, left: QWidget, cfg: dict) -> TitledCard:
+        """The Read options card: delimiter, encoding, header and rows to skip."""
+        # -- Read options: closed - the delimiter and the encoding are found
+        # by themselves, the header nearly always is the first row (todo H-10).
+        read = TitledCard(left, _("Read options"), "importReadCard", collapsible=True, collapsed=True)
+        options_form = QFormLayout()
+        stdSizeAndlayout(options_form)
+
+        self._has_header = QCheckBox(_("First row is header"), read.card)
+        self._has_header.setChecked(bool(cfg.get("header", True)))
+        options_form.addRow("", self._has_header)
+
+        self._skip_rows = QSpinBox(read.card)
+        self._skip_rows.setRange(0, 1_000_000)
+        self._skip_rows.setValue(int(cfg.get("skip_rows", 0) or 0))
+        self._skip_rows.setKeyboardTracking(False)
+        self._skip_rows.setAccelerated(True)
+        fit_spin_width(self._skip_rows)
+
+        self._skip_last = QSpinBox(read.card)
+        self._skip_last.setRange(0, 1_000_000)
+        self._skip_last.setValue(int(cfg.get("skip_last", 0) or 0))
+        self._skip_last.setKeyboardTracking(False)
+        self._skip_last.setAccelerated(True)
+        fit_spin_width(self._skip_last)
+
+        # Delimiter dropdown (editable)
+        self._delim = QComboBox(read.card)
+        self._delim.setEditable(True)
+        self._delim.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+        self._delim.addItem(_("auto"), userData=None)
+        self._delim.addItem(",", userData=",")
+        self._delim.addItem(";", userData=";")
+        # The escape sequence itself, which reads the same in every language.
+        self._delim.addItem("\\t", userData="\t")
+        self._delim.addItem("|", userData="|")
+        self._delim.addItem(_("space"), userData=" ")
+        saved_delim = (cfg.get("delim", "") or "").strip()
+        self._delim.setCurrentIndex(0)
+        if saved_delim:
+            self._delim.setEditText(saved_delim)
+        stdSizeAndlayout(self._delim)
+
+        # Encoding dropdown (editable)
+        self._encoding = QComboBox(read.card)
+        self._encoding.setEditable(True)
+        self._encoding.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+        for e in self.ENCODINGS:
+            self._encoding.addItem(e)
+        saved_enc = (cfg.get("encoding", "auto") or "auto").strip() or "auto"
+        self._encoding.setCurrentText(saved_enc)
+        stdSizeAndlayout(self._encoding)
+
+        read.card.layout().addLayout(options_form)
+        # Two to a row (PairGrid drops to one when the panel is too narrow):
+        # four rows of one short field each were most of this card's height,
+        # and the dialog's minimum height was taller than a laptop's screen.
+        read.card.layout().addWidget(
+            PairGrid(
+                [
+                    (QLabel(_("Skip top rows"), read.card), self._skip_rows),
+                    (QLabel(_("Skip last rows"), read.card), self._skip_last),
+                    (QLabel(_("Delimiter"), read.card), self._delim),
+                    (QLabel(_("Encoding"), read.card), self._encoding),
+                ],
+                read.card,
+            )
+        )
+        return read
+
+    def _build_values_card(self, left: QWidget, cfg: dict) -> TitledCard:
+        """The Values card: missing-value codes and how the dates are written."""
+        # -- Values: what is missing, how the dates are written (closed; for every source, the
+        # importers' files too - unlike Read options).
+        values = TitledCard(left, _("Values"), "importValuesCard", collapsible=True, collapsed=True)
+        values_form = QFormLayout()
+        stdSizeAndlayout(values_form)
+        self._date_order = QComboBox(values.card)
+        for key, label in import_cleaning.DATE_ORDERS:
+            self._date_order.addItem(_(label), key)
+        self._date_order.setCurrentIndex(max(0, self._date_order.findData(str(cfg.get("dates") or "auto"))))
+        self._date_order.setToolTip(_("How the dates are written. Auto reads it from the values - a first number "
+                                      "above 12 is a day - and, when they do not tell, follows this computer's "
+                                      "own date order."))
+        stdSizeAndlayout(self._date_order)
+        values_form.addRow(field_label(_("Dates")), self._date_order)
+        self._date_format = QLineEdit(str(cfg.get("date_format") or ""), values.card)
+        self._date_format.setPlaceholderText("DD.MM.YYYY HH:mm")
+        self._date_format.setToolTip(_("The dates' format: YYYY year, MM month, DD day, HH:mm:ss time, MMM month name "
+                                       "(or strftime codes: %Y, %m, %d, %H:%M:%S, %b)."))
+        values_form.addRow(field_label(_("Format")), self._date_format)
+        self._missing_codes = QLineEdit(", ".join(cfg.get("missing", import_cleaning.DEFAULT_MISSING)), values.card)
+        self._missing_codes.setToolTip(_("Values that mean \"no value\", separated by commas: they are imported "
+                                         "as empty cells."))
+        values_form.addRow(field_label(_("Missing values")), self._missing_codes)
+        self._empty_missing = QCheckBox(_("Empty or blank text is missing"), values.card)
+        self._empty_missing.setChecked(bool(cfg.get("empty_is_missing", True)))
+        values_form.addRow("", self._empty_missing)
+        values.card.layout().addLayout(values_form)
+        self._sync_date_format()
+        self._date_order.currentIndexChanged.connect(lambda _i: (self._sync_date_format(), self._schedule_preview()))
+        self._date_format.editingFinished.connect(self._schedule_preview)
+        self._missing_codes.editingFinished.connect(self._schedule_preview)
+        self._empty_missing.toggled.connect(lambda _on: self._schedule_preview())
+        return values
+
+    def _build_columns_card(self, left: QWidget, cfg: dict) -> TitledCard:
+        """The New table card: its name, and the columns the preview found with the type each will get."""
+        # -- The new table: its name, then the columns the preview found and the type each will get.
+        columns = TitledCard(left, _("New table"), "importColumnsCard")
+        name_form = QFormLayout()
+        stdSizeAndlayout(name_form)
+        self._table = QLineEdit(columns.card)
+        self._table.setText(str(cfg.get("table", "")))
+        stdSizeAndlayout(self._table)
+        name_form.addRow(_("Name"), self._table)
+        columns.card.layout().addLayout(name_form)
+        self._col_table = QTableWidget(columns.card)
+        self._col_table.setColumnCount(2)
+        self._col_table.setHorizontalHeaderLabels([_("Column"), _("Type")])
+        self._col_table.verticalHeader().setVisible(False)
+        self._col_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self._col_table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
+        self._col_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self._col_table.horizontalHeader().setStretchLastSection(True)
+        self._col_table.setMinimumHeight(96)
+        mark_editor_panel(self._col_table)
+        columns.card.layout().addWidget(self._col_table, 1)
+        # How much was read: the rows and columns the table will have.
+        self._size_label = QLabel("", columns.card)
+        self._size_label.setProperty("muted", True)
+        columns.card.layout().addWidget(self._size_label)
+        columns_layout = columns.layout()
+        if isinstance(columns_layout, QBoxLayout):
+            columns_layout.setStretch(columns_layout.count() - 1, 1)
+        return columns
+
+    def _connect_option_signals(self) -> None:
+        """Every read option re-reads the preview, a moment after it changes (the timer that waits for that)."""
+        if hasattr(self, "_sheet"):
+            self._sheet.currentIndexChanged.connect(lambda _=0: self._on_sheet_changed())  # type: ignore
+
+        # Auto preview ONLY when browse is selected
+        self._has_header.stateChanged.connect(self._schedule_preview)  # type: ignore
+        self._skip_rows.valueChanged.connect(self._schedule_preview)  # type: ignore
+        self._skip_last.valueChanged.connect(self._schedule_preview)  # type: ignore
+        self._delim.currentIndexChanged.connect(self._schedule_preview)  # type: ignore
+        self._delim.editTextChanged.connect(self._schedule_preview)  # type: ignore
+        self._encoding.currentIndexChanged.connect(self._schedule_preview)  # type: ignore
+        self._encoding.editTextChanged.connect(self._schedule_preview)  # type: ignore
+
+        self._preview_timer = QTimer(self)
+        self._preview_timer.setSingleShot(True)
+        self._preview_timer.timeout.connect(self._refresh_preview)  # type: ignore
+
+    # ------------------------------------------------------------------
+    # Preview
+    # ------------------------------------------------------------------
+    def _schedule_preview(self) -> None:
+        """Re-read the current source after the options settle.
+
+        Pasted text is re-read too. Header, delimiter and the two skip counts
+        describe how to *parse* a source, not where it came from, so a paste
+        that landed with the wrong delimiter used to be unfixable without
+        pasting it again.
+        """
+        if self._source_mode == "none":
+            return
+        self._preview_timer.start(250)
+
+    def _current_delim(self) -> str | None:
+        data = self._delim.currentData()
+        if data is not None:
+            return str(data)
+        txt = (self._delim.currentText() or "").strip()
+        if not txt or txt.lower() == "auto":
+            return None
+        if txt.lower() in ("tab", "\\t"):
+            return "\t"
+        if txt.lower() == "space":
+            return " "
+        return txt
+
+    def _current_encoding(self) -> str | None:
+        txt = (self._encoding.currentText() or "").strip()
+        if not txt or txt.lower() == "auto":
+            return None
+        return txt
+
+    def _is_excel_path(self, path: str) -> bool:
+        ext = (Path(path).suffix or "").lower()
+        return ext in (".xlsx", ".xlsm", ".xls")
+
+    def _current_sheet(self) -> str | None:
+        if not hasattr(self, "_sheet"):
+            return None
+        if self._sheet.isHidden() or self._sheet.count() == 0:
+            return None
+        data = self._sheet.currentData()
+        return str(data) if data else (str(self._sheet.currentText() or "") or None)
+
+    def _set_sheet_row_visible(self, visible: bool) -> None:
+        self._sheet.setVisible(visible)
+        self._sheet.setEnabled(visible)
+        self._sheet_label.setVisible(visible)
+
+    def _update_sheet_choices(self, path: str) -> None:
+        """The Sheet row: a workbook's sheets, or the parts an importer finds - "Dataset" then."""
+        if not hasattr(self, "_sheet"):
+            return
+        importer = file_importer(path) if path else None
+        if not path:
+            self._show_metadata(None)
+        self._read_card.setEnabled(importer is None)  # the importers read their own layout
+        self._reader_label.setText(_("Read as: {name}").format(name=_(importer.Name)) if importer else "")
+        self._reader_label.setVisible(importer is not None)
+        sheets: list[str] = []
+        if path and (importer is not None or self._is_excel_path(path)):
+            try:
+                sheets = file_datasets(path)
+            except Exception as exc:
+                applogger.warning("Cannot list the sheets or datasets of %s: %s", path, exc)
+        if self._sheet_label is not None:
+            self._sheet_label.setText(_("Dataset") if importer is not None else _("Sheet"))
+        self._sheet.blockSignals(True)
+        try:
+            self._sheet.clear()
+            for s in sheets:
+                self._sheet.addItem(_("All, in one table (Dataset column)") if s == ALL_DATASETS else s, userData=s)
+            if sheets and self._desired_sheet:
+                idx = self._sheet.findData(self._desired_sheet)
+                if idx >= 0:
+                    self._sheet.setCurrentIndex(idx)
+            self._set_sheet_row_visible(bool(sheets))
+        finally:
+            self._sheet.blockSignals(False)
+
+    def _show_metadata(self, imported: ImportedData | None) -> None:
+        """The Metadata frame: the file's own information, the units, what the reader did."""
+        lines: list[str] = []
+        if imported is not None:
+            lines += [_(note) for note in imported.notes]
+            lines += [f"{_(key)}: {value}" for key, value in imported.metadata.items()]
+            lines += [f"{column}: {unit}" for column, unit in imported.units.items()]
+        self._metadata_text.setText("\n".join(lines))
+        self._metadata_card.setVisible(bool(lines))
+
+    def _on_sheet_changed(self) -> None:
+        if self._source_mode == "file":
+            self._refresh_preview()
+
+    def _refresh_preview(self) -> None:
+        """Re-read whichever source is current and show it.
+
+        Dispatching on the source mode is the point. This used to read
+        ``self.file_name`` and nothing else, so a paste that arrived after a
+        file had been opened was overwritten by that file the moment anything
+        called this - which the paste handler itself did, on its last line.
+        """
+        if self._source_mode == "clipboard":
+            failure = self._show_frame(self._read_clipboard_source)
+            if failure is not None:
+                show_message(self, "import.clipboard_failed", error=failure)
+            return
+
+        if self._source_mode == "web":
+            failure = self._show_frame(self._read_web_source)
+            if failure is not None:
+                show_message(self, "import.web_failed", error=failure)
+            return
+
+        path = (self.file_name or "").strip()
+        if not path or not Path(path).exists():
+            return
+
+        failure = self._show_frame(lambda: self._read_source(path))
+        if failure is not None:
+            show_message(self, "import.preview_failed", error=failure)
+
+    def _show_frame(self, read: Callable[[], pd.DataFrame]) -> Exception | None:
+        """Read one source through *read*, then fill the columns and preview.
+
+        Shared by the file and the clipboard because the only difference
+        between them is the reading; everything after it - cleaning, the type
+        table, hiding the empty columns from the preview - is the same work,
+        and was the same work written twice.
+
+        The failure is returned rather than reported, so that each caller
+        names its own catalogue message at its own call site. The ids have to
+        be literals where show_message is called: that is what the sweep
+        proving every id is defined, and every defined id used, can see.
+        """
+        try:
+            self._df = read()
+            self._apply_skip_last_and_clean()
+
+            # Columns: keep empty columns (default Ignore)
+            self._build_columns_table(include_empty=True)
+
+            # Preview: hide empty columns
+            df_prev = self._df
+            if df_prev is not None:
+                empty_cols = self._empty_columns(df_prev)
+                if empty_cols:
+                    df_prev = df_prev.drop(columns=empty_cols)
+
+            if df_prev is None:
+                self._preview.clear()
+            else:
+                self._preview.set_model(DataFramePreviewModel(df_prev, parent=self._preview.view))
+                # A column picked in the preview is picked in Columns, for its type.
+                self._preview.view.selectionModel().currentChanged.connect(self._select_column_from_preview)
+
+            return None
+
+        except Exception as exc:
+            applogger.exception("Preview failed: %s", exc)
+            self._df = None
+            self._preview.clear()
+            self._col_table.setRowCount(0)
+            return exc
+
+    def _read_clipboard_source(self) -> pd.DataFrame:
+        """Parse the remembered clipboard text with the current options."""
+        frame = self._parse_clipboard(self._clipboard_text, self._clipboard_transposed)
+        if frame is None:
+            # Said here rather than left to fail further on, where an empty
+            # clipboard read as a confusing error about a missing table.
+            raise ValueError("The clipboard holds no text to import.")
+        return frame
+
+
+    def _read_web_source(self) -> pd.DataFrame:
+        """Fetch and parse the remembered URL with the current options."""
+        return read_web_url(
+            self._path,
+            skiprows=int(self._skip_rows.value()),
+            skipfooter=int(self._skip_last.value()),
+            header=bool(self._has_header.isChecked()),
+            sheet=self._current_sheet(),
+            delim=self._current_delim(),
+            encoding=self._current_encoding(),
+        )
+
+    def _read_source(self, path: str) -> pd.DataFrame:
+        delim = self._current_delim()
+        encoding = self._current_encoding()
+        skiprows = int(self._skip_rows.value())
+        skipfooter = int(self._skip_last.value())
+        header = bool(self._has_header.isChecked())
+
+        self._imported = None
+        if file_importer(path) is not None:
+            self._imported = read_imported(path, self._current_sheet())
+            self._show_metadata(self._imported)
+            return self._imported.frame
+        self._show_metadata(None)
+        return read_any_file(
+            path,
+            skiprows=skiprows,
+            skipfooter=skipfooter,
+            header=header,
+            sheet=self._current_sheet(),
+            delim=delim,
+            encoding=encoding,
+        )
+
+    def _sync_date_format(self) -> None:
+        self._date_format.setEnabled(self._date_order.currentData() == import_cleaning.FORMAT)
+
+    def _date_settings(self) -> tuple[str, str, str]:
+        """(order, format, the computer's own order for dates that do not tell)."""
+        return (str(self._date_order.currentData() or import_cleaning.AUTO), self._date_format.text().strip(),
+                local_date_order())
+
+    def _apply_skip_last_and_clean(self) -> None:
+        if self._df is None:
+            return
+        self._df.columns = [str(c).strip() for c in self._df.columns]
+        skip_last = int(self._skip_last.value())
+        if skip_last > 0 and len(self._df) > 0:
+            self._df = self._df.iloc[: max(0, len(self._df) - skip_last)]
+        self._df = import_cleaning.clean_missing(self._df, import_cleaning.parse_missing(self._missing_codes.text()),
+                                                 empty_is_missing=self._empty_missing.isChecked())
+
+    @staticmethod
+    def _empty_columns(df: pd.DataFrame) -> list[str]:
+        empties: list[str] = []
+        for col in df.columns:
+            s = df[col]
+            if s.isna().all():
+                empties.append(str(col))
+                continue
+            try:
+                ss = s.astype(str).str.strip().replace("nan", "")
+                if ss.eq("").all():
+                    empties.append(str(col))
+            except Exception:
+                pass  # a column that cannot be read as text is not an empty one
+        return empties
+
+    # ------------------------------------------------------------------
+    # Column typing
+    # ------------------------------------------------------------------
+    def _select_column_from_preview(self, current: QModelIndex, _previous: QModelIndex = QModelIndex()) -> None:
+        """The column of the preview's current cell, selected in Columns - where its type is set."""
+        model = self._preview.view.model()
+        if not current.isValid() or model is None:
+            return
+        name = str(model.headerData(current.column(), Qt.Orientation.Horizontal, Qt.ItemDataRole.DisplayRole))
+        for row in range(self._col_table.rowCount()):
+            item = self._col_table.item(row, 0)
+            if item is not None and item.text() == name:
+                self._col_table.selectRow(row)
+                self._col_table.scrollToItem(item)
+                return
+
+    def _build_columns_table(self, *, include_empty: bool) -> None:
+        df = self._df
+        self._col_table.setRowCount(0)
+        self._size_label.setText(
+            "" if df is None
+            else _("{rows} rows, {columns} columns").format(rows=f"{len(df):,}", columns=len(df.columns))
+        )
+        if df is None or df.empty:
+            return
+
+        empty_cols = set(self._empty_columns(df))
+        cols = [str(c) for c in df.columns]
+        if not include_empty:
+            cols = [c for c in cols if c not in empty_cols]
+
+        self._col_table.setRowCount(len(cols))
+        for r, col in enumerate(cols):
+            it_name = QTableWidgetItem(col)
+            it_name.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
+            self._col_table.setItem(r, 0, it_name)
+
+            combo = QComboBox(self._col_table)
+            combo.addItems(self.SQLITE_TYPES)
+            if col in empty_cols:
+                combo.setCurrentText("Ignore")
+            else:
+                combo.setCurrentText(self._guess_type(df[col]))
+            self._col_table.setCellWidget(r, 1, combo)
+
+        self._col_table.resizeColumnsToContents()
+
+
+    def _guess_type(self, series: pd.Series) -> str:
+        """The plain guess, then text read again: numbers (once "n/d" is gone), or dates."""
+        guess = self._guess_sqlite_type(series)
+        if guess != "TEXT":
+            return guess
+        present = series.dropna()
+        numbers = to_numbers(present.astype(str).str.strip())
+        if len(present) and numbers.notna().all():
+            return "INTEGER" if bool((numbers % 1 == 0).all()) else "REAL"
+        order, date_format, default = self._date_settings()
+        if import_cleaning.looks_like_dates(series, order, date_format, default=default):
+            return import_cleaning.date_kind(series, order, date_format, default=default)
+        return guess
+
+    @staticmethod
+    def _guess_sqlite_type(series: pd.Series) -> str:
+        try:
+            s = series.dropna()
+            if s.empty:
+                return "Ignore"
+            if pd.api.types.is_integer_dtype(s):
+                return "INTEGER"
+            if pd.api.types.is_float_dtype(s):
+                return "REAL"
+            if pd.api.types.is_bool_dtype(s):
+                return "INTEGER"
+            if pd.api.types.is_datetime64_any_dtype(s):
+                return "DATETIME"
+        except Exception:
+            pass  # a dtype pandas cannot classify: stored as text
+        return "TEXT"
+
+    def _selected_types(self) -> dict[str, str]:
+        mapping: dict[str, str] = {}
+        for r in range(self._col_table.rowCount()):
+            name_it = self._col_table.item(r, 0)
+            if not name_it:
+                continue
+            col = name_it.text()
+            combo = self._col_table.cellWidget(r, 1)
+            if not isinstance(combo, QComboBox):
+                continue
+            t = combo.currentText().strip().upper()
+            if t == "IGNORE":
+                continue
+            mapping[col] = t
+        return mapping
+
+    # ------------------------------------------------------------------
+    # Actions
+    # ------------------------------------------------------------------
+    def _set_file_name_label(self, path: str) -> None:
+        p = Path((path or "").strip())
+        if not path or not p.name:
+            self.file_name=""
+            self.setWindowTitle(_("Import data"))
+            return
+        self.file_name=path
+        self.setWindowTitle(f"Import data: {path}")
+
+
+    def _safe_table_name_from_filename(self,path: str) -> str:
+        base = path if path == CLIPBOARD_SOURCE_NAME else Path(path).stem.strip()
+        if not base:
+            base = "new_table"
+        name = re.sub(r"[^0-9a-zA-Z_]+", "_", base)
+        if not re.match(r"^[A-Za-z_]", name):
+            name = "t_" + name
+        name = name.strip("_") or "new_table"
+        nname=name
+        iter:int=1
+        while self._repo.check_if_table_exists(nname):
+            nname=name+"_"+str(iter)
+            iter+=1
+        return nname
+
+    def _set_default_table_name(self, path: str) -> None:
+        auto = self._safe_table_name_from_filename(path)
+        self._table.setText(auto)
+
+    def _on_browse(self) -> None:
+        path, _unused = QFileDialog.getOpenFileName(
+            self,
+            _("Select file"),
+            str(Path.home()),
+            IMPORT_FILE_FILTER,
+        )
+        if not path:
+            return
+        self.load_file(path)
+
+    def load_file(self, path: str | Path) -> None:
+        name = str(path)
+        self._source_mode = "file"
+        self._set_file_name_label(name)
+        self._set_default_table_name(name)
+        self._path = name
+        self._update_sheet_choices(name)
+        self._refresh_preview()
+
+    def _parse_clipboard(self, text: str, transposed: bool) -> pd.DataFrame | None:
+        """Read *text* with the current options, rows and columns swapped first if asked.
+
+        Transposed, the skip counts and the header refer to the table as it
+        is shown - after the swap - and the delimiter to the text as copied.
+        """
+        if transposed:
+            text = transpose_delimited_text(text, self._current_delim())
+        return read_clipboard_text(
+            text,
+            skiprows=int(self._skip_rows.value()),
+            skipfooter=int(self._skip_last.value()),
+            header=bool(self._has_header.isChecked()),
+            delimiter="\t" if transposed else self._current_delim(),
+        )
+
+    def load_clipboard(self, transposed: bool = False) -> bool:
+        """Show the clipboard's table as the source - what Import from clipboard opens the dialog with.
+
+        False when there is nothing usable on the clipboard (the reason has been shown).
+        """
+        self._on_load_clipboard(transposed=transposed)
+        return self._source_mode == "clipboard"
+
+    def _on_load_clipboard(self, transposed: bool = False) -> None:
+        """Replace whatever is loaded with what is on the clipboard.
+
+        *Replace* is the whole job. The clipboard becomes the source, so the
+        file - if one was opened - stops being it: the remembered path, the
+        window title and the sheet list all go, and the table name is taken
+        from the clipboard rather than left naming a file the preview no
+        longer shows.
+
+        The text is kept rather than only its parse. Header, delimiter and
+        the skip counts can be changed afterwards, and re-reading the source
+        is how they take effect - which needs the source still to be here.
+        """
+        text = QApplication.clipboard().text() or ""
+
+        # Parsed before anything is replaced: an empty clipboard must leave
+        # the dialog exactly as it was, not clear it and then say why.
+        try:
+            probe = self._parse_clipboard(text, transposed)
+        except Exception as exc:
+            applogger.exception("Clipboard preview failed: %s", exc)
+            show_message(self, "import.clipboard_failed", error=exc)
+            return
+
+        if probe is None or probe.empty:
+            show_message(self, "import.clipboard_empty")
+            return
+
+        self._source_mode = "clipboard"
+        self._clipboard_text = text
+        self._clipboard_transposed = transposed
+        self._path = ""
+        self._set_file_name_label("")
+        self._update_sheet_choices("")
+        self._set_default_table_name(CLIPBOARD_SOURCE_NAME)
+
+        self._refresh_preview()
+
+    def _on_web_source_picked(self, source: WebDataSource) -> None:
+        """Fill the URL field from the chosen quick-pick source.
+
+        Fills the field rather than fetching immediately: a URL from the
+        catalogue is still a URL, and the person picking it should see it -
+        and be free to edit it, e.g. PubChem's CID - before anything is
+        downloaded.
+        """
+        self._picked_web_source = source
+        self._url.setText(source.url)
+        self._url.setToolTip(source.description)
+        # Only a source the user added themselves can be removed again - a
+        # bundled entry ships with the application, not with this project.
+        self._btn_delete_web_source.setEnabled(source.custom)
+
+    def _rebuild_web_source_menu(self) -> None:
+        """(Re)build the quick-pick menu from the current catalogue.
+
+        Called once at construction and again after Add/Delete Source, since
+        either changes what ``load_web_data_sources()`` returns.
+        """
+        # Every entry gets the same icon rather than one per category: what
+        # they have in common is that picking one downloads something, which
+        # is exactly what the "fetch_url" action already draws - reusing it
+        # needs no new catalogue entry, and a dozen bespoke subject glyphs
+        # (Astronomy, Sports, Entertainment...) would each need an SF Symbol,
+        # a Segoe Fluent glyph and a freedesktop theme name of their own to
+        # match how every other icon in this application is sourced.
+        entry_icon = load_icon("fetch_url")
+        self._web_source_menu.clear()
+        by_category: dict[str, list[WebDataSource]] = {}
+        for source in load_web_data_sources():
+            by_category.setdefault(source.category, []).append(source)
+        for category, sources in by_category.items():
+            # Categories and dataset names are data, not source text - see
+            # the note above on _(): they are deliberately not translated.
+            # USER_WEB_SOURCE_CATEGORY is no exception: it reads the same as
+            # every other category here, plain text rather than chrome.
+            self._web_source_menu.addSection(category)
+            for source in sources:
+                menu_action = self._web_source_menu.addAction(entry_icon, source.name)
+                menu_action.setToolTip(source.description)
+                menu_action.triggered.connect(
+                    lambda _checked=False, s=source: self._on_web_source_picked(s)
+                )
+
+    def _on_add_web_source(self) -> None:
+        """Add a source of the user's own to the quick-pick catalogue."""
+        dialog = _AddWebSourceDialog(self)
+        if not dialog.exec():
+            return
+        source = add_user_web_source(dialog.name, dialog.url, dialog.description)
+        self._rebuild_web_source_menu()
+        self._on_web_source_picked(source)
+
+    def _on_delete_web_source(self) -> None:
+        """Remove the selected source from the user's own catalogue.
+
+        The button is only enabled while the last-picked source is one the
+        user added themselves (see ``_on_web_source_picked``), so this never
+        runs against a bundled entry.
+        """
+        picked = self._picked_web_source
+        if picked is None or not picked.custom:
+            return
+        remove_user_web_source(picked.name)
+        self._picked_web_source = None
+        self._btn_delete_web_source.setEnabled(False)
+        self._rebuild_web_source_menu()
+
+    def _on_fetch_url(self) -> None:
+        """Download the URL in the web-source field and load it as this
+        dialog's web source.
+
+        Fetched once as a probe before anything replaces the current source,
+        the same way the clipboard is - a typo in the URL or an unreachable
+        host must leave the dialog exactly as it was, not clear it first and
+        say why afterwards.
+        """
+        url = (self._url.text() or "").strip()
+        if not url:
+            return
+
+        if not is_valid_web_url(url):
+            show_message(self, "import.web_invalid_url")
+            return
+
+        try:
+            probe = read_web_url(
+                url,
+                skiprows=int(self._skip_rows.value()),
+                skipfooter=int(self._skip_last.value()),
+                header=bool(self._has_header.isChecked()),
+                sheet=None,
+                delim=self._current_delim(),
+                encoding=self._current_encoding(),
+            )
+        except Exception as exc:
+            applogger.exception("Web import failed: %s", exc)
+            show_message(self, "import.web_failed", error=exc)
+            return
+
+        if probe is None or probe.empty:
+            show_message(self, "import.nothing_to_import")
+            return
+
+        self._source_mode = "web"
+        self._path = url
+        self._set_file_name_label(url)
+        self._update_sheet_choices("")
+
+        # A quick-pick source names the table for what it is; a typed-in URL
+        # falls back to its own file name.
+        picked = self._picked_web_source
+        table_name_seed = picked.name if picked is not None and picked.url == url else filename_from_url(url)
+        self._set_default_table_name(table_name_seed)
+
+        self._refresh_preview()
+
+    def _on_accept(self) -> None:
+        if self._df is None:
+            # If user did not press Preview, read once for import.
+            self._refresh_preview()
+
+        df = self._df
+        if df is None or df.empty:
+            applogger.info("Import aborted: no data to import")
+            show_message(self, "import.nothing_to_import")
+            return
+
+        table = (self._table.text() or "").strip()
+        if not table:
+            show_message(self, "import.no_table_name")
+            return
+
+        types = {k: v for k, v in self._selected_types().items() if v.lower() != "ignore"}
+        cols_keep = [c for c in df.columns if c in types]
+        if not cols_keep:
+            applogger.info("Import aborted: no columns to import")
+            show_message(self, "import.no_columns_selected")
+            return
+
+        df2 = df[cols_keep].copy()
+        df2 = self._coerce_df(df2, types, self._date_settings())
+        set_import_data_dialog_config(
+            {
+                "table": table,
+                "header": bool(self._has_header.isChecked()),
+                "skip_rows": int(self._skip_rows.value()),
+                "skip_last": int(self._skip_last.value()),
+                "delim": self._current_delim() or "",
+                "encoding": self._current_encoding() or "auto",
+                "sheet": self._current_sheet() or "",
+                "dates": self._date_settings()[0],
+                "date_format": self._date_format.text().strip(),
+                "missing": import_cleaning.parse_missing(self._missing_codes.text()),
+                "empty_is_missing": self._empty_missing.isChecked(),
+            }
+        )
+        try:
+            table_name=self._safe_table_name_from_filename(table)
+            self._repo.import_into_sqlite(table_name, df2, types)
+            imported = self._imported if self._source_mode == "file" else None
+            if imported is not None:
+                self._repo.set_table_info(table_name, "source_metadata", {
+                    "file": Path(self._path).name, "dataset": self._current_sheet() or "",
+                    "importer": getattr(file_importer(self._path), "Name", ""),
+                    "metadata": {key: str(value) for key, value in imported.metadata.items()},
+                    "units": dict(imported.units), "notes": list(imported.notes)})
+
+            source = self._link_source_settings()
+            if source is not None:
+                link_settings = {
+                    "source": source,
+                    "read": {
+                        "skiprows": int(self._skip_rows.value()),
+                        "skip_last": int(self._skip_last.value()),
+                        "header": bool(self._has_header.isChecked()),
+                        "delimiter": self._current_delim(),
+                        "encoding": self._current_encoding(),
+                        "dates": self._date_settings()[0],
+                        "date_format": self._date_format.text().strip(),
+                        "date_default": self._date_settings()[2],
+                        "missing": import_cleaning.parse_missing(self._missing_codes.text()),
+                        "empty_is_missing": self._empty_missing.isChecked(),
+                    },
+                    "destination": {"table": table_name, "normalize_columns": True},
+                    "columns": {"types": types},
+                }
+                if not self._repo.upsert_link(
+                    table_name=table_name,
+                    source_path=self._path,
+                    settings=link_settings,
+                ):
+                    applogger.warning("Failed to create link for imported table '%s'", table_name)
+        except Exception as exc:
+            applogger.exception("Import failed: %s", exc)
+            show_message(self, "import.failed", error=exc)
+            return
+
+        self.import_result = ImportResult(table_name=table_name, rows=int(len(df2)), cols=int(len(df2.columns)))
+        self.accept()
+
+    def _link_source_settings(self) -> dict[str, object] | None:
+        """Return the ``source`` dict a saved link should remember, or None.
+
+        Every source that can meaningfully be read again gets one - file,
+         a URL. Pasted text cannot: there is nothing left
+        to reread once the clipboard has moved on, so "Update link" has
+        nothing to offer it and none is created.
+        """
+        if self._source_mode == "file":
+            importer = file_importer(self._path)
+            source: dict[str, object] = {"kind": "file", "path": self._path, "sheet": self._current_sheet()}
+            if importer is not None:
+                source["importer"] = importer.Name
+            return source
+        if self._source_mode == "web":
+            return {"kind": "web", "url": self._path}
+        return None
+
+    @staticmethod
+    def _coerce_df(df: pd.DataFrame, types: dict[str, str],
+                   dates: tuple[str, str, str] = (import_cleaning.AUTO, "", import_cleaning.MONTH_FIRST)
+                   ) -> pd.DataFrame:
+        out = df.copy()
+        for col, t in types.items():
+            if col not in out.columns:
+                continue
+            tt = t.upper()
+            s = out[col]
+
+            if tt == "INTEGER":
+                out[col] = to_numbers(s).astype("Int64")
+            elif tt == "REAL":
+                out[col] = to_numbers(s)
+            elif tt in ("DATE", "TIME", "DATETIME"):
+                order, date_format, default = dates
+                out[col] = import_cleaning.convert_dates(s, tt, order, date_format, default=default)
+            elif tt == "BLOB":
+                out[col] = s.apply(
+                    lambda v: v
+                    if isinstance(v, (bytes, bytearray))
+                    else ("" if pd.isna(v) else str(v)).encode("utf-8")
+                )
+            else:
+                out[col] = s.astype("string")
+
+        return out

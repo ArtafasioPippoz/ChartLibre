@@ -1,0 +1,72 @@
+"""The table list's context menu: Edit query opens the Query Builder on the selected query."""
+from __future__ import annotations
+
+import pandas as pd
+import pytest
+from PySide6.QtCore import QItemSelectionModel
+
+import app.widgets.table_list as table_list_module
+from app.data.sqlite_repo import SqliteRepo
+from app.widgets.table_list import TableListPanel
+
+
+class _Recorder:
+    """Stands in for QueryBuilderDialog: notes how it was opened, never shows."""
+
+    opened: list[str | None] = []
+
+    def __init__(self, repo, query_name: str | None = None, parent=None) -> None:
+        _Recorder.opened.append(query_name)
+
+    def exec(self) -> int:
+        return 0
+
+
+@pytest.fixture
+def panel(qapp, repo: SqliteRepo, monkeypatch: pytest.MonkeyPatch):
+    repo.import_dataframe(pd.DataFrame({"a": [1, 2]}), table_name="numbers", normalize_columns=False)
+    repo.save_query("evens", 'SELECT a FROM "numbers" WHERE a % 2 = 0')
+    monkeypatch.setattr(table_list_module, "QueryBuilderDialog", _Recorder)
+    _Recorder.opened = []
+    widget = TableListPanel(repo, None)  # type: ignore[arg-type]
+    widget.reload()
+    yield widget
+    widget.close()
+
+
+def _select(panel: TableListPanel, name: str) -> None:
+    for row in range(panel._model.rowCount()):
+        item = panel._model.item(row, panel.COL_TABLE)
+        if item is not None and item.data(panel.ROLE_TABLE_NAME) == name:
+            index = panel._model.index(row, panel.COL_TABLE)
+            panel._view.selectionModel().select(
+                index, QItemSelectionModel.SelectionFlag.ClearAndSelect | QItemSelectionModel.SelectionFlag.Rows
+            )
+            panel._view.selectionModel().setCurrentIndex(index, QItemSelectionModel.SelectionFlag.NoUpdate)
+            return
+    raise AssertionError(f"{name} is not in the list")
+
+
+def test_edit_query_opens_the_builder_on_the_selected_query(panel: TableListPanel) -> None:
+    _select(panel, "evens")
+    assert panel._single_selected_query() == "evens"
+    panel._edit_selected_query()
+    assert _Recorder.opened == ["evens"]
+
+
+def test_ok_saves_and_closes_and_stays_open_on_a_bad_query(qapp, repo: SqliteRepo, monkeypatch: pytest.MonkeyPatch) -> None:
+    from PySide6.QtWidgets import QDialog, QInputDialog
+
+    import app.dialogs.query_builder_dialog as builder_module
+
+    repo.import_dataframe(pd.DataFrame({"a": [1, 2, 3]}), table_name="t", normalize_columns=False)
+    monkeypatch.setattr(QInputDialog, "getText", staticmethod(lambda *_a, **_k: ("big_ones", True)))
+    monkeypatch.setattr(builder_module, "show_message", lambda *_a, **_k: None)
+    dialog = builder_module.QueryBuilderDialog(repo)
+    dialog._editor.setPlainText('SELECT nope FROM "missing"')
+    dialog.accept()
+    assert dialog.result() != QDialog.DialogCode.Accepted and repo.get_query("big_ones") is None
+    dialog._editor.setPlainText('SELECT a FROM "t" WHERE a > 1')
+    dialog.accept()
+    assert dialog.result() == QDialog.DialogCode.Accepted
+    assert repo.get_query("big_ones") is not None

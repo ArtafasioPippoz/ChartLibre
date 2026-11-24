@@ -1,0 +1,83 @@
+#import "helpers.typ": *
+
+= Analysis <analysis-chapter>
+
+Where a data operation works on the series of a chart, an *analysis* works on the columns of a table: you say which column is the response and which ones might explain it, and it fits a model of the whole table. The *Analysis* page of the navigation rail lists them with the data operations; each opens on the table selected in the Tables page. Each names, under *Computed with*, the library functions that fit it, linked to their documentation.
+
+== How every analysis window works
+
+- *Select columns*, on the left: the table, its columns with their modelling type — ▲ continuous, ● nominal, ◐ ordinal — and the *Type* to change it. Under them, *Select role variables*: drag or click columns into the roles the analysis asks for (Y, X, groups, …). A role that is short of columns, or a column of the wrong type, is said before anything runs.
+- *Parameters*, in the middle, where the analysis has any.
+- *Results*, on the right: the report.
+- *Preview* computes and shows the report; *OK* writes the results into the project — each row's prediction beside its data, the report's tables as tables — and draws a figure with the report in its notes. The calculation runs in the background, with *Stop*; OK is undoable.
+
+== The analyses
+
+#defs(
+  [*Distribution*], [One report per Y column: the quantile table (0% to 100%, at the (n + 1)p position), the moments and the normality tests. OK draws the histogram with its normal curve beside the normal quantile plot. Process capability is in the Control Chart operation (see @data-operations), which knows whether the process is stable. #refs("numpy.quantile", "scipy.stats.shapiro")],
+  [*Fit Y by X*], [One Y against each X, the analysis chosen by their types: *Bivariate* (continuous by continuous: the least-squares line, correlations), *Oneway* (continuous by groups: means, ANOVA, Welch and Kruskal-Wallis, and every pair compared — Tukey HSD, Games-Howell for unequal variances, Dunn on the ranks with Holm's adjustment), *Contingency* (groups by groups: counts, row shares, chi-squared, Fisher) or *Logistic* (groups by continuous: the probability of each level along X, odds ratios, AUC). An ordinal column is a measure as Y and groups as X. #refs("statsmodels.regression.linear_model.OLS", "scipy.stats.tukey_hsd", "scipy.stats.studentized_range", "scipy.stats.chi2_contingency", "statsmodels.discrete.discrete_model.Logit", "statsmodels.discrete.discrete_model.MNLogit")],
+  [*Fit Model*], [A linear model of one or more responses on the effects you build from the columns (main effects, factorial, response surface). Its *personality* says how: *Standard Least Squares*, *Stepwise* (backward or forward), *Generalized Linear Model* (normal, binomial, Poisson, gamma), *Nominal* or *Ordinal Logistic* for a categorical Y, and *Generalized Regression* — Lasso, Ridge or Elastic Net, the penalty chosen by cross-validation, for many factors or factors that move together. Effect tests, estimates, the prediction profile; for a logistic fit the ROC curve, its AUC and the confusion matrix. #refs("statsmodels.formula.api.ols", "statsmodels.formula.api.glm", "statsmodels.discrete.discrete_model.Logit", "statsmodels.discrete.discrete_model.MNLogit", "statsmodels.miscmodels.ordinal_model.OrderedModel", "sklearn.linear_model.LassoCV", "sklearn.linear_model.RidgeCV", "sklearn.linear_model.ElasticNetCV", "sklearn.metrics.roc_curve")],
+  [*Partition*], [A decision tree of one response on many factors, as JMP's: *Split* and *Prune* one step at a time, or *Automatic* on validation rows; or a *Bootstrap Forest* or a *Boosted Tree*. Leaves and their rules, column contributions, and for any of the three the *permutation importance* (how much the fit drops when a column is shuffled) and *partial dependence* (the predicted response as one factor varies); for a nominal Y the ROC curve. #refs("sklearn.tree.DecisionTreeRegressor", "sklearn.tree.DecisionTreeClassifier", "sklearn.ensemble.RandomForestRegressor", "sklearn.ensemble.GradientBoostingRegressor", "sklearn.metrics.roc_auc_score")],
+  [*Time Series*], [A measure in time order — a date, a time or a run number orders it, the rows' order without one. The autocorrelation (ACF) and partial autocorrelation (PACF) with the Ljung-Box test at every lag; the seasonal decomposition (STL) into trend, season and remainder, the season found from the dates (12 for months — on the 1st or the 15th — 7 for days, 4 for quarters) or given; and a forecast with its 95% prediction interval, by *exponential smoothing* (ETS: a level, a trend and a season) or *ARIMA* (p, d, q) with a seasonal (P, D, Q) — given, or *chosen by AIC* among 27 models, d from the *ADF* and *KPSS* stationarity tests and D from the season's strength — with AIC, BIC and whether the residuals are still autocorrelated. An *input* X gives the cross-correlation at lags both ways - raw and *prewhitened* (both filtered by X's own autoregression, so that two series which merely wander do not look related): whether it leads or follows the measure, and by how much. Put *in the model*, X enters the ARIMA at that lag as a *transfer function*, its coefficient the change in Y per unit of X; an *intervention* - a date, a step or a pulse - estimates the change something made. OK writes the predicted values - each one step ahead from the values before it, as JMP's *Predicted* - the residuals and components beside the rows, the forecast as a table, and draws the series with its trend and forecast, the ACF, the PACF and the season. #refs("statsmodels.tsa.stattools.acf", "statsmodels.tsa.stattools.pacf", "statsmodels.stats.diagnostic.acorr_ljungbox", "statsmodels.tsa.seasonal.STL", "statsmodels.tsa.arima.model.ARIMA", "statsmodels.tsa.exponential_smoothing.ets.ETSModel", "statsmodels.tsa.stattools.adfuller", "statsmodels.tsa.stattools.kpss")],
+  [*Multivariate*], [How continuous columns move together, two by two: the correlation matrix and a row per pair with its correlation, 95% confidence interval (Fisher's z), p-value and count — each pair on the rows where both columns have a value. *Pearson* for a straight-line relation, *Spearman* or *Kendall* for any relation that keeps going one way. OK draws the scatterplot matrix. #refs("scipy.stats.pearsonr", "scipy.stats.spearmanr", "scipy.stats.kendalltau")],
+  [*Principal Components*], [A few directions that carry most of the variation of many columns: the eigenvalues with their share and the cumulative share, the loadings (each column's correlation with each component) and the eigenvectors, *On* the correlations (columns standardized, the usual choice) or the covariances. OK writes every row's scores (Prin1, Prin2, ...) beside its data and draws the scree, score and loading plots and the *biplot* (the rows' scores with the columns' loadings as arrows); a *By* column colours the rows of the score plot and the biplot by group. #refs("numpy.linalg.eigh", "numpy.cov")],
+  [*Factor Analysis*], [A few hidden factors behind many correlated columns, on their correlations: *Maximum Likelihood* or *Principal Axis*, rotated by *Varimax*, *Quartimax*, *Equamax* or *Promax* (oblique, with the factors' correlations); the number of factors given, or the eigenvalues above 1. The variance each factor explains, the rotated loadings, each column's communality and uniqueness, and - by Maximum Likelihood - the chi-square test that the factors are enough; a *By* column colours the score plot; OK writes each row's factor scores and draws the scree, loading and score plots. #refs("sklearn.decomposition.FactorAnalysis")],
+  [*Cluster Analysis*], [The rows grouped on several continuous columns, standardized: *K Means*, *Hierarchical (Ward)* or *Normal Mixtures*. With k left at 0, every k from 2 to the largest is tried and the one with the highest mean *silhouette* kept. Each cluster's size and means, numbered from the largest; OK writes each row's Cluster and silhouette and draws the silhouette by k, the clusters on the principal components and their profiles as a parallel plot. #refs("sklearn.cluster.KMeans", "sklearn.cluster.AgglomerativeClustering", "sklearn.mixture.GaussianMixture", "sklearn.metrics.silhouette_score")],
+  [*Discriminant*], [Which group a row belongs to, from continuous measures: linear or quadratic, with Wilks' lambda, the canonical analysis and plot, and each row's predicted group and probabilities. #refs("scipy.linalg.eigh", "scipy.linalg.cholesky", "scipy.stats.f")],
+  [*Partial Least Squares*], [A response from many X that move together — the wavelengths of a spectrum — through a few components, their number chosen by cross-validation; the variables' importance (VIP), loadings, coefficients and scores. #refs("sklearn.cross_decomposition.PLSRegression", "sklearn.model_selection.KFold")],
+  [*Random data*], [Draws random numbers with numpy.random and says whether they are what they were drawn to be. One column, two or three (with a correlation, Gaussian copula), an even X with a random Y (and a trend), or a grid with a random Z (on a function of x and y you type, read as text and never run as code): 17 distributions, normal to Cauchy, binomial to Poisson. The *seed* draws the same table again; left at Random it is chosen once and written in the report. The checks: Kolmogorov-Smirnov and Anderson-Darling against the distribution (chi-square for the discrete ones), the moments with their z-scores, the order (runs, turning points, Ljung-Box, Durbin-Watson), and between columns the correlation, the distance correlation and the correlation asked for; on a grid Moran's I. The verdict counts the tests run and how many rejected at 5% - one in twenty does on perfectly good numbers - and says No only when a p-value is below 5% divided by the number of tests. *Repeat* draws and checks up to 500 samples and shows how the p-values are spread: flat, with about 5% below 0.05, when the generator is right. OK writes the table and draws a figure of panels chosen in the Charts tab: the histogram with the fitted curve, the Q-Q plot, the ECDF, the scatter, the joint plot, the pair plot, the surface and the contour.],
+)
+
+#figure(
+  example("analysis_fit_model", width: 100%),
+  caption: [Fit Model on a Box-Behnken design: the effects ranked by LogWorth, and the prediction profile.],
+)
+#figure(
+  example("analysis_partition", width: 100%),
+  caption: [Partition of the penguins' body mass: the partition graph, each leaf as wide as its rows, and the permutation importance.],
+)
+#figure(
+  example("analysis_discriminant"),
+  caption: [Discriminant analysis of the three penguin species from four measures: the canonical plot.],
+)
+#figure(
+  example("analysis_pls", width: 100%),
+  caption: [Partial Least Squares on a set of spectra: RMSECV by number of components, VIP along the wavelengths, scores, actual by predicted.],
+)
+
+== Guided analysis <guided-analysis>
+
+*Guided analysis* starts from your data and what you want to find out rather than from the name of a function. It follows the table selected in the Tables page and says in one line what it holds — how many numeric columns, categories and dates.
+
+#figure(
+  image("../screenshots/screenshot_guided_analysis.png", width: 100%),
+  caption: [Guided analysis on the Palmer penguins table: what it holds, its own questions, the quick answers and Help me choose.],
+)
+
+- *Search* finds any function by what it does, in English or Italian, and by the names other programs give it ("anova", "crosstabs", "control chart"). The same search opens from anywhere with *Cmd/Ctrl+K*.
+- *Quick answers* ask a question in everyday words and answer it in words, the right test chosen for you:
+  - *Are there differences?* — is a measure different from one group to another (t-test or ANOVA, Mann-Whitney or Kruskal-Wallis, chi-squared or Fisher, as the data call for);
+  - *What has the most impact?* — the factors ranked by how much they matter for a result (a random forest on rows it had not seen, with a linear model's p-values);
+  - *Has it changed over time?* — a steady trend (Mann-Kendall, Sen's slope) or a sudden change (Pettitt), whichever the values show.
+  #refs("scipy.stats.ttest_ind", "scipy.stats.mannwhitneyu", "scipy.stats.kruskal", "scipy.stats.tukey_hsd", "scipy.stats.chi2_contingency", "scipy.stats.fisher_exact", "sklearn.ensemble.RandomForestRegressor", "statsmodels.stats.anova.anova_lm", "scipy.stats.theilslopes")
+
+  Above them, questions asked of the selected table itself — "Does “weight” change between the groups of “line”?" — open the answer with its columns already chosen.
+- *Help me choose…* opens a window in two steps, columns first:
+  + *Which columns?* — the table's columns with their type (▲ number, ● category, ◐ ordered category, ◷ date); pick one to three, and their first rows show beside them.
+  + *What you can do with them* — *See it*: two or three charts that suit those columns, sketched from their rows; *Create chart* makes one at once. *Ask a question*: the analyses that answer a question asked with the columns' own names ("Does “body_mass_g” change between the groups of “species”?"), each with why in a line; *Open* starts it with the columns already in their roles. Only what the columns allow is offered. When two numbers could be the result, *Which one is the result?* asks which.
+
+  *Not sure where to start?* leads instead to the goals in everyday words — describe, compare, relate, explain, predict, monitor… — with what fits each; those the table cannot feed come last, saying what they lack. The columns picked are remembered for each table.
+
+#figure(
+  image("../screenshots/screenshot_guided_wizard.png", width: 80%),
+  caption: [Help me choose, with the penguins' species and body mass picked: three charts, and the two questions they allow.],
+)
+
+#figure(
+  example("answer_differences", "answer_impact", "answer_change", width: 100%),
+  caption: [The three quick answers on real data: penguin body mass by species, what has the most impact on it, and NASA's global temperature anomaly since 1880.],
+)
+
+#note[
+  The demo *Quick answers – three questions asked of real data* has each quick answer already asked, its answer in the chart's notes; *Relate*, *Classify* and *Describe and compare* go from a goal through the charts and the analyses *Help me choose* offers, on the penguins and on a table of salaries.
+]

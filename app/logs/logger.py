@@ -1,0 +1,431 @@
+"""Application logger, with raise-on-log behaviour.
+
+``applogger`` is a singleton :class:`ChartLibreLogger` that writes to a rotating
+file, mirrors records to a Qt signal for the in-app log viewer, puts WARNING
+and louder in the status bar, and can raise once a record is written:
+
+    applogger.warning("Recoverable")                     # log only
+    applogger.error("Failed", raise_error=True)          # log, then LoggedError
+
+It never opens a window: what a user must read goes through app.utils.messages.
+"""
+from __future__ import annotations
+
+import logging
+import sys
+import traceback
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
+from types import TracebackType
+from typing import Any, Final, Self, cast
+
+from PySide6.QtCore import QObject, QtMsgType, Signal, qInstallMessageHandler
+from PySide6.QtWidgets import QStatusBar
+
+_LOGGER_DIR: Final[Path] = Path(__file__).resolve().parent.parent / "logs"
+_LOGGER_NAME: Final[str] = "chartlibre"
+
+# Where the rotating file handler writes by default.  Public so the log viewer
+# can tell the user where the full log lives without rebuilding the path.
+LOG_FILE: Final[Path] = _LOGGER_DIR / "chartlibre.log"
+
+ExceptionInfo = tuple[type[BaseException], BaseException, TracebackType | None]
+
+
+
+class LoggedError(RuntimeError):
+    """Raised when a log record is configured to raise after being emitted."""
+
+
+class LogRecordEmitter(QObject):
+    """Qt signal bridge emitted for every new application log record."""
+
+    record_emitted = Signal(str, int, str)
+    #: What the status bar shows. A signal rather than a call because a
+    #: record can come from a worker thread (a calculation running in the
+    #: background) and a widget may only be touched from the GUI thread:
+    #: Qt queues the delivery there.
+    status_message = Signal(str, int)
+
+
+log_events = LogRecordEmitter()
+
+
+_UNKNOWN_CALLER: Final[str] = "<unknown>"
+
+
+def _caller_qualname(*, stacklevel: int) -> str:
+    """Return ``Class.method`` (or ``function``) of the code that logged.
+
+    ``logging`` already records the function name, but not the class, so two
+    ``reload`` methods on different widgets are indistinguishable in the log -
+    which is exactly when the log matters.
+
+    The class is recovered from the calling frame's ``self`` or ``cls`` local
+    rather than from the qualified name, because ``__qualname__`` belongs to the
+    function object and is not reachable from a frame.  ``sys._getframe`` is
+    used deliberately: it is what ``logging`` itself uses, and it costs a few
+    microseconds against ``inspect.stack``, which builds and reads source
+    context for every frame.
+    """
+    try:
+        frame = sys._getframe(stacklevel)
+    except (ValueError, AttributeError):
+        return _UNKNOWN_CALLER
+
+    function_name = frame.f_code.co_name
+    local_names = frame.f_locals
+
+    owner = local_names.get("self", None)
+    if owner is not None:
+        return f"{type(owner).__name__}.{function_name}"
+
+    owner_class = local_names.get("cls", None)
+    if isinstance(owner_class, type):
+        return f"{owner_class.__name__}.{function_name}"
+
+    return function_name
+
+
+class _CallerFilter(logging.Filter):
+    """Guarantee every record has a ``caller`` attribute.
+
+    Records emitted through the standard ``logging`` API - by libraries, or by
+    ``logging.getLogger(...)`` elsewhere - never pass through
+    ``_log_with_policy``, so the formatter would raise a KeyError on them.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if not hasattr(record, "caller"):
+            record.caller = f"{record.module}.{record.funcName}"
+        return True
+
+
+class ChartLibreLogger(logging.Logger):
+    """Logger whose calls can also raise, and reach the status bar.
+
+    Usage examples:
+        applogger.warning("Recoverable issue")       # file, log viewer, status bar
+        applogger.error("Stop here", raise_error=True)  # ...then LoggedError
+
+    A log call never opens a window; the messages a user must read come from
+    app.utils.messages.
+    """
+
+    # The six level methods below only exist to widen the standard signature
+    # with raise_error; all the behaviour lives in _log_with_policy. They
+    # cannot be generated in a loop because the stacklevel used to find the
+    # caller's class depends on a fixed call depth.
+
+    _status_bar: QStatusBar | None = None
+
+    def debug(
+        self,
+        msg: object,
+        *args: object,
+        raise_error: bool = False,
+        **kwargs: Any,
+    ) -> None:
+        """Log at DEBUG."""
+        self._log_with_policy(logging.DEBUG, msg, args, raise_error, **kwargs)
+
+    def info(
+        self,
+        msg: object,
+        *args: object,
+        raise_error: bool = False,
+        **kwargs: Any,
+    ) -> None:
+        """Log at INFO."""
+        self._log_with_policy(logging.INFO, msg, args, raise_error, **kwargs)
+
+    def warning(
+        self,
+        msg: object,
+        *args: object,
+        raise_error: bool = False,
+        **kwargs: Any,
+    ) -> None:
+        """Log at WARNING; it also shows in the status bar."""
+        self._log_with_policy(logging.WARNING, msg, args, raise_error, **kwargs)
+
+    def error(
+        self,
+        msg: object,
+        *args: object,
+        raise_error: bool = False,
+        **kwargs: Any,
+    ) -> None:
+        """Log at ERROR; raises LoggedError afterwards when *raise_error*."""
+        self._log_with_policy(logging.ERROR, msg, args, raise_error, **kwargs)
+
+    def critical(
+        self,
+        msg: object,
+        *args: object,
+        raise_error: bool = False,
+        **kwargs: Any,
+    ) -> None:
+        """Log at CRITICAL; raises LoggedError afterwards when *raise_error*."""
+        self._log_with_policy(logging.CRITICAL, msg, args, raise_error, **kwargs)
+
+    def exception(
+        self,
+        msg: object,
+        *args: object,
+        exc_info: bool | BaseException | tuple[type[BaseException], BaseException, TracebackType | None] = True,
+        raise_error: bool = False,
+        **kwargs: Any,
+    ) -> None:
+        """Log at ERROR with the active traceback attached.
+
+        It does not re-raise unless asked to, so it is the right call from
+        inside an ``except`` block that intends to recover.
+        """
+        kwargs["exc_info"] = exc_info
+        self._log_with_policy(logging.ERROR, msg, args, raise_error, **kwargs)
+
+    def _log_with_policy(
+        self,
+        level: int,
+        msg: object,
+        args: tuple[object, ...],
+        raise_error: bool,
+        **kwargs: Any,
+    ) -> None:
+        """Emit one record, then raise LoggedError if the caller asked to.
+
+        The raise happens *after* ``super()._log`` on purpose: the record must
+        reach the file and the log viewer even when the caller is about to be
+        unwound by the exception.
+        """
+        if not self.isEnabledFor(level):
+            return
+
+        # A user's own chart or operation file written for an older version
+        # may still pass show_dialog, which no longer does anything.
+        kwargs.pop("show_dialog", None)
+        extra = dict(cast(dict[str, Any], kwargs.pop("extra", {}) or {}))
+        extra.setdefault("caller", _caller_qualname(stacklevel=3))
+        kwargs["extra"] = extra
+
+        super()._log(level, msg, args, **kwargs)
+
+        if raise_error:
+            raise LoggedError(str(msg) % args if args else str(msg))
+
+        if self._status_bar is not None and level > logging.DEBUG:
+            log_events.status_message.emit(str(msg) % args if args else str(msg), 5000)
+
+    def set_status_bar(self, status_bar: QStatusBar | None) -> None:
+        """Set the status bar that receives log messages, or None to disable."""
+        if self._status_bar is not None:
+            # A bar gone with its window must not be touched at all: asking a
+            # deleted Qt object for its bound method can crash, not raise.
+            import shiboken6
+
+            if shiboken6.isValid(self._status_bar):
+                try:
+                    log_events.status_message.disconnect(self._status_bar.showMessage)
+                except (RuntimeError, TypeError):
+                    pass  # already disconnected
+        self._status_bar = status_bar
+        if status_bar is not None:
+            log_events.status_message.connect(status_bar.showMessage)
+
+
+class QtLogEventHandler(logging.Handler):
+    """Handler that emits a Qt signal for each formatted log record."""
+
+    def emit(self, record: logging.LogRecord) -> None:
+        try:
+            log_events.record_emitted.emit(
+                self.format(record),
+                int(record.levelno),
+                record.getMessage(),
+            )
+        except Exception:
+            self.handleError(record)
+
+
+class AppLogger:
+    """Singleton application logger factory and GUI error reporter."""
+
+    _instance: Self | None = None
+    _logger: ChartLibreLogger | None = None
+    _configured: bool = False
+    _hooks_installed: bool = False
+
+
+    def __new__(cls) -> Self:
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    @classmethod
+    def configure(
+        cls,
+        log_dir: Path = _LOGGER_DIR,
+        *,
+        console_level: int = logging.INFO,
+        file_level: int = logging.WARNING,
+        max_bytes: int = 1_000_000,
+        backup_count: int = 3,
+    ) -> ChartLibreLogger:
+        """Configure and return the singleton application logger.
+
+        Any call can pass ``raise_error=True`` to raise LoggedError once the
+        record is written; nothing raises by default.
+        """
+        if cls._configured and cls._logger is not None:
+            return cls._logger
+
+        logging.setLoggerClass(ChartLibreLogger)
+
+        log_dir.mkdir(parents=True, exist_ok=True)
+        # LOG_FILE when the default directory is used; a relocated directory
+        # (tests, a packaged build) keeps its own file.
+        log_file: Path = log_dir / LOG_FILE.name
+        logger = cast(ChartLibreLogger, logging.getLogger(_LOGGER_NAME))
+        logger.setLevel(logging.DEBUG)
+        logger.propagate = False
+
+        formatter = logging.Formatter(
+            fmt = "%(asctime)s | %(levelname)-8s | %(caller)s | %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+        # Attached to the logger, not to each handler: a filter on the logger
+        # runs once per record and before any handler sees it.
+        if not any(isinstance(existing, _CallerFilter) for existing in logger.filters):
+            logger.addFilter(_CallerFilter())
+
+        if not any(isinstance(handler, logging.StreamHandler) for handler in logger.handlers):
+            console_handler = logging.StreamHandler()
+            console_handler.setLevel(console_level)
+            console_handler.setFormatter(formatter)
+            logger.addHandler(console_handler)
+
+        has_file_handler = any(isinstance(handler, RotatingFileHandler) for handler in logger.handlers)
+        if not has_file_handler:
+            file_handler = RotatingFileHandler(
+                log_file,
+                maxBytes=max_bytes,
+                backupCount=backup_count,
+                encoding="utf-8",
+            )
+            file_handler.setLevel(file_level)
+            file_handler.setFormatter(formatter)
+            logger.addHandler(file_handler)
+
+        if not any(isinstance(handler, QtLogEventHandler) for handler in logger.handlers):
+            event_handler = QtLogEventHandler()
+            event_handler.setLevel(logging.DEBUG)
+            event_handler.setFormatter(formatter)
+            logger.addHandler(event_handler)
+
+        cls._logger = logger
+        cls._configured = True
+        logger.debug("Log file: %s", log_file)
+        return logger
+
+    @classmethod
+    def reset(cls) -> None:
+        """Detach every handler and forget the singleton configuration.
+
+        Why: ``configure`` is a no-op once the singleton exists, so anything that
+        needs to point the logger at a different directory (tests, a relocated
+        log folder) has to tear the current configuration down first.
+        """
+        logger = cls._logger or cast(ChartLibreLogger, logging.getLogger(_LOGGER_NAME))
+        for handler in list(logger.handlers):
+            logger.removeHandler(handler)
+            try:
+                handler.close()
+            except (OSError, ValueError):
+                # A handler that fails to close must not block reconfiguration.
+                pass
+        cls._logger = None
+        cls._configured = False
+
+    @classmethod
+    def get_logger(cls) -> ChartLibreLogger:
+        """Return the configured singleton logger, initialising it if needed."""
+        if cls._logger is None:
+            return cls.configure()
+        return cls._logger
+
+
+    @classmethod
+    def install_exception_hooks(cls) -> None:
+        """Install global Python and Qt hooks for fatal errors."""
+        if cls._hooks_installed:
+            return
+        qInstallMessageHandler(cls._handle_qt_message)
+        cls._hooks_installed = True
+
+
+    @classmethod
+    def _handle_qt_message(
+        cls,
+        mode: QtMsgType,
+        context: object,
+        message: str,
+    ) -> None:
+        """Route a Qt-internal message into the application log.
+
+        Installed with ``qInstallMessageHandler`` so warnings raised by Qt
+        itself - unknown QSS properties, layout complaints, painting errors -
+        land in the same file as the application's own records instead of on
+        stderr, where a packaged build would lose them.
+        """
+        del context
+        logger = cls.get_logger()
+        match mode:
+            case QtMsgType.QtCriticalMsg| QtMsgType.QtFatalMsg:
+                logger.critical("Qt critical: %s", message)
+            case QtMsgType.QtWarningMsg:
+                logger.warning("Qt warning: %s", message)
+            case QtMsgType.QtInfoMsg:
+                logger.info("Qt info: %s", message)
+            case _:
+                logger.debug("Qt debug: %s", message)
+
+
+def format_exception(exc_info: ExceptionInfo) -> str:
+    """Return a formatted traceback string for an exception tuple."""
+    return "".join(traceback.format_exception(*exc_info))
+
+
+# Initialise ASAP at import time so module-level imports are always safe.
+applogger: ChartLibreLogger = AppLogger.configure()
+AppLogger.install_exception_hooks()
+
+
+def get_logger() -> ChartLibreLogger:
+    """Return the singleton application logger."""
+    return AppLogger.get_logger()
+
+
+def clear_log_file() -> None:
+    """Empty the application log file, through the handler that writes it.
+
+    Truncated in place by the RotatingFileHandler that holds it open, under
+    its lock: replacing the file under an open handle would leave the handle
+    writing to a file nobody reads (and Windows would refuse the delete).
+    Without a file handler, the file is emptied directly.
+    """
+    logger = logging.getLogger(_LOGGER_NAME)
+    for handler in logger.handlers:
+        if isinstance(handler, RotatingFileHandler):
+            handler.acquire()
+            try:
+                if handler.stream is not None:
+                    handler.stream.seek(0)
+                    handler.stream.truncate()
+                    handler.stream.flush()
+                    return
+            finally:
+                handler.release()
+    path = Path(LOG_FILE)
+    if path.exists():
+        path.write_text("", encoding="utf-8")

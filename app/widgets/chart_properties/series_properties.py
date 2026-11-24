@@ -1,0 +1,950 @@
+"""Property editor for the series of the selected axis.
+
+Handles per-series style (colour, marker, line style, alpha, visibility, legend
+participation), ordering, deletion, and the series SQL query.
+"""
+from __future__ import annotations
+
+import sys
+
+import re
+from functools import cache
+from typing import Any
+
+from matplotlib import rcParams
+from PySide6.QtCore import QPointF, QSize, Qt, Signal
+from PySide6.QtGui import QBrush, QColor, QIcon, QPainter, QPen, QTextOption
+from PySide6.QtWidgets import (
+    QCheckBox,
+    QComboBox,
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QPlainTextEdit,
+    QScrollArea,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
+
+from app.logs.logger import applogger
+from app.plugin_api.charts.kwarg_spec import DEFAULT
+from app.styles.style import (
+    MARGIN_PANEL,
+    TitledCard,
+    create_action_button,
+    create_hidpi_pixmap,
+    mark_destructive_button,
+    stdSizeAndlayout,
+)
+from app.utils.config import get_constant
+from app.utils.i18n import _
+from app.utils.messages import ask
+from app.widgets.drop_down_controls.path_effect_combo import PathEffectCombo
+from app.widgets.chart_properties.base_properties import BaseProperties
+from app.widgets.chart_jump_bar import AxisStepper
+from app.widgets.inspector import InspectorCard, InspectorForm, InspectorSection
+from app.widgets.chart_properties.series_style_editors import (
+    BarPictureEditor,
+    LineStyleEditor,
+    MarkerStyleEditor,
+)
+
+AxisDescriptorLike = Any
+SeriesDescriptorLike = Any
+
+SQL_QUERY_VISIBLE_LINES = get_constant("sql_query_visible_lines", 6)
+
+_SWATCH_W, _SWATCH_H = 28, 14
+
+#: Matplotlib linestyle code -> Qt pen style, same mapping LineStyleCombo
+#: uses. Anything not in here (an unrecognised code, "none") falls back to
+#: a plain solid line - "none" is handled separately, as a dot.
+_SWATCH_PEN_STYLES: dict[str, Qt.PenStyle] = {
+    "-": Qt.PenStyle.SolidLine,
+    "--": Qt.PenStyle.DashLine,
+    "-.": Qt.PenStyle.DashDotLine,
+    ":": Qt.PenStyle.DotLine,
+}
+
+
+@cache
+def _series_swatch_icon(color: str, linestyle: str) -> QIcon:
+    """A small colour/line-style preview for one row of the series combo.
+
+    Best-effort, not a render: an explicit colour and linestyle are drawn
+    exactly, but a series left on "whatever the cycle/style sheet decides"
+    is approximated by the caller (the active property cycle, indexed by
+    the series' position in the combo) rather than replicated stroke for
+    stroke - the renderer that actually draws the chart may cycle
+    differently per chart type. Enough to recognise "this is the blue
+    dashed one" without opening the series first, which is the point.
+    """
+    pixmap = create_hidpi_pixmap(_SWATCH_W, _SWATCH_H)
+    qcolor = QColor(color)
+    if not qcolor.isValid():
+        qcolor = QColor("#808080")
+
+    painter = QPainter(pixmap)
+    try:
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        mid_y = _SWATCH_H / 2
+
+        if linestyle == "none":
+            # Marker-only series: a dot reads as "no line" better than an
+            # empty icon, which looks like the swatch failed to draw.
+            painter.setBrush(QBrush(qcolor))
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawEllipse(QPointF(_SWATCH_W / 2, mid_y), 3, 3)
+        else:
+            pen = QPen(qcolor)
+            pen.setWidth(2)
+            pen.setStyle(_SWATCH_PEN_STYLES.get(linestyle, Qt.PenStyle.SolidLine))
+            painter.setPen(pen)
+            painter.drawLine(QPointF(2, mid_y), QPointF(_SWATCH_W - 2, mid_y))
+    finally:
+        painter.end()
+
+    return QIcon(pixmap)
+
+
+_ORDER_BY_AT_END = re.compile(r"\s+ORDER\s+BY\s+[^()]*?;?\s*$", re.IGNORECASE)
+
+
+def is_sorted(sql: str) -> bool:
+    """Whether the query ends with its own ORDER BY (one inside a subquery does not count)."""
+    return bool(_ORDER_BY_AT_END.search(sql or ""))
+
+
+def without_sort(sql: str) -> str:
+    return _ORDER_BY_AT_END.sub("", sql or "").rstrip()
+
+
+def with_sort(sql: str, column: str) -> str:
+    quoted = '"' + column.replace('"', '""') + '"'
+    return f"{without_sort(sql).rstrip().rstrip(';')}\nORDER BY {quoted}"
+
+
+class SeriesPropertiesWidget(BaseProperties):
+    """Compact editor for series descriptor style/options."""
+
+    series_selected = Signal(int)
+    #: A series chosen here by the person (not a reload): its id and name, for the chart to show it.
+    series_picked = Signal(int, str)
+    series_options_requested = Signal(dict)
+    series_order_requested = Signal(list)
+    series_delete_requested = Signal(int)
+    #: Apply in the Function card: {"series_id", "function" (the formula), "parameters", "x", "y"}.
+    function_edit_requested = Signal(dict)
+
+    # Fixed height, in visible lines, for the SQL query editor. A fixed
+    # size rather than Expanding keeps the form layout stable regardless
+    # of query length and avoids the editor growing to swallow the panel.
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+
+        # _repo/_figure_id/_figure/_redraw_callback come from BaseProperties.
+        self._current_axis_id: int | None = None
+        self._current_series_id: int | None = None
+        self._series_map: dict[int, SeriesDescriptorLike] = {}
+        #: key -> (stored value, combo index it was loaded as); see _load_choice.
+
+        self._build_ui()
+        self._install_auto_apply(self._emit_series_options_requested)
+        self._connect_auto_apply()
+        self.clear_connected_figure()
+
+    def _connect_auto_apply(self) -> None:
+        """Apply a style edit a short moment after the last control change.
+
+        ``_series_combo`` is left out: it picks which series is shown, not
+        an edit to one, and its handler repopulates the form under the
+        reload guard anyway.
+        """
+        self._watch(
+            self._legend_label_edit,
+            self._sql_query_edit,
+            self._visible_check,
+            self._show_in_legend_check,
+            self._sort_x_check,
+            self._line_editor,
+            self._marker_editor,
+            self._bar_picture_editor,
+            self._effect_combo,
+        )
+
+    def _build_ui(self) -> None:
+        """Build all UI sections inside a resizable scrollable container.
+
+        The selector card stays at natural height. The options card receives
+        the remaining vertical space while still allowing the whole panel to
+        scroll when the host becomes too small.
+        """
+        self.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Expanding,
+        )
+
+        content = QWidget(self)
+        content.setProperty("toolboxPage", True)
+        content.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        content.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Expanding,
+        )
+
+        root = QVBoxLayout(content)
+        root.setContentsMargins(*MARGIN_PANEL)
+        root.setSpacing(12)
+
+        self._selector_section = self._build_selector_section()
+        root.addWidget(self._selector_section, 0)
+
+        self._build_groups()
+        for card in self._groups:
+            root.addWidget(card, 0)
+
+        self._function_section = self._build_function_section()
+        root.addWidget(self._function_section, 0)
+        root.addStretch(1)  # the spare height goes below the last section, not between Query and Function
+
+        scroll = QScrollArea(self)
+        scroll.setProperty("toolboxPage", True)
+        scroll.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        scroll.viewport().setProperty("toolboxPage", True)
+        scroll.viewport().setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Expanding,
+        )
+        scroll.setWidget(content)
+
+        main = QVBoxLayout(self)
+        stdSizeAndlayout(main)
+        main.addWidget(scroll, 1)
+
+    def _build_selector_section(self) -> QWidget:
+        """Create the series selector and ordering controls."""
+        section = TitledCard(self, _("Axis"), "seriesSelectorCard")
+        section.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Preferred,
+        )
+        self._series_title = section.title_label
+        self.axis_stepper = AxisStepper(section)
+        AxisStepper.beside(section.title_label, self.axis_stepper)
+
+        layout = section.card.layout()
+
+        self._series_combo = QComboBox(section)
+        stdSizeAndlayout(self._series_combo)
+        self._series_combo.currentIndexChanged.connect(
+            self._on_series_combo_changed
+        )
+        # activated: a choice made here, never a reload's - only that is shown on the chart.
+        self._series_combo.activated.connect(self._on_series_combo_activated)
+        layout.addWidget(self._series_combo)
+
+        # Shift-click on the chart adds series edited together with this one.
+        self._also_ids: list[int] = []
+        self._also_label = QLabel(section)
+        self._also_label.setObjectName("seriesAlsoEditing")
+        self._also_label.setWordWrap(True)
+        self._also_label.setTextFormat(Qt.TextFormat.RichText)
+        self._also_label.linkActivated.connect(lambda _link: self.clear_also_series())
+        self._also_label.hide()
+        layout.addWidget(self._also_label)
+
+        row = QWidget(section)
+        row_layout = QHBoxLayout(row)
+        stdSizeAndlayout(row_layout)
+
+        self._btn_move_up = create_action_button(
+            parent=row,
+            action_id="up",
+            action=self._move_current_series_up,
+            layout=row_layout,
+        )
+        self._btn_move_down = create_action_button(
+            parent=row,
+            action_id="down",
+            action=self._move_current_series_down,
+            layout=row_layout,
+        )
+        self._btn_delete = create_action_button(
+            parent=row,
+            action_id="delete",
+            action=self._on_delete_clicked,
+            layout=row_layout,
+        )
+        mark_destructive_button(self._btn_delete)  # red, as every delete of the app
+        for _button in (self._btn_move_up, self._btn_move_down, self._btn_delete):
+            _button.setIconSize(QSize(14, 14))  # a small icon, so a short word keeps room beside it
+            _button.setMinimumWidth(78)
+            if sys.platform == "darwin":  # a Mac button is its word
+                _button.setIcon(QIcon())
+        # No Apply button: every style control applies itself a short moment
+        # after it changes (see _connect_auto_apply). Up / Down / Delete stay
+        # - they reorder and remove series, not commit the form.
+
+        row_layout.addStretch(1)
+        layout.addWidget(row)
+
+        return section
+
+    def _build_function_section(self) -> InspectorCard:
+        """A function series' function: its formula, this series' values and range (FunctionEditor), Apply.
+
+        Shown only for a series that draws a stored function, closed until opened. The formula is the
+        project's - every chart of the function follows it; the values and the range are this series' own.
+        """
+        from PySide6.QtWidgets import QPushButton
+
+        from app.widgets.function_editor import FunctionEditor
+
+        section = InspectorCard(self, _("Function"), "seriesFunctionCard", collapsed=True, prefix="series")
+        layout = section.card.layout()
+        self._function_note = QLabel(section.card)
+        self._function_note.setWordWrap(True)
+        self._function_note.setProperty("muted", True)
+        self._function_editor = FunctionEditor(section.card)
+        buttons = QHBoxLayout()
+        buttons.addStretch(1)
+        self._function_trust = QPushButton(_("Trust..."), section.card)
+        self._function_trust.setToolTip(_("Run the project's functions on this computer: their code is shown first."))
+        self._function_trust.clicked.connect(self._trust_function)
+        self._function_apply = QPushButton(_("Apply"), section.card)
+        self._function_apply.setToolTip(_("The formula for every chart of the function; the values and the range "
+                                          "for this series."))
+        self._function_apply.clicked.connect(self._apply_function)
+        buttons.addWidget(self._function_trust)
+        buttons.addWidget(self._function_apply)
+        layout.addWidget(self._function_note)
+        layout.addWidget(self._function_editor)
+        layout.addLayout(buttons)
+        #: The function query the series was loaded with (parse_function_sql), or None.
+        self._function_query: Any = None
+        section.hide()
+        return section
+
+    def _load_function(self, series_desc: SeriesDescriptorLike | None) -> None:
+        """The Function card for *series_desc*: shown with its function when it draws one, hidden otherwise."""
+        from app.data.repo.function_sql import function_names, parse_function_sql
+
+        sql = str(getattr(series_desc, "sql_query", "") or "") if series_desc is not None else ""
+        query = parse_function_sql(sql) if "chartlibre_function" in sql else None
+        stored = None
+        if query is not None and self._repo is not None:
+            # Only for a series that draws a function: the store brings SymPy, half a second to import.
+            from app.data_operations import sympy_store
+
+            stored = sympy_store.get(self._repo, query.name)
+        self._function_query = query if stored is not None else None
+        self._function_section.setVisible(stored is not None)
+        if stored is None:
+            return
+        self._function_editor.load(stored, values=query.parameters, x=query.x, y=query.y)
+        trusted = sympy_store.is_trusted(stored)
+        self._function_editor.set_read_only(not trusted)
+        self._function_trust.setVisible(not trusted)
+        self._function_apply.setEnabled(trusted)
+        others = sum(1 for row in self._repo.list_series_dict()
+                     if int(row["id"]) != int(series_desc.id) and query.name in function_names([row["sql_query"]]))
+        notes = [_("'{name}': the formula is the project's - {count} other series draw it too.").format(
+            name=query.name, count=others) if others else
+            _("'{name}': the formula is the project's; the values and the range are this series'.").format(
+                name=query.name)]
+        if not trusted:
+            notes.append(_("Not trusted on this computer: shown, not run."))
+        self._function_note.setText(" ".join(notes))
+
+    def _apply_function(self) -> None:
+        """Apply: what is wrong said in the card, nothing sent; otherwise the edit, to the window."""
+        editor, query = self._function_editor, self._function_query
+        if query is None or self._current_series_id is None:
+            return
+        problem = editor.problem()
+        if not problem and (editor.ndim() == 2) != (query.y is not None):
+            problem = (_("This series draws z = f(x, y): the formula must use y.") if query.y is not None else
+                       _("This series draws y = f(x): a formula of x and y needs a chart of its own (Function)."))
+        if problem:
+            self._function_note.setText(problem)
+            return
+        self.function_edit_requested.emit({
+            "series_id": int(self._current_series_id), "function": editor.function_data(),
+            "parameters": editor.parameters(), "x": editor.x_range(), "y": editor.y_range(),
+        })
+
+    def _trust_function(self) -> None:
+        from app.dialogs.function_trust_dialog import ask_to_trust
+
+        if self._repo is not None and ask_to_trust(self, self._repo):
+            self._load_function(self._series_map.get(int(self._current_series_id))
+                                if self._current_series_id is not None else None)
+            self.function_edit_requested.emit({"series_id": None})  # only drawn again
+
+    def _sort_toggled(self, on: bool) -> None:
+        """Add or remove ORDER BY <x> at the end of the query (the query is applied as typed)."""
+        if self._reloading_depth:
+            return
+        sql = self._sql_query_edit.toPlainText()
+        column = getattr(self, "_x_column", "")
+        if not column or on == is_sorted(sql):
+            return
+        self._sql_query_edit.setPlainText(with_sort(sql, column) if on else without_sort(sql))
+
+    def _build_groups(self) -> None:
+        """Create the series' controls and their sections (self._groups): Legend, Line, Marker, Bar picture, Effect,
+        Query."""
+        section = self
+        self._legend_label_edit = QLineEdit(section)
+        stdSizeAndlayout(self._legend_label_edit)
+
+        self._sql_query_edit = QPlainTextEdit(
+            section,
+            readOnly=False,
+            placeholderText="Enter SQL query for this series.",
+            undoRedoEnabled=True,
+        )
+        self._sql_query_edit.setLineWrapMode(
+            QPlainTextEdit.LineWrapMode.WidgetWidth
+        )
+        self._sql_query_edit.setWordWrapMode(
+            QTextOption.WrapMode.WrapAtWordBoundaryOrAnywhere
+        )
+        self._sql_query_edit.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
+        stdSizeAndlayout(self._sql_query_edit)
+        self._sql_query_edit.setFixedHeight(
+            self._sql_query_edit.fontMetrics().lineSpacing()
+            * SQL_QUERY_VISIBLE_LINES
+            + 12
+        )
+
+        self._visible_check = QCheckBox(_("Visible"), section)
+        self._show_in_legend_check = QCheckBox(_("Show in legend"), section)
+        # Adds or removes ORDER BY <x> at the end of the series' query: the sort is the query's, not the chart's.
+        self._sort_x_check = QCheckBox(_("Sort by X ascending (ORDER BY in the query)"), section)
+
+        stdSizeAndlayout(self._visible_check)
+        stdSizeAndlayout(self._show_in_legend_check)
+        stdSizeAndlayout(self._sort_x_check)
+
+        flags_row = QWidget(section)
+        stdSizeAndlayout(flags_row)
+
+        flags_layout = QHBoxLayout(flags_row)
+        stdSizeAndlayout(flags_layout)
+        flags_layout.addWidget(self._visible_check, 0)
+        flags_layout.addWidget(self._show_in_legend_check, 0)
+        flags_layout.addStretch(1)
+
+        # The line and the markers, each a class of its own (series_style_editors).
+        self._line_editor = LineStyleEditor(section)
+        self._marker_editor = MarkerStyleEditor(section, repo=lambda: self._repo,
+                                                line_colour=lambda: self._line_editor.colour())
+        self._bar_picture_editor = BarPictureEditor(section, repo=lambda: self._repo)
+        # An outline, a shadow or a glow under what the series draws, and its legend entry (charts.path_effects).
+        self._effect_combo = PathEffectCombo(section, artist="series")
+        self._effect_combo.setToolTip(_("An outline, a shadow or a glow drawn under the series' lines, points, bars "
+                                        "or wedges, and under its legend entry"))
+        self._sort_x_check.toggled.connect(self._sort_toggled)
+
+        self._group_forms: dict[str, InspectorForm] = {}
+
+        def group(title: str, name: str, rows: list[tuple[str, QWidget]], *, collapsed: bool = False,
+                  foldable: bool = False) -> InspectorSection:
+            # An inspector section: a title row with a chevron over one label/control grid, no box.
+            card = InspectorSection(title, self, key="series." + name, collapsed=collapsed, foldable=foldable)
+            card.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)  # never below its height
+            box_form = InspectorForm(card.body)
+            body_layout = QVBoxLayout(card.body)
+            body_layout.setContentsMargins(0, 0, 0, 0)
+            body_layout.addWidget(box_form)
+            for label, widget in rows:
+                box_form.add_row(label, widget) if label else box_form.add_wide(widget)
+            self._group_forms[name] = box_form
+            return card
+
+        self._groups = [
+            group(_("Legend"), "legend", [(_("Label"), self._legend_label_edit), ("", flags_row)]),
+            group(_("Line"), "line", [("", self._line_editor)]),
+            group(_("Marker"), "marker", [("", self._marker_editor)]),
+            group(_("Bar picture"), "bar_picture", [("", self._bar_picture_editor)]),
+            group(_("Effect"), "effect", [(_("Effect"), self._effect_combo)]),
+            group(_("Query"), "query", [("", self._sql_query_edit), ("", self._sort_x_check)], collapsed=True,
+              foldable=True),
+        ]
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
+    # set_connected_figure is BaseProperties': attach the four attributes,
+    # then call _reload_from_descriptor() below, which already ends by
+    # enabling or disabling this editor's own controls itself.
+
+    def clear_connected_figure(self) -> None:
+        """Reset UI and disable editing."""
+        self._current_axis_id = None
+        self._current_series_id = None
+        self._series_map.clear()
+        self._series_title.setText(_("Axis: No axis selected"))
+        self._clear_series_combo()
+        self._clear_series_fields()
+        super().clear_connected_figure()
+
+    def set_current_axis_id(self, axis_id: int | None) -> None:
+        """Limit the series selector to one axis."""
+        axis_id = int(axis_id) if axis_id is not None else None
+        if axis_id != self._current_axis_id:
+            self._also_ids.clear()
+        self._current_axis_id = axis_id
+        if self._repo is not None and self._figure_id is not None:
+            self.reload_controls()
+
+    def current_axis_id(self) -> int | None:
+        """Return the current axis id filter."""
+        return self._current_axis_id
+
+    def select_series_named(self, name: str) -> bool:
+        """Show the series called *name* on the current axis (a click on it in the chart).
+
+        The chart labels a series' artists with its name - or a name it
+        starts with, for a series split by a group column or given a
+        companion line ("name (rolling)") - so an exact match wins, then
+        the longest name the label starts with.
+        """
+        series_id = self._series_id_named(name)
+        if series_id is None:
+            return False
+        self._select_series(series_id)
+        return True
+
+    def _series_id_named(self, name: str) -> int | None:
+        matches = [
+            (len(str(desc.name)), series_id)
+            for series_id, desc in self._series_map.items()
+            if name == str(desc.name) or name.startswith(str(desc.name))
+        ]
+        if not matches:
+            return None
+        exact = [series_id for series_id, desc in self._series_map.items() if name == str(desc.name)]
+        return exact[0] if exact else max(matches)[1]
+
+    def add_series_named(self, name: str) -> bool:
+        """Edit the series called *name* together with the shown one (a Shift-click on it in the chart).
+
+        Its name matched as in select_series_named. One already added is
+        taken out again; with none shown yet it becomes the shown one.
+        """
+        picked = self._series_id_named(name)
+        if picked is None or self._current_series_id is None:
+            return self.select_series_named(name)
+        if picked in self._also_ids:
+            self._also_ids.remove(picked)
+        elif picked != self._current_series_id:
+            self._also_ids.append(picked)
+        self._refresh_also_series()
+        return True
+
+    def also_series_ids(self) -> list[int]:
+        """The series edited together with the shown one."""
+        return list(self._also_ids)
+
+    def clear_also_series(self) -> None:
+        self._also_ids.clear()
+        self._refresh_also_series()
+
+    def _refresh_also_series(self) -> None:
+        """Keep the added series that are still on this axis, and say which they are."""
+        self._also_ids = [i for i in self._also_ids if i in self._series_map and i != self._current_series_id]
+        names = ", ".join(str(self._series_map[i].name) for i in self._also_ids)
+        self._also_label.setText(
+            _("Also editing: {names}").format(names=names) + f' <a href="clear">{_("Clear")}</a>'
+            if names else ""
+        )
+        self._also_label.setVisible(bool(names))
+
+    def _on_series_combo_activated(self, index: int) -> None:
+        """A series chosen here: it alone is edited, and it is shown on the chart."""
+        self.clear_also_series()
+        if self._series_combo.itemData(index) is not None:
+            self.series_picked.emit(int(self._series_combo.itemData(index)), self._series_combo.itemText(index))
+
+    # ------------------------------------------------------------------
+    # Descriptor loading
+    # ------------------------------------------------------------------
+
+    def _reload_from_descriptor(self) -> None:
+        """Reload the series selector from the connected figure descriptor.
+
+        This is the single descriptor reload path for the series panel. It is
+        safe during shutdown, chart deletion, stale selection changes, and
+        descriptor schema errors.
+        """
+        if self._repo is None or self._figure_id is None:
+            self.clear_connected_figure()
+            return
+
+        descriptor = self._repo.load_figure_descriptor(self._figure_id)
+        previous_series_id = self._current_series_id
+
+        self._series_map.clear()
+        self._series_combo.blockSignals(True)
+        try:
+            self._series_combo.clear()
+
+            if descriptor is None:
+                # Normal after a Cancel or a new Preview took the figure away: not a warning.
+                applogger.debug(
+                    "No figure descriptor found for figure_id=%s. "
+                    "Series editing disabled for this figure.",
+                    self._figure_id,
+                )
+                return
+
+            for axis_desc in self._axes_from_descriptor(descriptor):
+                self._add_axis_series(axis_desc)
+        finally:
+            self._series_combo.blockSignals(False)
+
+        self._update_title()
+
+        if self._series_combo.count() == 0:
+            self._load_series_descriptor(None)
+            self._set_enabled_state(False)
+            return
+
+        self._set_enabled_state(True)
+        self._select_series(previous_series_id)
+
+    def _axes_from_descriptor(self, descriptor: Any) -> list:
+        """Return axes from a validated descriptor."""
+        axes = getattr(descriptor, "axes", None)
+        if axes is None:
+            applogger.error(
+                "Figure descriptor id=%r has no axes list. "
+                "Series editing stopped; please check the descriptor schema.",
+                getattr(descriptor, "id", self._figure_id),
+            )
+            return []
+        return list(axes)
+
+    def _add_axis_series(self, axis_desc: AxisDescriptorLike) -> None:
+        """Add all series for the axis when it passes the current filter."""
+        axis_id = int(axis_desc.id)
+
+        if self._current_axis_id is not None and axis_id != self._current_axis_id:
+            return
+
+        for series_desc in list(axis_desc.series or []):
+            series_id = int(series_desc.id)
+            self._series_map[series_id] = series_desc
+            self._series_combo.addItem(
+                self._series_swatch_icon_for(series_desc),
+                self._series_display_label(series_desc),
+                series_id,
+            )
+
+    def _series_swatch_icon_for(self, series_desc: SeriesDescriptorLike) -> QIcon:
+        """Resolve the colour/linestyle swatch icon for one combo row."""
+        style = self._series_style(series_desc)
+
+        color = str(style.get("color", "") or "").strip()
+        if not color:
+            try:
+                cycle = rcParams["axes.prop_cycle"].by_key().get("color") or []
+            except (KeyError, AttributeError, TypeError):
+                cycle = []
+            cycle = list(cycle) or ["#1f77b4"]
+            # The combo is built in display order, so its current item
+            # count is this series' position in it - the same index the
+            # renderer's own cycle would be at if nothing else on this axis
+            # set an explicit colour either.
+            color = str(cycle[self._series_combo.count() % len(cycle)])
+
+        linestyle = str(style.get("linestyle", "") or "").strip().lower()
+        if linestyle in ("", DEFAULT):
+            linestyle = "-"
+
+        return _series_swatch_icon(color, linestyle)
+
+    def _select_series(self, preferred_series_id: int | None) -> None:
+        """Select the previous series when possible, otherwise first."""
+        index_to_select = 0
+
+        if preferred_series_id is not None:
+            for index in range(self._series_combo.count()):
+                data = self._series_combo.itemData(index)
+                if data is not None and int(data) == preferred_series_id:
+                    index_to_select = index
+                    break
+
+        self._series_combo.setCurrentIndex(index_to_select)
+        self._on_series_combo_changed(index_to_select)
+
+    def _update_title(self) -> None:
+        """Name the axis whose series are being edited."""
+        if self._current_axis_id is None:
+            self._series_title.setText(_("Axis: No axis selected"))
+            return
+        name = ""
+        if self._repo is not None and self._figure_id is not None:
+            try:
+                for axis_id, _index, title in self._repo.list_axes_for_figure(int(self._figure_id)):
+                    if int(axis_id) == self._current_axis_id:
+                        name = str(title or "").strip()
+                        break
+            except Exception:
+                applogger.debug("Could not resolve the series axis title.", exc_info=True)
+        name = name or _("Axis {id}").format(id=self._current_axis_id)
+        self._series_title.setText(_("Axis: {name}").format(name=name))
+
+    # ------------------------------------------------------------------
+    # Series binding
+    # ------------------------------------------------------------------
+
+    def _series_style(self, series_desc: SeriesDescriptorLike) -> dict[str, Any]:
+        """Return a mutable series style dictionary."""
+        if series_desc.options is None:
+            return {}
+
+        if isinstance(series_desc.options, dict):
+            return dict(series_desc.options)
+
+        applogger.error(
+            f"Series id={series_desc.id!r} has invalid style. Editing stopped; "
+            "please check the descriptor schema."
+        )
+        return {}
+
+    def _series_display_label(self, series_desc: SeriesDescriptorLike) -> str:
+        """Build selector text for one series."""
+        style = self._series_style(series_desc)
+        name = str(
+            series_desc.name
+            or style.get("label")
+            or f"Series {series_desc.id}"
+        ).strip()
+
+        return name if bool(style.get("visible", True)) else f"{name} (hidden)"
+
+    def _load_series_descriptor(
+        self,
+        series_desc: SeriesDescriptorLike | None,
+    ) -> None:
+        """Load one series descriptor into the form."""
+        if series_desc is None:
+            self._clear_series_fields()
+            return
+
+        self._load_function(series_desc)
+        with self._reloading_controls():
+            self._current_series_id = int(series_desc.id)
+            style = self._series_style(series_desc)
+
+            self._legend_label_edit.setText(str(style.get("label", "") or ""))
+            self._sql_query_edit.setPlainText(
+                str(getattr(series_desc, "sql_query", "") or "")
+            )
+            self._visible_check.setChecked(bool(style.get("visible", True)))
+            self._show_in_legend_check.setChecked(
+                bool(style.get("show_in_legend", True))
+            )
+            sql = str(getattr(series_desc, "sql_query", "") or "")
+            roles = getattr(series_desc, "roles", None) or {}
+            if isinstance(roles, str):  # kept as JSON text in some descriptors
+                import json
+
+                try:
+                    roles = json.loads(roles) or {}
+                except ValueError:
+                    roles = {}
+            self._x_column = str((roles.get("x") if isinstance(roles, dict) else "") or "")
+            if style.get("sort_x") and self._x_column and not is_sorted(sql):
+                # The chart used to sort it; the query does now (the old key goes on the next apply).
+                self._sql_query_edit.setPlainText(with_sort(sql, self._x_column))
+            self._sort_x_check.setEnabled(bool(self._x_column))
+            self._sort_x_check.setChecked(is_sorted(self._sql_query_edit.toPlainText()))
+
+            self._line_editor.load(style)
+            self._marker_editor.load(style)
+            self._bar_picture_editor.load(style)
+            if not self._effect_combo.set_current_effect(str(style.get("path_effects") or "")):
+                self._effect_combo.set_current_effect("")
+            # Only a bar chart's series can be drawn as pictures.
+            self._groups[3].setVisible(self._is_bar_series(int(series_desc.id)))
+
+    def _is_bar_series(self, series_id: int) -> bool:
+        """Whether the series is on a Bar Chart or Horizontal Bar Chart axis."""
+        if self._repo is None or self._figure_id is None:
+            return False
+        try:
+            figure = self._repo.load_figure_descriptor(int(self._figure_id))
+        except Exception:
+            return False
+        for axis in getattr(figure, "axes", ()) or ():
+            if any(int(getattr(series, "id", -1)) == series_id for series in getattr(axis, "series", ()) or ()):
+                return str(getattr(axis, "name", "")) in ("Bar Chart", "Horizontal Bar Chart")
+        return False
+
+    def _clear_series_fields(self) -> None:
+        """Clear form fields for the no-selection state."""
+        self._function_section.hide()
+        self._function_query = None
+        with self._reloading_controls():
+            self._current_series_id = None
+            self._legend_label_edit.clear()
+            self._sql_query_edit.clear()
+            self._visible_check.setChecked(True)
+            self._show_in_legend_check.setChecked(True)
+            self._sort_x_check.setChecked(False)
+            self._line_editor.clear()
+            self._marker_editor.clear()
+            self._bar_picture_editor.clear()
+            self._effect_combo.set_current_effect("")
+            self._groups[3].setVisible(False)
+
+    # ------------------------------------------------------------------
+    # Events and actions
+    # ------------------------------------------------------------------
+
+    def _clear_series_combo(self) -> None:
+        """Clear the selector without emitting selection-change signals."""
+        self._series_combo.blockSignals(True)
+        self._series_combo.clear()
+        self._series_combo.blockSignals(False)
+
+    def _set_enabled_state(self, enabled: bool) -> None:
+        """Enable or disable interactive controls."""
+        for widget in (
+            self._series_combo,
+            self._btn_move_up,
+            self._btn_move_down,
+            self._btn_delete,
+            self._legend_label_edit,
+            self._sql_query_edit,
+            self._visible_check,
+            self._show_in_legend_check,
+            self._sort_x_check,
+            self._line_editor,
+            self._marker_editor,
+            self._bar_picture_editor,
+        ):
+            widget.setEnabled(enabled)
+
+
+    def _on_series_combo_changed(self, index: int) -> None:
+        """Handle series selector changes."""
+        if index < 0:
+            self._load_series_descriptor(None)
+            return
+
+        data = self._series_combo.itemData(index)
+        if data is None:
+            self._load_series_descriptor(None)
+            return
+
+        series_id = int(data)
+        series_desc = self._series_map.get(series_id)
+
+        if series_desc is None:
+            applogger.error(
+                "Series descriptor id=%r not found in the map. "
+                "Editing stopped; please check the descriptor.",
+                series_id,
+            )
+            self._load_series_descriptor(None)
+            return
+
+        self._load_series_descriptor(series_desc)
+        self._refresh_also_series()
+        self.series_selected.emit(series_id)
+
+    def _on_delete_clicked(self) -> None:
+        """Delete the selected series."""
+        index = self._series_combo.currentIndex()
+        if index < 0:
+            return
+
+        data = self._series_combo.itemData(index)
+        if data is None:
+            return
+
+        series_id = int(data)
+
+        if not ask(
+            self,
+            "series.confirm_delete",
+            series=self._series_combo.itemText(index),
+        ):
+            return
+
+        if series_id in self._series_map:
+            del self._series_map[series_id]
+
+        self._series_combo.removeItem(index)
+        self.series_delete_requested.emit(int(series_id))
+
+    def _move_current_series_up(self) -> None:
+        """Move the selected series up in combo order."""
+        self._move_current_series(-1)
+
+    def _move_current_series_down(self) -> None:
+        """Move the selected series down in combo order."""
+        self._move_current_series(1)
+
+    def _move_current_series(self, offset: int) -> None:
+        """Move the selected series by one row and emit the new order."""
+        index = self._series_combo.currentIndex()
+        target = index + offset
+
+        if index < 0 or target < 0 or target >= self._series_combo.count():
+            return
+
+        text = self._series_combo.itemText(index)
+        data = self._series_combo.itemData(index)
+
+        self._series_combo.removeItem(index)
+        self._series_combo.insertItem(target, text, data)
+        self._series_combo.setCurrentIndex(target)
+
+        self._emit_series_order_requested()
+
+    def _emit_series_order_requested(self) -> None:
+        """Emit the current combo order."""
+        ordered_ids: list[int] = []
+
+        for index in range(self._series_combo.count()):
+            data = self._series_combo.itemData(index)
+            if data is not None:
+                ordered_ids.append(int(data))
+
+        self.series_order_requested.emit(ordered_ids)
+
+    def _emit_series_options_requested(self) -> None:
+        """Emit the current form payload."""
+        self.series_options_requested.emit(
+            {
+                "series_id": self._current_series_id,
+                "also_series_ids": list(self._also_ids),
+                "label": self._legend_label_edit.text().strip(),
+                "sql_query": self._sql_query_edit.toPlainText().strip(),
+                "visible": bool(self._visible_check.isChecked()),
+                "show_in_legend": bool(self._show_in_legend_check.isChecked()),
+                "sort_x": None,  # the sort is the query's ORDER BY now: the old key is removed
+                # The line's and the markers' keys; None removes one (series_style_editors).
+                **self._line_editor.values(),
+                **self._marker_editor.values(),
+                **self._bar_picture_editor.values(),
+                "path_effects": self._effect_combo.current_effect() or None,  # None removes the key
+            }
+        )

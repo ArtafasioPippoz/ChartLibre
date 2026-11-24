@@ -1,0 +1,428 @@
+# 日本語 translation for the pack multivariate.
+# Message ids are the English source strings.
+
+msgid ""
+msgstr "Project-Id-Version: ChartLibre\nLanguage: ja\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\n"
+
+msgid "0 chooses them by cross-validation: another component only while it cuts the prediction error by 5% or more."
+msgstr "0 は、断続によってそれらを選択します。: 予測エラーを5%以上削減しながら、別のコンポーネントのみ。"
+
+msgid "0 takes as many as the correlations have eigenvalues above 1 (see the scree plot)."
+msgstr "0 は、相関が 1 の上に eigenvalues を持っているので、数だけかかります (scree のプロットを参照してください)。"
+
+msgid "A few directions that carry most of the variation of many columns: eigenvalues and their share, loadings, each row's scores; scree, score and loading plots."
+msgstr "多くの列のバリエーションのほとんどを運ぶいくつかの方向: eigenvalues とその共有、読み込み、各行のスコア; scree、スコア、プロットをロードします。"
+
+msgid "A few hidden factors behind many correlated columns: Maximum Likelihood or Principal Axis, rotated (Varimax, Quartimax, Equamax, Promax); loadings, communalities, each row's scores."
+msgstr "多くの相関列の背後にあるいくつかの隠された要因:最大尤度またはプリンシパル軸、回転(Varimax、Quartimax、Equamax、Promax)。 ローディング、コミュニティ、各行のスコア。"
+
+msgid "Actual"
+msgstr "アクチュアリー"
+
+msgid "Actual by predicted"
+msgstr "予測による実際の行動"
+
+msgid "Algorithm"
+msgstr "アルゴリスム"
+
+msgid "Biplot"
+msgstr "ピプロット"
+
+msgid "By"
+msgstr "によって:"
+
+msgid "Canonical analysis"
+msgstr "キャニカル分析"
+
+msgid "Canonical plot"
+msgstr "キャニカルプロット"
+
+msgid "Canonical scores by {response}"
+msgstr "{response}によるキャノンスコア"
+
+msgid "Choose k automatically"
+msgstr "kを自動的に選択する"
+
+msgid "Choose the clustering algorithm family."
+msgstr "クラスタリングアルゴリズムファミリーを選択します。"
+
+msgid "Choose the exact scipy.cluster function/workflow to use."
+msgstr "正確なscipy.cluster関数/ワークフローを選択します。"
+
+msgid "Choose whether clusters are rendered as one point-colored series or as separate series."
+msgstr "クラスターが1つのポイントカラーのシリーズとして、または別々のシリーズとしてレンダリングされているかどうかを選択します。"
+
+msgid "Choose which numeric columns are used as clustering features."
+msgstr "数値列がクラスタリング機能として使用されるかを選択します。"
+
+msgid "Choosing k"
+msgstr "チョースk"
+
+msgid "Cluster"
+msgstr "クラスター"
+
+msgid "Cluster means"
+msgstr "クラスターの手段"
+
+msgid "Cluster profiles"
+msgstr "クラスタプロファイル"
+
+msgid "Clusters"
+msgstr "クラスタ"
+
+msgid "Clusters on two principal components"
+msgstr "2つの主要コンポーネントのクラスタ"
+
+msgid "Coefficients"
+msgstr "コファレンス"
+
+msgid "Columns"
+msgstr "コラム"
+
+msgid "Columns standardized"
+msgstr "標準化されたコラム"
+
+msgid "Communalities"
+msgstr "コミュニティ"
+
+msgid "Component"
+msgstr "コンポーネント"
+
+msgid "Components"
+msgstr "コンポーネント"
+
+msgid "Confusion matrix"
+msgstr "融合のマトリックス"
+
+msgid "Correlation"
+msgstr "相関関係"
+
+msgid "Correlations"
+msgstr "相関関係"
+
+msgid "Correlations weigh every column the same, whatever its unit - the usual choice. Covariances let the columns with the widest spread lead, for columns in one unit."
+msgstr "相関は、すべての列を同じ、そのユニット - 通常の選択と重なります。 Covariancesは、最も広いスプレッドリードを持つ列を、1つのユニットの列にすることができます。"
+
+msgid "Cross-validation"
+msgstr "クロスバリデーション"
+
+msgid "Cross-validation folds"
+msgstr "クロスバリデーションフォールド"
+
+msgid "Cut criterion"
+msgstr "切口のcriterion"
+
+msgid "Cut threshold"
+msgstr "切口のしきい値"
+
+msgid "Cut threshold for distance/inconsistent criteria. Leave at auto for median linkage distance."
+msgstr "距離/一貫性のある基準の閾値を切ります。 中央の連結距離のオートを残します。"
+
+msgid "Discriminant"
+msgstr "免責事項"
+
+msgid "Distance metric"
+msgstr "距離メトリック"
+
+msgid "Do the clusters differ in {column}?"
+msgstr "クラスターは{column}と異なるのですか?"
+
+msgid "Each cluster's mean silhouette: near 1 well apart, near 0 on a border, below 0 misplaced."
+msgstr "各クラスターの意味のシルエット: 境界線の 0 近く、0 の間違いの下の 0 を離れて 1 つ近く。"
+
+msgid "Each feature divided by its standard deviation, so that each counts the same whatever its unit - leave on unless the features share one unit and scale."
+msgstr "各機能は、その標準偏差によって分割され、各々がそのユニットが同じことをカウントするので、機能が1つのユニットを共有し、スケールをシェアしない限り、残します。"
+
+msgid "Each feature's mean in each cluster."
+msgstr "各クラスターのそれぞれの機能が意味します。"
+
+msgid "Each row across the features as a parallel plot, coloured by its cluster."
+msgstr "各行は、そのクラスターが彩る、並列プロットとして機能します。"
+
+msgid "Eigenvalue"
+msgstr "Eigenvalue(イゲンバリュー)"
+
+msgid "Eigenvalues"
+msgstr "Eigenvalues(イゲンバリュー)"
+
+msgid "Eigenvectors"
+msgstr "Eigenvectors(イゲンベクター)"
+
+msgid "Factor Analysis"
+msgstr "因子分析"
+
+msgid "Factor correlations"
+msgstr "要因の相関"
+
+msgid "Factor loading plot"
+msgstr "要因ローディングのプロット"
+
+msgid "Factors"
+msgstr "ファクター"
+
+msgid "Family"
+msgstr "ファミリー"
+
+msgid "Features"
+msgstr "おすすめ商品"
+
+msgid "For X in different units. Off for a spectrum: scaling gives the wavelengths that carry only noise the weight of the bands."
+msgstr "異なる単位でXのために。 スペクトルのためにオフ:スケーリングは、バンドの体重を騒音だけ運ぶ波長を与えます。"
+
+msgid "Group means"
+msgstr "グループの意味"
+
+msgid "Group similar rows - k-means, hierarchical (Ward), normal mixtures, DBSCAN and more - with k chosen by the silhouette; each cluster's size and means, its rows on the principal components."
+msgstr "グループ類似の行 - k-means、階層(Ward)、通常の混合物、DBSCANともっと - シルエットによって選ばれたk;各クラスターのサイズと手段、主要コンポーネントの行。"
+
+msgid "How continuous columns move together: the correlation matrix, each pair's correlation with its confidence interval and p-value, and the scatterplot matrix."
+msgstr "連続列が一緒に移動する方法:相関行列、各ペアの相関関係は、その自信の間隔とp-値、およびスキャッタープロット行列。"
+
+msgid "How likely each group is before the measures are seen: its share of the rows, or the same for every group."
+msgstr "各グループが対策の前にどのようになるか:行のシェア、またはグループごとに同じ。"
+
+msgid "How to read this"
+msgstr "これを読む方法"
+
+msgid "Into how many parts the rows are split; each part is predicted by a model fitted on the others."
+msgstr "行が分割される部分の数に、各部分は他のモデルに取り付けられたモデルによって予測されます。"
+
+msgid "K-means convergence threshold."
+msgstr "K-means の収斂のしきい値。"
+
+msgid "K-means iterations"
+msgstr "K-meansの反復"
+
+msgid "K-means threshold"
+msgstr "K-meansのしきい値"
+
+msgid "Largest k"
+msgstr "最高k"
+
+msgid "Linear: the groups share one covariance, the boundaries are planes. Quadratic: each group has its own, the boundaries curve; it needs more rows."
+msgstr "リニア:グループが1つの共鳴を共有し、境界線は平面です。クアドラティック:各グループには独自の境界曲線があります。それはより多くの行を必要とします。"
+
+msgid "Linkage method"
+msgstr "リンク方法"
+
+msgid "Loading matrix"
+msgstr "ローディングのマトリックス"
+
+msgid "Loading plot"
+msgstr "ローディングのプロット"
+
+msgid "Max runtime"
+msgstr "最高のランタイム"
+
+msgid "Maximum Likelihood: JMP's default, for columns roughly normal. Principal Axis: no assumption of normality, steadier with few rows."
+msgstr "最大尤度: JMP のデフォルトは、列のほぼ正常です。 主軸: ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー ノー"
+
+msgid "Maximum k-means iterations."
+msgstr "最高のk-meansの反復。"
+
+msgid "Maximum seconds to wait for clustering. Use 0 for no timeout."
+msgstr "クラスタリング待ち時間の最大秒数。タイムアウトなしで0を使用してください。"
+
+msgid "Mean"
+msgstr "意味:"
+
+msgid "Mean silhouette"
+msgstr "意味のシルエット"
+
+msgid "Method"
+msgstr "メソッド"
+
+msgid "Min samples"
+msgstr "最低のサンプル"
+
+msgid "Minimum samples for DBSCAN/OPTICS core points."
+msgstr "DBSCAN/OPTICSのコアポイントの最小サンプル。"
+
+msgid "Multivariate"
+msgstr "多変量体"
+
+msgid "Multivariate Methods"
+msgstr "多変種方法"
+
+msgid "Multivariate methods"
+msgstr "多変種方法"
+
+msgid "Neighborhood radius"
+msgstr "近隣の半径"
+
+msgid "Neighborhood radius for DBSCAN. 0 uses the default 0.5."
+msgstr "DBSCANのための近隣の半径。 0 はデフォルト 0.5 を使用します。"
+
+msgid "Normalize features by standard deviation before k-means."
+msgstr "k-means の前に標準偏差で機能を正規化します。"
+
+msgid "Number"
+msgstr "番号 番号"
+
+msgid "Number of clusters to request."
+msgstr "要求するクラスターの数。"
+
+msgid "On"
+msgstr "にほんご"
+
+msgid "Optional: a column of groups - species, batch, site; the score plot and the biplot colour the rows by it."
+msgstr "オプション: グループの列 - 種、バッチ、サイト; スコアのプロットとそれによって行をバイプロット色。"
+
+msgid "Optional: a column of groups - species, batch, site; the score plot colours the rows by it."
+msgstr "オプション: グループの列 - 種、バッチ、サイト; スコアプロットはそれによって行を彩ります。"
+
+msgid "PLS"
+msgstr "PLSの特長"
+
+msgid "Pairwise correlations, strongest evidence first"
+msgstr "平等な相関、最も強い証拠は最初に最初にします"
+
+msgid "Partial Least Squares"
+msgstr "部分的なイースト スクエア"
+
+msgid "Pearson measures a straight-line relation; Spearman and Kendall any relation that keeps going one way, and are not swayed by outliers."
+msgstr "ピアソンは、直線的な関係を測定します。スピアマンとケンダルは、何らかの関係を1つの方法に保ち、アウターズが揺れることはありません。"
+
+msgid "Principal Components"
+msgstr "プリンシパルコンポーネント"
+
+msgid "Principal components, factor analysis, clustering, discriminant, partial least squares and correlations, with dendrogram and parallel plot."
+msgstr "主成分、要因分析、クラスタリング、差別化、部分的な少なくとも正方形と相関性、デンドログラムと並列プロット。"
+
+msgid "Prior probabilities"
+msgstr "事前の確率"
+
+msgid "RMSECV by number of components"
+msgstr "RMSECV コンポーネント数"
+
+msgid "Render as"
+msgstr "レンダリングとして"
+
+msgid "Response {name}"
+msgstr "応答 {name}"
+
+msgid "Rotated factor loadings"
+msgstr "回転された要因ローディング"
+
+msgid "Rotation"
+msgstr "回転数"
+
+msgid "Rows"
+msgstr "ルーズ"
+
+msgid "Scale X to unit variance"
+msgstr "スケールXをユニットの分散に"
+
+msgid "Scatterplot matrix"
+msgstr "スキャッタープロットのマトリックス"
+
+msgid "Score plot"
+msgstr "スコアプロット"
+
+msgid "Scores"
+msgstr "スコア"
+
+msgid "Scree plot"
+msgstr "スクリープロット"
+
+msgid "Silhouette"
+msgstr "シルエット"
+
+msgid "Silhouette by cluster"
+msgstr "クラスターによるシルエット"
+
+msgid "Standardized canonical coefficients"
+msgstr "標準化されたcanonical係数"
+
+msgid "Summary"
+msgstr "インフォメーション"
+
+msgid "The column whose groups the rows are classified into."
+msgstr "行が分類される列。"
+
+msgid "The continuous columns to correlate, two by two."
+msgstr "連なる列が2つずつ相関する。"
+
+msgid "The continuous columns whose correlations the factors explain."
+msgstr "要因が説明する相関する連続列。"
+
+msgid "The continuous columns whose variation is summed up."
+msgstr "バリエーションが集約される連続列。"
+
+msgid "The continuous measures that tell the groups apart."
+msgstr "グループを別々に伝える継続的な対策。"
+
+msgid "The largest number of clusters tried."
+msgstr "最大のクラスターの数を試してみました。"
+
+msgid "The many measures to predict them from: a spectrum's columns."
+msgstr "スペクトラムの列から予測する多くの対策。"
+
+msgid "The rows on the first two principal components of the features, coloured by cluster."
+msgstr "機能の最初の2つの主要コンポーネントの列は、クラスターによって着色されます。"
+
+msgid "The values to predict: a concentration, a property."
+msgstr "予測する値: 濃度、プロパティ。"
+
+msgid "Try every k from 2 to the largest and keep the one with the best mean silhouette. DBSCAN, OPTICS and MeanShift find their own number of clusters."
+msgstr "2から最大にすべてのkを試し、最良の意味のシルエットで1つを保ちます。 DBSCAN、OPICS、MeanShiftは、独自の数のクラスターを見つけます。"
+
+msgid "Variable (in column order)"
+msgstr "変数(列順)"
+
+msgid "Variable importance (VIP)"
+msgstr "可変的な重要性(VIP)"
+
+msgid "Variable importance (VIP), highest 15"
+msgstr "変数重要度(VIP)、最高15"
+
+msgid "Variance explained"
+msgstr "バリエーションの説明"
+
+msgid "Varimax: each factor with few large loadings, the usual choice. Quartimax: each column on few factors. Equamax: between the two. Promax: lets the factors correlate, when the traits they stand for do."
+msgstr "Varimax: いくつかの大きなローディング、通常の選択肢を持つ各要因。 Quartimax: いくつかの要因の各列。 Equamax: 2 間で。 Promax: 要因が相関し、それらが立っているとき。"
+
+msgid "Which group a row belongs to, from continuous measures: linear or quadratic discriminant analysis, canonical plot, Wilks' lambda and the misclassified rows."
+msgstr "連続的な対策から、行が属するグループ:線形または四角形の分裂分析、角形のプロット、ウィルクスのランバダおよび誤解を分類された行。"
+
+msgid "Whiten features"
+msgstr "Whitenの特徴"
+
+msgid "With automatic k: the mean silhouette of each k tried."
+msgstr "自動 k:各 k の平均のシルエットが試した。"
+
+msgid "X"
+msgstr "X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X X"
+
+msgid "X, covariates"
+msgstr "X、コワリエーツ"
+
+msgid "Y"
+msgstr "ツイート"
+
+msgid "Y from many X that move together - a spectrum's wavelengths: a few latent components, their number chosen by cross-validation; variable importance (VIP), loadings, scores, predictions."
+msgstr "一緒に移動する多くのXからY - スペクトルの波長:いくつかのラテンコンポーネント、クロスバリデーションによって選ばれたそれらの番号; 変数重要性(VIP)、ローディング、スコア、予測。"
+
+msgid "Y, columns"
+msgstr "Y, コラム"
+
+msgid "Y, group"
+msgstr "Y、グループ"
+
+msgid "more factors are needed"
+msgstr "より多くの要因が必要"
+
+msgid "the groups differ on them"
+msgstr "グループがそれぞれ異なる"
+
+msgid "the groups of {response} had the same means of {covariates}"
+msgstr "{response} のグループが {covariates} と同じ意味を持っていた"
+
+msgid "{count} factor(s) were enough to explain the correlations"
+msgstr "{count} の要因は相関を説明するのに十分でした"
+
+msgid "{x} and {y} are correlated"
+msgstr "{x} と {y} は相関"
+
+msgid "{x} and {y} were not correlated"
+msgstr "{x} と {y} が相関的ではない"

@@ -1,0 +1,65 @@
+# Italiano translation for the pack data_formats.
+# Message ids are the English source strings.
+
+msgid ""
+msgstr "Project-Id-Version: ChartLibre\nLanguage: it\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\n"
+
+msgid "A GPX file's track, route and waypoints: latitude, longitude, elevation, time."
+msgstr "Traccia, itinerario e waypoint di un file GPX: latitudine, longitudine, altitudine, ora."
+
+msgid "A MATLAB .mat file (v4 to v7): each numeric variable a dataset, or all of one length side by side."
+msgstr "Un file .mat di MATLAB (da v4 a v7): ogni variabile numerica è un set di dati, oppure tutte le variabili di una stessa lunghezza sono affiancate."
+
+msgid "A NetCDF file (.nc): the variables of each set of dimensions as one table."
+msgstr "Un file NetCDF (.nc): le variabili di ciascun insieme di dimensioni come un'unica tabella."
+
+msgid "A Prism XML project: each data table a dataset, replicates as numbered columns."
+msgstr "Un progetto Prism XML: ogni tabella di dati è un set di dati, le repliche sono colonne numerate."
+
+msgid "A WAV recording: time and one column per channel."
+msgstr "Una registrazione WAV: tempo e una colonna per canale."
+
+msgid "An Apache Arrow IPC file (Feather)."
+msgstr "Un file Apache Arrow IPC (Feather)."
+
+msgid "An Apache Parquet file."
+msgstr "Un file Apache Parquet."
+
+msgid "Columnar and scientific"
+msgstr "A colonne e scientifici"
+
+msgid "Columnar and scientific data files: Parquet, Feather/Arrow, NetCDF, MATLAB, WAV audio, GPS tracks (GPX) and GraphPad Prism."
+msgstr "File di dati a colonne e scientifici: Parquet, Feather/Arrow, NetCDF, MATLAB, audio WAV, tracce GPS (GPX) e GraphPad Prism."
+
+msgid "Data formats"
+msgstr "Formati dei dati"
+
+msgid "Feather / Arrow"
+msgstr "Feather / Arrow"
+
+msgid "GPS track (GPX)"
+msgstr "Traccia GPS (GPX)"
+
+msgid "GraphPad Prism (.pzfx)"
+msgstr "GraphPad Prism (.pzfx)"
+
+msgid "Lab instruments"
+msgstr "Strumenti di laboratorio"
+
+msgid "MATLAB"
+msgstr "MATLAB"
+
+msgid "NetCDF"
+msgstr "NetCDF"
+
+msgid "Other"
+msgstr "Altro"
+
+msgid "Parquet"
+msgstr "Parquet"
+
+msgid "Statistics software"
+msgstr "Software di statistica"
+
+msgid "WAV audio"
+msgstr "Audio WAV"

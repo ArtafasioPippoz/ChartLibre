@@ -1,0 +1,29 @@
+name: Feature request
+description: A chart, analysis, import format or workflow you need.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: What are you trying to do?
+      description: Describe the task, not the solution. What data do you have and what do you want out of it?
+    validations:
+      required: true
+  - type: textarea
+    id: today
+    attributes:
+      label: How do you do it today?
+      description: Which tool (Origin, Prism, SigmaPlot, Excel, a Matplotlib script...) and what is slow or missing.
+  - type: textarea
+    id: example
+    attributes:
+      label: An example
+      description: A sample file, a figure from a paper, or a link to the behaviour in another tool.
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Can you help?
+      options:
+        - label: I can test a first version.
+        - label: I can write or review the code.
+        - label: I can supply reference data or expected results.

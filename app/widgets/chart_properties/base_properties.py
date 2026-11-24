@@ -1,0 +1,293 @@
+"""Shared base for the Figure/Axis/Series properties editors.
+
+The three editors show and edit different things - a figure's size and
+layout, one axis's scale and drawing kwargs, one series' style and query -
+and each needs its own arrangement of controls, so this is deliberately not
+a base *layout*: every subclass still builds its own UI, in its own
+``_build_ui()``, exactly as before. What they did share, byte for byte in
+three places, is the small bit of state around "which figure this editor is
+currently pointed at" and the connect/disconnect lifecycle around it.
+
+A subclass must NOT call ``self.setLayout(...)`` before its own
+``_build_ui()`` runs (and must not let Qt's default "first QVBoxLayout(self)
+wins" behaviour surprise it either) - ``BaseProperties.__init__`` sets no
+layout of its own for exactly that reason: a widget can only ever have one,
+and the previous version of this class claimed it before any subclass got
+the chance to build its real one, which is why every properties panel
+briefly rendered at its empty-widget size (22x22) instead of its content's.
+"""
+from __future__ import annotations
+
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
+from typing import Any
+
+from PySide6.QtCore import QEvent, QObject, Qt, QTimer
+from PySide6.QtGui import QKeyEvent
+from PySide6.QtWidgets import (
+    QAbstractSpinBox,
+    QCheckBox,
+    QComboBox,
+    QLineEdit,
+    QPlainTextEdit,
+    QSizePolicy,
+    QWidget,
+)
+
+from app.styles.style import configure_combo_width
+from app.utils.config import get_constant
+from app.widgets.drop_down_controls.path_effect_combo import PathEffectCombo
+
+#: How long the editor waits after the last control change before it applies
+#: the edit on its own. Long enough that a slider drag or a burst of
+#: keystrokes lands as one apply (and one undo entry); short enough that the
+#: chart still feels like it is following the control.
+AUTO_APPLY_DELAY_MS: int = get_constant("auto_apply_delay_ms", 400)
+
+
+class BaseProperties(QWidget):
+    """Common connected-figure state for a properties editor.
+
+    Holds the four attributes every editor already read and wrote
+    identically (``_repo``, ``_figure_id``, ``_figure``,
+    ``_redraw_callback``) and the pair of lifecycle methods that used to be
+    three near-identical copies. A subclass still owns its own UI and its
+    own ``_reload_from_descriptor()``/``_set_enabled_state()`` - this only
+    owns calling them at the right time, not what they do.
+    """
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        # A stable name so macos_native.qss / fluent_win11.qss can each say
+        # what the ground behind a properties panel's cards should be,
+        # without matching on plain QWidget. They answer differently on
+        # purpose: white on Windows, where the WinUI3 Settings app puts
+        # outlined cards on one continuous white page, and the window
+        # ground on macOS, where System Settings floats white grouped
+        # boxes on grey. See the #basePropertiesPanel rule in each.
+        self.setObjectName("basePropertiesPanel")
+        # Without this a stylesheet background on a plain QWidget subclass
+        # is parsed and then never painted - the long-standing Qt gotcha
+        # that makes QSS look like it "does not work" on custom widgets.
+        # QFrame-based widgets (create_card_widget's cards) do not need it,
+        # which is why theirs worked and this one would not have.
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        self.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Expanding,
+        )
+
+        self._repo: Any | None = None
+        self._figure_id: int | None = None
+        self._figure: Any | None = None
+        self._redraw_callback: Callable[[], None] | None = None
+
+        # Auto-apply: a subclass calls _install_auto_apply() with the method
+        # that commits its edit, then routes every editable control's change
+        # signal through _queue_auto_apply. The edit then applies itself a
+        # short moment after the last change, so the Apply button is a
+        # shortcut rather than a requirement.
+        self._auto_apply_timer = QTimer(self)
+        self._auto_apply_timer.setSingleShot(True)
+        self._auto_apply_timer.setInterval(AUTO_APPLY_DELAY_MS)
+        self._auto_apply_callback: Callable[[], None] | None = None
+        #: >0 while the controls are being populated from a descriptor, so the
+        #: setValue/setChecked/setCurrentIndex calls that reload does are not
+        #: mistaken for the user editing.
+        self._reloading_depth = 0
+        #: Multi-line boxes applied when they lose the focus (see _apply_on_commit).
+        self._commit_on_focus_out: set[QPlainTextEdit] = set()
+
+    def _install_auto_apply(self, callback: Callable[[], None]) -> None:
+        """Register the method that commits this editor's pending edit."""
+        self._auto_apply_callback = callback
+        self._auto_apply_timer.timeout.connect(self._run_auto_apply)
+
+    def _watch(self, *widgets: Any) -> None:
+        """Apply a short moment after any of *widgets* is changed by the user.
+
+        Each control by its own change signal: a line or text edit when it is
+        committed (Enter, or leaving it), a check box when toggled, a combo
+        when its choice changes, a spin box when its value does, and anything
+        else that has a ``value_changed`` signal (the font-size control).
+        """
+        for widget in widgets:
+            if isinstance(widget, (QLineEdit, QPlainTextEdit)):
+                self._apply_on_commit(widget)
+            elif isinstance(widget, QCheckBox):
+                widget.toggled.connect(self._queue_auto_apply)
+            elif isinstance(widget, (QComboBox, PathEffectCombo)):
+                widget.currentIndexChanged.connect(self._queue_auto_apply)
+            elif isinstance(widget, QAbstractSpinBox):
+                widget.valueChanged.connect(self._queue_auto_apply)  # type: ignore[attr-defined]
+            elif hasattr(widget, "value_changed"):
+                widget.value_changed.connect(self._queue_auto_apply)
+            else:
+                raise TypeError(f"Cannot watch {type(widget).__name__}")
+
+    @staticmethod
+    def _configure_combo_width(combo: QComboBox, minimum_contents_length: int = 0) -> None:
+        """Make a combo box use the panel's width (the rule is style's)."""
+        configure_combo_width(combo, minimum_contents_length)
+
+    @contextmanager
+    def _reloading_controls(self) -> Iterator[None]:
+        """Suppress auto-apply while the block repopulates the controls."""
+        self._reloading_depth += 1
+        try:
+            yield
+        finally:
+            self._reloading_depth -= 1
+        self._cancel_auto_apply()
+
+    def reload_controls(self) -> None:
+        """Repopulate the editor from its descriptor without auto-applying.
+
+        The entry point every external caller uses instead of
+        ``_reload_from_descriptor`` directly - it brackets the reload so the
+        programmatic control updates inside it do not queue an apply.
+        """
+        with self._reloading_controls():
+            self._reload_from_descriptor()
+
+    def _queue_auto_apply(self, *_ignored: Any) -> None:
+        """(Re)start the countdown to an automatic apply.
+
+        Ignores its arguments so it can be connected straight to Qt signals
+        that pass a value (valueChanged, currentIndexChanged, toggled). Does
+        nothing until a figure is connected or while the controls are being
+        reloaded.
+        """
+        if (
+            self._auto_apply_callback is None
+            or self._figure_id is None
+            or self._reloading_depth
+        ):
+            return
+        self._auto_apply_timer.start()
+
+    def _apply_on_commit(self, edit: QLineEdit | QPlainTextEdit) -> None:
+        """Apply a text box when the user is done with it, not at every keystroke.
+
+        Done means Enter, or leaving the box (and Ctrl/Cmd+Enter in a
+        multi-line one, where Enter is a new line). Applying while typing
+        redrew the chart after every pause and reloaded the form, which took
+        the focus out of the box in the middle of a word. Nothing is applied
+        when the text did not change.
+        """
+        if isinstance(edit, QLineEdit):
+            edit.editingFinished.connect(lambda box=edit: self._commit_text_edit(box))
+        else:
+            self._commit_on_focus_out.add(edit)
+            edit.installEventFilter(self)
+
+    def _commit_text_edit(self, edit: QLineEdit | QPlainTextEdit) -> None:
+        """Apply now if *edit* holds a change the user made."""
+        if isinstance(edit, QLineEdit):
+            if not edit.isModified():
+                return
+            edit.setModified(False)
+        else:
+            document = edit.document()
+            if not document.isModified():
+                return
+            document.setModified(False)
+        if (
+            self._auto_apply_callback is None
+            or self._figure_id is None
+            or self._reloading_depth
+        ):
+            return
+        # Whatever else was pending goes in the same apply.
+        self._auto_apply_timer.stop()
+        self._auto_apply_callback()
+
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:
+        if watched in self._commit_on_focus_out and isinstance(watched, QPlainTextEdit):
+            if event.type() == QEvent.Type.FocusOut:
+                self._commit_text_edit(watched)
+            elif event.type() == QEvent.Type.KeyPress and isinstance(event, QKeyEvent):
+                if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter) and event.modifiers() & (
+                    Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.MetaModifier
+                ):
+                    self._commit_text_edit(watched)
+                    return True
+        return super().eventFilter(watched, event)
+
+    def _cancel_auto_apply(self) -> None:
+        """Drop a pending auto-apply - the edit target is changing."""
+        self._auto_apply_timer.stop()
+
+    def _run_auto_apply(self) -> None:
+        if self._auto_apply_callback is not None and self._figure_id is not None:
+            self._auto_apply_callback()
+
+    def set_connected_figure(
+        self,
+        repo: Any,
+        figure_id: int,
+        figure: Any,
+        redraw_callback: Callable[[], None] | None = None,
+    ) -> None:
+        """Attach a figure and reload this editor's fields from it.
+
+        Does not itself call ``_set_enabled_state`` - every subclass's own
+        ``_reload_from_descriptor`` already ends by enabling or disabling
+        its controls itself (disabled when the descriptor turns out to be
+        missing or empty, enabled otherwise), and calling it again
+        unconditionally here would override that: an axis panel with no
+        axes left, in particular, needs to end up disabled even though a
+        figure *is* connected.
+        """
+        self._repo = repo
+        self._figure_id = int(figure_id)
+        self._figure = figure
+        self._redraw_callback = redraw_callback
+        self._before_reload()
+        self.reload_controls()
+
+    def _before_reload(self) -> None:
+        """Run right after connecting, right before the first reload.
+
+        A no-op here. FigurePropertiesWidget is the one subclass that needs
+        something between "the four attributes are set" and "reload the
+        fields from them" - pushing this figure's own DPI/width/height into
+        rcParams and onto the connected Matplotlib figure, both of which
+        read from ``self._figure_id`` and so cannot run before it is set -
+        so it overrides this rather than the whole of
+        ``set_connected_figure``.
+        """
+
+    def clear_connected_figure(self) -> None:
+        """Detach the current figure and disable editing.
+
+        A subclass with more of its own state to reset (a selection map, a
+        current axis/series id, a combo to clear) overrides this, calls
+        ``super().clear_connected_figure()`` for the shared part, and does
+        the rest itself - exactly what each already did before this existed,
+        just without repeating these four lines to get there.
+        """
+        self._cancel_auto_apply()
+        self._repo = None
+        self._figure_id = None
+        self._figure = None
+        self._redraw_callback = None
+        self._set_enabled_state(False)
+
+    def _reload_from_descriptor(self) -> None:
+        """Reload this editor's fields from the connected descriptor.
+
+        Every subclass overrides this. Nothing to share about *what* gets
+        reloaded - only that ``set_connected_figure`` always reloads right
+        after connecting, which is the part worth not repeating.
+        """
+        raise NotImplementedError
+
+    def _set_enabled_state(self, enabled: bool) -> None:
+        """Enable or disable this editor's interactive controls.
+
+        Every subclass overrides this with its own control list. Nothing to
+        share about *which* controls - only that connecting and
+        disconnecting always toggle them the same way.
+        """
+        raise NotImplementedError

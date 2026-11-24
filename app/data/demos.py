@@ -1,0 +1,786 @@
+"""The demo projects "Load demo" offers, and copying one out to open it.
+
+Only the catalogue and the copy live in the application. The demo files
+themselves are built ahead of time, from the datasets under
+dev/demo/sample data, by ``python -m dev.demo.build_demos`` - a developer's
+step that nothing an end user runs ever needs.
+"""
+from __future__ import annotations
+
+import shutil
+from dataclasses import dataclass
+from pathlib import Path
+
+from app.data.sqlite_repo import SqliteRepo
+
+#: The repository root: three levels above this file (app/data/demos.py).
+REPO_ROOT: Path = Path(__file__).resolve().parents[2]
+
+#: Where the built demo set lives, and where "Load demo" reads it from.
+DEMO_DIR: Path = REPO_ROOT / "demo"
+
+#: Where "Load demo" drops its working copy of a demo before opening it. A
+#: folder of its own beside the application rather than the home directory:
+#: the copies are throwaway (Load demo overwrites its own last copy in
+#: place), and one predictable place to find - or delete - all of them at
+#: once beats them scattered loose in ``~``. Not version-controlled.
+PROJECTS_DIR: Path = REPO_ROOT / "projects"
+
+
+#: A bibliographic reference: the citation, and optionally its DOI and a
+#: link. The same shape the project's own ``references`` entry holds.
+Reference = dict[str, str]
+
+
+def reference(citation: str, *, doi: str = "", url: str = "") -> Reference:
+    """One reference, with only the parts it has."""
+    entry = {"citation": citation}
+    if doi:
+        entry["doi"] = doi
+    if url:
+        entry["url"] = url
+    return entry
+
+
+#: The data sources the demos draw on (see also app/utils/credits.py).
+REF_PENGUINS = reference(
+    "Horst A. M., Hill A. P., Gorman K. B. (2020). palmerpenguins: Palmer Archipelago (Antarctica) penguin data.",
+    doi="10.5281/zenodo.3960218", url="https://allisonhorst.github.io/palmerpenguins/")
+REF_ANTIBIOTICS = reference("Burtin W. (1951). Antibiotic effectiveness against sixteen bacteria. Scope (Upjohn).")
+REF_YEAST = reference("Nakai K. (1991). Yeast. UCI Machine Learning Repository.",
+                      doi="10.24432/C5KG68", url="https://archive.ics.uci.edu/dataset/110/yeast")
+REF_ANSCOMBE = reference("Anscombe F. J. (1973). Graphs in statistical analysis. The American Statistician 27(1), 17-21.",
+                         doi="10.1080/00031305.1973.10478966")
+REF_CO2 = reference("Keeling C. D. et al.; NOAA Global Monitoring Laboratory. Mauna Loa CO2 monthly mean data.",
+                    url="https://gml.noaa.gov/ccgg/trends/")
+REF_SUNSPOTS = reference("WDC-SILSO, Royal Observatory of Belgium, Brussels. Monthly mean total sunspot number.",
+                         url="https://www.sidc.be/SILSO/")
+REF_GISTEMP = reference("GISTEMP Team (2024). GISS Surface Temperature Analysis (GISTEMP), version 4. NASA GISS.",
+                        url="https://data.giss.nasa.gov/gistemp/")
+REF_USGS = reference("U.S. Geological Survey. Earthquake Hazards Program, real-time feeds.",
+                     url="https://earthquake.usgs.gov/earthquakes/feed/")
+REF_NIST = reference("NIST Statistical Reference Datasets (StRD): nonlinear regression and univariate summary statistics.",
+                     url="https://www.itl.nist.gov/div898/strd/")
+REF_FREIREICH = reference("Freireich E. J. et al. (1963). The effect of 6-mercaptopurine on the duration of steroid-induced "
+                          "remissions in acute leukemia. Blood 21(6), 699-716.", doi="10.1182/blood.V21.6.699.699")
+REF_COLDITZ = reference("Colditz G. A. et al. (1994). Efficacy of BCG vaccine in the prevention of tuberculosis: "
+                        "meta-analysis of the published literature. JAMA 271(9), 698-702.", doi="10.1001/jama.1994.03510330076038")
+REF_OXIDE = reference("Pinheiro J. C., Bates D. M. (2000). Mixed-Effects Models in S and S-PLUS. Springer (the Oxide data, "
+                      "from R's nlme package).", doi="10.1007/b98882")
+REF_NEWCOMB = reference("Newcomb S. (1891). Measures of the velocity of light made under the direction of the Navy "
+                        "Department, 1880-1882; Stigler S. M. (1977). Do robust estimators work with real data? "
+                        "Annals of Statistics 5(6), 1055-1098.", doi="10.1214/aos/1176343997")
+REF_NILE = reference("Cobb G. W. (1978). The problem of the Nile: conditional solution to a changepoint problem. "
+                     "Biometrika 65(2), 243-251.", doi="10.1093/biomet/65.2.243")
+REF_AIRLINE = reference("Box G. E. P., Jenkins G. M., Reinsel G. C. (1976). Time Series Analysis: Forecasting and "
+                        "Control (monthly airline passengers, 1949-1960).")
+REF_MICHELSON = reference("Michelson A. A. (1882). Experimental determination of the velocity of light. "
+                          "Astronomical Papers 1, 109-145. (NIST StRD dataset Michelso.)")
+
+
+@dataclass(frozen=True, slots=True)
+class DemoProject:
+    """One demo file: what it is called, and what it contains.
+
+    The file name is the documentation.  Someone with a dozen .dhub files in a
+    folder should be able to open the one that answers their question without
+    opening the other eleven, which means the name has to say both the
+    subject and what it demonstrates.
+
+    ``summary``, ``author`` and ``references`` are what the build writes into
+    the project's own information (``__project_info__``: notes, author,
+    references), along with its preview; once built, the Load demo dialog
+    reads them back from the file through :meth:`info`, the way any project
+    describes itself.
+    """
+
+    file_name: str
+    summary: str
+    figures: tuple[str, ...]
+    #: "module:function" that writes this file itself, for a demo that is
+    #: not a selection of figures - the Data Operations one runs the
+    #: operations' dialogs. Empty: built from ``figures`` as usual.
+    builder: str = ""
+    #: The figure the preview pictures, by (part of) its name; the first
+    #: figure when empty.
+    preview: str = ""
+    #: Where its data comes from.
+    references: tuple[Reference, ...] = ()
+    author: str = "ChartLibre"
+    #: Its group in Load demo (DEMO_CATEGORIES): JMP's platform names where it is about one.
+    category: str = "Graph"
+
+    @property
+    def path_name(self) -> str:
+        """Return the file name with its extension."""
+        return f"{self.file_name}.dhub"
+
+    @property
+    def source_path(self) -> Path:
+        """Return where the pre-built copy of this project lives.
+
+        Built by dev/demo/build_demos.py into :data:`DEMO_DIR`, not at
+        the point this is read - see :func:`copy_demo_project`.
+        """
+        return DEMO_DIR / self.path_name
+
+    def info(self) -> dict[str, str]:
+        """The built file's project information, read without opening it for
+        writing; empty when it is not built or predates the information."""
+        from app.data.sqlite_repo import read_project_info
+
+        return read_project_info(self.source_path)
+
+    @property
+    def description(self) -> str:
+        """What the demo is, as the built project's notes say."""
+        return self.info().get("notes") or self.summary
+
+    @property
+    def preview_bytes(self) -> bytes | None:
+        """The built project's preview picture: the one embedded in it, else the legacy file beside it."""
+        from app.utils.project_preview import project_preview_bytes
+
+        return project_preview_bytes(self.source_path, self.info().get("preview_path"))
+
+    @property
+    def preview_path(self) -> Path | None:
+        """The picture the built project's ``preview_path`` names, if any."""
+        entry = self.info().get("preview_path")
+        if not entry:
+            return None
+        path = Path(entry) if Path(entry).is_absolute() else DEMO_DIR / entry
+        return path if path.is_file() else None
+
+
+#: The demo set: a subject each, under its category - no figure in two of them. (The complete project of every
+#: figure was one more, every one of its figures already in another: build_demos --single still writes it.)
+#: Load demo's groups, in its drop-down's order: how to start, then by JMP's platforms.
+DEMO_CATEGORIES: tuple[str, ...] = (
+    "Getting Started", "Guided Analysis", "Graph", "Basic Analysis", "Curves", "Signal Processing",
+    "Screening", "Multivariate Methods", "Quality and Process", "Design of Experiments",
+)
+
+DEMO_PROJECTS: tuple[DemoProject, ...] = (
+    DemoProject(
+        "Series styles - restyle a series and watch the chart change",
+        "Seven charts for trying the live style preview: open a figure, select a series and "
+        "change its colour, line style, marker or size (a stem plot: its line, marker and "
+        "baseline format strings) - the chart follows as you edit, with no redraw. Scatter, "
+        "time series, ECDF, stairs, stem, 3D line and 3D scatter.",
+        ("penguin_scatter", "stock_timeseries", "machine_ecdf", "server_events_stairs",
+         "signal_spectrum_stem", "helix_3d_line", "parametric_scatter3d"),
+        preview="Signal spectrum as discrete tones",
+        references=(REF_PENGUINS,),
+        category="Graph",
+    ),
+    DemoProject(
+        "Time, trees and circles - spectrogram, dendrogram, radar and wind rose",
+        "Four charts for questions a plain x-y cannot answer: when a frequency appears "
+        "(Spectrogram of a sweeping tone and a steady hum), how rows join into groups "
+        "(Dendrogram of penguins, Ward), how profiles compare (Radar chart of the species' means), "
+        "and where a direction comes from (Wind rose, split by speed). Signal and wind readings "
+        "are synthetic with a fixed seed.",
+        ("chirp_spectrogram", "penguin_dendrogram", "penguin_radar", "wind_rose"),
+        preview="Wind rose",
+        references=(REF_PENGUINS,),
+        category="Graph",
+    ),
+    DemoProject(
+        "Steps and flows - a waterfall and a Sankey diagram",
+        "Two charts for quantities that move: a Waterfall of an operating profit from last year to "
+        "this, one cause at a time with a subtotal, and a Sankey diagram of a power plant's fuel "
+        "energy through the boiler and steam to electricity, heat and losses. Invented, balanced figures.",
+        ("profit_waterfall", "energy_sankey"),
+        preview="Sankey",
+        category="Graph",
+    ),
+    DemoProject(
+        "Matrices and relief - a Hinton diagram and a hillshade",
+        "Two charts that read a grid at a glance. A Hinton diagram draws a matrix as squares - the weights of a "
+        "small network's layer, white where positive and black where negative, the area the size - and a "
+        "Hillshade lights a made-up island from the north-west so that its ridges and hollows stand out. Both "
+        "tables are synthetic with a fixed seed.",
+        ("weights_hinton", "terrain_hillshade"),
+        preview="Hillshade",
+        category="Graph",
+    ),
+    DemoProject(
+        "Medicine - a left ventricle bullseye and EEG traces",
+        "Two charts of the clinic, from the Medicine pack: the American Heart Association's 17-segment polar map "
+        "of the left ventricle, coloured by the perfusion after a stress test, and six EEG channels stacked on "
+        "one time axis, with the alpha rhythm at the back of the head and a blink in front. The figures are "
+        "invented and are not for diagnosis.",
+        ("lv_bullseye", "eeg_traces"),
+        preview="Left ventricle bullseye",
+        category="Graph",
+    ),
+    DemoProject(
+        "Meteorology - a sounding on a Skew-T log-P diagram",
+        "A radiosonde's climb on the meteorologist's chart: temperature and dew point against pressure, on a "
+        "skewed temperature axis over the isotherms, the dry adiabats and the lines of constant mixing ratio, "
+        "from the Meteorology pack. Where the two curves meet the air is saturated; the gap between them is "
+        "the dryness. The sounding is synthetic with a fixed seed.",
+        ("sounding_skew_t",),
+        preview="Skew-T",
+        category="Graph",
+    ),
+    DemoProject(
+        "Matrices and scales - an image plot and a secondary axis",
+        "A table that already is a grid, drawn as an Image Plot (the penguins' correlation matrix, "
+        "values in the cells, with a colorbar - or point it at an image file), and a daily temperature "
+        "with a second axis on the right that is the first in degrees Fahrenheit: Axis properties > "
+        "Also in, with conversions for temperature, length, mass, time, angle and photon wavelength "
+        "to energy.",
+        ("penguin_correlation_image", "temperature_secondary_axis"),
+        preview="Image plot",
+        references=(REF_PENGUINS,),
+        category="Graph",
+    ),
+    DemoProject(
+        "Figures for papers - a mosaic, panel letters and stacked panels",
+        "Two multi-axis figures laid out the way a paper does: a mosaic (Figure properties > Mosaic, "
+        "AB;CC - a repeated letter is one axis spanning cells) with panel letters (a), (b), (c) on "
+        "each panel, and three price series stacked on one shared time axis with letters A, B, C "
+        "inside the corners. Panel letters and the layouts are in Figure properties.",
+        ("paper_mosaic", "paper_stacked"),
+        preview="A paper figure",
+        references=(REF_PENGUINS,),
+        category="Graph",
+    ),
+    DemoProject(
+        "Quick answers - three questions asked of real data",
+        "Start from a question, not a function: are the three penguin species "
+        "different in body mass? What has the most impact on it? Has the "
+        "global temperature changed since 1880? Each asked through Guided "
+        "analysis > Quick answers, with the answer in words in the chart's "
+        "notes - open the same question again on your own table.",
+        (),
+        builder="dev.demo.demo_questions:build_questions_demo",
+        preview="Are there differences?",
+        references=(REF_PENGUINS, REF_GISTEMP,),
+        category="Guided Analysis",
+    ),
+    DemoProject(
+        "Relate - how the penguins' measures move together",
+        "Start from a goal: how do the penguins' bill, flipper and body mass relate? "
+        "The way Help me choose leads - a scatter plot of two measures, then "
+        "Multivariate (every pair's correlation with its p-value), Fit Y by X on "
+        "body mass by flipper length, and Principal Components, whose score plot "
+        "already separates the species.",
+        (),
+        builder="dev.demo.demo_goals:build_relate_demo",
+        preview="Multivariate",
+        references=(REF_PENGUINS,),
+        category="Guided Analysis",
+    ),
+    DemoProject(
+        "Classify - telling the penguin species apart",
+        "Start from a goal: which species is a penguin, from its measures? A box plot "
+        "of bill depth by species, then Discriminant (the canonical plot and the "
+        "rows misclassified), Partition (the rules of a tree) and Fit Y by X on "
+        "species by island.",
+        (),
+        builder="dev.demo.demo_goals:build_classify_demo",
+        preview="Discriminant",
+        references=(REF_PENGUINS,),
+        category="Guided Analysis",
+    ),
+    DemoProject(
+        "Describe and compare - salaries across departments",
+        "Start from a goal: what do the salaries look like, and do the departments "
+        "pay differently? A histogram, Distribution, Are there differences? and "
+        "What has the most impact? - each answer in the chart's notes.",
+        (),
+        builder="dev.demo.demo_goals:build_describe_compare_demo",
+        preview="Are there differences?",
+        category="Guided Analysis",
+    ),
+    DemoProject(
+        "Predict - which card transactions are fraud",
+        "Start from a goal: which transactions are fraud, and from what? A box plot of the "
+        "distance from home by fraud, then What has the most impact? on fraud, Partition (a "
+        "tree's rules for the suspicious ones) and a logistic Fit Model on the three strongest factors.",
+        (),
+        builder="dev.demo.demo_goals:build_predict_demo",
+        preview="Partition",
+        category="Guided Analysis",
+    ),
+    DemoProject(
+        "Signal - the Keeling curve's season, and the sunspots' cycle",
+        "Start from a goal: what pattern is in a measure over time? The Mauna Loa CO2 record "
+        "with Time Series - its trend and yearly season, the ADF and KPSS tests, and a "
+        "five-year forecast by the ARIMA the AIC chooses - and the monthly sunspots, whose "
+        "autocorrelation shows the eleven-year cycle.",
+        (),
+        builder="dev.demo.demo_goals:build_signal_demo",
+        preview="Time Series",
+        references=(REF_CO2, REF_SUNSPOTS),
+        category="Guided Analysis",
+    ),
+    DemoProject(
+        "Process - real data, oxide wafers and Newcomb's light measurements",
+        "Real measurements for statistical process control: the oxide thickness of 24 semiconductor wafers "
+        "with three sites each, on an X-bar and R chart (a wafer is a subgroup) and as a one-way comparison "
+        "by lot; and Newcomb's 66 measurements of the speed of light, in the order made, on an individuals "
+        "chart - which flags his two famous low readings - and through the randomness tests of their order.",
+        (),
+        builder="dev.demo.demo_goals:build_spc_real_demo",
+        preview="X-bar and R",
+        references=(REF_OXIDE, REF_NEWCOMB),
+        category="Quality and Process",
+    ),
+    DemoProject(
+        "Quality - a gauge study, a skewed process and a vortex",
+        "A measuring system and a process judged the way a quality engineer would, on simulated data with the "
+        "variation built in known: Gage R&R of a diameter gauge (10 parts, 3 operators, 3 repeats) on its "
+        "Multi-Vari chart; a lognormal surface roughness - not normal, so the individuals chart, whose limits "
+        "assume a normal, flags a high reading; its distribution fitted by AIC and its capability by the "
+        "percentile method against USL 3.2 um; and a vortex's divergence and curl from Vector Field.",
+        (),
+        builder="dev.demo.demo_quality:build_quality_demo",
+        preview="Gage R&R",
+        category="Quality and Process",
+    ),
+    DemoProject(
+        "Random data - numbers drawn, checked and drawn, and noise added to a signal",
+        "Random numbers from numpy.random, with seeds so every number can be drawn again: 2,000 normal numbers with "
+        "their histogram, fitted curve, Q-Q plot and ECDF; a normal and an exponential correlated at 0.7; a grid of "
+        "sin(x) cos(y) with normal noise as a surface; and 100 repetitions of the checks, whose p-values are flat "
+        "when the numbers are as drawn. The report of each says how many tests were run, how many rejected, and "
+        "whether anything argues against the numbers being as asked. Last, Add noise: a clean sine with a trend, "
+        "noise added to a signal-to-noise ratio of 15 dB and drawn beside the original.",
+        (),
+        builder="dev.demo.demo_random:build_random_demo",
+        preview="Random X",
+        category="Basic Analysis",
+    ),
+    DemoProject(
+        "Time series - real data, the Nile and the airline passengers",
+        "Two classic real series, their dates stored as text: the annual flow of the Nile 1871-1970, with "
+        "the drop of about 1898 a time series model has to absorb, and the monthly airline passengers "
+        "1949-1960, a trend with a growing season. Time Series gives each its forecast by the ARIMA the AIC "
+        "chooses, its autocorrelations and the residual randomness tests (runs, turning points, Durbin-Watson, "
+        "Ljung-Box).",
+        (),
+        builder="dev.demo.demo_goals:build_timeseries_real_demo",
+        preview="Time Series",
+        references=(REF_NILE, REF_AIRLINE),
+        category="Signal Processing",
+    ),
+    DemoProject(
+        "Anomalies - the card transactions that stand apart",
+        "Start from a goal: which rows do not belong? The transactions' amounts and their "
+        "distribution, Explore Outliers on the amount against the distance from home - "
+        "several methods, the outliers marked - and whether that distance tells the frauds "
+        "(Fit Y by X).",
+        (),
+        builder="dev.demo.demo_goals:build_anomalies_demo",
+        preview="Explore Outliers",
+        category="Guided Analysis",
+    ),
+    DemoProject(
+        "Process - four gauges measuring the same standard",
+        "Start from a goal: is the process stable and within its specification? The four "
+        "machines' readings of one 25 mm standard, a Control Chart of machine A and of machine "
+        "D with the capability against 24.98-25.02 mm - A is capable (Cpk 1.8), D is not "
+        "(Cpk 0.5, 13% of its readings out of specification) - and Are there differences? "
+        "between the machines.",
+        (),
+        builder="dev.demo.demo_goals:build_process_demo",
+        preview="machine D",
+        category="Guided Analysis",
+    ),
+    DemoProject(
+        "Groups - the penguins found again without their species",
+        "Start from a goal: are there groups among the rows? Cluster Analysis on the penguins' "
+        "four measures alone: the silhouette picks two clusters - the Gentoo, and the Adelie "
+        "with the Chinstrap, whose measures overlap. Principal Components coloured by species, "
+        "with the biplot, shows why; Factor Analysis finds a size factor and a bill-depth one.",
+        (),
+        builder="dev.demo.demo_goals:build_groups_demo",
+        preview="Clustering",
+        references=(REF_PENGUINS,),
+        category="Guided Analysis",
+    ),
+    DemoProject(
+        "Antibiotics - grouped bars from a classic dataset",
+        "1930s antibiotic potency data for sixteen bacteria, as a horizontal "
+        "bar chart sorted by effectiveness.",
+        ("antibiotics",),
+        references=(REF_ANTIBIOTICS,),
+    ),
+    DemoProject(
+        "Penguins - species compared across four chart types",
+        "The Palmer penguins: the same three species read as a scatter plot, "
+        "a histogram, a violin plot and a box plot.",
+        ("penguin_scatter", "penguin_hist", "penguin_violin", "penguin_box"),
+        references=(REF_PENGUINS,),
+    ),
+    DemoProject(
+        "Yeast proteins - histogram of three localisation classes",
+        "Cytoplasm, nucleus and mitochondria: three overlapping distributions "
+        "of one measured feature.",
+        ("yeast_hist",),
+        references=(REF_YEAST,),
+    ),
+    DemoProject(
+        "DLVO force curve - ready for Fit and Calculus",
+        "A real colloidal force-distance curve, repulsive at short range and "
+        "attractive beyond it, with a measurable crossover - the Roots "
+        "operation's own question, answered exactly where the curve changes "
+        "sign - and its curvature is also a fair test for Regression's "
+        "Random Forest/Gradient Boosting models and for GP Regression's "
+        "uncertainty band.",
+        ("dlvo_force",),
+        category="Curves",
+    ),
+    DemoProject(
+        "Stock prices - three tickers, ready for Smoothing",
+        "Three years of daily closing prices for three stocks, noisy enough "
+        "that a moving average earns its keep - the three series also share "
+        "a date axis, which is what Decomposition needs to run PCA/ICA "
+        "across them together.",
+        ("stock_timeseries",),
+        category="Signal Processing",
+    ),
+    DemoProject(
+        "Employee compensation - ready for the Outlier operation",
+        "Salaries across five departments, with one real outlier the box "
+        "plot already shows and the operation can confirm - a right-skewed "
+        "distribution Transform's Power/Quantile models can reshape, too - "
+        "plus a pie chart of the same five departments' headcount.",
+        ("employee_box", "employee_dept_pie"),
+        category="Screening",
+    ),
+    DemoProject(
+        "Driver behaviour - ready for the Cluster operation",
+        "Four thousand drivers by distance and speeding: the classic "
+        "two-feature clustering dataset, and shape-aware enough a "
+        "population for Outliers' Isolation Forest/Local Outlier Factor "
+        "models to earn their keep over a plain Z-score.",
+        ("driver_scatter",),
+        category="Multivariate Methods",
+    ),
+    DemoProject(
+        "Transactions - histogram and a saved query",
+        "Fraud against legitimate transactions by amount, and a saved query "
+        "averaging amount by channel.",
+        ("transactions_hist", "transactions_query"),
+    ),
+    DemoProject(
+        "Pairwise sample - four variables on two axes",
+        "Two coordinates, a colour and a marker size: four variables read "
+        "off one scatter plot.",
+        ("pairwise_scatter",),
+    ),
+    DemoProject(
+        "3D surfaces - gridded, scattered, contoured and meshed",
+        "The same kind of surface in the two layouts the surface renderers "
+        "each need - a regular grid, and scattered points triangulated into "
+        "one - plus both from directly above as a contour map, and the "
+        "scattered one's own triangulation shown bare, then coloured by "
+        "height.",
+        (
+            "surface_3d", "scattered_3d", "surface_contour",
+            "scattered_contour", "scattered_tri_mesh", "scattered_tri_color_mesh",
+        ),
+    ),
+    DemoProject(
+        "Parametric curve - a helix in projection and in 3D",
+        "A helix seen end-on: a circle, coloured by how far along the curve "
+        "each point is - and the same helix as discrete points in three "
+        "dimensions rather than a projection.",
+        ("parametric_scatter", "parametric_scatter3d"),
+    ),
+    DemoProject(
+        "Figure layouts - shared scale, main+secondary, overlapping axes",
+        "Three real datasets, each arranged with a different multi-axis "
+        "layout preset: three price series sharing one main chart, three "
+        "histograms panning and zooming together, and force paired with "
+        "potential energy on a second y-axis.",
+        ("stock_main_secondary", "penguin_shared_grid", "dlvo_overlapping"),
+    ),
+    DemoProject(
+        "Classic demos - Anscombe, Lissajous, and a signal spectrum",
+        "Three teaching examples from mathematics, physics and signal "
+        "processing: Anscombe's quartet on a shared-scale grid (the "
+        "matplotlib gallery's own multi-axis example), four Lissajous "
+        "figures at different frequency ratios, and a noisy signal beside "
+        "the frequency spectrum that recovers its three true tones, also "
+        "read as a stem plot of discrete lines - the same signal the "
+        "Filtering operation's IIR/FIR/Hilbert models can run on directly "
+        "(its 5, 20 and 50 Hz tones are exact targets for a lowpass, a "
+        "bandpass, or an envelope) and Spectral Analysis's own subject.",
+        (
+            "anscombe_quartet", "lissajous_grid", "signal_time_and_frequency",
+            "signal_spectrum_stem",
+        ),
+        references=(REF_ANSCOMBE,),
+    ),
+    DemoProject(
+        "Quality and spectroscopy - three quality-control operations",
+        "Textbook defective-unit counts for the Control Chart operation's "
+        "attribute charts (p/np/c/u), a synthetic spectrum with a "
+        "drifting, wandering background for Baseline Correction (AsLS or "
+        "rubber band) and, once corrected, for the Peaks operation's "
+        "prominence filter to find its two peaks - both figures already "
+        "carry an annotation and a reference line with an explicit colour, "
+        "so opening Overlay properties shows its colour/line/font/size "
+        "editors populated rather than empty - and seven rejected-board "
+        "causes as a Pareto chart, the tool this kind of table exists for.",
+        ("attribute_counts", "baseline_spectrum", "defect_causes_pareto"),
+        category="Quality and Process",
+    ),
+    DemoProject(
+        "New chart types - heatmap, hexbin, event plot, and true 3D",
+        "Chart types added after the first release, each on data suited to "
+        "what makes it different from a plain scatter or line: a smooth "
+        "surface as a per-cell heatmap, four thousand drivers binned into a "
+        "hexbin, three servers' error timestamps as an event raster (and, "
+        "on the same table, a running total as a stairs plot), a helix and "
+        "a small sales table as a true 3D line and 3D bar chart rather than "
+        "a scattered or projected stand-in, and that same sales table again "
+        "stacked by region instead of grouped.",
+        (
+            "heatmap_grid",
+            "driver_hexbin",
+            "server_events",
+            "server_events_stairs",
+            "helix_3d_line",
+            "regional_sales_3d_bar",
+            "regional_sales_stack",
+        ),
+    ),
+    DemoProject(
+        "Machine comparison - four gauges measuring the same standard",
+        "Thirty repeated readings of a 25.000 mm gauge block from four "
+        "coordinate measuring machines: a box plot (which machine reads "
+        "high, which is noisier), the same distributions again as an ECDF, "
+        "a run-order scatter (whether either drifts over the session), a "
+        "summary table, and each machine's own scheduled maintenance as a "
+        "Gantt-style broken bar, horizontal and vertical - a shape-aware "
+        "population for the Outlier operation, and aligned closely enough "
+        "by run number for Statistics's paired t-test to confirm Machine "
+        "C's bias against Machine A.",
+        (
+            "machine_box", "machine_ecdf", "machine_scatter", "machine_table",
+            "machine_downtime_hbar", "machine_downtime_vbar",
+        ),
+        category="Quality and Process",
+    ),
+    DemoProject(
+        "Release history and regional sales - timeline and text",
+        "Ten software releases on a dated timeline, coloured by whether "
+        "each was a major or minor version, and the four sales regions "
+        "read as plain labelled points rather than bars.",
+        ("release_timeline", "regional_text"),
+    ),
+    DemoProject(
+        "A rotating field - quiver, streamlines and wind barbs",
+        "One synthetic vector field - solid-body rotation on a regular "
+        "grid - drawn the three ways a vector field can be: an arrow per "
+        "point, traced streamlines, and meteorology's own wind-barb "
+        "notation - plus an unrelated month of daily temperature range, "
+        "shaded as a filled band.",
+        ("vector_field_quiver", "vector_field_stream", "vector_field_barbs",
+         "temperature_fill_between"),
+    ),
+    DemoProject(
+        "Sparse calibration curve - ready for Interpolation",
+        "A logistic response curve sampled at only nine irregular points - "
+        "exact by construction, so Interpolation's generated curve can be "
+        "checked against the true shape rather than against noise.",
+        ("sparse_calibration_scatter",),
+        category="Curves",
+    ),
+    DemoProject(
+        "3D Data Operations - Fit, Peaks, Roots and Calculus on a surface",
+        "A Gaussian bump and a saddle, run through the four Data "
+        "Operations that now understand a series with a z role: a "
+        "Gaussian2D surface fitted to 500 scattered points, the bump's one "
+        "peak found on its exact grid, a saddle's z=0 level curve traced "
+        "as its two true diagonals, and the bump's gradient magnitude "
+        "with the volume under it reported alongside.",
+        ("ops3d_showcase",),
+        category="Curves",
+    ),
+    DemoProject(
+        "Real case studies - CO2, sunspots, earthquakes and warming",
+        "Four published results, each on the institution's own published "
+        "data rather than on anything invented here (downloaded by "
+        "dev/demo/fetch_case_study_data.py): the Keeling curve breathing "
+        "once a year on top of its rise from 315 to 428 ppm; 277 years of "
+        "sunspot counts whose spectrum - computed by the Spectral "
+        "operation's own FFT - peaks at 11.1 years, the cycle Schwabe "
+        "read off by eye in 1843; a month of earthquakes obeying "
+        "Gutenberg-Richter with b = 1.06 above the magnitude the "
+        "catalogue is complete at, and visibly departing from it below; "
+        "and 146 years of global temperature anomaly.",
+        (
+            "keeling_curve",
+            "sunspot_record",
+            "sunspot_spectrum",
+            "gutenberg_richter",
+            "global_temperature",
+        ),
+        references=(REF_CO2, REF_SUNSPOTS, REF_USGS, REF_GISTEMP,),
+        category="Getting Started",
+    ),
+    DemoProject(
+        "Root cause analysis - an Ishikawa diagram and its Pareto chart",
+        "Why circuit boards are rejected, twice over: the possible causes "
+        "brainstormed on a fishbone by the six Ms (method, machine, "
+        "material, manpower, measurement, environment), with finer causes "
+        "under some of them, and the defects actually counted as a Pareto "
+        "chart - the two quality tools that are used together.",
+        ("defect_root_causes_fishbone", "defect_causes_pareto"),
+        category="Quality and Process",
+    ),
+    DemoProject(
+        "NIST reference datasets - certified answers for Fit and Statistics",
+        "Ten of the NIST Statistical Reference Datasets, the yardstick "
+        "statistics packages are measured against: five nonlinear "
+        "regressions ready for Fit (their models are in its NIST category), "
+        "a line, a parabola and Filip's tenth-degree polynomial, Michelson's "
+        "speed of light for the summary statistics and five instruments for "
+        "a one-way ANOVA - each with its certified values under the chart.",
+        (),
+        builder="dev.demo.nist_demo:build_nist_demo",
+        preview="NIST Gauss3",
+        references=(REF_NIST,),
+        category="Basic Analysis",
+    ),
+    DemoProject(
+        "Diagnostic plots - Q-Q, survival, forest, mosaic and more",
+        "The seven diagnostic charts on the data they were made for: a "
+        "pair plot, an interaction plot, a mosaic and a normal Q-Q plot of "
+        "the Palmer penguins, a P-P plot of Michelson's speed of light, "
+        "Kaplan-Meier curves of the 6-MP leukaemia trial and a forest plot "
+        "of the thirteen BCG vaccine trials - each with what to look for and "
+        "the Statistics model that tests it.",
+        (),
+        builder="dev.demo.diagnostics_demo:build_diagnostics_demo",
+        references=(REF_PENGUINS, REF_FREIREICH, REF_COLDITZ, REF_MICHELSON,),
+    ),
+    DemoProject(
+        "Data operations - fifteen operations, each with its report",
+        "Fifteen Data Operations run for real, one per chart, each on a "
+        "dataset suited to it - smoothing, spectrum, filtering, baseline, "
+        "peaks, roots, calculus, fit, interpolation, statistics, outliers, "
+        "clustering, a control chart, a robust regression and a transform - "
+        "with the result drawn on the chart and the operation's own report in "
+        "the results pane below it, exactly as the operation leaves them.",
+        (),
+        builder="dev.demo.demo_operations:build_operations_demo",
+        category="Curves",
+    ),
+    DemoProject(
+        "Animated charts - a column and a function's parameter played",
+        "Figures that move: CO2 at Mauna Loa one year at a time, the seasonal cycle climbing; the global "
+        "temperature record as it grew, decade by decade; made-up countries, income against life expectancy "
+        "over thirty years; a damped oscillation with its decay varied and a Gaussian with its width varied. "
+        "Open a figure and press Play on Chart properties > Animation - Save as GIF is there too.",
+        (),
+        builder="dev.demo.demo_animation:build_animation_demo",
+        preview="CO2",
+        references=(REF_CO2, REF_GISTEMP),
+        category="Graph",
+    ),
+    DemoProject(
+        "Animated charts 2 - waves, heat and orbits, in 2D and 3D",
+        "More figures that move, all made up on the spot. In two dimensions: a travelling wave fading as it "
+        "goes, heat spreading along a rod, a Lissajous curve drawn as it goes, two tones beating with the "
+        "second one's frequency varied. In three: a helix growing along its axis, thirty particles drifting in "
+        "a box and a ripple spreading over a surface. Open a figure and press Play on Chart properties > "
+        "Animation - Save as GIF is there too.",
+        (),
+        builder="dev.demo.demo_animation_more:build_more_animation_demo",
+        preview="Ripple",
+        category="Graph",
+    ),
+    DemoProject(
+        "SymPy functions - stored formulas differentiated, integrated and fitted",
+        "Formulas kept with the project (Tables panel, marked F) and drawn as live series: a damped "
+        "oscillation and its exact derivative, logistic growth and its exact integral - Calculus works on "
+        "the formula, not the points, and keeps each result as a function of its own - the stored Logistic "
+        "fitted to noisy measurements by Fit Curve, a family of Gaussians from one formula, and a saddle "
+        "as a function of x and y.",
+        (),
+        builder="dev.demo.demo_functions:build_functions_demo",
+        preview="Damped",
+        category="Curves",
+    ),
+    DemoProject(
+        "Wafer maps - thickness, sheet resistance, particles and die bins",
+        "Four semiconductor wafers run through Wafer Map: a 300 mm wafer's film thickness at 49 sites - its "
+        "contour, die means, die bins against the limits and the yield; a 150 mm wafer with its flat, its sheet "
+        "resistance read with the flat on the right and rotated into place; a 200 mm wafer's particle scan - a "
+        "scratch, a cluster, loose particles - counted per die with the defect density and Poisson yield; and a "
+        "100 mm wafer's line width, a site on each die, its hot spot binned high.",
+        (),
+        builder="dev.demo.demo_wafer:build_wafer_demo",
+        preview="Film thickness",
+        category="Quality and Process",
+    ),
+    DemoProject(
+        "Designed experiment - a Box-Behnken design analysed with Fit Model",
+        "A reaction studied with a Box-Behnken design - temperature, time and "
+        "catalyst - kept with its table, so Analysis > Fit Model opens on it "
+        "with the responses cast and the response-surface model built. Yield "
+        "and purity are fitted by Standard Least Squares, the pass/fail grade "
+        "by Nominal Logistic; each figure carries its report in its notes.",
+        (),
+        builder="dev.demo.demo_fit_model:build_fit_model_demo",
+        preview="Yield",
+        category="Design of Experiments",
+    ),
+)
+
+
+def copy_demo_project(demo: DemoProject, target: Path) -> Path:
+    """Copy *demo*'s pre-built file to *target*, and return the path written.
+
+    The application does not build a demo on the spot any more: several of
+    the source datasets (four thousand drivers, three years of daily prices)
+    are large enough that rebuilding one on every click would make "Create
+    demo" feel like it had hung. Run ``python -m dev.demo.build_demos``
+    once to populate :data:`DEMO_DIR`; after that, "Load demo" is just a
+    file copy.
+
+    *target* must not be open: close its repository first (see
+    MainWindow._on_load_demo).
+    """
+    source = demo.source_path
+    if not source.is_file():
+        raise FileNotFoundError(
+            f"Demo project not built: {source}. "
+            "Run 'python -m dev.demo.build_demos' to build the demo set "
+            f"into {DEMO_DIR}."
+        )
+
+    target = SqliteRepo.ensure_dhub_extension(Path(target))
+    target.parent.mkdir(parents=True, exist_ok=True)
+    # The files beside the previous copy go with it. SQLite replays a
+    # leftover -wal onto whatever file now has its name, so the edits made
+    # to the last copy came back on top of the pristine one; and its undo
+    # history would "restore" tables from a project that is no longer there.
+    for path in (target, *project_side_files(target)):
+        path.unlink(missing_ok=True)
+    shutil.copy2(source, target)
+    # Its preview goes with it, under the name the project's preview_path
+    # gives it (the same stem, so the same name).
+    preview = demo.preview_path
+    if preview is not None:
+        shutil.copy2(preview, target.parent / preview.name)
+    return target
+
+
+def project_side_files(project: Path) -> tuple[Path, ...]:
+    """The files SQLite and the undo store keep beside *project*."""
+    undo = project.with_name(project.name + ".undo.db")
+    return tuple(
+        base.with_name(base.name + suffix)
+        for base in (project, undo)
+        for suffix in ("-wal", "-shm")
+    ) + (undo,)

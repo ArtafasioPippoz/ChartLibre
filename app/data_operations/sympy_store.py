@@ -1,0 +1,293 @@
+"""Stored SymPy/Python functions shared by Function and Fit dialogs."""
+from __future__ import annotations
+
+import ast
+import hashlib
+import json
+import re
+from collections.abc import Callable, Iterable, Mapping, Sequence
+from typing import Any
+
+import numpy as np
+import sympy as sp
+
+from app.data.repo.function_sql import GridRange, function_sql
+from app.utils.config import get_value, set_value
+
+
+def _scientific_import(name: str, globals: Any = None, locals: Any = None, fromlist: tuple[str, ...] = (), level: int = 0) -> Any:
+    """Allow imports only from NumPy and SymPy inside stored Code models."""
+    root = str(name).split(".", 1)[0]
+    if root not in {"numpy", "sympy"}:
+        raise ImportError("Stored function code may import only numpy and sympy.")
+    return __import__(name, globals, locals, fromlist, level)
+
+TABLE = "__sympy__"
+IMPLICIT = ("x", "y", "z")
+#: The stored functions this computer runs, by fingerprint (user.json): those saved here, and those the user
+#: trusted when asked (todo ID47). A project's function runs code - sympify and exec - when drawn or fitted.
+TRUST_KEY = "trusted_functions"
+
+
+class UntrustedFunction(PermissionError):
+    """A stored function this computer was not told to run: made elsewhere, never trusted here."""
+
+
+def fingerprint(data: Mapping[str, Any]) -> str:
+    """What a function runs - its kind and its code - as one hash: edited elsewhere, it is a new function."""
+    text = "\0".join((str(data.get("source_type", "")).lower(), str(data.get("code_string", "")).strip()))
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _trusted() -> set[str]:
+    value = get_value(TRUST_KEY, [])
+    return {str(item) for item in value} if isinstance(value, list) else set()
+
+
+def is_trusted(data: Mapping[str, Any]) -> bool:
+    return fingerprint(data) in _trusted()
+
+
+def trust(functions: Iterable[Mapping[str, Any]]) -> None:
+    """Remember on this computer that these functions may run."""
+    known = _trusted()
+    new = {fingerprint(data) for data in functions} - known
+    if new:
+        set_value(TRUST_KEY, sorted(known | new))
+
+
+def untrusted(repo: Any) -> list[dict[str, str]]:
+    """The project's stored functions this computer would not run."""
+    return [row for row in rows(repo) if not is_trusted(row)]
+
+
+def rows(repo: Any) -> list[dict[str, str]]:
+    return [function.to_dict() for function in repo.list_sympy_functions()]
+
+
+def get(repo: Any, name: str) -> dict[str, str] | None:
+    function = repo.get_sympy_function(name)
+    return function.to_dict() if function is not None else None
+
+
+def save(repo: Any, data: Mapping[str, str]) -> None:
+    check_calls(repo, data)
+    repo.save_sympy_function(
+        str(data["function_name"]),
+        str(data["source_type"]),
+        str(data.get("symbols", "")),
+        str(data["code_string"]),
+        float(data.get("from", "0")), float(data.get("to", "10")),
+        int(float(data.get("points", "200"))), str(data.get("description", "")),
+        float(data.get("y_from", "0")), float(data.get("y_to", "10")), int(float(data.get("y_points", "200"))),
+        json.dumps(values, sort_keys=True) if (values := stored_values(data)) else "",
+    )
+    trust([data])  # made on this computer
+
+
+def callers(repo: Any, name: str) -> list[str]:
+    """The stored functions whose expression calls *name*."""
+    return sorted(str(row["function_name"]) for row in rows(repo)
+                  if str(row["function_name"]) != name and str(row.get("source_type", "")).lower() == "expression"
+                  and name in _expression_names(str(row.get("code_string", ""))))
+
+
+def rename(repo: Any, old: str, new: str) -> int:
+    """Rename the stored function *old* to *new*, and the series that draw it; returns how many series.
+
+    Refused while another function calls it (its formula would name a function that is gone). A function
+    written as code is a def of its name: the def is renamed with it, and a trusted function stays trusted.
+    """
+    data = get(repo, old)
+    if data is None:
+        raise ValueError(f"There is no stored function '{old}'.")
+    calling = callers(repo, old)
+    if calling:
+        raise ValueError(f"'{old}' is called by {', '.join(calling)}: rename it there first.")
+    code = None
+    if str(data.get("source_type", "")).lower() == "code":
+        code = re.sub(rf"(^\s*def\s+){re.escape(old)}(\s*\()", rf"\g<1>{new}\g<2>", str(data["code_string"]),
+                      count=1, flags=re.M)
+        if is_trusted(data):
+            trust([{**data, "code_string": code}])
+    return repo.rename_sympy_function(old, new, code)
+
+
+def check_calls(repo: Any, data: Mapping[str, Any]) -> None:
+    """Refuse a function that would call itself, through the others (library.CallError, saying who calls whom)."""
+    if str(data.get("source_type", "")).lower() != "expression":
+        return
+    from app.functions import library
+
+    name = str(data["function_name"])
+    functions = {**functions_by_name(repo), name: dict(data)}
+    params = parameter_names(str(data.get("symbols", "")))
+    library.sympy_locals(params, code=str(data["code_string"]), functions=functions, chain=(name,))
+
+
+def stored_values(data: Mapping[str, Any]) -> dict[str, float]:
+    """The parameters' stored values ({"a": 2.0}): a mapping, or the "Values" column's JSON; {} for none."""
+    raw = data.get("values")
+    if not isinstance(raw, Mapping):
+        try:
+            raw = json.loads(str(raw or "") or "{}")
+        except ValueError:
+            return {}
+    if not isinstance(raw, Mapping):
+        return {}
+    values: dict[str, float] = {}
+    for key, value in raw.items():
+        try:
+            values[str(key)] = float(value)
+        except (TypeError, ValueError):
+            continue
+    return values
+
+
+def parameter_names(text: str) -> list[str]:
+    names = [part.strip() for part in text.split(",") if part.strip()]
+    # Accept old rows that explicitly stored x/y/z, but never expose them as fit parameters.
+    return [name for name in names if name not in IMPLICIT]
+
+
+def _code_info(code: str, wanted: str) -> tuple[ast.FunctionDef, list[str], int]:
+    tree = ast.parse(code, mode="exec")
+    node = next((item for item in tree.body if isinstance(item, ast.FunctionDef) and item.name == wanted), None)
+    if node is None:
+        raise ValueError(f"Code must define def {wanted}(...).")
+    params = [arg.arg for arg in node.args.args if arg.arg not in IMPLICIT]
+    names = {item.id for item in ast.walk(node) if isinstance(item, ast.Name)}
+    ndim = 2 if "y" in names else 1
+    return node, params, ndim
+
+
+def _expression_names(code: str) -> set[str]:
+    """The names an expression uses, read without running it (sympify evaluates its text)."""
+    try:
+        tree = ast.parse(code.replace("^", "**"), mode="eval")
+    except SyntaxError:
+        return set()
+    return {node.id for node in ast.walk(tree) if isinstance(node, ast.Name)}
+
+
+def payload(data: Mapping[str, str]) -> dict[str, Any]:
+    name = str(data["function_name"])
+    kind = str(data["source_type"]).lower()
+    code = str(data["code_string"])
+    params = parameter_names(str(data.get("symbols", "")))
+    ndim = 1
+    if kind == "expression":
+        ndim = 2 if "y" in _expression_names(code) else 1
+    elif kind == "code":
+        _node, signature_params, ndim = _code_info(code, name)
+        if not params:
+            params = signature_params
+    else:
+        raise ValueError(f"Unsupported stored source type: {kind}")
+    return {
+        "name": name, "description": str(data.get("description", "")) or "Stored SymPy function", "expression": code,
+        "params": params, "p0": [stored_values(data).get(param, 1.0) for param in params], "ndim": ndim,
+        "_sympy_stored": True, "source_type": kind, "symbols": ",".join(params), "code_string": code,
+        "keywords": f"stored sympy {name}",
+    }
+
+
+def source_sql(data: Mapping[str, Any], parameters: Mapping[str, float] | None = None,
+               x: GridRange | None = None, y: GridRange | None = None) -> str:
+    """A function's query as a data source: the stored parameter values and range, unless others are given.
+
+    Each chart keeps its own in its series' query (function_sql); the stored ones are where it starts.
+    """
+    info = payload(data)
+    values = dict(zip(info["params"], (float(value) for value in info["p0"])))
+    values.update({str(key): float(value) for key, value in (parameters or {}).items() if key in values})
+    if x is None:
+        x = GridRange(float(data.get("from", 0.0)), float(data.get("to", 10.0)), int(float(data.get("points", 200))))
+    if int(info["ndim"]) != 2:
+        return function_sql(info["name"], values, x)
+    if y is None:
+        y = GridRange(float(data.get("y_from", 0.0)), float(data.get("y_to", 10.0)),
+                      int(float(data.get("y_points", 200))))
+    return function_sql(info["name"], values, x, y)
+
+
+def library_row(repo: Any, name: str, values: Sequence[float], x: GridRange, y: GridRange) -> dict[str, Any] | None:
+    """The library function *name* as the project row its live series draws - copied on use (Q1 of
+    dev/plans/sympy_library_plan.txt), so the project holds everything it draws. None for a code function
+    (Voigt), drawn as a table. Under its name as an identifier (Gaussian_peak); a project's own different
+    function of that name is kept, and the copy takes the next free one (Gaussian_peak_2).
+    """
+    from app.functions import library
+
+    entry = library.get(name)
+    if entry is None or entry.get("kind") != "expression":
+        return None
+    stem = library.identifier(str(entry["name"]))
+    function_name, number = stem, 2
+    while (existing := get(repo, function_name)) is not None and str(existing.get("code_string")) != entry["code"]:
+        function_name, number = f"{stem}_{number}", number + 1
+    return {
+        "function_name": function_name, "source_type": "expression", "symbols": ",".join(entry["params"]),
+        "code_string": str(entry["code"]), "description": f"{entry['name']} (from the library): {entry['description']}",
+        "from": str(x.start), "to": str(x.stop), "points": str(x.points),
+        "y_from": str(y.start), "y_to": str(y.stop), "y_points": str(y.points),
+        "values": {param: float(value) for param, value in zip(entry["params"], values, strict=True)},
+    }
+
+
+def catalog(repo: Any) -> list[dict[str, Any]]:
+    return [payload(row) for row in rows(repo)]
+
+
+def functions_by_name(repo: Any) -> dict[str, dict[str, str]]:
+    """The project's functions by name: what an expression's calls to them are read from."""
+    return {str(row["function_name"]): row for row in rows(repo)}
+
+
+def make_model(data: Mapping[str, Any], functions: Mapping[str, Mapping] | None = None,
+               ) -> Callable[[np.ndarray, np.ndarray], np.ndarray]:
+    """The function as a model; UntrustedFunction, nothing run, when this computer was not told to run it.
+
+    *functions*: the project's, by name (functions_by_name) - what the expression may call besides the library.
+    """
+    name = str(data["name"])
+    if not is_trusted(data):
+        raise UntrustedFunction(f"The stored function '{name}' is not trusted on this computer.")
+    kind = str(data["source_type"])
+    params = parameter_names(str(data.get("symbols", "")))
+    code = str(data["code_string"])
+    ndim = int(data.get("ndim", 1))
+
+    if kind == "expression":
+        from app.functions import library
+
+        x, y = sp.symbols("x y")
+        p_symbols = [sp.Symbol(param) for param in params]
+        local = library.sympy_locals(params, ndim, code=code, functions=functions, chain=(name,))
+        expr = sp.sympify(code, locals=local)
+        args = (x, y, *p_symbols) if ndim == 2 else (x, *p_symbols)
+        numeric = sp.lambdify(args, expr, modules=library.NUMPY_MODULES)
+
+        def model(independent: np.ndarray, theta: np.ndarray) -> np.ndarray:
+            p = np.asarray(theta, dtype=float)
+            arr = np.asarray(independent, dtype=float)
+            value = numeric(arr[:, 0], arr[:, 1], *p) if ndim == 2 else numeric(arr, *p)
+            return np.asarray(value, dtype=float)
+        return model
+
+    _node, signature_params, _ndim = _code_info(code, name)
+    if not params:
+        params = signature_params
+    env: dict[str, Any] = {"np": np, "numpy": np, "sp": sp, "sympy": sp, "__builtins__": {"__import__": _scientific_import}}
+    exec(compile(code, "<stored-sympy>", "exec"), env, env)
+    func = env[name]
+
+    def model(independent: np.ndarray, theta: np.ndarray) -> np.ndarray:
+        arr = np.asarray(independent, dtype=float)
+        if ndim == 2:
+            env["x"], env["y"] = arr[:, 0], arr[:, 1]
+        else:
+            env["x"] = arr
+        p = np.asarray(theta, dtype=float)
+        return np.asarray(func(*p), dtype=float)
+    return model

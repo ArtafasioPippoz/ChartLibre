@@ -1,0 +1,86 @@
+Save and apply prediction models (ID01; started 2026-11-14)
+Status 2026-11-15: A-F done but one family. Every analysis that fits a model gives one - Partition (pickled),
+Fit Model least squares (pickled, 95 % prediction interval), PLS, Discriminant and Fit Y by X (portable JSON) - with
+Save as model... in its window; Predict with a saved model is on the Analysis page and in the Tables list's menu.
+Design point 5 is in the Predict window: Rename, Delete, Export (a .clmodel file: JSON, a pickled payload inside as
+base64, its fingerprint checked on import) and Import; an imported pickled model is asked about ("model.trust")
+before its first run. API: Model(name).export(path), .rename(new); models.import_model(repo, path).
+Series Regression done too: RegressionModel (pickled) reads the x column of the series' query (source_names).
+Still to do: the portable JSON form of Fit Model's models (E; they stay pickled); predictions recorded in the history (design
+point 4); the manual chapter (G, with ID49). The API gives result.fitted, not result.model: AnalysisResult.model
+already names the analysis' model variant. Decided: forms as proposed, Partition first, predictions in a new table.
+============================================================
+
+The goal
+--------
+A model fitted in an analysis (Partition, Fit Model, PLS, Discriminant, Fit Y by X, Regression of a series...) is
+kept with everything it needs to give a value for a row it has never seen - its columns, how they are encoded, its
+levels, its missing-value rule - and is applied to new rows or to another table: "Predict with a saved model".
+Through the Python API (dev/plans/analysis_api_plan.txt) the same thing is a call:
+
+    model = result.model                      # any analysis that fits a model gives one
+    model.save("birds_mass")                  # kept in the project: Models in the Tables panel
+    Model("birds_mass").predict("NewBirds")   # a table of predictions; or .predict(frame) -> DataFrame
+    Model("birds_mass").describe()            # kind, response, features, the fit's numbers, when, on which table
+
+What is there
+-------------
+Each analysis in app/analysis/ fits its own estimator and encodes its own columns (partition._encode: nominal
+factors as the rank of each level by the response; linear_model: a statsmodels formula; pls/discriminant: a plain
+matrix). Predictions for the rows used are already returned (PartitionResult.predicted, leaf, probabilities) but the
+fitted object is thrown away with the result. Stored functions (app/data_operations/sympy_store.py) already have the
+pattern for code kept in a project and run only on a computer that trusts it (fingerprint in user.json).
+
+Design
+------
+1. One contract, app/analysis/models.py: class SavedModel with  kind, response, features (name, kind, levels),
+   encode(frame) -> matrix, predict(frame) -> DataFrame (Prediction, and Prob(level) for a category),
+   fit_summary (the numbers of the report), and to_state() / from_state(state). An analysis that can be used for
+   prediction returns one beside its result: PartitionResult.model, FitResult.model, ...
+2. Storage, in the project: a table __models__ (name, kind, created, source table, response, features_json,
+   summary_json, payload BLOB, fingerprint). The payload is the estimator and its encoding. Two ways, to choose:
+   (a) pickle/joblib of the scikit-learn estimator and a JSON of the encoding - small code, any estimator, but a
+       pickle runs code on load: loaded only when this computer trusts the model (the stored functions' rule: made
+       here, or accepted when asked, its code shown as "a model of kind X made by version Y");
+   (b) a portable form per kind (a tree as its nodes, a linear model as terms and coefficients, PLS as
+       matrices) - safe and readable, one writer and one reader per kind.
+   Proposed: (b) for the linear family and trees (the two most used, and the ones people want to read), (a) with the
+   trust rule for the forests, boosted trees and anything else, so that every analysis has a way from day one.
+3. Applying: Analysis menu > "Predict with a saved model": pick the model, pick the table (its columns matched by
+   name, a mismatch listed and refused), choose what is written - Prediction, Prob(level), the leaf, an interval
+   when the model has one - into a new table, or as columns added to the table (Undo as one step). The row
+   count, the missing-value rule and the levels the model had never seen are reported, not hidden.
+4. The history records it (__operations__) like any analysis; the report names the model and its version.
+5. Models are listed with the Tables (marked M, like F for functions), renamed, deleted, exported to a file, and
+   a model file is imported (the trust rule applies to an imported pickle).
+
+Steps (one commit each; tests on a real project, no GUI window where an API call can do)
+-------------------------------------------------------------------------------------------
+A. app/analysis/models.py (the contract, the encoding of columns, unseen levels, missing values) and the
+   __models__ table with save / list / load / delete on the repo, with the trust rule for payloads. Tests with a
+   fake model.
+B. Partition: result.model for the tree, the forest and the boosted tree (partition._encode kept in the model);
+   predict(frame) reproduces the report's own predictions on the training rows (the test that matters).
+C. The Python API: result.model, Model(name), .predict(), .describe(), .save(); in the workpad.
+D. "Predict with a saved model" in the Analysis menu and in the Tables list (a model's menu: Predict, Rename,
+   Delete, Export); Save as model... on the results of the analyses that fit one.
+E. Fit Model (the linear family): the formula, the terms, the coefficients as the portable form; prediction
+   intervals as the report has them.
+F. PLS, Discriminant, Fit Y by X, series Regression: one commit each, the same test as B.
+G. Manual chapter; strings for translation.
+
+Rules and risks
+---------------
+- The test of every family: predict() on the rows it was fitted on gives the numbers of its own report.
+- A model keeps the versions of numpy/scikit-learn/statsmodels it was made with; on a different one it still runs
+  but says so; a model that fails to load says why and never takes the project down.
+- Not here: refitting on new data (that is "Run again" of the history), hyperparameter search (ID17), model
+  comparison and validation (ID08), the preprocessing pipelines of ID14 (a model will carry its own encoding now and
+  take ID14's saved scaling/imputation when it exists).
+
+Decisions for the owner
+-----------------------
+1. Storage: (b) for linear models and trees and (a, trusted) for the rest, as proposed - or only (a), faster, one
+   mechanism, every family at once?
+2. The first family: Partition (trees, forests, boosted: the most used for prediction) or Fit Model (linear)?
+3. Applying a model: a new table of predictions by default, or columns added to the table?

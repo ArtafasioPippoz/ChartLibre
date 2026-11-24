@@ -1,0 +1,39 @@
+name: Platform report (Linux, Intel Mac, Windows setup)
+description: Tell us whether ChartLibre installs and starts on your system, working or not.
+labels: ["platform"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Reports that say "it works" are as useful as reports that say "it fails". Linux and Intel Macs have been barely tested.
+  - type: input
+    id: system
+    attributes:
+      label: System
+      description: Distribution and version, or macOS / Windows version, and the processor.
+      placeholder: "Ubuntu 24.04, x86_64, Wayland"
+    validations:
+      required: true
+  - type: dropdown
+    id: result
+    attributes:
+      label: Did it start?
+      options:
+        - Yes, and the main features worked
+        - Yes, with problems
+        - No, the first launch failed
+        - No, it started and then crashed
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: What you tried and what happened
+      description: Which launcher you used, what you opened, and any error text (the first launch names missing system libraries).
+    validations:
+      required: true
+  - type: input
+    id: screen
+    attributes:
+      label: Screen size and scaling (optional)
+      placeholder: "1366x768, 125%"

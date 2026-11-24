@@ -1,0 +1,10 @@
+{
+  "id": "quality",
+  "name": "Quality and process",
+  "version": "1.0.0",
+  "description": "Control charts, Gage R&R and method comparison, with the multi-vari and bullet charts.",
+  "author": "ChartLibre",
+  "needs_app": "0.2.0",
+  "packages": [],
+  "default": true
+}

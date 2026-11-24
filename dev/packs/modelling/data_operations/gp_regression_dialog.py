@@ -1,0 +1,251 @@
+"""Gaussian process regression, with its own uncertainty band (todo.txt P2-15).
+
+Every other regression-shaped operation in this app returns one curve. This
+one is worth a dialog of its own because a GP is the one smoother here that
+quantifies its own uncertainty: fitting it returns not just a mean curve but
+a posterior standard deviation at every point, so the natural result is
+three series - the mean, and a +/-2 sigma band flanking it - rather than one.
+"""
+from __future__ import annotations
+
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass, field
+from typing import Any, ClassVar
+
+import numpy as np
+import pandas as pd
+
+from app import SVG
+from app.analysis import gaussian_process as gp
+from app.plugin_api import reading_guide
+from app.plugin_api.data_operations.dialog_base import (
+    DataOperationDialogBase,
+    OperationModel,
+    ResultSeriesSpec,
+)
+from app.plugin_api.data_operations.parameter_spec import FloatParam
+from app.plugin_api.data_operations.results import TableResult
+from app.utils import report_html
+
+KERNEL_RBF = "RBF"
+KERNEL_MATERN_32 = "Matern (nu=1.5)"
+KERNEL_MATERN_52 = "Matern (nu=2.5)"
+KERNEL_RATIONAL_QUADRATIC = "Rational Quadratic"
+
+#: The models offered, in combo order, with their documentation.
+GP_KERNELS: dict[str, OperationModel] = {
+    KERNEL_RBF: OperationModel(
+        doc_title="RBF kernel",
+        doc_url="https://scikit-learn.org/stable/modules/generated/sklearn.gaussian_process.kernels.RBF.html",
+    ),
+    KERNEL_MATERN_32: OperationModel(
+        doc_title="Matern kernel (nu=1.5)",
+        doc_url="https://scikit-learn.org/stable/modules/generated/sklearn.gaussian_process.kernels.Matern.html",
+    ),
+    KERNEL_MATERN_52: OperationModel(
+        doc_title="Matern kernel (nu=2.5)",
+        doc_url="https://scikit-learn.org/stable/modules/generated/sklearn.gaussian_process.kernels.Matern.html",
+    ),
+    KERNEL_RATIONAL_QUADRATIC: OperationModel(
+        doc_title="Rational Quadratic kernel",
+        doc_url="https://scikit-learn.org/stable/modules/generated/sklearn.gaussian_process.kernels.RationalQuadratic.html",
+    ),
+}
+
+#: The engine's name for each kernel.
+_KERNEL_KEY: dict[str, str] = {
+    KERNEL_RBF: gp.KERNEL_RBF,
+    KERNEL_MATERN_32: gp.KERNEL_MATERN_32,
+    KERNEL_MATERN_52: gp.KERNEL_MATERN_52,
+    KERNEL_RATIONAL_QUADRATIC: gp.KERNEL_RATIONAL_QUADRATIC,
+}
+
+
+@dataclass(slots=True)
+class GPRegressionResult(TableResult):
+    """One source series' Gaussian-process fit: a mean curve and its band."""
+
+    source_name: str
+    result_name: str
+    model: str
+    x: np.ndarray
+    mean: np.ndarray
+    upper: np.ndarray
+    lower: np.ndarray
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def to_df(self) -> pd.DataFrame:
+        return pd.DataFrame(
+            {"x": self.x, "mean": self.mean, "upper": self.upper, "lower": self.lower}
+        )
+
+
+class SeriesGPRegressionDialog(DataOperationDialogBase):
+    """Fit a Gaussian process to a series and draw its mean +/-2 sigma band."""
+
+    #: Where the result goes: the Charts tab's "Draw on".
+    DESTINATIONS = (DataOperationDialogBase.DEST_SAME_AXIS, DataOperationDialogBase.DEST_NEW_AXIS, DataOperationDialogBase.DEST_NEW_FIGURE)
+    DEFAULT_DESTINATION = DataOperationDialogBase.DEST_NEW_AXIS
+
+    MODELS = GP_KERNELS
+    MODEL_TOOLTIP = "Choose the kernel."
+    MODEL_LABEL = "Kernel"
+
+    Name: str = "Gaussian Process"
+    Description = "Gaussian process regression with an uncertainty band"
+
+    INPUT_REQUIRES_SORTED_X = True
+    INPUT_REQUIRES_UNIQUE_X = True
+    INPUT_MINIMUM_POINTS = 3
+
+    #: Computed on a worker thread: see DataOperationDialogBase.evaluate.
+    RUN_IN_BACKGROUND = True
+
+    PARAMS = (
+        FloatParam(
+            "length_scale",
+            "Length scale",
+            tooltip=(
+                "Starting guess for how quickly the fit can vary with x. "
+                "Re-optimized automatically while fitting - a starting point, "
+                "not a fixed choice."
+            ),
+            default_value=1.0,
+            minimum=1.0e-3,
+            maximum=1000.0,
+        ),
+        FloatParam(
+            "noise_level",
+            "Noise level",
+            tooltip=(
+                "Starting guess for the observation noise variance, added to "
+                "the kernel. Also re-optimized while fitting."
+            ),
+            default_value=1.0,
+            minimum=1.0e-6,
+            maximum=100.0,
+        ),
+    )
+
+    Icon = SVG.GP_REGRESSION
+    Keywords: str = (
+        "gaussian process gp regression regressione gp processo gaussiano kriging uncertainty incertezza confidence band banda di "
+        "confidenza"
+    )
+    Goals: ClassVar[list[str]] = ["predict", "relate"]
+    Category: str = "Predictive and Specialized Modeling"
+    Order: int = 35
+
+    WINDOW_SIZE = (760, 640)
+    SELECTS_ALL_SERIES = True
+
+    # ------------------------------------------------------------------
+    # UI
+    # ------------------------------------------------------------------
+
+    def _kernel(self) -> str:
+        return self.current_model(KERNEL_RBF)
+
+    # ------------------------------------------------------------------
+    # Computation
+    # ------------------------------------------------------------------
+
+    def compute_series(
+        self, name: str, data: tuple[np.ndarray, np.ndarray], settings: tuple[str, dict[str, Any]]
+    ) -> GPRegressionResult:
+        kernel_name, params = settings
+        x_values, y_values = data
+        return self._fit_one(name, x_values, y_values, kernel_name, params)
+
+    def _fit_one(
+        self,
+        name: str,
+        x_values: np.ndarray,
+        y_values: np.ndarray,
+        kernel_name: str,
+        params: Mapping[str, Any],
+    ) -> GPRegressionResult:
+        fitted = gp.fit_gaussian_process(
+            _KERNEL_KEY[kernel_name],
+            x_values,
+            y_values,
+            length_scale=float(params.get("length_scale", 1.0)),
+            noise_level=float(params.get("noise_level", 1.0)),
+        )
+        return GPRegressionResult(
+            source_name=name,
+            result_name=f"{name} - GP ({kernel_name})",
+            model=kernel_name,
+            x=fitted.x,
+            mean=fitted.mean,
+            upper=fitted.upper,
+            lower=fitted.lower,
+            metadata={
+                "kernel": fitted.kernel,
+                "log_marginal_likelihood": fitted.log_marginal_likelihood,
+            },
+        )
+
+    # ------------------------------------------------------------------
+    # Where the result is drawn - three series from one saved table
+    # ------------------------------------------------------------------
+
+    def resolve_target_axis_id(
+        self, selected_axis_id: int, results: Sequence[Any]
+    ) -> int:
+        axis_id = self.resolve_destination_axis(
+            selected_axis_id,
+            chart_type="Scatter Plot",
+            title=self._kernel(),
+            figure_name=self.result_figure_name(results),
+            options={"grid": True, "linestyle": "-", "marker": ""},
+        )
+        if results:
+            self.label_result_axis(title=str(results[0].model or ""))
+        return axis_id
+
+    # ------------------------------------------------------------------
+    # Results
+    # ------------------------------------------------------------------
+
+    def result_series_specs(
+        self,
+        axis_id: int,
+        table_name: str,
+        result: GPRegressionResult,
+    ) -> Sequence[ResultSeriesSpec]:
+        """The posterior mean, and the band two standard deviations either side of it."""
+        del axis_id
+        band = {"linestyle": "--", "linewidth": 1.0, "marker": "", "alpha": 0.6}
+        return [
+            self.curve_spec(table_name, result, y="mean", name=f"{result.source_name} - GP mean",
+                            linestyle="-", linewidth=1.8, marker=""),
+            self.curve_spec(table_name, result, y="upper", name=f"{result.source_name} - GP +2σ", **band),
+            self.curve_spec(table_name, result, y="lower", name=f"{result.source_name} - GP -2σ", **band),
+        ]
+
+    RESULT_TABLE_PREFIX = 'GP'
+    RESULT_TABLE_VARIANT = 'model'
+
+    RESULT_COLUMNS = (("Series", "left"), ("Kernel", "left"), ("Log marginal likelihood", "right"),
+                      ("Fitted kernel", "left"))
+
+    def results_subtitle(self, results: Sequence[GPRegressionResult]) -> str:
+        return self._kernel()
+
+    def result_row(self, result: GPRegressionResult) -> tuple[str, ...]:
+        return (result.source_name, result.model,
+                report_html.format_number(result.metadata.get("log_marginal_likelihood")),
+                str(result.metadata.get("kernel", "")))
+
+    def how_to_read(self, results: Sequence[Any]) -> list[str]:
+        """The band's widest point: where the process knows least."""
+        if not results:
+            return []
+        result = results[0]
+        width = np.asarray(result.upper, dtype=float) - np.asarray(result.lower, dtype=float)
+        if not np.isfinite(width).any():
+            return []
+        widest = int(np.nanargmax(width))
+        return [line for line in [reading_guide.gp_band(width[widest], widest_x=np.asarray(result.x)[widest])]
+                if line]

@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or idea (Discussions)
+    url: https://github.com/ArtafasioPippoz/ChartLibre/discussions
+    about: Ask how to do something, share a chart, or offer help before opening an issue.

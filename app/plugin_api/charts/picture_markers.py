@@ -1,0 +1,252 @@
+"""Markers drawn as pictures from the project (__images__): a series' marker "image:<name>".
+
+The pictures come from the project being drawn: render_figure sets the source for the time of a render, so
+renderers need no repository of their own. An SVG is drawn through Qt's own SVG renderer (no new package), at
+twice the size it shows, so it stays sharp; a single-colour picture (an icon) takes the series' colour, a
+multicolour one or a photo keeps its own.
+"""
+from __future__ import annotations
+
+import re
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
+from contextvars import ContextVar
+from functools import lru_cache
+from typing import Any
+
+import numpy as np
+
+PREFIX = "image:"
+SIZE_STEPS = 8  # a bubble chart's pictures come in this many sizes
+MAX_POINTS = 2000  # more pictures than this draw slowly: an even sample of them is drawn
+
+_source: ContextVar[Callable[[str], Any] | None] = ContextVar("picture_source", default=None)
+
+
+def is_picture(marker: Any) -> bool:
+    return isinstance(marker, str) and marker.startswith(PREFIX) and len(marker) > len(PREFIX)
+
+
+def name_of(marker: str) -> str:
+    return marker[len(PREFIX):]
+
+
+@contextmanager
+def pictures_from(get_image: Callable[[str], Any] | None) -> Iterator[None]:
+    """Pictures are read with *get_image(name)* while the block runs."""
+    token = _source.set(get_image)
+    try:
+        yield
+    finally:
+        _source.reset(token)
+
+
+@lru_cache(maxsize=64)
+def _rgba(kind: str, data: bytes, pixels: int) -> np.ndarray | None:
+    """The picture as an RGBA float array, its longer side *pixels*."""
+    from PySide6.QtCore import QByteArray, QRectF, Qt
+    from PySide6.QtGui import QImage, QPainter
+
+    if kind == "svg":
+        from PySide6.QtSvg import QSvgRenderer
+
+        renderer = QSvgRenderer(QByteArray(data))
+        if not renderer.isValid():
+            return None
+        size = renderer.defaultSize()
+        w, h = max(size.width(), 1), max(size.height(), 1)
+        scale = pixels / max(w, h)
+        image = QImage(max(1, round(w * scale)), max(1, round(h * scale)), QImage.Format.Format_RGBA8888)
+        image.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(image)
+        renderer.render(painter, QRectF(0, 0, image.width(), image.height()))
+        painter.end()
+    else:
+        image = QImage.fromData(data)
+        if image.isNull():
+            return None
+        image = image.scaled(pixels, pixels, Qt.AspectRatioMode.KeepAspectRatio,
+                             Qt.TransformationMode.SmoothTransformation).convertToFormat(QImage.Format.Format_RGBA8888)
+    width, height = image.width(), image.height()
+    raw = np.frombuffer(image.constBits(), dtype=np.uint8, count=image.bytesPerLine() * height)
+    array = raw.reshape(height, image.bytesPerLine())[:, : width * 4].reshape(height, width, 4) / 255.0
+    return array.copy()
+
+
+def _single_colour(array: np.ndarray) -> bool:
+    opaque = array[..., 3] > 0.5
+    if opaque.sum() < 4:
+        return False
+    return float(array[..., :3][opaque].std(axis=0).max()) < 0.08
+
+
+def picture(marker: str, size_points: float, dpi: float, colour: Any = None) -> np.ndarray | None:
+    """The array drawn for *marker* at *size_points*, tinted with *colour* when it is single-coloured."""
+    get = _source.get()
+    if get is None:
+        return None
+    stored = get(name_of(marker))
+    if stored is None:
+        return None
+    pixels = max(8, min(512, round(size_points * dpi / 72.0 * 2)))
+    array = _rgba(stored.kind, bytes(stored.data), pixels)
+    if array is None:
+        return None
+    if colour is not None and _single_colour(array):
+        from matplotlib.colors import to_rgb
+
+        try:
+            array = array.copy()
+            array[..., :3] = to_rgb(colour)
+        except ValueError:
+            pass
+    return array
+
+
+def draw(ax, xs: Any, ys: Any, marker: str, *, size_points: float | None, colour: Any = None, zorder: float = 2.5,
+         label: str = "") -> bool:
+    """Put the picture at every (x, y); False when there is nothing to draw it with (no picture of that name)."""
+    from matplotlib.lines import Line2D
+    from matplotlib.offsetbox import AnnotationBbox, OffsetImage
+
+    from app.logs.logger import applogger
+
+    size = float(size_points or 0) or 12.0
+    array = picture(marker, size, ax.figure.dpi, colour)
+    if array is None:
+        applogger.warning("Picture marker %r: no such picture in the project; the style's marker is used.", marker)
+        return False
+    xs, ys = np.asarray(xs), np.asarray(ys)
+    if len(xs) > MAX_POINTS:
+        applogger.warning("%d picture markers: an even sample of %d is drawn.", len(xs), MAX_POINTS)
+        keep = np.linspace(0, len(xs) - 1, MAX_POINTS).astype(int)
+        xs, ys = xs[keep], ys[keep]
+    zoom = 0.5  # drawn at twice the size: half of it shows
+    for x, y in zip(xs, ys, strict=False):
+        try:
+            if not (np.isfinite(float(x)) and np.isfinite(float(y))):
+                continue
+        except (TypeError, ValueError):
+            pass
+        box = AnnotationBbox(OffsetImage(array, zoom=zoom), (x, y), frameon=False, pad=0, zorder=zorder)
+        box._chartlibre_picture = marker
+        ax.add_artist(box)
+    ax.update_datalim(np.column_stack([np.asarray(xs, dtype=float), np.asarray(ys, dtype=float)])
+                      if np.issubdtype(np.asarray(xs).dtype, np.number) and np.issubdtype(np.asarray(ys).dtype,
+                                                                                          np.number) else [])
+    ax.autoscale_view()
+    if label:  # the legend shows the series' colour as a square: a picture has no legend handle of its own
+        ax.add_line(Line2D([], [], linestyle="", marker="s", color=colour or "0.4", label=label))
+    return True
+
+
+def draw_named(ax, xs: Any, ys: Any, names: Any, *, size_points: float | None, colour: Any = None,
+               zorder: float = 2.5, label: str = "", every: int = 1, areas: Any = None) -> np.ndarray:
+    """Each point drawn as the picture its name in *names* says; the mask of the points that got one.
+
+    A point whose name is empty or not in the project is left to the caller (the series' own marker). The legend
+    entry is made once, with the first name drawn. *areas* (a bubble's size column, in points squared) gives each
+    point its own size: its square root is the picture's side; the sizes are drawn in at most SIZE_STEPS steps.
+    """
+    xs, ys, names = np.asarray(xs), np.asarray(ys), np.asarray(names).astype(str)
+    drawn = np.zeros(len(names), dtype=bool)
+    legend_done = False
+    sides = None
+    if areas is not None:
+        sides = np.sqrt(np.clip(np.nan_to_num(np.asarray(areas, dtype=float), nan=0.0), 0, None))
+        if sides.max() > 0:
+            steps = np.linspace(sides[sides > 0].min(), sides.max(), SIZE_STEPS)
+            sides = np.where(sides > 0, steps[np.abs(sides[:, None] - steps[None, :]).argmin(axis=1)], 0.0)
+    for name in dict.fromkeys(names.tolist()):
+        same = names == name
+        for side in ([None] if sides is None else np.unique(sides[same])):
+            at = np.flatnonzero(same if side is None else same & (sides == side))[::max(int(every or 1), 1)]
+            if name and len(at) and draw(ax, xs[at], ys[at], PREFIX + name,
+                                         size_points=size_points if not side else float(side), colour=colour,
+                                         zorder=zorder, label=label if not legend_done else ""):
+                drawn[at] = True
+                legend_done = legend_done or bool(label)
+    return drawn
+
+
+_TOKEN = re.compile(r"\{image:([^{}]+)\}")
+
+
+def split_title(title: str) -> tuple[str, list[str]]:
+    """A title's text without its {image:name} tokens, and the picture names those tokens gave, in order."""
+    names = [name.strip() for name in _TOKEN.findall(title or "")]
+    return (_TOKEN.sub("", title or "").strip() if names else (title or "")), names
+
+
+def draw_title_pictures(ax, names: list[str]) -> int:
+    """Put the pictures *names* left of the axes' title, as tall as its text; how many were drawn."""
+    from matplotlib.offsetbox import AnnotationBbox, OffsetImage
+
+    title = ax.title
+    side = float(title.get_fontsize()) * 1.3
+    drawn = 0
+    for name in names:
+        array = picture(PREFIX + name, side, ax.figure.dpi, title.get_color())
+        if array is None:
+            continue
+        box = AnnotationBbox(OffsetImage(array, zoom=0.5), (0, 0.5), xycoords=title, boxcoords="offset points",
+                             xybox=(-(side + 4) * drawn - 4, 0), box_alignment=(1, 0.5), frameon=False, pad=0,
+                             annotation_clip=False)
+        box._chartlibre_picture = PREFIX + name
+        ax.add_artist(box)
+        drawn += 1
+    return drawn
+
+
+def draw_bars(ax, positions: Any, values: Any, thickness: float, *, name: str, unit: float = 0.0,
+              horizontal: bool = False, baseline: Any = 0.0, colour: Any = None, zorder: float = 2.0,
+              label: str = "") -> bool:
+    """Bars drawn as the picture *name*: False when the project has no such picture.
+
+    *unit* 0 stretches one picture over each bar. *unit* N > 0 makes a pictogram: one picture stands for N, as many
+    as the value holds, the last one cut to the fraction - 2.5 pictures of 1000 for 2,500. The bars themselves
+    (invisible, they keep the axis limits) are the caller's.
+    """
+    from matplotlib.image import AxesImage
+    from matplotlib.lines import Line2D
+    from matplotlib.patches import Rectangle
+
+    from app.logs.logger import applogger
+
+    marker = PREFIX + name
+    array = picture(marker, 48.0, ax.figure.dpi, colour)
+    if array is None:
+        applogger.warning("Bar picture %r: no such picture in the project; plain bars are drawn.", name)
+        return False
+    positions, values = np.asarray(positions, dtype=float), np.asarray(values, dtype=float)
+    bases = np.broadcast_to(np.asarray(baseline, dtype=float), values.shape)
+    for centre, value, base in zip(positions, values, bases, strict=True):
+        if not (np.isfinite(centre) and np.isfinite(value) and value != 0):
+            continue
+        low, high = centre - thickness / 2.0, centre + thickness / 2.0
+        sign = 1.0 if value > 0 else -1.0
+        if unit > 0:
+            slots = abs(value) / unit
+            pieces = [(base + sign * k * unit, base + sign * (k + 1) * unit, min(1.0, slots - k))
+                      for k in range(int(np.ceil(slots - 1e-9)))]
+        else:
+            pieces = [(base, base + value, 1.0)]
+        for start, end, shown in pieces:
+            extent = (start, end, low, high) if horizontal else (low, high, start, end)
+            image = AxesImage(ax, origin="upper", interpolation="antialiased", zorder=zorder)
+            image.set_data(array[:, ::-1] if (horizontal and end < start) else array)
+            ax.add_image(image)
+            image.set_extent(extent)
+            if shown < 1.0:  # the last picture, cut to the fraction of a unit
+                span = (end - start) * shown
+                cut = (Rectangle((start, low), span, thickness) if horizontal
+                       else Rectangle((low, start), thickness, span))
+                cut.set_transform(ax.transData)
+                image.set_clip_path(cut)
+                image._chartlibre_cut = shown
+    ax.set_aspect("auto")  # an image asks for equal aspect and its own limits: back to the bars'
+    ax.relim()
+    ax.autoscale_view()
+    if label:
+        ax.add_line(Line2D([], [], linestyle="", marker="s", color=colour or "0.4", label=label))
+    return True

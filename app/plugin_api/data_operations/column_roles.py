@@ -1,0 +1,410 @@
+"""Cast a table's columns into the roles an operation needs: Y, factors, a block...
+
+The table operations' counterpart of the data operations' axis/series
+selector, after JMP's "Cast Selected Columns into Roles": the columns on
+the left, each with its modelling type, and one box per role on the right.
+Select columns, press a role's button, and they move into it; double-click
+one in a role to take it out again. A column has at most one role.
+
+The modelling type says how a column enters a model: *continuous* (a number
+that varies - a temperature, a yield) or *nominal* (a label - a catalyst, an
+operator, a batch). It is guessed from the data and can be changed: a
+number used as a category (a machine number, a 1/2/3 level) is nominal.
+"""
+from __future__ import annotations
+
+from app.styles.style import TidyMenu
+
+from app.styles.style import field_label
+from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import dataclass, field
+from typing import Any
+
+import pandas as pd
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import (
+    QAbstractItemView,
+    QComboBox,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
+    QMenu,
+    QPushButton,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
+
+from app.styles.style import TitledCard
+from app.utils.coercion import to_numbers
+from app.utils.i18n import _
+
+CONTINUOUS = "continuous"
+ORDINAL = "ordinal"
+NOMINAL = "nominal"
+
+#: The modelling types, as the type combo lists them, and the mark a column
+#: carries for its type in the lists.
+KINDS: tuple[tuple[str, str], ...] = ((CONTINUOUS, "Continuous"), (ORDINAL, "Ordinal"), (NOMINAL, "Nominal"))
+_KIND_MARKS: dict[str, str] = {CONTINUOUS: "▲", ORDINAL: "◆", NOMINAL: "●"}
+
+#: The types whose values are levels rather than measurements.
+CATEGORICAL = frozenset({ORDINAL, NOMINAL})
+
+_NAME_ROLE = Qt.ItemDataRole.UserRole
+
+
+@dataclass(frozen=True, slots=True)
+class ColumnRole:
+    """A role an operation needs columns in.
+
+    ``kinds`` are the modelling types the role accepts; ``minimum`` how many
+    columns it must have before the operation can run, ``maximum`` how many
+    it may have (None: any number).
+    """
+
+    key: str
+    label: str
+    tooltip: str = ""
+    kinds: tuple[str, ...] = (CONTINUOUS, ORDINAL, NOMINAL)
+    minimum: int = 0
+    maximum: int | None = None
+
+
+@dataclass(slots=True)
+class ColumnCasting:
+    """The columns' types and roles, as the widget holds them."""
+
+    kinds: dict[str, str] = field(default_factory=dict)
+    roles: dict[str, list[str]] = field(default_factory=dict)
+
+    def columns(self, role: str) -> list[str]:
+        return list(self.roles.get(role, []))
+
+def declared_kind(declared: str | None) -> str | None:
+    """The modelling type a column's declared SQL type says, as JMP's defaults:
+    a REAL is continuous, an INTEGER ordinal, TEXT nominal. None: no type declared."""
+    text = str(declared or "").strip().upper()
+    if not text:
+        return None
+    if "INT" in text:  # SQLite's own rule for integer affinity
+        return ORDINAL
+    if any(word in text for word in ("REAL", "FLOA", "DOUB", "NUM", "DEC")):
+        return CONTINUOUS
+    return NOMINAL
+
+
+def guess_kind(values: pd.Series) -> str:
+    """The modelling type *values* suggest, when no type is declared: text is nominal,
+    whole numbers ordinal, other numbers continuous."""
+    present = values.dropna()
+    if present.empty:
+        return CONTINUOUS
+    if pd.api.types.is_bool_dtype(present):
+        return NOMINAL
+    if pd.api.types.is_integer_dtype(present):
+        return ORDINAL
+    if pd.api.types.is_float_dtype(present):
+        return CONTINUOUS
+    numbers = to_numbers(present)
+    if numbers.notna().sum() < len(present):
+        return NOMINAL
+    return ORDINAL if bool(((numbers % 1) == 0).all()) else CONTINUOUS
+
+
+class ColumnRolesWidget(QWidget):
+    """The table's columns on the left, a box per role on the right."""
+
+    #: The roles or a type changed.
+    changed = Signal()
+    #: "Column Info..." was chosen on a column (its name): the window that owns the table opens it.
+    column_info_requested = Signal(str)
+
+    def __init__(self, roles: Sequence[ColumnRole], parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self._roles = tuple(roles)
+        self._kinds: dict[str, str] = {}
+        self._columns: list[str] = []
+        self._boxes: dict[str, QListWidget] = {}
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(10)
+
+        # Titled frames, as everywhere else in the application: the columns
+        # and the roles on the first tab, what the operation adds on the next.
+        columns_card = TitledCard(self, _("Select Columns"))
+        columns = columns_card.card.layout()
+        assert isinstance(columns, QVBoxLayout)
+        columns.setSpacing(4)
+        #: Where the dialog puts the table to read, above the columns.
+        self.columns_card_layout = columns
+        self._search = QLineEdit(self)
+        self._search.setPlaceholderText(_("Find a column"))
+        self._search.setClearButtonEnabled(True)
+        self._search.textChanged.connect(self._filter_columns)
+        columns.addWidget(self._search)
+        self._column_list = QListWidget(self)
+        self._column_list.setObjectName("tableColumnsList")
+        self._column_list.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self._column_list.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        # As tall as the window allows, and no less than a few columns: the
+        # window decides, not the list.
+        rows_height = max(self._column_list.fontMetrics().height() + 4, 18)
+        self._column_list.setMinimumHeight(4 * rows_height)
+        self._column_list.itemSelectionChanged.connect(self._sync_kind_combo)
+        self._column_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self._column_list.customContextMenuRequested.connect(self._show_column_menu)
+        columns.addWidget(self._column_list, 1)
+        type_row = QHBoxLayout()
+        type_row.addWidget(QLabel(field_label(_("Type")), self))
+        self._kind_combo = QComboBox(self)
+        self._kind_combo.setToolTip(_("How the selected columns enter a model: as numbers, or as labels."))
+        for value, label in KINDS:
+            self._kind_combo.addItem(f"{_KIND_MARKS[value]} {_(label)}", value)
+        self._kind_combo.activated.connect(self._apply_kind)
+        type_row.addWidget(self._kind_combo, 1)
+        columns.addLayout(type_row)
+        columns.setStretchFactor(self._column_list, 1)
+        columns_card.layout().setStretchFactor(columns_card.card, 1)
+
+
+        self._columns_card = columns_card
+
+        roles_card = TitledCard(self, _("Pick Role Variables"))
+        self._roles_card = roles_card
+        right = QGridLayout()
+        right.setContentsMargins(0, 0, 0, 0)
+        right.setHorizontalSpacing(6)
+        right.setVerticalSpacing(6)
+        for row, role in enumerate(self._roles):
+            button = QPushButton(_(role.label), self)
+            button.setToolTip(_(role.tooltip) if role.tooltip else "")
+            button.clicked.connect(lambda _checked=False, key=role.key: self.assign_selected(key))
+            right.addWidget(button, row, 0, Qt.AlignmentFlag.AlignTop)
+            box = QListWidget(self)
+            box.setObjectName(f"roleBox_{role.key}")
+            box.setToolTip(_("Double-click a column to take it out of this role."))
+            box.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+            rows = 1 if role.maximum == 1 else 3
+            box.setFixedHeight(10 + rows * max(box.fontMetrics().height() + 8, 22))
+            box.itemDoubleClicked.connect(lambda item, key=role.key: self.unassign(key, [item.data(_NAME_ROLE)]))
+            right.addWidget(box, row, 1)
+            self._boxes[role.key] = box
+        right.setColumnStretch(1, 1)
+        roles_layout = roles_card.card.layout()
+        assert roles_layout is not None
+        roles_layout.addLayout(right)
+
+        # The columns and their roles are the window's Data page; what the operation adds (a model's
+        # effects, its settings) goes on pages of their own (add_tab), which the window shows as its tabs.
+        # Their titles stay: inside the Settings frame the two are flattened
+        # into one surface, and nothing else would say what each part is for.
+        layout.addWidget(columns_card, 1)
+        layout.addWidget(roles_card, 0)
+        self._pages: dict[str, QWidget] = {}
+        self._titles: dict[str, str] = {}
+        #: Where the operation adds its own frames, on the page after Data: a model's effects.
+        self.side_layout = self.add_tab(_("Roles"))
+
+    def add_tab(self, title: str) -> QVBoxLayout:
+        """The layout of the page *title*, made the first time it is asked for: a column of titled frames."""
+        existing = self._pages.get(title)
+        if existing is not None:
+            layout = existing.layout()
+            assert isinstance(layout, QVBoxLayout)
+            return layout
+        page = QWidget()
+        page_layout = QVBoxLayout(page)
+        page_layout.setContentsMargins(0, 0, 0, 0)
+        page_layout.setSpacing(10)
+        self._pages[title] = page
+        self._titles[title] = title
+        return page_layout
+
+    def finish_tabs(self) -> None:
+        """Keep each page's frames at its top: the spare height goes below them,
+        unless a frame already takes it (a list that should fill the page)."""
+        for page in self._pages.values():
+            page_layout = page.layout()
+            if not any(page_layout.stretch(i) for i in range(page_layout.count())):
+                page_layout.addStretch(1)
+
+    def rename_extra_tab(self, title: str) -> None:
+        """Name the page after Data (the operation's own frames, e.g. a model's effects)."""
+        self._titles[_("Roles")] = title
+
+    def pages(self) -> list[tuple[QWidget, str]]:
+        """The operation's pages, as (page, title), in the order made; a page it added nothing to is left out."""
+        return [(page, self._titles[key]) for key, page in self._pages.items()
+                if any(page.layout().itemAt(i).widget() is not None for i in range(page.layout().count()))]
+
+    def take_page(self, title: str) -> QWidget | None:
+        """The page *title*, out of pages(): the window places it itself (the parameters' page)."""
+        self._titles.pop(title, None)
+        return self._pages.pop(title, None)
+
+    # -- Content ---------------------------------------------------------
+
+    @property
+    def roles(self) -> tuple[ColumnRole, ...]:
+        return self._roles
+
+    def request_column_info(self, item: QListWidgetItem | None) -> None:
+        """Ask for Column Info on the column *item* stands for."""
+        name = item.data(_NAME_ROLE) if item is not None else None
+        if name:
+            self.column_info_requested.emit(str(name))
+
+    def _show_column_menu(self, position: Any) -> None:
+        item = self._column_list.itemAt(position)
+        if item is None:
+            return
+        menu = TidyMenu(self)
+        menu.addAction(_("Column Info...")).triggered.connect(lambda _checked=False, it=item: self.request_column_info(it))
+        menu.exec(self._column_list.viewport().mapToGlobal(position))
+
+    def set_columns(self, frame: pd.DataFrame, kinds: Mapping[str, str] | None = None,
+                    declared: Mapping[str, str] | None = None) -> None:
+        """Show *frame*'s columns, typed from *kinds*, else from their *declared* SQL types,
+        else guessed from the values; every role empties."""
+        self._columns = [str(name) for name in frame.columns]
+        given = {name: kind for name, kind in (kinds or {}).items() if kind in _KIND_MARKS}
+        types = dict(declared or {})
+        self._kinds = {
+            name: given.get(name) or declared_kind(types.get(name)) or guess_kind(frame[name])
+            for name in self._columns
+        }
+        for box in self._boxes.values():
+            box.clear()
+        self._refresh_columns()
+        self.changed.emit()
+
+    def casting(self) -> ColumnCasting:
+        """The columns' types and what each role holds, in order."""
+        return ColumnCasting(
+            kinds=dict(self._kinds),
+            roles={key: [box.item(i).data(_NAME_ROLE) for i in range(box.count())] for key, box in self._boxes.items()},
+        )
+
+    def set_casting(self, roles: Mapping[str, Iterable[str]], kinds: Mapping[str, str] | None = None) -> None:
+        """Put columns into roles (and set their types); names not in the table are skipped."""
+        for name, kind in (kinds or {}).items():
+            if name in self._kinds and kind in _KIND_MARKS:
+                self._kinds[name] = kind
+        for box in self._boxes.values():
+            box.clear()
+        for key, names in roles.items():
+            if key in self._boxes:
+                self._add(key, [name for name in names if name in self._kinds])
+        self._refresh_columns()
+        self.changed.emit()
+
+    def problems(self) -> list[str]:
+        """What keeps the casting from being usable: a role short of columns, a column of the wrong type."""
+        found = []
+        casting = self.casting()
+        for role in self._roles:
+            names = casting.columns(role.key)
+            if len(names) < role.minimum:
+                found.append(_("{role}: choose at least {count} column(s).").format(role=_(role.label), count=role.minimum))
+            wrong = [name for name in names if casting.kinds.get(name) not in role.kinds]
+            if wrong:
+                found.append(_("{role} takes {kinds} columns only: {columns}.").format(
+                    role=_(role.label),
+                    kinds=" / ".join(_(label) for value, label in KINDS if value in role.kinds).lower(),
+                    columns=", ".join(wrong),
+                ))
+        return found
+
+    def selected_columns(self) -> list[str]:
+        """The columns selected on the left, in the table's order."""
+        chosen = {item.data(_NAME_ROLE) for item in self._column_list.selectedItems()}
+        return [name for name in self._columns if name in chosen]
+
+    def _filter_columns(self, text: str) -> None:
+        needle = text.strip().casefold()
+        for row in range(self._column_list.count()):
+            item = self._column_list.item(row)
+            item.setHidden(bool(needle) and needle not in str(item.data(_NAME_ROLE)).casefold())
+
+    # -- Moving columns ----------------------------------------------------
+
+    def assign_selected(self, key: str) -> None:
+        """Move the columns selected on the left into the role *key*."""
+        names = [item.data(_NAME_ROLE) for item in self._column_list.selectedItems()]
+        if names:
+            self.assign(key, names)
+
+    def assign(self, key: str, names: Sequence[str]) -> None:
+        """Move *names* into the role *key*, out of any role they had."""
+        for other in self._boxes:
+            self._remove(other, names)
+        self._add(key, names)
+        self._refresh_columns()
+        self.changed.emit()
+
+    def unassign(self, key: str, names: Sequence[str]) -> None:
+        self._remove(key, names)
+        self._refresh_columns()
+        self.changed.emit()
+
+    def _add(self, key: str, names: Sequence[str]) -> None:
+        role = next(role for role in self._roles if role.key == key)
+        box = self._boxes[key]
+        present = {box.item(i).data(_NAME_ROLE) for i in range(box.count())}
+        for name in names:
+            if name in present:
+                continue
+            if role.maximum is not None and box.count() >= role.maximum:
+                # A one-column role takes the newest choice.
+                box.takeItem(0)
+            item = QListWidgetItem(self._label(name), box)
+            item.setData(_NAME_ROLE, name)
+
+    def _remove(self, key: str, names: Sequence[str]) -> None:
+        box = self._boxes[key]
+        for row in reversed(range(box.count())):
+            if box.item(row).data(_NAME_ROLE) in names:
+                box.takeItem(row)
+
+    # -- Types ---------------------------------------------------------------
+
+    def _apply_kind(self, _index: int) -> None:
+        kind = str(self._kind_combo.currentData())
+        for item in self._column_list.selectedItems():
+            self._kinds[item.data(_NAME_ROLE)] = kind
+        self._refresh_columns()
+        self.changed.emit()
+
+    def _sync_kind_combo(self) -> None:
+        selected = {self._kinds.get(item.data(_NAME_ROLE)) for item in self._column_list.selectedItems()}
+        self._kind_combo.setEnabled(bool(selected))
+        if len(selected) == 1:
+            self._kind_combo.setCurrentIndex(max(0, self._kind_combo.findData(selected.pop())))
+
+    def _label(self, name: str) -> str:
+        return f"{_KIND_MARKS.get(self._kinds.get(name, ''), '')} {name}"
+
+    def _refresh_columns(self) -> None:
+        """Relabel every list with the current types; dim the columns that already have a role."""
+        selected = {item.data(_NAME_ROLE) for item in self._column_list.selectedItems()}
+        cast = {box.item(i).data(_NAME_ROLE) for box in self._boxes.values() for i in range(box.count())}
+        self._column_list.clear()
+        for name in self._columns:
+            item = QListWidgetItem(self._label(name), self._column_list)
+            item.setData(_NAME_ROLE, name)
+            if name in cast:
+                font = item.font()
+                font.setItalic(True)
+                item.setFont(font)
+                item.setForeground(self.palette().placeholderText())
+            item.setSelected(name in selected)
+        for box in self._boxes.values():
+            for i in range(box.count()):
+                box.item(i).setText(self._label(box.item(i).data(_NAME_ROLE)))
+        self._filter_columns(self._search.text())
+        self._sync_kind_combo()

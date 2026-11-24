@@ -1,0 +1,23 @@
+# Italiano translation for the pack assistant_providers.
+# Message ids are the English source strings.
+
+msgid ""
+msgstr "Project-Id-Version: ChartLibre\nLanguage: it\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\n"
+
+msgid "Apple Foundation Models"
+msgstr "Modelli di base Apple"
+
+msgid "GitHub Copilot"
+msgstr "GitHub Copilot"
+
+msgid "GitHub Copilot's models through GitHub Models, with a GitHub token - or any OpenAI-compatible chat endpoint."
+msgstr "I modelli di GitHub Copilot tramite GitHub Models, con un token GitHub o qualsiasi endpoint di chat compatibile con OpenAI."
+
+msgid "More assistant providers"
+msgstr "Altri provider di assistenti"
+
+msgid "The assistant through GitHub Copilot's models or Apple's on-device Foundation Models."
+msgstr "L'assistente tramite i modelli di GitHub Copilot o i modelli Foundation di Apple integrati nel dispositivo."
+
+msgid "The model built into macOS (Apple Intelligence): no key, and nothing leaves the computer."
+msgstr "Il modello integrato in macOS (Apple Intelligence): nessuna chiave e nessun dato esce dal computer."

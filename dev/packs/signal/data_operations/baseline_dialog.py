@@ -1,0 +1,194 @@
+"""Baseline correction: subtract the slow background under a spectrum.
+
+A spectrum, a chromatogram or any similarly peaky series often sits on a
+wandering background - fluorescence, detector drift, scattering - that has
+nothing to do with the peaks themselves. Peak heights, and especially peak
+areas, are wrong until that background is estimated and removed. This is a
+declared prerequisite for meaningful peak areas (see todo.txt P2-3).
+
+Two estimators, in order of how much they assume:
+
+* **Asymmetric Least Squares (AsLS)**, Eilers & Boelens 2005 - a smooth
+  curve fitted to sit cheaply *below* the data and expensively above it: an
+  asymmetric weighted least-squares fit against a roughness penalty,
+  re-weighted a few times. Two knobs, ``lambda`` (smoothness) and ``p``
+  (asymmetry), and it copes with overlapping or concave baselines an
+  outline-based method cannot.
+* **Rubber band** - the lower convex hull of the series, linearly
+  interpolated between its vertices: literally a band stretched under the
+  data from below. No parameters, but it can only ever be as good as a
+  convex shape, so a baseline with its own concave dips is not one this
+  method can follow.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Sequence
+from dataclasses import dataclass, field
+from typing import Any, ClassVar
+
+import numpy as np
+import pandas as pd
+
+from app import SVG
+from app.analysis.baseline import (
+    ASLS_MINIMUM_POINTS,
+    METHOD_ASLS,
+    METHOD_RUBBER_BAND,
+    correct_baseline,
+)
+from app.plugin_api import reading_guide
+from app.plugin_api.data_operations.dialog_base import (
+    DataOperationDialogBase,
+    OperationModel,
+    ResultSeriesSpec,
+)
+from app.plugin_api.data_operations.parameter_spec import (
+    BoolParam,
+    FloatParam,
+    IntParam,
+)
+from app.plugin_api.data_operations.results import TableResult
+
+BASELINE_ASLS = "Asymmetric Least Squares (AsLS)"
+BASELINE_RUBBER = "Rubber band"
+#: The models offered, in combo order, with their documentation.
+BASELINE_MODELS: dict[str, OperationModel] = {
+    BASELINE_ASLS: OperationModel(
+        doc_title="Eilers & Boelens (2005), Asymmetric Least Squares Smoothing",
+        doc_url="https://www.researchgate.net/publication/228961729_Asymmetric_least_squares_smoothing",
+    ),
+    BASELINE_RUBBER: OperationModel(
+        doc_title="Rubber-band / convex-hull baseline",
+        doc_url="https://en.wikipedia.org/wiki/Convex_hull",
+    ),
+}
+
+@dataclass(slots=True)
+class BaselineResult(TableResult):
+    """One source series, its estimated baseline, and the corrected series."""
+
+    source_name: str
+    result_name: str
+    model: str
+    x: np.ndarray
+    corrected: np.ndarray
+    baseline: np.ndarray
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def to_df(self) -> pd.DataFrame:
+        return pd.DataFrame(
+            {"x": self.x, "corrected": self.corrected, "baseline": self.baseline}
+        )
+
+
+# ----------------------------------------------------------------------
+# The dialog
+# ----------------------------------------------------------------------
+class SeriesBaselineDialog(DataOperationDialogBase):
+    """Estimate and subtract the slow background under a series."""
+
+    #: Where the result goes: the Charts tab's "Draw on".
+    DESTINATIONS = (DataOperationDialogBase.DEST_SAME_AXIS, DataOperationDialogBase.DEST_NEW_AXIS, DataOperationDialogBase.DEST_NEW_FIGURE)
+    DEFAULT_DESTINATION = DataOperationDialogBase.DEST_SAME_AXIS
+
+    MODELS = BASELINE_MODELS
+    MODEL_TOOLTIP = "Choose the baseline estimator."
+    MODEL_LABEL = "Method"
+
+    Name: str = "Baseline Correction"
+    Description = "Subtract a spectrum's background (AsLS or rubber band)"
+
+    INPUT_REQUIRES_SORTED_X = True
+    INPUT_REQUIRES_UNIQUE_X = True
+    INPUT_MINIMUM_POINTS = ASLS_MINIMUM_POINTS
+
+    #: Computed on a worker thread: see DataOperationDialogBase.evaluate.
+    RUN_IN_BACKGROUND = True
+
+    PARAMS = (
+        FloatParam("lam", "Lambda", tooltip="Smoothness. Larger makes the baseline stiffer, so it bends "
+                                             "less to follow narrow peaks.",
+                   default_value=100_000.0, minimum=10.0, maximum=1e10, decimals=0, step=10_000.0,
+                   visible_for={"model": (BASELINE_ASLS,)}),
+        FloatParam("p", "p", tooltip="Asymmetry. Smaller pushes the baseline further below the "
+                                      "peaks; it should stay well under 0.5.",
+                   default_value=0.01, minimum=0.0001, maximum=0.5, decimals=4, step=0.001,
+                   visible_for={"model": (BASELINE_ASLS,)}),
+        IntParam("iterations", "Iterations", tooltip="Re-weighting passes.",
+                 default_value=10, minimum=1, maximum=50, visible_for={"model": (BASELINE_ASLS,)}, advanced=True),
+        BoolParam("draw_baseline", "Baseline", tooltip="Draw the estimated baseline itself.",
+                  default_value=True),
+    )
+
+    Icon = SVG.BASELINE
+    Keywords: str = "correzione linea di base baseline background fondo spectrum spettro asls rubber band"
+    Goals: ClassVar[list[str]] = ["signal"]
+    Category: str = "Signal Processing"
+    Order: int = 83
+
+    WINDOW_SIZE = (800, 620)
+    SELECTS_ALL_SERIES = True
+
+    # ------------------------------------------------------------------
+    # Computation
+    # ------------------------------------------------------------------
+
+    def compute_series(
+        self, name: str, data: tuple[np.ndarray, np.ndarray], settings: tuple[str, dict[str, Any]]
+    ) -> BaselineResult:
+        model, params = settings
+        x_values, y_values = data
+        is_asls = model == BASELINE_ASLS
+        correction = correct_baseline(
+            METHOD_ASLS if is_asls else METHOD_RUBBER_BAND,
+            x_values,
+            y_values,
+            lam=float(params["lam"]),
+            p=float(params["p"]),
+            iterations=int(params["iterations"]),
+        )
+        meta: dict[str, Any] = {"lambda": params["lam"], "p": params["p"]} if is_asls else {}
+        meta["baseline area"] = correction.area
+        return BaselineResult(
+            source_name=name,
+            result_name=f"{name} - baseline corrected",
+            model=model,
+            x=x_values,
+            corrected=correction.corrected,
+            baseline=correction.baseline,
+            metadata=meta,
+        )
+
+    # ------------------------------------------------------------------
+    # Results
+    # ------------------------------------------------------------------
+    def result_series_spec(
+        self, axis_id: int, table_name: str, result: BaselineResult,
+    ) -> ResultSeriesSpec:
+        del axis_id
+        return self.curve_spec(table_name, result, y="corrected", linestyle="-", linewidth=1.4, marker="")
+
+    def result_series_specs(
+        self, axis_id: int, table_name: str, result: BaselineResult,
+    ) -> Sequence[ResultSeriesSpec]:
+        specs: list[ResultSeriesSpec] = []
+        if self.parameter_values()["draw_baseline"]:
+            specs.append(self.curve_spec(table_name, result, y="baseline", name=f"{result.result_name} - baseline",
+                                         linestyle="--", linewidth=1.0, marker="", color="#9e9e9e"))
+        specs.append(self.result_series_spec(axis_id, table_name, result))
+        return specs
+
+    RESULT_TABLE_PREFIX = 'Baseline'
+    RESULT_TABLE_VARIANT = None
+
+    def how_to_read(self, results: Sequence[Any]) -> list[str]:
+        """How much of what was measured the baseline was."""
+        if not results:
+            return []
+        result = results[0]
+        x = np.asarray(result.x, dtype=float)
+        corrected = np.asarray(result.corrected, dtype=float)
+        signal = float(np.trapezoid(np.nan_to_num(corrected), x)) if x.size > 1 else None
+        return [line for line in [reading_guide.baseline(result.metadata.get("baseline area"),
+                                                         corrected_area=signal)] if line]

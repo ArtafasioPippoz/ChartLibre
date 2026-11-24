@@ -1,0 +1,112 @@
+"""Operations that declare MODELS get the standard Model combo and Docs link."""
+from __future__ import annotations
+
+import importlib
+import inspect
+import pkgutil
+from collections.abc import Iterator
+from pathlib import Path
+from typing import Any, cast
+
+import numpy as np
+import pandas as pd
+import pytest
+
+import app.data_operations as package
+from app.data.sqlite_repo import SqliteRepo
+from app.data_operations.interpolate_dialog import (
+    MODEL_EXPONENTIAL,
+    MODEL_SCIPY_PCHIP,
+    SeriesInterpolateDialog,
+)
+from app.logs.logger import applogger
+from app.plugin_api.data_operations.dialog_base import DataOperationDialogBase
+from dev.tests._cases import check_all
+
+
+def _operations_with_models() -> list[type[DataOperationDialogBase]]:
+    found = []
+    for module_info in pkgutil.iter_modules(package.__path__):
+        if not module_info.name.endswith("_dialog"):
+            continue
+        module = importlib.import_module(f"{package.__name__}.{module_info.name}")
+        for _name, cls in inspect.getmembers(module, inspect.isclass):
+            if (
+                cls.__module__ == module.__name__
+                and issubclass(cls, DataOperationDialogBase)
+                and cls.MODELS
+            ):
+                found.append(cls)
+    return found
+
+
+@pytest.fixture
+def figure(tmp_db_path: Path) -> Iterator[tuple[SqliteRepo, int]]:
+    for suffix in (".dhub", ".dhub-wal", ".dhub-shm"):
+        tmp_db_path.with_suffix(suffix).unlink(missing_ok=True)
+    repo = SqliteRepo(db_path=tmp_db_path)
+    x = np.linspace(1.0, 10.0, 40)
+    repo.import_dataframe(
+        pd.DataFrame({"x": x, "y": np.exp(0.2 * x)}), table_name="curve", normalize_columns=False
+    )
+    figure_id = repo.create_figure_descriptor(name="Models")
+    axis_id = repo.create_axis_descriptor(
+        figure_id=figure_id, axis_index=0, chart_type="Line Plot",
+        title="curve", x_label="x", y_label="y", options={},
+    )
+    repo.create_series_descriptor(
+        axis_id=axis_id, series_index=0, name="curve",
+        sql_query='SELECT "x", "y" FROM "curve"', roles={"x": "x", "y": "y"}, style={},
+    )
+    yield repo, figure_id
+    repo.close()
+
+
+def _items(combo) -> list[str]:
+    # Separators between groups are items with no text.
+    return [combo.itemText(i) for i in range(combo.count()) if combo.itemText(i)]
+
+
+_CASES_THE_COMBO_LISTS_THE_MODELS_AND_THE_LINK_FOLLOWS = [(case,) for case in _operations_with_models()]
+
+
+def _the_combo_lists_the_models_and_the_link_follows(qapp, figure, cls) -> None:
+    repo, figure_id = figure
+    dialog = cls(repo=repo, figure_id=figure_id, parent=None)
+    try:
+        assert _items(dialog.model_combo) == list(cls.MODELS)
+        for index in range(dialog.model_combo.count()):
+            name = dialog.model_combo.itemText(index)
+            if not name:
+                continue
+            dialog.model_combo.setCurrentIndex(index)
+            url = cls.MODELS[name].doc_url
+            if url:
+                assert url in dialog._doc_link.text(), name
+    finally:
+        dialog.close()
+        applogger.set_status_bar(None)
+
+
+def test_the_combo_lists_the_models_and_the_link_follows(qapp, figure) -> None:
+    check_all(lambda *case: _the_combo_lists_the_models_and_the_link_follows(**dict(zip(['cls'], case)), qapp=qapp, figure=figure), _CASES_THE_COMBO_LISTS_THE_MODELS_AND_THE_LINK_FOLLOWS)
+
+
+def test_interpolation_start_parameters_are_offered_for_the_fitted_models(qapp, figure) -> None:
+    """They are curve_fit's p0: a fitted model takes them, an interpolant has none."""
+    repo, figure_id = figure
+    dialog = SeriesInterpolateDialog(repo=repo, figure_id=figure_id, parent=cast(Any, None))
+    try:
+        dialog.show()
+        dialog.model_combo.setCurrentText(MODEL_EXPONENTIAL)
+        qapp.processEvents()
+        assert not dialog._parameter_form_spec.field("start_params").isHidden()
+        assert dialog._start_params() != {}
+
+        dialog.model_combo.setCurrentText(MODEL_SCIPY_PCHIP)
+        qapp.processEvents()
+        assert dialog._parameter_form_spec.field("start_params").isHidden()
+        assert dialog._start_params() == {}
+    finally:
+        dialog.close()
+        applogger.set_status_bar(None)
