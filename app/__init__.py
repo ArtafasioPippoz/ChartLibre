@@ -7,7 +7,7 @@ nowhere else.
 """
 
 APP_NAME: str = "ChartLibre"
-APP_VERSION: str = "0.2.0"
+APP_VERSION: str = "0.3.0"
 
 from app import SVG as _SVG  # noqa: E402
 

@@ -1,6 +1,6 @@
 # Contributing to ChartLibre
 
-Thank you for looking. ChartLibre is a young project (version 0.2.0) and it
+Thank you for looking. ChartLibre is a young project (version 0.3.0) and it
 has had little testing by real people on real data, so **you do not need to
 write code to help**. Most of what it needs right now is someone who uses it
 and tells us what happens.

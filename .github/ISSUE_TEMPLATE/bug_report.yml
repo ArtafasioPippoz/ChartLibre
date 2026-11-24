@@ -47,8 +47,8 @@ body:
     id: version
     attributes:
       label: ChartLibre version
-      description: Shown in the Credits window, e.g. 0.2.0.
-      placeholder: "0.2.0"
+      description: Shown in the Credits window, e.g. 0.3.0.
+      placeholder: "0.3.0"
     validations:
       required: true
   - type: dropdown
