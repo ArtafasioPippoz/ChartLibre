@@ -721,7 +721,7 @@ class SettingsDialog(PanelDialog):
             restart()
 
     def _ask_restart(self, what: str) -> bool:
-        """The changes apply at the next start: restart now, or later. Two buttons that say what they do."""
+        """The changes apply at the next start. ChartLibre never restarts by itself: restart now, or start it again by hand."""
         from PySide6.QtWidgets import QMessageBox
 
         from app.utils.messages import message
@@ -732,7 +732,7 @@ class SettingsDialog(PanelDialog):
         box.setWindowTitle(title)
         box.setText(text)
         now = box.addButton(tr("Restart now"), QMessageBox.ButtonRole.AcceptRole)
-        box.addButton(tr("Later"), QMessageBox.ButtonRole.RejectRole)
+        box.addButton(tr("Not now"), QMessageBox.ButtonRole.RejectRole)
         box.setDefaultButton(now)
         box.exec()
         return box.clickedButton() is now

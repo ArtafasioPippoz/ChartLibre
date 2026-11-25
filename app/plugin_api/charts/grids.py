@@ -14,6 +14,8 @@ the scattered path, which needs the raw points rather than a grid.
 """
 from __future__ import annotations
 
+import math
+
 import numpy as np
 import pandas as pd
 
@@ -132,3 +134,67 @@ def finite_xyz(
     z = to_numbers(column_of(df, z_role)).to_numpy(dtype=float)
     finite = np.isfinite(x) & np.isfinite(y) & np.isfinite(z)
     return x[finite], y[finite], z[finite]
+
+
+def grid_thinning_mask(
+    df: SeriesFrame | pd.DataFrame,
+    *,
+    max_cells: int,
+    x_role: str = "x",
+    y_role: str = "y",
+    z_role: str = "z",
+) -> np.ndarray | None:
+    """Which rows of a grid to keep so that at most *max_cells* cells are drawn.
+
+    Every k-th distinct x and every k-th distinct y is kept, for the smallest k
+    that brings the cell count under *max_cells*. What survives is still a
+    complete Cartesian product, so :func:`pivot_to_grid` accepts it: the same
+    surface, on fewer lines.
+
+    Returns a boolean mask over the rows of *df*, or None when nothing needs
+    thinning: the grid is small enough already, it is not a grid, or it has a
+    hole. A hole is left to :func:`pivot_to_grid` to refuse - thinning round it
+    would draw the part of the grid on the kept lines and hide the missing
+    measurement.
+    """
+    x = to_numbers(column_of(df, x_role)).to_numpy(dtype=float)
+    y = to_numbers(column_of(df, y_role)).to_numpy(dtype=float)
+    z = to_numbers(column_of(df, z_role)).to_numpy(dtype=float)
+    rows = np.flatnonzero(np.isfinite(x) & np.isfinite(y) & np.isfinite(z))
+    if rows.size == 0:
+        return None
+    xs, x_index = np.unique(x[rows], return_inverse=True)
+    ys, y_index = np.unique(y[rows], return_inverse=True)
+    # More cells than points cannot be a complete grid: pivot_to_grid says so.
+    if xs.size * ys.size > rows.size:
+        return None
+    step = _thinning_step(xs.size, ys.size, max_cells)
+    if step <= 1:
+        return None
+    present = np.zeros((ys.size, xs.size), dtype=bool)
+    present[y_index, x_index] = True
+    if not present.all():
+        return None
+    kept_x = np.arange(0, xs.size, step)
+    kept_y = np.arange(0, ys.size, step)
+    kept = np.isin(x_index, kept_x) & np.isin(y_index, kept_y)
+    mask = np.zeros(len(df), dtype=bool)
+    mask[rows[kept]] = True
+    applogger.info(
+        "Grid of %d x %d drawn as %d x %d: every %d-th row and column, at most %d cells.",
+        xs.size,
+        ys.size,
+        kept_x.size,
+        kept_y.size,
+        step,
+        max_cells,
+    )
+    return mask
+
+
+def _thinning_step(nx: int, ny: int, max_cells: int) -> int:
+    """The smallest step k with ceil(nx / k) * ceil(ny / k) <= max_cells."""
+    step = max(1, math.ceil(math.sqrt(nx * ny / max(1, max_cells))))
+    while -(-nx // step) * -(-ny // step) > max_cells:
+        step += 1
+    return step

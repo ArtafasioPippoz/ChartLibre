@@ -24,6 +24,7 @@ connection in ``app/data/repo/function_sql.py``.
 from __future__ import annotations
 
 import json
+import math
 import re
 import sqlite3
 import uuid
@@ -81,6 +82,65 @@ from app.utils.config import get_constant, load_config
 # Series cache defaults, overridable from config.json under "series_cache".
 _SERIES_CACHE_DEFAULT_ENABLED = True
 _SERIES_CACHE_DEFAULT_MAX_ENTRIES = get_constant("series_cache_entries", 64)
+
+#: A colour column with at most threshold / COLOUR_CATEGORY_DIVISOR distinct values is a
+#: set of categories - a cluster, a flag, a group - and any more is a colour map.
+COLOUR_CATEGORY_DIVISOR = 100
+
+
+def colour_group_plan(
+    total: int,
+    threshold: int,
+    groups: Sequence[tuple[object, int]],
+) -> tuple[int, list[tuple[object | None, int]]]:
+    """Plan the thinning of a series whose rows fall into colour *groups*: ``(stride, rare)``.
+
+    Every stratum - a colour group, or the uncoloured rows, which are ``None``
+    here - gets an equal share of the threshold. One no bigger than its share is
+    *rare* and is kept whole: an outlier, a small cluster, a few flagged rows.
+    The rest are thinned by the stride, sized to the budget the rare rows leave,
+    so the total stays near the threshold. With no rare stratum this is the plain
+    stride ``ceil(total / threshold)``.
+    """
+    coloured = sum(count for _, count in groups)
+    strata: list[tuple[object | None, int]] = list(groups)
+    if total > coloured:
+        strata.append((None, total - coloured))
+    share = max(1, threshold // len(strata))
+    rare = [(value, count) for value, count in strata if count <= share]
+    kept_whole = sum(count for _, count in rare)
+    budget = max(1, threshold - kept_whole)
+    stride = max(1, -(-(total - kept_whole) // budget))
+    return stride, rare
+
+
+def _sql_literal(value: object) -> str | None:
+    """*value* as an SQL literal, or None when it has no plain spelling (a blob, a non-finite number)."""
+    if isinstance(value, bool):
+        return str(int(value))
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        return repr(value) if math.isfinite(value) else None
+    if isinstance(value, str) and "\x00" not in value:
+        return "'" + value.replace("'", "''") + "'"
+    return None
+
+
+def _rare_rows_condition(rare: Sequence[tuple[object | None, int]]) -> str:
+    """The ``OR`` clauses that keep every row of the *rare* colour strata."""
+    literals: list[str] = []
+    clauses: list[str] = []
+    for value, _ in rare:
+        if value is None:
+            clauses.append("(\"color\" IS NULL OR \"color\" = '')")
+            continue
+        text = _sql_literal(value)
+        if text is not None:
+            literals.append(text)
+    if literals:
+        clauses.insert(0, f"(\"color\" IN ({', '.join(literals)}))")
+    return "".join(f" OR {clause}" for clause in clauses)
 
 
 class _PreviewSafeConnection(sqlite3.Connection):
@@ -202,6 +262,11 @@ class SqliteRepo(TablesMixin, ProjectMixin, ImagesMixin):
     # Row counts behind series_row_count(), invalidated the same way and at
     # the same time as _series_cache - see that field's docstring.
     _series_row_count_cache: dict[str, int] = field(default_factory=dict)
+    # Colour groups behind series_colour_groups(), keyed by SQL text and limit; None marks a
+    # colour map. Invalidated together with the two above.
+    _series_colour_groups_cache: dict[tuple[str, int], tuple[tuple[object, int], ...] | None] = field(
+        default_factory=dict
+    )
     #: SQL texts found to write when this project was opened (scan_user_sql);
     #: they are refused wherever they would run, until edited.
     _blocked_sql: set[str] = field(default_factory=set)
@@ -389,7 +454,21 @@ class SqliteRepo(TablesMixin, ProjectMixin, ImagesMixin):
         """Drop every cached series DataFrame."""
         self._series_cache.clear()
         self._series_row_count_cache.clear()
+        self._series_colour_groups_cache.clear()
         self._series_cache_stamp = None
+
+    def _sync_series_caches(self) -> None:
+        """Drop every cached series result when the database has changed since it was read.
+
+        Each reader of the caches calls this first, so whichever of them sees a
+        change first clears them all: none is left stale for the others.
+        """
+        stamp = self._database_stamp()
+        if stamp != self._series_cache_stamp:
+            self._series_cache.clear()
+            self._series_row_count_cache.clear()
+            self._series_colour_groups_cache.clear()
+            self._series_cache_stamp = stamp
 
     @property
     def series_cache_stats(self) -> dict[str, int | bool]:
@@ -427,10 +506,7 @@ class SqliteRepo(TablesMixin, ProjectMixin, ImagesMixin):
         if not self._series_cache_enabled:
             return self._read_series_frame(sql_text)
 
-        stamp = self._database_stamp()
-        if stamp != self._series_cache_stamp:
-            self._series_cache.clear()
-            self._series_cache_stamp = stamp
+        self._sync_series_caches()
 
         cached = self._series_cache.get(sql_text)
         if cached is not None:
@@ -517,11 +593,7 @@ class SqliteRepo(TablesMixin, ProjectMixin, ImagesMixin):
 
         assert self._con is not None
 
-        stamp = self._database_stamp()
-        if stamp != self._series_cache_stamp:
-            self._series_cache.clear()
-            self._series_row_count_cache.clear()
-            self._series_cache_stamp = stamp
+        self._sync_series_caches()
 
         cached = self._series_row_count_cache.get(sql_text)
         if cached is not None:
@@ -534,6 +606,38 @@ class SqliteRepo(TablesMixin, ProjectMixin, ImagesMixin):
         return count
 
     @ensure_connection_wrapper
+    def series_colour_groups(self, sql: str, *, limit: int) -> tuple[tuple[object, int], ...] | None:
+        """Return the colour groups of *sql*, each with its row count, or None for a colour map.
+
+        A group is a value of the ``color`` column over the rows where it is set
+        and not empty. More than *limit* distinct values is a colour map - a
+        colour per row - and None comes back. The values are looked for first,
+        and the search stops at *limit* + 1, so a colour map is recognised after
+        a few dozen rows rather than by counting them all. Cached like
+        ``series_row_count``, per *limit*.
+        """
+        sql_text = (sql or "").strip()
+        if not sql_text:
+            return ()
+
+        assert self._con is not None
+        self._sync_series_caches()
+
+        key = (sql_text, limit)
+        if key in self._series_colour_groups_cache:
+            return self._series_colour_groups_cache[key]
+
+        self.refuse_if_blocked(sql_text)
+        coloured = f"FROM ({sql_text}) WHERE \"color\" IS NOT NULL AND \"color\" <> ''"
+        probe = self._con.execute(f"SELECT DISTINCT \"color\" {coloured} LIMIT {limit + 1}").fetchall()
+        groups: tuple[tuple[object, int], ...] | None = None
+        if len(probe) <= limit:
+            counted = self._con.execute(f"SELECT \"color\", COUNT(*) {coloured} GROUP BY \"color\"").fetchall()
+            groups = tuple((value, int(count)) for value, count in counted)
+        self._series_colour_groups_cache[key] = groups
+        return groups
+
+    @ensure_connection_wrapper
     def downsampled_series_frame(self, sql: str, *, threshold: int) -> SeriesFrame:
         """Return *sql*'s result, decimated to roughly ``threshold`` rows.
 
@@ -541,10 +645,14 @@ class SqliteRepo(TablesMixin, ProjectMixin, ImagesMixin):
         (``series_row_count``, itself cached) to size a stride, and - only
         when the query actually exceeds ``threshold`` - one row kept out of
         every stride via ``ROW_NUMBER()``, in the query's own order (a
-        curve's ``ORDER BY x``); a row with a colour of its own (an outlier
-        coloured, a cluster) is always kept. The full
-        result is never read only to be thinned out afterwards - that would
-        keep the exact cost this exists to avoid.
+        curve's ``ORDER BY x``). A colour column is read as groups
+        (``colour_group_plan``): a group no bigger than its share of the
+        threshold is kept whole, so an outlier or a small cluster is never
+        thinned out, and the rest is thinned to the budget left. More colours
+        than ``threshold / COLOUR_CATEGORY_DIVISOR`` is a colour map, thinned
+        like any other column. The full result is never read only to be
+        thinned out afterwards - that would keep the exact cost this exists
+        to avoid.
 
         ``threshold <= 0`` disables downsampling and reads the plain query.
         """
@@ -557,14 +665,19 @@ class SqliteRepo(TablesMixin, ProjectMixin, ImagesMixin):
             return self.series_frame(sql_text)
 
         stride = max(1, -(-total // threshold))  # ceil division
+        rare: list[tuple[object | None, int]] = []
+        if has_projection_alias(sql_text, "color"):
+            # Read as groups: a group no bigger than its share of the threshold
+            # (an outlier, a small cluster, a flag) stays whole, the rest is
+            # thinned to the budget left. Too many colours is a colour map.
+            limit = max(1, threshold // COLOUR_CATEGORY_DIVISOR)
+            groups = self.series_colour_groups(sql_text, limit=limit)
+            if groups is not None:
+                stride, rare = colour_group_plan(total, threshold, groups)
         # OVER () numbers the rows in the query's own order - a curve's ORDER
         # BY x. "ORDER BY 1" inside a window is the constant 1, not the first
         # column, and kept an arbitrary set of rows.
-        keep = f"(__chartlibre_rn__ - 1) % {stride} = 0"
-        if has_projection_alias(sql_text, "color"):
-            # A row given a colour of its own - an outlier, a cluster - is
-            # what the chart is there to show: never thinned out.
-            keep += " OR (\"color\" IS NOT NULL AND \"color\" <> '')"
+        keep = f"(__chartlibre_rn__ - 1) % {stride} = 0" + _rare_rows_condition(rare)
         wrapped = (
             "SELECT * FROM ("
             f"SELECT *, ROW_NUMBER() OVER () AS __chartlibre_rn__ FROM ({sql_text})"

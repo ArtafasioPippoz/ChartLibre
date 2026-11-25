@@ -238,6 +238,17 @@ def _style_steps(
     return True, steps
 
 
+def pickable_data_artists(axes: Any) -> list[Any]:
+    """The artists whose readout reads one point per index: the axes' lines and its marker collections.
+
+    A surface, a heatmap or a filled band is a collection too, but it has no
+    point per index - its ``get_offsets()`` is matplotlib's default single
+    (0, 0) - so arming it made clicking one of its faces raise IndexError.
+    """
+    markers = [artist for artist in axes.collections if isinstance(artist, PathCollection)]
+    return [*axes.lines, *markers]
+
+
 class ChartPanel(DrawToolsMixin, ChartToolsMixin, QFrame):
     """Embed a repository-backed Matplotlib chart.
 
@@ -1238,7 +1249,7 @@ class ChartPanel(DrawToolsMixin, ChartToolsMixin, QFrame):
         legend entry toggles its series rather than reading anything out.
         """
         for axes in self._figure.axes:
-            for artist in (*axes.lines, *axes.collections):
+            for artist in pickable_data_artists(axes):
                 artist.set_picker(PICK_TOLERANCE_POINTS)
 
             # True, not a tolerance in points: a patch is a filled area, so
@@ -1333,6 +1344,10 @@ class ChartPanel(DrawToolsMixin, ChartToolsMixin, QFrame):
         # a line carries two parallel sequences. Nothing else is made pickable.
         if hasattr(artist, "get_offsets"):
             points = artist.get_offsets()
+            if max(indices) >= len(points):
+                # Not one point per index: there is nothing to read out, and
+                # indexing past the end is what raised.
+                return
             pairs = [(float(points[i][0]), float(points[i][1])) for i in indices]
         else:
             # get_xydata is the line in axis units: dates already numbers (get_data kept them as datetimes).

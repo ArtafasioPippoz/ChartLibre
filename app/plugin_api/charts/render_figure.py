@@ -38,6 +38,7 @@ from app.plugin_api.charts import (
     secondary_axis,
 )
 from app.plugin_api.charts.base import SeriesData
+from app.plugin_api.charts.grids import grid_thinning_mask
 from app.plugin_api.charts.text_lines import display_text, multialignment
 from app.scanners.axis_renderer_scanner import get_renderer, import_class_from_file
 from app.utils.coercion import column_of, to_numbers
@@ -239,6 +240,9 @@ def _render_figure_from_descriptor(
                     else downsample_threshold
                 ),
             )
+            if chart_type in _GRID_THINNED_CHART_TYPES and downsample_threshold > 0:
+                point_budget = downsample_threshold * DENSE_DOWNSAMPLE_FACTOR
+                series_list = [_thinned_grid_series(series, point_budget) for series in series_list]
             renderer = get_renderer(chart_type)
             if renderer is None:
                 # Said on the chart itself: an empty axis told the user nothing. A chart type of a pack that
@@ -994,11 +998,15 @@ DEFAULT_DOWNSAMPLE_THRESHOLD = get_constant("default_downsample_threshold", 1_00
 #: to the next, so the surviving rows are no longer a full Cartesian product
 #: of x and y. pivot_to_grid then rightly refuses them, and the renderer
 #: draws nothing instead of the smaller-but-complete grid it should. Grid
-#: datasets are also typically far smaller than the row counts downsampling
-#: exists for, so these chart types simply skip it rather than decimating by
-#: unique x/y instead - not worth the extra machinery yet.
+#: datasets can still run to a million points, so Surface Plot is thinned by
+#: index instead (grid_thinning_mask, applied in _thinned_grid_series below);
+#: Contour Plot and Wafer Map still draw theirs whole.
 #: Wafer Map too: its contour is a grid, and each die or defect a datum of its own.
 _GRID_REQUIRED_CHART_TYPES = frozenset({"Surface Plot", "Contour Plot", "Wafer Map"})
+
+#: The grid types thinned by index to the cells the axis' Max points allows
+#: (threshold x DENSE_DOWNSAMPLE_FACTOR, the point budget a 3D cloud gets).
+_GRID_THINNED_CHART_TYPES = frozenset({"Surface Plot"})
 
 #: The renderers' categories whose data is a grid, a mesh or a cloud in 3D: thinned only past this factor
 #: times the figure's threshold - a thinned mesh has holes, a thinned cloud loses its surface, but a
@@ -1076,6 +1084,19 @@ def _build_series_data_list(
         )
 
     return output
+
+
+def _thinned_grid_series(series: SeriesData, max_cells: int) -> SeriesData:
+    """*series* with its grid thinned to *max_cells* cells (grid_thinning_mask), or unchanged.
+
+    The row ids, when the series has them, are thinned with the rows so the two stay aligned.
+    """
+    mask = grid_thinning_mask(series.df, max_cells=max_cells)
+    if mask is None:
+        return series
+    frame = SeriesFrame({name: np.asarray(series.df[name])[mask] for name in series.df.columns})
+    ids = series.ids[mask] if series.ids is not None else None
+    return replace(series, df=frame, ids=ids)
 
 
 def _draw_band(ax: Any, series: SeriesData) -> None:

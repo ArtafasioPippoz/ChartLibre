@@ -1403,7 +1403,7 @@
     "settings.restart": {
       "level": "question",
       "title": "Restart",
-      "text": "The changes ({what}) apply the next time ChartLibre starts."
+      "text": "The changes ({what}) take effect when ChartLibre restarts. ChartLibre does not restart by itself: restart it now, or close and open it yourself later."
     },
     "pack.not_added": {
       "level": "warning",
