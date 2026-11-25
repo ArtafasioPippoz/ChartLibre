@@ -21,8 +21,8 @@ from typing import Any, Final
 from matplotlib.lines import Line2D
 from matplotlib.patches import FancyArrowPatch, PathPatch
 from matplotlib.text import Text
-from PySide6.QtCore import QPointF, QRectF, QSize, Qt
-from PySide6.QtGui import QAction, QColor, QIcon, QPainter, QPen, QPixmap
+from PySide6.QtCore import QSize, Qt
+from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import QInputDialog, QToolButton
 
 from app.logs.logger import applogger
@@ -34,7 +34,8 @@ from app.plugin_api.charts.path_geometry import (
     rectangle_nodes,
     snap_angle,
 )
-from app.styles.style import TidyMenu, field_label, theme_is_dark
+from app import SVG
+from app.styles.style import TidyMenu, field_label, icon_from_svg_source
 from app.utils.i18n import _
 
 #: The colour of what is being drawn, and of the objects it creates (the ruler's, the paths' default).
@@ -97,73 +98,8 @@ def tool_hint(tool_id: str) -> str:
 
 
 def tool_icon(tool_id: str, ink: str | None = None) -> QIcon:
-    """A small drawing of the tool, in *ink* (the theme's text colour by default), at 1x and 2x."""
-    colour = QColor(ink or ("#c9ced6" if theme_is_dark() else "#4a5263"))
-    icon = QIcon()
-    for ratio in (1, 2):
-        size = 18 * ratio
-        pixmap = QPixmap(size, size)
-        pixmap.fill(Qt.GlobalColor.transparent)
-        painter = QPainter(pixmap)
-        try:
-            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-            painter.scale(ratio, ratio)
-            pen = QPen(colour, 1.5)
-            pen.setCapStyle(Qt.PenCapStyle.RoundCap)
-            pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
-            painter.setPen(pen)
-            _paint_tool(painter, tool_id, colour)
-        finally:
-            painter.end()
-        icon.addPixmap(pixmap)
-    return icon
-
-
-def _paint_tool(painter: QPainter, tool_id: str, colour: QColor) -> None:
-    """Draw tool *tool_id* in the 18x18 square of *painter*."""
-    from PySide6.QtGui import QPainterPath
-
-    fill = QColor(colour)
-    fill.setAlpha(70)
-    if tool_id in ("path", "area"):
-        curve = QPainterPath(QPointF(3, 14))
-        curve.cubicTo(QPointF(5, 2), QPointF(11, 2), QPointF(13, 10))
-        if tool_id == "area":
-            curve.lineTo(QPointF(15, 15))
-            curve.closeSubpath()
-            painter.setBrush(fill)
-        painter.drawPath(curve)
-        painter.setBrush(colour)
-        for point in ((3, 14), (13, 10)):
-            painter.drawEllipse(QPointF(*point), 1.4, 1.4)
-    elif tool_id == "rectangle":
-        painter.setBrush(fill)
-        painter.drawRect(QRectF(3, 4, 12, 10))
-    elif tool_id == "ellipse":
-        painter.setBrush(fill)
-        painter.drawEllipse(QRectF(2.5, 4, 13, 10))
-    elif tool_id == "arrow":
-        painter.drawLine(QPointF(3, 15), QPointF(14, 4))
-        painter.drawLine(QPointF(14, 4), QPointF(8.5, 4.5))
-        painter.drawLine(QPointF(14, 4), QPointF(13.5, 9.5))
-    elif tool_id == "annotation":
-        painter.setBrush(fill)
-        painter.drawRoundedRect(QRectF(3, 3, 12, 9), 2, 2)
-        painter.drawLine(QPointF(7, 12), QPointF(6, 16))
-        painter.drawLine(QPointF(7, 6.5), QPointF(11, 6.5))
-        painter.drawLine(QPointF(7, 9), QPointF(10, 9))
-    elif tool_id == "ruler":
-        painter.drawLine(QPointF(3, 14), QPointF(15, 4))
-        painter.drawLine(QPointF(3, 11.5), QPointF(3, 16.5))
-        painter.drawLine(QPointF(15, 1.5), QPointF(15, 6.5))
-    elif tool_id == "hline":
-        painter.drawLine(QPointF(2, 9), QPointF(16, 9))
-        painter.drawLine(QPointF(2, 6), QPointF(2, 12))
-        painter.drawLine(QPointF(16, 6), QPointF(16, 12))
-    elif tool_id == "vline":
-        painter.drawLine(QPointF(9, 2), QPointF(9, 16))
-        painter.drawLine(QPointF(6, 2), QPointF(12, 2))
-        painter.drawLine(QPointF(6, 16), QPointF(12, 16))
+    """The tool's drawing (app.SVG.DRAW_TOOLS), inked in the theme's colour - or in *ink*."""
+    return icon_from_svg_source(SVG.DRAW_TOOLS.get(tool_id), size=18, color=ink)
 
 
 class DrawToolsMixin:

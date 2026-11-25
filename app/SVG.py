@@ -20,6 +20,25 @@ An extension pack keeps drawing its own: ``Icon`` stays a plain string.
 APP: str = '<path d="M11 5H7v14h4"/><path d="M4 9h3M4 15h3"/><path d="M10 16l5-6 4-5"/>'
 
 # ---------------------------------------------------------------------------
+# The chart's drawing tools (the Draw button's menu), by tool id
+# ---------------------------------------------------------------------------
+
+#: A shape's fill: a neutral grey at low opacity, so it reads on a light and a dark theme alike.
+_FILL = 'fill="#808080" fill-opacity=".25"'
+
+DRAW_TOOLS: dict[str, str] = {
+    "path": '<path d="M4 18C6 6 14 4 17 12l3 7"/><circle cx="4" cy="18" r="1.6"/><circle cx="17" cy="12" r="1.6"/>',
+    "area": f'<path d="M4 18C6 6 14 4 17 12l3 7z" {_FILL}/>',
+    "rectangle": f'<rect x="3.5" y="6" width="17" height="12" rx="1" {_FILL}/>',
+    "ellipse": f'<ellipse cx="12" cy="12" rx="9" ry="6.5" {_FILL}/>',
+    "arrow": '<path d="M5 19L19 5M10 5h9v9"/>',
+    "annotation": '<path d="M5 4.5h14a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5h-8L7 20.5v-4H5A1.5 1.5 0 0 1 3.5 15V6A1.5 1.5 0 0 1 5 4.5z"/><path d="M8 9h8M8 12.5h5"/>',
+    "ruler": '<path d="M3.5 17.5l14-14 3 3-14 14z"/><path d="M7.5 13.5l2 2M10.5 10.5l1.5 1.5M13.5 7.5l2 2"/>',
+    "hline": '<path d="M3 12h18M3 8v8M21 8v8"/>',
+    "vline": '<path d="M12 3v18M8 3h8M8 21h8"/>',
+}
+
+# ---------------------------------------------------------------------------
 # Title bar (Windows): the four caption glyphs
 # ---------------------------------------------------------------------------
 
