@@ -1,5 +1,5 @@
 """The chart panel's tools and view: interactive tools (crosshair, dragged annotations, box selection,
-live updates, ruler), resize modes, zoom, background and the figure's geometry, and what the panel
+live updates), resize modes, zoom, background and the figure's geometry, and what the panel
 does to its chart (copy, save, export, delete)."""
 from __future__ import annotations
 
@@ -130,7 +130,7 @@ class ChartToolsMixin(_Host):
     """The chart panel's tools and view: interactive tools (crosshair, dragged annotations, box selection, A part of ChartPanel (panel.py)."""
 
     # ==================================================================
-    # Tools: Interactive tools: crosshair, dragged annotations, box selection, live updates, ruler.
+    # Tools: Interactive tools: crosshair, dragged annotations, box selection, live updates.
     # ==================================================================
     # ------------------------------------------------------------------
     # Crosshair
@@ -158,7 +158,7 @@ class ChartToolsMixin(_Host):
     def _discard_crosshair(self) -> None:
         """Forget the crosshair's artists after figure.clear() destroyed them.
 
-        Mirrors _discard_hover_annotation/_discard_ruler: the enabled flags
+        Mirrors _discard_hover_annotation: the enabled flags
         survive a reload (a person's choice to see a crosshair should not
         reset itself every time the chart redraws), only the per-axes
         artists and the pending link-zoom guard do not.
@@ -923,133 +923,15 @@ class ChartToolsMixin(_Host):
         """Redraw on the timer, unless a gesture on this chart is mid-flight.
 
         reload() clears the figure and rebuilds it from the descriptor, so
-        a redraw arriving mid-drag would pull the artist a drag or a
-        pending ruler point refers to out from under it. A completed box
+        a redraw arriving mid-drag would pull the artist a drag refers
+        to out from under it. A completed box
         selection is not guarded here: it already survives reload() by
         design (see _discard_box_selection), so a timer tick between
         selecting and right-clicking "Hide selected" does not lose it.
         """
-        if (
-            self._dragging_annotation is not None
-            or self._selection_start is not None
-            or self._ruler_start is not None
-        ):
+        if self._dragging_annotation is not None or self._selection_start is not None:
             return
         self.reload()
-
-    # ------------------------------------------------------------------
-    # Ruler / measure mode
-    # ------------------------------------------------------------------
-    #: Colour for the pending point's marker. A completed measurement's own
-    #: colour lives in its stored kwargs instead (BaseAxisRenderer.
-    #: apply_measurement), defaulting to this same value.
-    RULER_COLOR: Final[str] = "#d62728"
-
-    def _init_ruler(self) -> None:
-        """Reset the ruler to "no pending point"."""
-        #: (axis id, x, y) of the point "Measure from here" was clicked at,
-        #: or None while nothing is pending. A *finished* measurement is
-        #: not tracked here at all - see _measure_to_here - it is stored on
-        #: the axis and drawn back by BaseAxisRenderer.apply_measurements
-        #: like a reference line, not kept as a transient artist.
-        self._ruler_start: tuple[int, float, float] | None = None
-        #: The pending point's own marker artist, if one is currently shown.
-        self._ruler_artists: list[Any] = []
-
-    def _discard_ruler(self) -> None:
-        """Forget the pending point after the figure it was drawn on is gone.
-
-        Mirrors _discard_hover_annotation: figure.clear() (in reload())
-        already destroyed the marker artist, so the reference is simply
-        dropped rather than removed a second time.
-        """
-        self._ruler_start = None
-        self._ruler_artists = []
-
-    def _clear_ruler(self) -> None:
-        """Remove the pending point's marker, and forget it.
-
-        Unlike _discard_ruler, the figure here is still alive - this is
-        either "Cancel measurement", or the first step of starting a new
-        one over an old pending point - so the marker is actually removed
-        rather than merely forgotten.
-        """
-        for artist in self._ruler_artists:
-            try:
-                artist.remove()
-            except Exception:
-                pass  # removed already, with its axes
-        self._ruler_artists = []
-        self._ruler_start = None
-        self._canvas.draw_idle()
-
-    def _measure_from_here(
-        self, axes: Any, axis_id: int, x_value: float, y_value: float
-    ) -> None:
-        """Start a measurement at the clicked point.
-
-        Replaces any point already pending - only one measurement can be
-        in progress at a time, so starting a new one always reads as "the
-        current one", never as an old pending click left behind by mistake.
-        """
-        self._clear_ruler()
-        self._ruler_start = (axis_id, x_value, y_value)
-        (marker,) = axes.plot(
-            [x_value],
-            [y_value],
-            marker="+",
-            markersize=11,
-            markeredgewidth=1.6,
-            color=self.RULER_COLOR,
-            linestyle="none",
-            zorder=10_000,
-        )
-        self._ruler_artists.append(marker)
-        self._canvas.draw_idle()
-
-    def _measure_to_here(
-        self, axes: Any, axis_id: int, x_value: float, y_value: float
-    ) -> None:
-        """Finish the pending measurement at the clicked point, and store it.
-
-        A no-op if nothing is pending, or if the second click landed on a
-        different axes than the first - dx/dy/slope mean nothing between
-        two axes that may not even share units.
-
-        Written to the axis' own "measurements" - the same storage a
-        reference line or an annotation gets (BaseAxisRenderer.
-        apply_measurements draws it back) - rather than drawn here as a
-        transient artist: a measurement worth taking is worth it still
-        being there next time the chart opens, and worth deleting from the
-        Overlay panel's Measurements tab the same way a line is.
-        """
-        if self._ruler_start is None or self._ruler_start[0] != axis_id:
-            return
-
-        _axis_id, x0, y0 = self._ruler_start
-        self._clear_ruler()
-
-        try:
-            self._repo.snapshot_for_undo(
-                self._repo.DESCRIPTOR_TABLES, label=_("Add measurement")
-            )
-            options = dict(self._repo.get_axis_options(int(axis_id)) or {})
-            measurements = list(options.get("measurements") or [])
-            measurements.append(
-                {"x0": x0, "y0": y0, "x1": x_value, "y1": y_value, "kwargs": {}}
-            )
-            options["measurements"] = measurements
-            self._repo.set_axis_options(int(axis_id), options)
-        except Exception:
-            applogger.exception("Could not add a measurement.")
-            return
-
-        applogger.info(
-            "Added a measurement (%g, %g) -> (%g, %g) on axis %s",
-            x0, y0, x_value, y_value, axis_id,
-        )
-        self.reload()
-        self.figure_edited.emit()
 
     # ==================================================================
     # Geometry: Resize modes, zoom, background, and the figure's geometry and metrics.

@@ -555,3 +555,26 @@ def test_an_offset_arrow_tail_is_placed_in_data_and_stored_so() -> None:
         assert panel._annotation_tail(ax, {"type": "arrow", "kwargs": {"textcoords": "axes fraction"}}, head) is None
     finally:
         plt.close(figure)
+
+
+def test_edit_selects_moves_and_deletes_reference_lines() -> None:
+    figure, ax, panel = _setup("edit")
+    try:
+        panel._repo.options = {"lines": [{"orientation": "vertical", "value": 3.0, "kwargs": {}},
+                                         {"orientation": "horizontal", "value": 7.0, "kwargs": {}}]}
+        _click(panel, ax, 3, 1)  # anywhere along the vertical line
+        assert panel._edit_what == "lines" and panel._edit_sel == (7, 0)
+        panel._on_draw_press(_event(ax, 3, 1))
+        panel._on_draw_motion(_event(ax, 4, 2))
+        panel._on_draw_release(_event(ax, 4, 2))  # only x moves a vertical line
+        assert panel._repo.options["lines"][0]["value"] == 4 and panel._repo.labels[-1] == "Move line"
+        _click(panel, ax, 9, 7)  # along the horizontal one
+        assert panel._edit_sel == (7, 1)
+        panel._on_draw_press(_event(ax, 9, 7))
+        panel._on_draw_motion(_event(ax, 8, 6))
+        panel._on_draw_release(_event(ax, 8, 6))
+        assert panel._repo.options["lines"][1]["value"] == 6
+        _key(panel, "delete")
+        assert panel._repo.options["lines"] == [{"orientation": "vertical", "value": 4.0, "kwargs": {}}]
+    finally:
+        plt.close(figure)

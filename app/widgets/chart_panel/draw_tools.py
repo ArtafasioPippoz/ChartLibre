@@ -92,8 +92,8 @@ def tool_label(tool_id: str) -> str:
 def tool_hint(tool_id: str) -> str:
     """What the tool does with the mouse and keys, one line (translated)."""
     return {
-        "edit": _("Click a path, an arrow, a note or a ruler · drag nodes and handles · double-click: add or smooth · "
-                  "Delete: remove · Esc"),
+        "edit": _("Click a path, an arrow, a note, a ruler or a line · drag nodes and handles · "
+                  "double-click: add or smooth · Delete: remove · Esc"),
         "path": _("Click: corner · drag: curve · Enter: finish · C: close · Esc: cancel"),
         "area": _("Click: corner · drag: curve · Enter: finish · Esc: cancel"),
         "rectangle": _("Drag from one corner to the opposite one · Esc: cancel"),
@@ -511,6 +511,13 @@ class DrawToolsMixin:
         if not isinstance(entry, dict):
             return []
         try:
+            if what == "lines":
+                value = float(entry["value"])
+                if not math.isfinite(value):
+                    return []
+                if self._line_is_horizontal(entry):
+                    return [(sum(axes.get_xlim()) / 2.0, value)]
+                return [(value, sum(axes.get_ylim()) / 2.0)]
             if what == "measurements":
                 return [(float(entry["x0"]), float(entry["y0"])), (float(entry["x1"]), float(entry["y1"]))]
             head = (float(entry.get("x", 0.0)), float(entry.get("y", 0.0)))
@@ -518,6 +525,11 @@ class DrawToolsMixin:
             return []
         tail = self._annotation_tail(axes, entry, head)
         return [head] if tail is None else [head, tail]
+
+    @staticmethod
+    def _line_is_horizontal(entry: dict[str, Any]) -> bool:
+        """As BaseAxisRenderer.apply_reference_line reads it: "h..." is horizontal, anything else vertical."""
+        return str(entry.get("orientation", "vertical") or "vertical").lower().startswith("h")
 
     def _edit_load_item(self, axes: Any, axis_id: int, index: int, what: str) -> bool:
         """Select annotation or measurement *index*: its points become the nodes that can be dragged."""
@@ -589,7 +601,12 @@ class DrawToolsMixin:
             if self._edit_drag is not None and self._edit_moved:
                 if self._edit_what == "annotations":
                     self._edit_move_annotation_artist(nodes)
-                if len(nodes) > 1:
+                if self._edit_what == "lines":
+                    horizontal = self._edit_line_horizontal()
+                    low, high = (self._draw_axes.get_xlim() if horizontal else self._draw_axes.get_ylim())
+                    xs, ys = ([low, high], [nodes[0][1]] * 2) if horizontal else ([nodes[0][0]] * 2, [low, high])
+                    self._draw_add(Line2D(xs, ys, color=HANDLE_COLOR, linewidth=1.2, linestyle="--"))
+                elif len(nodes) > 1:
                     self._draw_add(Line2D([n[0] for n in nodes], [n[1] for n in nodes], color=HANDLE_COLOR,
                                           linewidth=1.2, linestyle="--"))
         elif self._edit_drag is not None and self._edit_moved:
@@ -597,6 +614,14 @@ class DrawToolsMixin:
                                      linewidth=1.2, linestyle="--"))
         self._draw_handles(nodes, self._edit_node)
         self._canvas.draw_idle()
+
+    def _edit_line_horizontal(self) -> bool:
+        """Whether the selected reference line is horizontal (read from the store: the nodes do not say)."""
+        if self._edit_sel is None:
+            return False
+        lines = (self._repo.get_axis_options(self._edit_sel[0]) or {}).get("lines") or []
+        index = self._edit_sel[1]
+        return 0 <= index < len(lines) and isinstance(lines[index], dict) and self._line_is_horizontal(lines[index])
 
     def _edit_move_annotation_artist(self, nodes: list[Node]) -> None:
         """While dragging: put the drawn annotation where its nodes are now (it is redrawn from the store on release)."""
@@ -646,21 +671,24 @@ class DrawToolsMixin:
         return None
 
     def _edit_item_at(self, axes: Any, axis_id: int, event: Any) -> tuple[str, int] | None:
-        """(option, index) of the annotation or measurement under the pointer: near its line or its point, or on
-        an annotation's text. Annotations first, topmost (last stored) first."""
+        """(option, index) of the annotation, measurement or reference line under the pointer: near its line or its
+        point, or on an annotation's text. Annotations first, then measurements, then lines; last stored first."""
         import numpy as np
 
         point = (float(event.x), float(event.y))
         options = self._repo.get_axis_options(int(axis_id)) or {}
         texts = {getattr(t, "_chartlibre_annotation_index", None): t for t in axes.texts}
-        for what in ("annotations", "measurements"):
+        for what in ("annotations", "measurements", "lines"):
             items = options.get(what) or []
             for index in range(len(items) - 1, -1, -1):
                 points = self._edit_item_nodes(axes, what, items[index])
                 if not points:
                     continue
                 pixels = np.asarray(axes.transData.transform(points), dtype=float)
-                if len(pixels) > 1:
+                if what == "lines":  # across the whole axes: only the distance across the line counts
+                    across = 1 if self._line_is_horizontal(items[index]) else 0
+                    near = abs(pixels[0][across] - point[across]) <= EDIT_HIT_PX
+                elif len(pixels) > 1:
                     near = self._polyline_nearest(pixels, point)[0] <= EDIT_HIT_PX
                 else:
                     near = math.hypot(*(pixels[0] - point)) <= EDIT_HIT_PX
@@ -675,7 +703,7 @@ class DrawToolsMixin:
         return None
 
     def _edit_target_at(self, axes: Any, axis_id: int, event: Any) -> tuple[str, int] | None:
-        """(option, index) of what is under the pointer - notes, arrows and rulers first, they sit on top."""
+        """(option, index) of what is under the pointer - notes, arrows, rulers and lines first, they sit on top."""
         target = self._edit_item_at(axes, axis_id, event)
         if target is not None:
             return target
@@ -765,7 +793,8 @@ class DrawToolsMixin:
         moved = self._edit_moved and self._edit_drag is not None
         self._edit_drag, self._edit_anchor, self._edit_moved = None, None, False
         if moved:
-            self._edit_commit({"annotations": _("Move annotation"), "measurements": _("Move measurement")}
+            self._edit_commit({"annotations": _("Move annotation"), "measurements": _("Move measurement"),
+                               "lines": _("Move line")}
                               .get(self._edit_what, _("Edit path")))
         else:
             self._edit_refresh()
@@ -853,6 +882,10 @@ class DrawToolsMixin:
             nodes = self._edit_nodes_typed()
 
             def place(items: list[Any], index: int) -> None:
+                if self._edit_what == "lines":
+                    horizontal = self._line_is_horizontal(items[index])
+                    items[index] = {**items[index], "value": float(nodes[0][1] if horizontal else nodes[0][0])}
+                    return
                 if self._edit_what == "measurements":
                     (x0, y0, _h0, _v0), (x1, y1, _h1, _v1) = nodes[0], nodes[1]
                     items[index] = {**items[index], "x0": float(x0), "y0": float(y0), "x1": float(x1), "y1": float(y1)}
@@ -878,7 +911,8 @@ class DrawToolsMixin:
             del paths[index]
 
         selected = self._edit_sel
-        label = {"annotations": _("Delete annotation"), "measurements": _("Delete measurement")}.get(
+        label = {"annotations": _("Delete annotation"), "measurements": _("Delete measurement"),
+                 "lines": _("Delete line")}.get(
             self._edit_what, _("Delete path"))
         if self._edit_write(label, change) and selected is not None:
             self._edit_sel = None  # the paths after it moved up: nothing is selected any more

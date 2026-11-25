@@ -386,7 +386,6 @@ class ChartPanel(DrawToolsMixin, ChartToolsMixin, QFrame):
         self._canvas = ChartCanvas(self._figure)
         self._canvas.resize_settled.connect(lambda: self._schedule_canvas_geometry_sync(redraw=True))
         self._init_hover_readout()
-        self._init_ruler()
         self._init_draw_tools()
         self._init_crosshair()
         self._init_annotation_drag()
@@ -898,7 +897,6 @@ class ChartPanel(DrawToolsMixin, ChartToolsMixin, QFrame):
         """Reload the latest descriptor from the repository and re-render it."""
         self._figure.clear()
         self._discard_hover_annotation()
-        self._discard_ruler()
         self._discard_draw_tools()
         self._discard_crosshair()
         self._discard_annotation_drag()
@@ -2008,13 +2006,9 @@ class ChartPanel(DrawToolsMixin, ChartToolsMixin, QFrame):
         return menu
 
     def _show_context_menu(self, pos: QPoint) -> None:
-        """Show the actions menu, plus what can be done at the point clicked.
+        """Show the actions menu, plus what can be done with a box selection on the axes clicked.
 
-        The cached menu covers the whole figure - reload, copy, save,
-        delete - and is the same wherever the click landed. The reference
-        lines are not: they are added *at* a value on one axis, so they
-        only appear when the click is inside an axes, and they name the
-        value they would use.
+        Lines, notes, arrows and measurements are drawn with the Draw button's tools, not from here.
         """
         self.context_menu_for(pos).exec(self._canvas.mapToGlobal(pos))
 
@@ -2030,38 +2024,8 @@ class ChartPanel(DrawToolsMixin, ChartToolsMixin, QFrame):
         if target is None:
             return self._build_actions_menu()
 
-        axis_id, axes, x_value, y_value = target
         menu = self._build_actions_menu()
-        menu.addSeparator()
-        create_menu_item(
-            icons=CONTEXT_MENU_ICONS,
-            parent=self,
-            menu=menu,
-            icon="add.vertical",
-            checkable=False,
-            text=_("Add vertical line at x = {value}").format(
-                value=axis_text(axes.xaxis, x_value)
-            ),
-            tooltip=_("A line across the whole axes, at this x."),
-            key=None,
-            action=lambda: self._add_reference_line(axis_id, "vertical", x_value),
-        )
-        create_menu_item(
-            icons=CONTEXT_MENU_ICONS,
-            parent=self,
-            menu=menu,
-            icon="add.horizontal",
-            checkable=False,
-            text=_("Add horizontal line at y = {value}").format(
-                value=axis_text(axes.yaxis, y_value)
-            ),
-            tooltip=_("A line along the whole axes, at this y."),
-            key=None,
-            action=lambda: self._add_reference_line(axis_id, "horizontal", y_value),
-        )
-        menu.addSeparator()
-        self._add_measure_menu_items(menu, axes, axis_id, x_value, y_value)
-        self._add_selection_menu_items(menu, axis_id)
+        self._add_selection_menu_items(menu, target[0])
         return menu
 
     def _add_selection_menu_items(self, menu: QMenu, axis_id: int) -> None:
@@ -2096,55 +2060,6 @@ class ChartPanel(DrawToolsMixin, ChartToolsMixin, QFrame):
             key=None,
             action=self._create_series_from_selection,
         )
-
-    def _add_measure_menu_items(
-        self, menu: QMenu, axes: Any, axis_id: int, x_value: float, y_value: float
-    ) -> None:
-        """Add the ruler's two-click flow to a context menu.
-
-        "Measure to here" only appears once a start point is pending on
-        this same axes - measuring across two axes that may not even share
-        units would report a slope neither one means.
-        """
-        pending_here = (
-            self._ruler_start is not None and self._ruler_start[0] == axis_id
-        )
-        create_menu_item(
-            parent=self,
-            menu=menu,
-            icon="measure",
-            checkable=False,
-            text=_("Measure from here"),
-            tooltip=_("Start measuring the distance and slope to another point."),
-            key=None,
-            action=lambda: self._measure_from_here(axes, axis_id, x_value, y_value),
-        )
-        if pending_here:
-            create_menu_item(
-                parent=self,
-                menu=menu,
-                icon="measure",
-                checkable=False,
-                text=_("Measure to here"),
-                tooltip=_("Finish the measurement at this point."),
-                key=None,
-                action=lambda: self._measure_to_here(axes, axis_id, x_value, y_value),
-            )
-        if self._ruler_start is not None:
-            # A completed measurement is not cleared from here any more -
-            # it is stored on the axis (apply_measurements) and deleted
-            # from the Overlay panel's Measurements tab, the same way a
-            # reference line is. This only cancels a still-pending point.
-            create_menu_item(
-                parent=self,
-                menu=menu,
-                icon="clear",
-                checkable=False,
-                text=_("Cancel measurement"),
-                tooltip=_("Forget the pending point without finishing the measurement."),
-                key=None,
-                action=self._clear_ruler,
-            )
 
     def _axis_at(self, pos: QPoint) -> tuple[int, Any, float, float] | None:
         """Return (axis id, axes, x, y) for the axes under *pos*, or None.
