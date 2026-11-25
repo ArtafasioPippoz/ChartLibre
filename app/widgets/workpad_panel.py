@@ -90,6 +90,14 @@ class WorkpadPanel(NavPanel):
         column.addWidget(self._command)
         QShortcut(QKeySequence("Ctrl+Return"), self._command).activated.connect(self.run)
         row = QHBoxLayout()
+        function_button = QPushButton(_("Function..."), box)
+        function_button.setToolTip(_("From a formula, the analyses and charts that suit it"))
+        function_button.clicked.connect(self.open_function_helper)
+        row.addWidget(function_button)
+        equation_button = QPushButton(_("Equation..."), box)
+        equation_button.setToolTip(_("From equations, a system, an inequality or a differential equation: ways to solve and draw"))
+        equation_button.clicked.connect(lambda: self.open_function_helper(equations=True))
+        row.addWidget(equation_button)
         row.addStretch(1)
         clear = QPushButton(_("New session"), box)
         clear.clicked.connect(self.new_session)
@@ -126,6 +134,20 @@ class WorkpadPanel(NavPanel):
     def _insert(self, text: str) -> None:
         """A name chosen in the helper, at the cursor; inside a call's quotes or brackets when it has them."""
         self._command.insertPlainText(text)
+        self._command.setFocus()
+
+    def open_function_helper(self, equations: bool = False) -> None:
+        """The function helper: a formula in, commands for its analyses and charts written in the command box."""
+        from app.widgets.function_helper_dialog import FunctionHelperDialog
+
+        dialog = FunctionHelperDialog(self, text=self._command.textCursor().selectedText(), equations=equations)
+        dialog.commands.connect(self._insert_block)
+        dialog.exec()
+
+    def _insert_block(self, text: str) -> None:
+        """Several lines at the end of the command box, after what is there."""
+        current = self._command.toPlainText()
+        self._command.setPlainText(current + ("\n" if current.strip() else "") + text)
         self._command.setFocus()
 
     def new_session(self) -> None:
