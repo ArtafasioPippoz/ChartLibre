@@ -124,10 +124,25 @@ class ChartNavigation(NavigationToolbar2QT):
     shares the action, so the checked Pan or Zoom and a greyed Back follow
     Matplotlib's state with no code of ours), and the cursor's coordinates it
     would write in its own label go to *on_message*. Pan, zoom and their
-    history are Matplotlib's, unchanged: nothing here reimplements them.
+    history are Matplotlib's: nothing here reimplements them, and a restore
+    only holds the linked-zoom sync off (see _update_view).
     """
 
     _on_message: Any = None
+    #: True while Back, Forward or Home sets every axes back to its stored view.
+    restoring_views: bool = False
+
+    def _update_view(self) -> None:
+        """Set each axes back to the view it was pushed with, with the linked-zoom sync held off.
+
+        A stored view already holds what the link had made of its axes when it was pushed. Set one
+        after another with the sync on, and the axes set last copies its range onto the ones before.
+        """
+        self.restoring_views = True
+        try:
+            super()._update_view()
+        finally:
+            self.restoring_views = False
 
     def set_message(self, s: str) -> None:
         if self._on_message is not None:

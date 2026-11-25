@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 import PySide6.QtGui
 from matplotlib import rcParams
+from matplotlib.dates import AutoDateFormatter, ConciseDateFormatter, DateFormatter, DateLocator
 from matplotlib.patches import Rectangle
 from PySide6.QtCore import QEvent, QObject, QSize, Qt, QTimer
 from PySide6.QtWidgets import (
@@ -111,6 +112,18 @@ if TYPE_CHECKING:
         _zoom_slider: Any
 else:
     _Host = object
+
+
+def _is_date_axis(axes: Any) -> bool:
+    """Whether the x axis of *axes* holds dates: the renderer put a date locator or date formatter on it.
+
+    A dated axis holds days since 1970 and a lag axis holds a count of steps; both are plain numbers to
+    Matplotlib, which is why linked zoom has to tell them apart.
+    """
+    axis = axes.xaxis
+    return isinstance(axis.get_major_locator(), DateLocator) or isinstance(
+        axis.get_major_formatter(), (DateFormatter, ConciseDateFormatter, AutoDateFormatter)
+    )
 
 
 class ChartToolsMixin(_Host):
@@ -242,22 +255,28 @@ class ChartToolsMixin(_Host):
                 axes.callbacks.connect("xlim_changed", self._on_axes_xlim_changed)  # pyright: ignore[reportAttributeAccessIssue]
 
     def _on_axes_xlim_changed(self, changed_axes: Any) -> None:
-        """Apply one axes' new x range to every other chart axes.
+        """Apply one axes' new x range to every other chart axes that reads x the same way.
 
         Guarded by _syncing_x_limits: setting another axes' xlim fires its
         own xlim_changed right back at this same callback, and without the
         guard two linked axes would bounce the change back and forth.
+
+        A dated axis and a lag axis are both plain numbers to Matplotlib, so
+        a range moves only between axes of the same kind: a lag of 40 is not
+        the day 40 after 1970. Back, Forward and Home are left out as well
+        (see ChartNavigation._update_view): each axes gets its stored view.
         """
-        if not self._link_x_zoom_enabled or self._syncing_x_limits:
+        if not self._link_x_zoom_enabled or self._syncing_x_limits or self._toolbar.restoring_views:
             return
 
         xlim = changed_axes.get_xlim()
+        dated = _is_date_axis(changed_axes)
         self._syncing_x_limits = True
         try:
             for axes in self._figure.axes:
                 if axes is changed_axes or not hasattr(axes, "_chartlibre_axis_id"):
                     continue
-                if axes.get_xlim() != xlim:
+                if _is_date_axis(axes) == dated and axes.get_xlim() != xlim:
                     axes.set_xlim(xlim)
         finally:
             self._syncing_x_limits = False
