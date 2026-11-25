@@ -911,6 +911,7 @@ class ChartPanel(DrawToolsMixin, ChartToolsMixin, QFrame):
             self._draw_selected_rows()
             self._update_filter_note()
             self._connect_x_sync_callbacks()
+            self._edit_restore()
 
             # Do not normalize again from len(self._figure.axes). Matplotlib can
             # contain extra Axes created by a stale grid, colorbars, twinx axes,

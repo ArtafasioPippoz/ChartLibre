@@ -629,12 +629,15 @@ class BaseAxisRenderer:
         a smooth (Bezier) one, an area is a closed path with a ``facecolor`` in its kwargs."""
         paths = options.get("paths", [])
         if isinstance(paths, list):
-            for path in paths:
+            for index, path in enumerate(paths):
                 if isinstance(path, dict):
-                    self.apply_path(ax, path)
+                    self.apply_path(ax, path, index=index)
 
-    def apply_path(self, ax: Any, path: dict[str, Any]) -> None:
-        """Draw one path, or nothing if it has fewer than two usable points."""
+    def apply_path(self, ax: Any, path: dict[str, Any], *, index: int | None = None) -> None:
+        """Draw one path, or nothing if it has fewer than two usable points.
+
+        The patch is tagged with ``_chartlibre_path_index`` when *index* is given: the drawing tools' Edit tool
+        finds the stored path a click landed on by it, as the annotation drag does with annotations."""
         from app.plugin_api.charts.path_geometry import build_path, has_curves, parse_nodes
 
         nodes = parse_nodes(path.get("points"))
@@ -657,9 +660,12 @@ class BaseAxisRenderer:
 
             if has_curves(nodes):
                 # Smooth nodes: Matplotlib's own cubic Bezier path (see charts.path_geometry).
-                ax.add_patch(PathPatch(build_path(nodes, closed), **kwargs))
+                patch: Any = PathPatch(build_path(nodes, closed), **kwargs)
             else:
-                ax.add_patch(Polygon(points, closed=closed, **kwargs))
+                patch = Polygon(points, closed=closed, **kwargs)
+            ax.add_patch(patch)
+            if index is not None:
+                patch._chartlibre_path_index = index
         except Exception:
             applogger.exception("A path could not be drawn: %r", path)
 

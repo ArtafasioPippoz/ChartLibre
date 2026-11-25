@@ -31,6 +31,7 @@ from app.plugin_api.charts.path_geometry import (
     build_path,
     ellipse_nodes,
     format_nodes,
+    parse_nodes,
     rectangle_nodes,
     snap_angle,
 )
@@ -45,19 +46,24 @@ HANDLE_COLOR: Final[str] = "#1f77b4"
 #: A press this close (pixels) to the first node closes the path; a drag must go further than this to count.
 SNAP_PX: Final[float] = 8.0
 DRAG_PX: Final[float] = 3.0
+#: How near (pixels) a click must be to a node, a handle or a path's line to take it.
+EDIT_HIT_PX: Final[float] = 7.0
 #: Opacity of an area's fill.
 AREA_ALPHA: Final[float] = 0.3
 
 
 @dataclass(frozen=True)
 class DrawTool:
-    """One entry of the drawing menu. *kind*: "pen" (click, drag a handle), "drag" (press, drag, release) or "click"."""
+    """One entry of the drawing menu. *kind*: "pen" (click, drag a handle), "drag" (press, drag, release), "click",
+    or "edit" (work on the paths already drawn)."""
 
     id: str
     kind: str
 
 
 DRAW_TOOLS: Final[tuple[DrawTool | None, ...]] = (
+    DrawTool("edit", "edit"),
+    None,
     DrawTool("path", "pen"), DrawTool("area", "pen"), DrawTool("rectangle", "drag"), DrawTool("ellipse", "drag"),
     None,
     DrawTool("arrow", "drag"), DrawTool("annotation", "drag"), DrawTool("ruler", "drag"),
@@ -70,6 +76,7 @@ _BY_ID: Final[dict[str, DrawTool]] = {tool.id: tool for tool in DRAW_TOOLS if to
 def tool_label(tool_id: str) -> str:
     """The menu text of a tool (translated)."""
     return {
+        "edit": _("Edit shapes"),
         "path": _("Path (line and curve)"),
         "area": _("Area (filled shape)"),
         "rectangle": _("Rectangle"),
@@ -85,6 +92,7 @@ def tool_label(tool_id: str) -> str:
 def tool_hint(tool_id: str) -> str:
     """What the tool does with the mouse and keys, one line (translated)."""
     return {
+        "edit": _("Click a path · drag nodes and handles · double-click: add or smooth · Delete: remove · Esc"),
         "path": _("Click: corner · drag: curve · Enter: finish · C: close · Esc: cancel"),
         "area": _("Click: corner · drag: curve · Enter: finish · Esc: cancel"),
         "rectangle": _("Drag from one corner to the opposite one · Esc: cancel"),
@@ -133,10 +141,23 @@ class DrawToolsMixin:
         #: The pointer's last position in data coordinates, on the drawing's axes.
         self._draw_cursor: tuple[float, float] | None = None
         self._draw_artists: list[Any] = []
+        #: The Edit tool: (axis id, index in the axis' "paths") of the selected path, its working nodes and whether
+        #: it is closed, the selected node, the drag in progress (kind, node index) with where it started.
+        self._edit_sel: tuple[int, int] | None = None
+        self._edit_nodes: list[list[float | None]] = []
+        self._edit_closed: bool = False
+        self._edit_node: int | None = None
+        self._edit_drag: tuple[str, int] | None = None
+        self._edit_anchor: tuple[float, float] | None = None
+        self._edit_orig: list[list[float | None]] = []
+        self._edit_moved: bool = False
 
     def _discard_draw_tools(self) -> None:
-        """After figure.clear(): the preview artists are gone with their axes; the active tool stays."""
+        """After figure.clear(): the preview artists are gone with their axes; the active tool stays, and so does
+        the Edit tool's selection (_edit_restore shows it again once the figure is drawn)."""
+        selected = self._edit_sel
         self._draw_reset_progress()
+        self._edit_sel = selected
 
     # ------------------------------------------------------------------
     # The button and its menu
@@ -211,7 +232,8 @@ class DrawToolsMixin:
                 self._select_mode_enabled = False
                 self._discard_box_selection()
             self._discard_hover_annotation_view()
-            self._canvas.setCursor(Qt.CursorShape.CrossCursor)
+            kind = _BY_ID[tool_id].kind
+            self._canvas.setCursor(Qt.CursorShape.ArrowCursor if kind == "edit" else Qt.CursorShape.CrossCursor)
             self._canvas.setFocus()
         else:
             self._canvas.unsetCursor()
@@ -262,7 +284,12 @@ class DrawToolsMixin:
             return
         axes = event.inaxes
         axis_id = getattr(axes, "_chartlibre_axis_id", None)
-        if axis_id is None or (self._draw_axes is not None and axes is not self._draw_axes):
+        if axis_id is None:
+            return
+        if tool.kind == "edit":
+            self._edit_press(event, axes, int(axis_id))
+            return
+        if self._draw_axes is not None and axes is not self._draw_axes:
             return
         if tool.kind == "pen":
             self._pen_press(event, axes, int(axis_id))
@@ -300,6 +327,9 @@ class DrawToolsMixin:
 
     def _on_draw_motion(self, event: Any) -> None:
         """The pointer moves: the rubber band follows it, or the new pen node's handle is pulled out."""
+        if self._draw_tool == "edit":
+            self._edit_motion(event)
+            return
         if self._draw_tool is None or self._draw_axes is None:
             return
         if event.inaxes is not self._draw_axes or event.xdata is None or event.ydata is None:
@@ -317,6 +347,9 @@ class DrawToolsMixin:
         """The button comes up: a pen node is set, or a dragged shape is made."""
         tool = _BY_ID.get(self._draw_tool or "")
         if tool is None or event.button != 1:
+            return
+        if tool.kind == "edit":
+            self._edit_release(event)
             return
         if tool.kind == "pen":
             self._draw_dragging = False
@@ -342,6 +375,9 @@ class DrawToolsMixin:
         if self._draw_tool is None:
             return
         key = str(event.key or "").lower()
+        if self._draw_tool == "edit":
+            self._edit_key(key)
+            return
         working = bool(self._draw_nodes) or self._draw_anchor is not None
         if key == "escape":
             if working:
@@ -403,10 +439,17 @@ class DrawToolsMixin:
                 build_path(shown, area and len(shown) > 2), facecolor=_rgba(DRAW_COLOR, AREA_ALPHA) if area else "none",
                 edgecolor=DRAW_COLOR, linewidth=1.4, linestyle="--",
             ))
+        self._draw_handles(nodes)
+
+    def _draw_handles(self, nodes: list[Node], selected: int | None = None) -> None:
+        """Show the nodes as small squares (the *selected* one filled) and the handles of the smooth ones."""
         if not nodes:
             return
         self._draw_add(Line2D([n[0] for n in nodes], [n[1] for n in nodes], linestyle="none", marker="s", markersize=5,
                               markerfacecolor="white", markeredgecolor=HANDLE_COLOR))
+        if selected is not None and 0 <= selected < len(nodes):
+            self._draw_add(Line2D([nodes[selected][0]], [nodes[selected][1]], linestyle="none", marker="s",
+                                  markersize=5, color=HANDLE_COLOR))
         for x_value, y_value, hx, hy in nodes:
             if hx is None or hy is None:
                 continue
@@ -429,6 +472,267 @@ class DrawToolsMixin:
             tail, head = ((x0, y0), (x1, y1)) if tool == "arrow" else ((x1, y1), (x0, y0))
             self._draw_add(FancyArrowPatch(tail, head, arrowstyle="-|>", mutation_scale=12, color=DRAW_COLOR,
                                            transform=axes.transData))
+
+    # ------------------------------------------------------------------
+    # The Edit tool: select a drawn path, drag its nodes and handles, add, smooth and remove nodes
+    # ------------------------------------------------------------------
+    def _edit_nodes_typed(self) -> list[Node]:
+        return [(n[0], n[1], n[2], n[3]) for n in self._edit_nodes]  # type: ignore[misc]
+
+    def _edit_load(self, axes: Any, axis_id: int, index: int) -> bool:
+        """Select path *index* of the axis: read its nodes from the stored option. False if there is none."""
+        paths = (self._repo.get_axis_options(int(axis_id)) or {}).get("paths") or []
+        if not 0 <= index < len(paths) or not isinstance(paths[index], dict):
+            return False
+        nodes = parse_nodes(paths[index].get("points"))
+        if len(nodes) < 2:
+            return False
+        self._edit_sel = (int(axis_id), index)
+        self._edit_nodes = [[x, y, hx, hy] for x, y, hx, hy in nodes]
+        self._edit_closed = str(paths[index].get("closed", "yes") or "yes").lower() not in ("no", "false", "0")
+        self._edit_node, self._edit_drag, self._edit_moved = None, None, False
+        self._draw_axes, self._draw_axis_id = axes, int(axis_id)
+        return True
+
+    def _edit_restore(self) -> None:
+        """After a render: show the selected path's nodes again, or forget it if it is gone."""
+        if self._draw_tool != "edit" or self._edit_sel is None:
+            return
+        axis_id, index = self._edit_sel
+        axes = next((a for a in self._figure.axes if getattr(a, "_chartlibre_axis_id", None) == axis_id), None)
+        if axes is None or not self._edit_load(axes, axis_id, index):
+            self._edit_sel = None
+            return
+        self._edit_refresh()
+
+    def _edit_deselect(self) -> None:
+        self._draw_clear_artists()
+        self._draw_reset_progress()
+        self._canvas.draw_idle()
+
+    def _edit_refresh(self) -> None:
+        """Show the selection: its nodes and handles, and the shape being dragged as a dashed outline."""
+        self._draw_clear_artists()
+        if self._draw_axes is None or self._edit_sel is None:
+            self._canvas.draw_idle()
+            return
+        nodes = self._edit_nodes_typed()
+        if self._edit_drag is not None and self._edit_moved:
+            self._draw_add(PathPatch(build_path(nodes, self._edit_closed), facecolor="none", edgecolor=HANDLE_COLOR,
+                                     linewidth=1.2, linestyle="--"))
+        self._draw_handles(nodes, self._edit_node)
+        self._canvas.draw_idle()
+
+    @staticmethod
+    def _polyline_nearest(polygon: Any, point: tuple[float, float]) -> tuple[float, tuple[float, float]]:
+        """(distance, nearest point) from *point* to the polyline *polygon* (an N x 2 array), in its own units."""
+        import numpy as np
+
+        best = (math.inf, (0.0, 0.0))
+        p = np.asarray(point, dtype=float)
+        for a, b in zip(polygon[:-1], polygon[1:]):
+            ab = b - a
+            length = float(ab @ ab)
+            t = 0.0 if length == 0 else min(1.0, max(0.0, float((p - a) @ ab) / length))
+            nearest = a + t * ab
+            distance = float(np.hypot(*(p - nearest)))
+            if distance < best[0]:
+                best = (distance, (float(nearest[0]), float(nearest[1])))
+        return best
+
+    def _edit_path_at(self, axes: Any, event: Any) -> int | None:
+        """The index of the stored path drawn under the pointer (on its line, or inside a filled one), topmost first."""
+        point = (float(event.x), float(event.y))
+        for patch in reversed(axes.patches):
+            index = getattr(patch, "_chartlibre_path_index", None)
+            if index is None:
+                continue
+            path = patch.get_path().transformed(patch.get_transform())
+            for polygon in path.to_polygons(closed_only=False):
+                if len(polygon) > 1 and self._polyline_nearest(polygon, point)[0] <= EDIT_HIT_PX:
+                    return int(index)
+            filled = patch.get_facecolor()
+            if len(filled) and filled[3] > 0 and path.contains_point(point):
+                return int(index)
+        return None
+
+    def _edit_hit(self, axes: Any, event: Any) -> tuple[str, int] | None:
+        """The handle ("out"/"in") or node under the pointer, handles first as they sit on top of the nodes."""
+        point = (float(event.x), float(event.y))
+        spots: list[tuple[str, int, float, float]] = []
+        for i, (x, y, hx, hy) in enumerate(self._edit_nodes_typed()):
+            if hx is not None and hy is not None:
+                spots.append(("out", i, hx, hy))
+                spots.append(("in", i, 2 * x - hx, 2 * y - hy))
+        spots += [("node", i, n[0], n[1]) for i, n in enumerate(self._edit_nodes)]  # type: ignore[misc]
+        for kind, i, x, y in spots:
+            px, py = axes.transData.transform((x, y))
+            if math.hypot(px - point[0], py - point[1]) <= EDIT_HIT_PX:
+                return kind, i
+        return None
+
+    def _edit_press(self, event: Any, axes: Any, axis_id: int) -> None:
+        point = (float(event.xdata), float(event.ydata))
+        if self._edit_sel is not None and axes is self._draw_axes:
+            hit = self._edit_hit(axes, event)
+            if hit is not None:
+                kind, i = hit
+                if event.dblclick and kind == "node":
+                    self._edit_toggle_smooth(i)
+                    return
+                if kind == "node" and "shift" in str(event.key or "") and self._edit_nodes[i][2] is None:
+                    kind = "pull"  # Shift on a corner: drag its handles out
+                self._edit_begin(kind, i, point, event)
+                return
+            if self._edit_path_at(axes, event) == self._edit_sel[1]:
+                if event.dblclick:
+                    self._edit_add_node(axes, event)
+                else:
+                    self._edit_node = None
+                    self._edit_begin("move", -1, point, event)
+                return
+        index = self._edit_path_at(axes, event)
+        if index is None:
+            self._edit_deselect()
+        elif self._edit_load(axes, axis_id, index):
+            self._edit_refresh()
+
+    def _edit_begin(self, kind: str, index: int, point: tuple[float, float], event: Any) -> None:
+        self._edit_drag = (kind, index)
+        self._edit_anchor = point
+        self._edit_orig = [list(n) for n in self._edit_nodes]
+        self._draw_press_px = (float(event.x), float(event.y))
+        self._edit_moved = False
+        if kind in ("node", "out", "in", "pull"):
+            self._edit_node = index
+        self._edit_refresh()
+
+    def _edit_motion(self, event: Any) -> None:
+        if self._edit_drag is None or self._edit_anchor is None or self._draw_press_px is None:
+            return
+        if event.inaxes is not self._draw_axes or event.xdata is None or event.ydata is None:
+            return
+        if not self._edit_moved and math.hypot(event.x - self._draw_press_px[0], event.y - self._draw_press_px[1]) <= DRAG_PX:
+            return
+        self._edit_moved = True
+        kind, i = self._edit_drag
+        x, y = float(event.xdata), float(event.ydata)
+        dx, dy = x - self._edit_anchor[0], y - self._edit_anchor[1]
+        nodes = self._edit_nodes
+        if kind in ("node", "move"):
+            for j, original in enumerate(self._edit_orig):
+                if kind == "node" and j != i:
+                    continue
+                nodes[j] = [original[0] + dx, original[1] + dy,  # type: ignore[operator]
+                            None if original[2] is None else original[2] + dx,  # type: ignore[operator]
+                            None if original[3] is None else original[3] + dy]  # type: ignore[operator]
+        elif kind in ("out", "pull"):
+            nodes[i][2], nodes[i][3] = x, y
+        elif kind == "in":
+            nodes[i][2], nodes[i][3] = 2 * float(nodes[i][0] or 0.0) - x, 2 * float(nodes[i][1] or 0.0) - y
+        self._edit_refresh()
+
+    def _edit_release(self, _event: Any) -> None:
+        moved = self._edit_moved and self._edit_drag is not None
+        self._edit_drag, self._edit_anchor, self._edit_moved = None, None, False
+        if moved:
+            self._edit_commit(_("Edit path"))
+        else:
+            self._edit_refresh()
+
+    def _edit_toggle_smooth(self, i: int) -> None:
+        """Double-click on a node: a corner becomes smooth (handles along its neighbours), a smooth one a corner."""
+        node = self._edit_nodes[i]
+        if node[2] is not None:
+            node[2] = node[3] = None
+        else:
+            count = len(self._edit_nodes)
+            before = self._edit_nodes[(i - 1) % count] if i > 0 or self._edit_closed else node
+            after = self._edit_nodes[(i + 1) % count] if i < count - 1 or self._edit_closed else node
+            tx, ty = float(after[0] or 0.0) - float(before[0] or 0.0), float(after[1] or 0.0) - float(before[1] or 0.0)
+            norm = math.hypot(tx, ty)
+            if norm == 0.0:
+                return
+            reach = min((math.hypot(float(n[0] or 0.0) - float(node[0] or 0.0), float(n[1] or 0.0) - float(node[1] or 0.0))
+                         for n in (before, after) if n is not node), default=norm) / 3.0
+            node[2], node[3] = float(node[0] or 0.0) + tx / norm * reach, float(node[1] or 0.0) + ty / norm * reach
+        self._edit_node = i
+        self._edit_commit(_("Edit path"))
+
+    def _edit_add_node(self, axes: Any, event: Any) -> None:
+        """Double-click on the selected path's line: a corner node where the line is, between its two neighbours."""
+        nodes = self._edit_nodes_typed()
+        pairs = [(i, i + 1) for i in range(len(nodes) - 1)]
+        if self._edit_closed and len(nodes) > 2:
+            pairs.append((len(nodes) - 1, 0))
+        best: tuple[float, int, tuple[float, float]] | None = None
+        for a, b in pairs:
+            segment = build_path([nodes[a], nodes[b]], False).transformed(axes.transData)
+            for polygon in segment.to_polygons(closed_only=False):
+                if len(polygon) < 2:
+                    continue
+                distance, nearest = self._polyline_nearest(polygon, (float(event.x), float(event.y)))
+                if best is None or distance < best[0]:
+                    best = (distance, a, nearest)
+        if best is None or best[0] > 2 * EDIT_HIT_PX:
+            return
+        x, y = axes.transData.inverted().transform(best[2])
+        self._edit_nodes.insert(best[1] + 1, [float(x), float(y), None, None])
+        self._edit_node = best[1] + 1
+        self._edit_commit(_("Add node"))
+
+    def _edit_key(self, key: str) -> None:
+        """Esc: deselect, then put the tool down. Delete/Backspace: the selected node, or the whole path."""
+        if key == "escape":
+            if self._edit_sel is not None:
+                self._edit_deselect()
+            else:
+                self.set_draw_tool(None)
+        elif key in ("delete", "backspace") and self._edit_sel is not None:
+            least = 3 if self._edit_closed else 2
+            if self._edit_node is not None and len(self._edit_nodes) > least:
+                del self._edit_nodes[self._edit_node]
+                self._edit_node = None
+                self._edit_commit(_("Remove node"))
+            else:
+                self._edit_remove_path()
+
+    def _edit_write(self, label: str, change: Any) -> bool:
+        """Apply *change(paths, index)* to the axis' stored paths, undoably, then redraw the chart."""
+        if self._edit_sel is None:
+            return False
+        axis_id, index = self._edit_sel
+        try:
+            self._repo.snapshot_for_undo(self._repo.DESCRIPTOR_TABLES, label=label)
+            options = dict(self._repo.get_axis_options(int(axis_id)) or {})
+            paths = list(options.get("paths") or [])
+            change(paths, index)
+            options["paths"] = paths
+            self._repo.set_axis_options(int(axis_id), options)
+        except Exception:
+            applogger.exception("Could not edit the path.")
+            return False
+        self.reload()
+        self.figure_edited.emit()
+        return True
+
+    def _edit_commit(self, label: str) -> None:
+        """Store the working nodes as the selected path's points."""
+        points = format_nodes(self._edit_nodes_typed())
+
+        def change(paths: list[Any], index: int) -> None:
+            paths[index] = {**paths[index], "points": points}
+
+        self._edit_write(label, change)
+
+    def _edit_remove_path(self) -> None:
+        def change(paths: list[Any], index: int) -> None:
+            del paths[index]
+
+        selected = self._edit_sel
+        if self._edit_write(_("Delete path"), change) and selected is not None:
+            self._edit_sel = None  # the paths after it moved up: nothing is selected any more
+            self._edit_deselect()
 
     # ------------------------------------------------------------------
     # What is stored

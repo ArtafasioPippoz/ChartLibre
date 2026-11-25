@@ -111,8 +111,17 @@ class _Panel(DrawToolsMixin):
         self._init_draw_tools()
 
     def reload(self) -> None:
+        """As the panel's: the preview is dropped, the stored paths are drawn again, the Edit selection comes back."""
         self.reloaded += 1
         self._discard_draw_tools()
+        figure = getattr(self, "_figure", None)
+        if figure is not None:
+            for axes in figure.axes:
+                for patch in list(axes.patches):
+                    patch.remove()
+                BaseAxisRenderer.__new__(BaseAxisRenderer).apply_paths(axes, self._repo.options)
+            figure.canvas.draw()
+            self._edit_restore()
 
     def _show_navigation_message(self, _text: str) -> None:
         pass
@@ -137,13 +146,16 @@ def _setup(tool: str) -> tuple[Any, Any, _Panel]:
     ax._chartlibre_axis_id = 7
     figure.canvas.draw()
     panel = _Panel()
+    panel._figure = figure
     panel.set_draw_tool(tool)
     return figure, ax, panel
 
 
 def _event(ax: Any, x: float, y: float, **extra: Any) -> Any:
     px, py = ax.transData.transform((x, y))
-    return SimpleNamespace(inaxes=ax, xdata=x, ydata=y, x=px, y=py, button=1, key=None, dblclick=False, **extra)
+    fields: dict[str, Any] = {"inaxes": ax, "xdata": x, "ydata": y, "x": px, "y": py, "button": 1, "key": None,
+                              "dblclick": False}
+    return SimpleNamespace(**{**fields, **extra})
 
 
 def _click(panel: _Panel, ax: Any, x: float, y: float) -> None:
@@ -269,6 +281,115 @@ def test_choosing_a_tool_puts_the_other_tools_down_and_nothing_draws_without_one
         plt.close(figure)
 
 
+# ---------------------------------------------------------------- the Edit tool
+def _drawn(points: str = "1,1; 9,1; 9,9", closed: str = "no") -> tuple[Any, Any, _Panel]:
+    """A panel with the Edit tool, and one stored path drawn on its axes the way the renderer draws it."""
+    figure, ax, panel = _setup("edit")
+    panel._repo.options = {"paths": [{"points": points, "closed": closed, "kwargs": {}}]}
+    BaseAxisRenderer.__new__(BaseAxisRenderer).apply_paths(ax, panel._repo.options)
+    figure.canvas.draw()
+    return figure, ax, panel
+
+
+def _points(panel: _Panel) -> str:
+    return panel._repo.options["paths"][0]["points"]
+
+
+def test_edit_selects_the_path_under_the_click_and_a_click_elsewhere_deselects() -> None:
+    figure, ax, panel = _drawn()
+    try:
+        _click(panel, ax, 5, 1)  # on its first segment
+        assert panel._edit_sel == (7, 0) and len(panel._edit_nodes) == 3 and panel._draw_artists
+        _click(panel, ax, 3, 8)  # nowhere near
+        assert panel._edit_sel is None and not panel._draw_artists
+    finally:
+        plt.close(figure)
+
+
+def test_edit_drags_a_node_and_the_whole_path() -> None:
+    figure, ax, panel = _drawn()
+    try:
+        _click(panel, ax, 5, 1)
+        panel._on_draw_press(_event(ax, 9, 1))  # the second node
+        panel._on_draw_motion(_event(ax, 9, 5))
+        panel._on_draw_release(_event(ax, 9, 5))
+        assert _points(panel) == "1,1; 9,5; 9,9" and panel.reloaded == 1
+        panel._on_draw_press(_event(ax, 5, 3))  # the middle of the redrawn line, away from a node: the whole path
+        panel._on_draw_motion(_event(ax, 6, 3))
+        panel._on_draw_release(_event(ax, 6, 3))
+        assert _points(panel) == "2,1; 10,5; 10,9"
+    finally:
+        plt.close(figure)
+
+
+def test_edit_double_click_smooths_a_node_then_drags_its_handle_and_makes_it_a_corner_again() -> None:
+    figure, ax, panel = _drawn()
+    try:
+        _click(panel, ax, 5, 1)
+        panel._on_draw_press(_event(ax, 9, 1, dblclick=True))
+        assert panel._edit_nodes[1][2] is not None and len(_points(panel).split(";")[1].split(",")) == 4
+        hx, hy = panel._edit_nodes[1][2], panel._edit_nodes[1][3]
+        panel._on_draw_press(_event(ax, hx, hy))  # the outgoing handle
+        panel._on_draw_motion(_event(ax, hx, hy + 2))
+        panel._on_draw_release(_event(ax, hx, hy + 2))
+        assert panel._edit_nodes[1][3] == pytest_approx(hy + 2)
+        panel._on_draw_press(_event(ax, 9, 1, dblclick=True))
+        assert panel._edit_nodes[1][2] is None and _points(panel) == "1,1; 9,1; 9,9"
+    finally:
+        plt.close(figure)
+
+
+def pytest_approx(value: float) -> Any:
+    import pytest
+
+    return pytest.approx(value)
+
+
+def test_edit_double_click_on_the_line_adds_a_node() -> None:
+    figure, ax, panel = _drawn()
+    try:
+        _click(panel, ax, 5, 1)
+        panel._on_draw_press(_event(ax, 5, 1, dblclick=True))
+        assert _points(panel) == "1,1; 5,1; 9,1; 9,9" and len(panel._edit_nodes) == 4
+    finally:
+        plt.close(figure)
+
+
+def test_edit_delete_removes_the_selected_node_then_the_path_and_escape_deselects() -> None:
+    figure, ax, panel = _drawn()
+    try:
+        _click(panel, ax, 5, 1)
+        _click(panel, ax, 9, 9)  # selects the last node
+        assert panel._edit_node == 2
+        _key(panel, "delete")
+        assert _points(panel) == "1,1; 9,1"
+        panel._edit_node = None
+        _key(panel, "delete")  # no node selected, or only two left: the path itself goes
+        assert panel._repo.options["paths"] == []
+        figure2, ax2, panel2 = _drawn()
+        try:
+            _click(panel2, ax2, 5, 1)
+            _key(panel2, "escape")
+            assert panel2._edit_sel is None and panel2.draw_tool == "edit"
+            _key(panel2, "escape")
+            assert panel2.draw_tool is None
+        finally:
+            plt.close(figure2)
+    finally:
+        plt.close(figure)
+
+
+def test_edit_picks_inside_a_filled_area_and_the_renderer_tags_its_patches() -> None:
+    figure, ax, panel = _drawn("1,1; 9,1; 9,9; 1,9", "yes")
+    try:
+        assert getattr(ax.patches[0], "_chartlibre_path_index", None) == 0
+        ax.patches[0].set_facecolor((1, 0, 0, 0.3))
+        _click(panel, ax, 5, 5)  # inside, far from the outline
+        assert panel._edit_sel == (7, 0)
+    finally:
+        plt.close(figure)
+
+
 # ---------------------------------------------------------------- in the real chart panel
 import time  # noqa: E402
 from collections.abc import Iterator  # noqa: E402
@@ -310,7 +431,7 @@ def _mouse(panel: ChartPanel, name: str, x: float, y: float) -> None:
 def test_the_pill_has_the_draw_button_with_every_tool_in_its_menu(real_panel: ChartPanel) -> None:
     button = real_panel._draw_button
     assert isinstance(button, QToolButton) and button.menu() is not None
-    assert set(real_panel._draw_actions) == {"path", "area", "rectangle", "ellipse", "arrow", "annotation", "ruler", "hline", "vline"}
+    assert set(real_panel._draw_actions) == {"edit", "path", "area", "rectangle", "ellipse", "arrow", "annotation", "ruler", "hline", "vline"}
     real_panel._draw_actions["area"].trigger()
     assert real_panel.draw_tool == "area" and button.isChecked() and real_panel._draw_actions["area"].isChecked()
     button.click()  # clicking the checked button puts the tool down

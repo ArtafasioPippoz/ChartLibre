@@ -27,6 +27,7 @@ APP: str = '<path d="M11 5H7v14h4"/><path d="M4 9h3M4 15h3"/><path d="M10 16l5-6
 _FILL = 'fill="#808080" fill-opacity=".25"'
 
 DRAW_TOOLS: dict[str, str] = {
+    "edit": f'<path d="M4 18C8 4 16 4 20 14"/><rect x="2.5" y="16.5" width="3.5" height="3.5" {_FILL}/><rect x="18" y="12.5" width="3.5" height="3.5" {_FILL}/>',
     "path": '<path d="M4 18C6 6 14 4 17 12l3 7"/><circle cx="4" cy="18" r="1.6"/><circle cx="17" cy="12" r="1.6"/>',
     "area": f'<path d="M4 18C6 6 14 4 17 12l3 7z" {_FILL}/>',
     "rectangle": f'<rect x="3.5" y="6" width="17" height="12" rx="1" {_FILL}/>',
