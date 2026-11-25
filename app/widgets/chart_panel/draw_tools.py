@@ -92,7 +92,8 @@ def tool_label(tool_id: str) -> str:
 def tool_hint(tool_id: str) -> str:
     """What the tool does with the mouse and keys, one line (translated)."""
     return {
-        "edit": _("Click a path · drag nodes and handles · double-click: add or smooth · Delete: remove · Esc"),
+        "edit": _("Click a path, an arrow, a note or a ruler · drag nodes and handles · double-click: add or smooth · "
+                  "Delete: remove · Esc"),
         "path": _("Click: corner · drag: curve · Enter: finish · C: close · Esc: cancel"),
         "area": _("Click: corner · drag: curve · Enter: finish · Esc: cancel"),
         "rectangle": _("Drag from one corner to the opposite one · Esc: cancel"),
@@ -144,6 +145,9 @@ class DrawToolsMixin:
         #: The Edit tool: (axis id, index in the axis' "paths") of the selected path, its working nodes and whether
         #: it is closed, the selected node, the drag in progress (kind, node index) with where it started.
         self._edit_sel: tuple[int, int] | None = None
+        #: The axis option the selection is in: "paths", or "annotations" (an arrow or a text note, whose nodes are
+        #: its point and - for an arrow placed in data coordinates or as an offset - the arrow's tail).
+        self._edit_what: str = "paths"
         self._edit_nodes: list[list[float | None]] = []
         self._edit_closed: bool = False
         self._edit_node: int | None = None
@@ -155,9 +159,9 @@ class DrawToolsMixin:
     def _discard_draw_tools(self) -> None:
         """After figure.clear(): the preview artists are gone with their axes; the active tool stays, and so does
         the Edit tool's selection (_edit_restore shows it again once the figure is drawn)."""
-        selected = self._edit_sel
+        selected, what = self._edit_sel, self._edit_what
         self._draw_reset_progress()
-        self._edit_sel = selected
+        self._edit_sel, self._edit_what = selected, what
 
     # ------------------------------------------------------------------
     # The button and its menu
@@ -483,20 +487,79 @@ class DrawToolsMixin:
     def _edit_nodes_typed(self) -> list[Node]:
         return [(n[0], n[1], n[2], n[3]) for n in self._edit_nodes]  # type: ignore[misc]
 
-    def _edit_load(self, axes: Any, axis_id: int, index: int) -> bool:
-        """Select path *index* of the axis: read its nodes from the stored option. False if there is none."""
+    def _edit_load(self, axes: Any, axis_id: int, index: int, what: str = "paths") -> bool:
+        """Select item *index* of the axis option *what*: read its nodes from the stored option. False if there is none."""
+        if what != "paths":
+            return self._edit_load_item(axes, axis_id, index, what)
         paths = (self._repo.get_axis_options(int(axis_id)) or {}).get("paths") or []
         if not 0 <= index < len(paths) or not isinstance(paths[index], dict):
             return False
         nodes = parse_nodes(paths[index].get("points"))
         if len(nodes) < 2:
             return False
-        self._edit_sel = (int(axis_id), index)
+        self._edit_sel, self._edit_what = (int(axis_id), index), "paths"
         self._edit_nodes = [[x, y, hx, hy] for x, y, hx, hy in nodes]
         self._edit_closed = str(paths[index].get("closed", "yes") or "yes").lower() not in ("no", "false", "0")
         self._edit_node, self._edit_drag, self._edit_moved = None, None, False
         self._draw_axes, self._draw_axis_id = axes, int(axis_id)
         return True
+
+    def _edit_item_nodes(self, axes: Any, what: str, entry: Any) -> list[tuple[float, float]]:
+        """The points of an annotation (its point, then its arrow's tail when it can be placed) or of a measurement
+        (its two ends), in data coordinates; empty when the entry has none that can be used."""
+        if not isinstance(entry, dict):
+            return []
+        try:
+            if what == "measurements":
+                return [(float(entry["x0"]), float(entry["y0"])), (float(entry["x1"]), float(entry["y1"]))]
+            head = (float(entry.get("x", 0.0)), float(entry.get("y", 0.0)))
+        except (KeyError, TypeError, ValueError):
+            return []
+        tail = self._annotation_tail(axes, entry, head)
+        return [head] if tail is None else [head, tail]
+
+    def _edit_load_item(self, axes: Any, axis_id: int, index: int, what: str) -> bool:
+        """Select annotation or measurement *index*: its points become the nodes that can be dragged."""
+        items = (self._repo.get_axis_options(int(axis_id)) or {}).get(what) or []
+        if not 0 <= index < len(items):
+            return False
+        points = self._edit_item_nodes(axes, what, items[index])
+        if not points:
+            return False
+        self._edit_sel, self._edit_what = (int(axis_id), index), what
+        self._edit_nodes = [[x, y, None, None] for x, y in points]
+        self._edit_closed = False
+        self._edit_node, self._edit_drag, self._edit_moved = None, None, False
+        self._draw_axes, self._draw_axis_id = axes, int(axis_id)
+        return True
+
+    @staticmethod
+    def _annotation_tail(axes: Any, entry: dict[str, Any], head: tuple[float, float]) -> tuple[float, float] | None:
+        """Where an arrow annotation's tail (its text) is, in data coordinates; None for a note or a tail in other
+        coordinates (axes fraction...). Offsets are turned into data the way Matplotlib places them."""
+        if str(entry.get("type", "text") or "text").lower() != "arrow":
+            return None
+        kwargs = entry.get("kwargs") if isinstance(entry.get("kwargs"), dict) else {}
+        try:
+            tx, ty = (float(v) for v in kwargs.get("xytext", (10, 10)))
+        except (TypeError, ValueError):
+            return None
+        coords = str(kwargs.get("textcoords", "offset points") or "offset points")
+        if coords == "data":
+            return tx, ty
+        if coords not in ("offset points", "offset pixels"):
+            return None
+        scale = axes.figure.dpi / 72.0 if coords == "offset points" else 1.0
+        px, py = axes.transData.transform(head)
+        x, y = axes.transData.inverted().transform((px + tx * scale, py + ty * scale))
+        return float(x), float(y)
+
+    def _edit_annotation_artist(self) -> Any | None:
+        """The drawn artist of the selected annotation, on the selection's axes."""
+        if self._draw_axes is None or self._edit_sel is None:
+            return None
+        return next((t for t in self._draw_axes.texts
+                     if getattr(t, "_chartlibre_annotation_index", None) == self._edit_sel[1]), None)
 
     def _edit_restore(self) -> None:
         """After a render: show the selected path's nodes again, or forget it if it is gone."""
@@ -504,7 +567,7 @@ class DrawToolsMixin:
             return
         axis_id, index = self._edit_sel
         axes = next((a for a in self._figure.axes if getattr(a, "_chartlibre_axis_id", None) == axis_id), None)
-        if axes is None or not self._edit_load(axes, axis_id, index):
+        if axes is None or not self._edit_load(axes, axis_id, index, self._edit_what):
             self._edit_sel = None
             return
         self._edit_refresh()
@@ -521,11 +584,32 @@ class DrawToolsMixin:
             self._canvas.draw_idle()
             return
         nodes = self._edit_nodes_typed()
-        if self._edit_drag is not None and self._edit_moved:
+        if self._edit_what != "paths":
+            if self._edit_drag is not None and self._edit_moved:
+                if self._edit_what == "annotations":
+                    self._edit_move_annotation_artist(nodes)
+                if len(nodes) > 1:
+                    self._draw_add(Line2D([n[0] for n in nodes], [n[1] for n in nodes], color=HANDLE_COLOR,
+                                          linewidth=1.2, linestyle="--"))
+        elif self._edit_drag is not None and self._edit_moved:
             self._draw_add(PathPatch(build_path(nodes, self._edit_closed), facecolor="none", edgecolor=HANDLE_COLOR,
                                      linewidth=1.2, linestyle="--"))
         self._draw_handles(nodes, self._edit_node)
         self._canvas.draw_idle()
+
+    def _edit_move_annotation_artist(self, nodes: list[Node]) -> None:
+        """While dragging: put the drawn annotation where its nodes are now (it is redrawn from the store on release)."""
+        artist = self._edit_annotation_artist()
+        if artist is None:
+            return
+        head = (nodes[0][0], nodes[0][1])
+        if hasattr(artist, "xyann"):
+            artist.xy = head
+            if len(nodes) > 1:
+                artist.anncoords = "data"
+                artist.xyann = (nodes[1][0], nodes[1][1])
+        else:
+            artist.set_position(head)
 
     @staticmethod
     def _polyline_nearest(polygon: Any, point: tuple[float, float]) -> tuple[float, tuple[float, float]]:
@@ -560,6 +644,43 @@ class DrawToolsMixin:
                 return int(index)
         return None
 
+    def _edit_item_at(self, axes: Any, axis_id: int, event: Any) -> tuple[str, int] | None:
+        """(option, index) of the annotation or measurement under the pointer: near its line or its point, or on
+        an annotation's text. Annotations first, topmost (last stored) first."""
+        import numpy as np
+
+        point = (float(event.x), float(event.y))
+        options = self._repo.get_axis_options(int(axis_id)) or {}
+        texts = {getattr(t, "_chartlibre_annotation_index", None): t for t in axes.texts}
+        for what in ("annotations", "measurements"):
+            items = options.get(what) or []
+            for index in range(len(items) - 1, -1, -1):
+                points = self._edit_item_nodes(axes, what, items[index])
+                if not points:
+                    continue
+                pixels = np.asarray(axes.transData.transform(points), dtype=float)
+                if len(pixels) > 1:
+                    near = self._polyline_nearest(pixels, point)[0] <= EDIT_HIT_PX
+                else:
+                    near = math.hypot(*(pixels[0] - point)) <= EDIT_HIT_PX
+                artist = texts.get(index) if what == "annotations" else None
+                try:
+                    on_text = bool(artist is not None and artist.get_text()
+                                   and artist.get_window_extent().contains(*point))
+                except Exception:
+                    on_text = False
+                if near or on_text:
+                    return what, index
+        return None
+
+    def _edit_target_at(self, axes: Any, axis_id: int, event: Any) -> tuple[str, int] | None:
+        """(option, index) of what is under the pointer - notes, arrows and rulers first, they sit on top."""
+        target = self._edit_item_at(axes, axis_id, event)
+        if target is not None:
+            return target
+        index = self._edit_path_at(axes, event)
+        return None if index is None else ("paths", index)
+
     def _edit_hit(self, axes: Any, event: Any) -> tuple[str, int] | None:
         """The handle ("out"/"in") or node under the pointer, handles first as they sit on top of the nodes."""
         point = (float(event.x), float(event.y))
@@ -581,6 +702,9 @@ class DrawToolsMixin:
             hit = self._edit_hit(axes, event)
             if hit is not None:
                 kind, i = hit
+                if self._edit_what != "paths":
+                    self._edit_begin("node", i, point, event)
+                    return
                 if event.dblclick and kind == "node":
                     self._edit_toggle_smooth(i)
                     return
@@ -588,17 +712,17 @@ class DrawToolsMixin:
                     kind = "pull"  # Shift on a corner: drag its handles out
                 self._edit_begin(kind, i, point, event)
                 return
-            if self._edit_path_at(axes, event) == self._edit_sel[1]:
-                if event.dblclick:
+            if self._edit_target_at(axes, axis_id, event) == (self._edit_what, self._edit_sel[1]):
+                if event.dblclick and self._edit_what == "paths":
                     self._edit_add_node(axes, event)
                 else:
                     self._edit_node = None
                     self._edit_begin("move", -1, point, event)
                 return
-        index = self._edit_path_at(axes, event)
-        if index is None:
+        target = self._edit_target_at(axes, axis_id, event)
+        if target is None:
             self._edit_deselect()
-        elif self._edit_load(axes, axis_id, index):
+        elif self._edit_load(axes, axis_id, target[1], target[0]):
             self._edit_refresh()
 
     def _edit_begin(self, kind: str, index: int, point: tuple[float, float], event: Any) -> None:
@@ -640,7 +764,8 @@ class DrawToolsMixin:
         moved = self._edit_moved and self._edit_drag is not None
         self._edit_drag, self._edit_anchor, self._edit_moved = None, None, False
         if moved:
-            self._edit_commit(_("Edit path"))
+            self._edit_commit({"annotations": _("Move annotation"), "measurements": _("Move measurement")}
+                              .get(self._edit_what, _("Edit path")))
         else:
             self._edit_refresh()
 
@@ -694,7 +819,7 @@ class DrawToolsMixin:
                 self.set_draw_tool(None)
         elif key in ("delete", "backspace") and self._edit_sel is not None:
             least = 3 if self._edit_closed else 2
-            if self._edit_node is not None and len(self._edit_nodes) > least:
+            if self._edit_what == "paths" and self._edit_node is not None and len(self._edit_nodes) > least:
                 del self._edit_nodes[self._edit_node]
                 self._edit_node = None
                 self._edit_commit(_("Remove node"))
@@ -702,26 +827,44 @@ class DrawToolsMixin:
                 self._edit_remove_path()
 
     def _edit_write(self, label: str, change: Any) -> bool:
-        """Apply *change(paths, index)* to the axis' stored paths, undoably, then redraw the chart."""
+        """Apply *change(items, index)* to the axis' stored paths or annotations, undoably, then redraw the chart."""
         if self._edit_sel is None:
             return False
         axis_id, index = self._edit_sel
+        key = self._edit_what
         try:
             self._repo.snapshot_for_undo(self._repo.DESCRIPTOR_TABLES, label=label)
             options = dict(self._repo.get_axis_options(int(axis_id)) or {})
-            paths = list(options.get("paths") or [])
-            change(paths, index)
-            options["paths"] = paths
+            items = list(options.get(key) or [])
+            change(items, index)
+            options[key] = items
             self._repo.set_axis_options(int(axis_id), options)
         except Exception:
-            applogger.exception("Could not edit the path.")
+            applogger.exception("Could not edit the %s.", key)
             return False
         self.reload()
         self.figure_edited.emit()
         return True
 
     def _edit_commit(self, label: str) -> None:
-        """Store the working nodes as the selected path's points."""
+        """Store the working nodes as the selected path's points, or as the annotation's point and arrow tail."""
+        if self._edit_what != "paths":
+            nodes = self._edit_nodes_typed()
+
+            def place(items: list[Any], index: int) -> None:
+                if self._edit_what == "measurements":
+                    (x0, y0, _h0, _v0), (x1, y1, _h1, _v1) = nodes[0], nodes[1]
+                    items[index] = {**items[index], "x0": float(x0), "y0": float(y0), "x1": float(x1), "y1": float(y1)}
+                    return
+                entry = {**items[index], "x": float(nodes[0][0]), "y": float(nodes[0][1])}
+                if len(nodes) > 1:
+                    kwargs = dict(entry.get("kwargs") or {})
+                    kwargs["xytext"], kwargs["textcoords"] = [float(nodes[1][0]), float(nodes[1][1])], "data"
+                    entry["kwargs"] = kwargs
+                items[index] = entry
+
+            self._edit_write(label, place)
+            return
         points = format_nodes(self._edit_nodes_typed())
 
         def change(paths: list[Any], index: int) -> None:
@@ -734,7 +877,9 @@ class DrawToolsMixin:
             del paths[index]
 
         selected = self._edit_sel
-        if self._edit_write(_("Delete path"), change) and selected is not None:
+        label = {"annotations": _("Delete annotation"), "measurements": _("Delete measurement")}.get(
+            self._edit_what, _("Delete path"))
+        if self._edit_write(label, change) and selected is not None:
             self._edit_sel = None  # the paths after it moved up: nothing is selected any more
             self._edit_deselect()
 

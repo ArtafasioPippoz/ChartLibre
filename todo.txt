@@ -1,6 +1,6 @@
 # ChartLibre — Master plan
 
-**State:** `app/` has 115,797 lines of code in 304 Python files; `dev/tests` has 35,184 lines in 301 files (measured at this commit).
+**State:** `app/` has 115,839 lines of code in 304 Python files; `dev/tests` has 35,184 lines in 300 files (measured at this commit).
 
 This is the only TODO. The work still open lives in the plans under `dev/plans/`. The list below links the plans still to complete, in the order to take them. A plan that is finished leaves this list; its file stays in the history.
 

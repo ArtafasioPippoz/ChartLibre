@@ -475,3 +475,83 @@ def test_every_tool_has_a_drawing_that_renders(qapp) -> None:
     assert ids == set(SVG.DRAW_TOOLS)
     for tool_id in ids:
         assert not tool_icon(tool_id).isNull(), tool_id
+
+
+def _with_items() -> tuple[Any, Any, _Panel]:
+    """An arrow (tail 1,1 -> head 5,5), a text note at 8,2 and a ruler 1,9 -> 4,9, with the Edit tool active."""
+    figure, ax, panel = _setup("edit")
+    panel._repo.options = {
+        "annotations": [
+            {"x": 5.0, "y": 5.0, "type": "arrow", "text": "",
+             "kwargs": {"xytext": [1.0, 1.0], "textcoords": "data", "arrowprops": {"arrowstyle": "-|>"}}},
+            {"x": 8.0, "y": 2.0, "type": "text", "text": "note", "kwargs": {}},
+        ],
+        "measurements": [{"x0": 1.0, "y0": 9.0, "x1": 4.0, "y1": 9.0, "kwargs": {}}],
+    }
+    renderer = BaseAxisRenderer.__new__(BaseAxisRenderer)
+    for index, entry in enumerate(panel._repo.options["annotations"]):
+        renderer.apply_annotation(ax, entry, index=index)
+    figure.canvas.draw()
+    return figure, ax, panel
+
+
+def test_edit_selects_and_drags_an_arrow_by_its_head_its_tail_or_whole() -> None:
+    figure, ax, panel = _with_items()
+    try:
+        _click(panel, ax, 3, 3)  # on the arrow's line
+        assert panel._edit_sel == (7, 0) and panel._edit_what == "annotations" and len(panel._edit_nodes) == 2
+        panel._on_draw_press(_event(ax, 5, 5))  # the head
+        panel._on_draw_motion(_event(ax, 6, 5))
+        panel._on_draw_release(_event(ax, 6, 5))
+        arrow = panel._repo.options["annotations"][0]
+        assert (arrow["x"], arrow["y"]) == (6, 5) and arrow["kwargs"]["xytext"] == [1, 1]
+        panel._on_draw_press(_event(ax, 1, 1))  # the tail
+        panel._on_draw_motion(_event(ax, 2, 1))
+        panel._on_draw_release(_event(ax, 2, 1))
+        assert panel._repo.options["annotations"][0]["kwargs"]["xytext"] == [2, 1]
+        panel._on_draw_press(_event(ax, 4, 3))  # the middle of the line: the whole arrow
+        panel._on_draw_motion(_event(ax, 4, 4))
+        panel._on_draw_release(_event(ax, 4, 4))
+        arrow = panel._repo.options["annotations"][0]
+        assert (arrow["x"], arrow["y"], arrow["kwargs"]["xytext"]) == (6, 6, [2, 2])
+        assert panel._repo.labels[-1] == "Move annotation"
+    finally:
+        plt.close(figure)
+
+
+def test_edit_moves_a_note_and_a_ruler_and_delete_removes_them() -> None:
+    figure, ax, panel = _with_items()
+    try:
+        _click(panel, ax, 8, 2)  # the note's point
+        assert panel._edit_sel == (7, 1) and len(panel._edit_nodes) == 1
+        panel._on_draw_press(_event(ax, 8, 2))
+        panel._on_draw_motion(_event(ax, 7, 3))
+        panel._on_draw_release(_event(ax, 7, 3))
+        note = panel._repo.options["annotations"][1]
+        assert (note["x"], note["y"], note["text"]) == (7, 3, "note")
+        _key(panel, "delete")
+        assert len(panel._repo.options["annotations"]) == 1 and panel._edit_sel is None
+
+        _click(panel, ax, 2.5, 9)  # on the ruler
+        assert panel._edit_what == "measurements" and panel._edit_sel == (7, 0)
+        panel._on_draw_press(_event(ax, 4, 9))  # its second end
+        panel._on_draw_motion(_event(ax, 4, 7))
+        panel._on_draw_release(_event(ax, 4, 7))
+        ruler = panel._repo.options["measurements"][0]
+        assert (ruler["x0"], ruler["y0"], ruler["x1"], ruler["y1"]) == (1, 9, 4, 7)
+        _key(panel, "delete")
+        assert panel._repo.options["measurements"] == [] and panel._repo.labels[-1] == "Delete measurement"
+    finally:
+        plt.close(figure)
+
+
+def test_an_offset_arrow_tail_is_placed_in_data_and_stored_so() -> None:
+    figure, ax, panel = _setup("edit")
+    try:
+        head = (5.0, 5.0)
+        tail = panel._annotation_tail(ax, {"type": "arrow", "kwargs": {"xytext": [0, 0]}}, head)
+        assert tail is not None and abs(tail[0] - 5) < 1e-9 and abs(tail[1] - 5) < 1e-9
+        assert panel._annotation_tail(ax, {"type": "text"}, head) is None
+        assert panel._annotation_tail(ax, {"type": "arrow", "kwargs": {"textcoords": "axes fraction"}}, head) is None
+    finally:
+        plt.close(figure)
