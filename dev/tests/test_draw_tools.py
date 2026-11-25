@@ -344,3 +344,13 @@ def test_pan_puts_the_drawing_tool_down_and_the_tool_puts_pan_down(real_panel: C
     assert real_panel.draw_tool is None and "pan" in str(real_panel._toolbar.mode)
     real_panel._draw_actions["ruler"].trigger()
     assert str(real_panel._toolbar.mode) == "" and real_panel.draw_tool == "ruler"
+
+
+def test_every_tool_has_a_drawing_that_renders(qapp) -> None:
+    from app import SVG
+    from app.widgets.chart_panel.draw_tools import DRAW_TOOLS, tool_icon
+
+    ids = {tool.id for tool in DRAW_TOOLS if tool is not None}
+    assert ids == set(SVG.DRAW_TOOLS)
+    for tool_id in ids:
+        assert not tool_icon(tool_id).isNull(), tool_id
