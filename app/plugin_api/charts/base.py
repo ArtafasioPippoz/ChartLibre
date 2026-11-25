@@ -624,8 +624,9 @@ class BaseAxisRenderer:
         return points
 
     def apply_paths(self, ax: Any, options: dict[str, Any]) -> None:
-        """Draw the polygons and polylines stored in ``options["paths"]``:
-        ``{"points": "x,y; x,y", "closed": "yes"|"no", "kwargs": {...}}``."""
+        """Draw the paths stored in ``options["paths"]``:
+        ``{"points": "x,y; x,y,hx,hy", "closed": "yes"|"no", "kwargs": {...}}`` - a node with four numbers is
+        a smooth (Bezier) one, an area is a closed path with a ``facecolor`` in its kwargs."""
         paths = options.get("paths", [])
         if isinstance(paths, list):
             for path in paths:
@@ -634,7 +635,10 @@ class BaseAxisRenderer:
 
     def apply_path(self, ax: Any, path: dict[str, Any]) -> None:
         """Draw one path, or nothing if it has fewer than two usable points."""
-        points = self.parse_path_points(path.get("points"))
+        from app.plugin_api.charts.path_geometry import build_path, has_curves, parse_nodes
+
+        nodes = parse_nodes(path.get("points"))
+        points = [(x, y) for x, y, _hx, _hy in nodes]
         if len(points) < 2:
             applogger.warning("Skipping a path with fewer than two points: %r", path.get("points"))
             return
@@ -649,9 +653,13 @@ class BaseAxisRenderer:
         kwargs.setdefault("linewidth", 1.6)
         kwargs.setdefault("zorder", 9_000)
         try:
-            from matplotlib.patches import Polygon
+            from matplotlib.patches import PathPatch, Polygon
 
-            ax.add_patch(Polygon(points, closed=closed, **kwargs))
+            if has_curves(nodes):
+                # Smooth nodes: Matplotlib's own cubic Bezier path (see charts.path_geometry).
+                ax.add_patch(PathPatch(build_path(nodes, closed), **kwargs))
+            else:
+                ax.add_patch(Polygon(points, closed=closed, **kwargs))
         except Exception:
             applogger.exception("A path could not be drawn: %r", path)
 
