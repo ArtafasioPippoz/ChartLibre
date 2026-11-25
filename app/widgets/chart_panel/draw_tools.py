@@ -170,10 +170,11 @@ class DrawToolsMixin:
         """The "Draw" button of the navigation pill: the last tool used, with the menu of all of them beside it."""
         button = QToolButton(parent)
         button.setObjectName("chartToolButton")
+        button.setProperty("drawMenu", True)  # its own width and chevron in the style sheets
         button.setCheckable(True)
         button.setAutoRaise(True)
         button.setIconSize(QSize(18, 18))
-        button.setFixedSize(QSize(40, 28))
+        button.setFixedSize(QSize(46, 28))
         button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
         button.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
