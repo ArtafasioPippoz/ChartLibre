@@ -6,7 +6,6 @@ FigureCanvasQTAgg is the scroll area's widget directly.
 """
 from __future__ import annotations
 
-from app.styles.style import field_label
 import math
 from typing import Any, Final
 
@@ -27,7 +26,6 @@ from PySide6.QtWidgets import (
     QAbstractScrollArea,
     QFrame,
     QHBoxLayout,
-    QInputDialog,
     QLabel,
     QMenu,
     QScrollArea,
@@ -54,7 +52,6 @@ from app.styles.style import (
     create_toolbar_button,
     theme_is_dark,
 )
-from app.styles.style import action as catalogue_action
 from app.utils.config import get_section, update_section
 from app.utils.i18n import _
 from app.widgets.chart_panel.canvas import ChartCanvas
@@ -1944,17 +1941,6 @@ class ChartPanel(DrawToolsMixin, ChartToolsMixin, QFrame):
                 MenuItem(_("Reload"), _("Reload chart"), PySide6.QtGui.QKeySequence.StandardKey.Refresh, self.reload,False,"reload"),
                 MenuItem(_("Export report…"), _("This chart and its notes as an HTML or PDF report, like File > Export for the whole project"), None, self.export_report, False, "project_report"),
                 MenuItem(_("Export view as CSV…"),_("Save the rows currently on screen as a CSV file"),None,self.export_view_as_csv,False,"export_csv"),
-                MenuItem(
-                    text=catalogue_action("graph_template").translated_text(),
-                    tooltip=catalogue_action("graph_template").translated_description(),
-                    icon="graph_template",
-                    submenu=[
-                        MenuItem(_("Save this look as a template…"), _("Keep this figure's style, axes and series look under a name"), None, self.save_as_template),
-                        MenuItem(_("Apply a template…"), _("Give this figure the look of a saved template; its data, titles and labels stay"), None, self.apply_saved_template),
-                        None,
-                        MenuItem(_("Delete a template…"), _("Forget a saved template"), None, self.delete_saved_template),
-                    ],
-                ),
                 None,
                 MenuItem(
                     text=_("Crosshair"),
@@ -2057,20 +2043,6 @@ class ChartPanel(DrawToolsMixin, ChartToolsMixin, QFrame):
             tooltip=_("A line along the whole axes, at this y."),
             key=None,
             action=lambda: self._add_reference_line(axis_id, "horizontal", y_value),
-        )
-        create_menu_item(
-            icons=CONTEXT_MENU_ICONS,
-            parent=self,
-            menu=menu,
-            icon="add.annotation",
-            checkable=False,
-            text=_("Add annotation here…"),
-            tooltip=_("A text note pinned to this point: x = {x}, y = {y}.").format(
-                x=axis_text(axes.xaxis, x_value),
-                y=axis_text(axes.yaxis, y_value),
-            ),
-            key=None,
-            action=lambda: self._add_annotation(axis_id, x_value, y_value),
         )
         menu.addSeparator()
         self._add_measure_menu_items(menu, axes, axis_id, x_value, y_value)
@@ -2224,46 +2196,3 @@ class ChartPanel(DrawToolsMixin, ChartToolsMixin, QFrame):
         )
         self.reload()
         self.figure_edited.emit()
-
-    def _add_annotation(self, axis_id: int, x_value: float, y_value: float) -> None:
-        """Prompt for text and pin a note to the clicked point, then redraw.
-
-        Writes the same "annotations" key the Overlay properties panel edits,
-        so a note dropped here can be restyled, moved or deleted there - see
-        BaseAxisRenderer.apply_annotations. Only the position and the text are
-        decided here; the type is a plain text note.
-        """
-        text, accepted = QInputDialog.getText(
-            self, _("Add annotation"), field_label(_("Annotation text"))
-        )
-        if not accepted or not text.strip():
-            return
-
-        try:
-            self._repo.snapshot_for_undo(
-                self._repo.DESCRIPTOR_TABLES,
-                label=_("Add annotation"),
-            )
-            options = dict(self._repo.get_axis_options(int(axis_id)) or {})
-            annotations = list(options.get("annotations") or [])
-            annotations.append(
-                {
-                    "x": float(x_value),
-                    "y": float(y_value),
-                    "type": "text",
-                    "text": text.strip(),
-                    "kwargs": {},
-                }
-            )
-            options["annotations"] = annotations
-            self._repo.set_axis_options(int(axis_id), options)
-        except Exception:
-            applogger.exception("Could not add an annotation.")
-            return
-
-        applogger.info(
-            "Added an annotation at (%g, %g) on axis %s", x_value, y_value, axis_id
-        )
-        self.reload()
-        self.figure_edited.emit()
-

@@ -112,6 +112,9 @@ class FigurePropertiesWidget(BaseProperties):
     #: A figure template to apply (its file's path), and a name to save this figure as one under.
     template_requested = Signal(str)
     template_save_requested = Signal(str)
+    #: A saved look (app.utils.graph_templates) to put on this figure, by name; a name to save its look under.
+    look_template_requested = Signal(str)
+    look_template_save_requested = Signal(str)
     #: Emitted with a mosaic text ("AAB;CCB") to arrange the axes by (layout_presets.plan_mosaic).
     layout_mosaic_requested = Signal(str)
 
@@ -604,6 +607,15 @@ class FigurePropertiesWidget(BaseProperties):
             self._journal_combo.addItem(_(label), width)
         self._journal_combo.setToolTip(_("Set the width a journal's column asks for; the height keeps the proportions."))
         self._journal_combo.activated.connect(self._on_journal_width_selected)
+        # Saved looks - style, axes and series colours and markers - to apply, save or forget.
+        # Its own row: a look leaves the layout alone, which is what the Preset combo's templates carry.
+        self._look_combo = QComboBox(opts_section)
+        self._configure_combo_width(self._look_combo, minimum_contents_length=14)
+        self._look_combo.setToolTip(
+            _("Give this figure the look of a saved template - style, axes and series colours and markers; its data, titles and labels stay.")
+        )
+        self._fill_look_combo()
+        self._look_combo.activated.connect(self._on_look_selected)
         # A line round the whole figure. (Matplotlib's frameon is the figure's
         # background, which on a white page showed no change at all.)
         self._fig_frameon.setToolTip(_("Draw a line round the whole figure"))
@@ -669,6 +681,7 @@ class FigurePropertiesWidget(BaseProperties):
             (_("Width"), self._fig_width_cm),
             (_("Height"), self._fig_height_cm),
             (_("Template"), self._journal_combo),
+            (_("Look"), self._look_combo),
             (_("Figure layout"), self._fig_layout_mode),
             (_("Border"), self._fig_frameon),
         ):
@@ -1153,6 +1166,55 @@ class FigurePropertiesWidget(BaseProperties):
         self._fig_width_cm.setValue(float(width))
         if old_width > 0:
             self._fig_height_cm.setValue(round(old_height * float(width) / old_width, 2))
+
+    #: The look combo's data for "save this look" and "delete one"; a saved look's data is its name.
+    SAVE_LOOK = "\0save-look"
+    DELETE_LOOK = "\0delete-look"
+
+    def _fill_look_combo(self) -> None:
+        """A prompt, the saved looks, then "Save this look as a template..." and "Delete a template..."."""
+        from app.utils import graph_templates
+
+        combo = self._look_combo
+        combo.blockSignals(True)
+        try:
+            combo.clear()
+            combo.addItem(_("Apply a look…"), None)
+            names = graph_templates.list_templates()
+            for name in names:
+                combo.addItem(name, name)
+            combo.insertSeparator(combo.count())
+            combo.addItem(_("Save this look as a template…"), self.SAVE_LOOK)
+            if names:
+                combo.addItem(_("Delete a template…"), self.DELETE_LOOK)
+        finally:
+            combo.blockSignals(False)
+
+    def _on_look_selected(self, _index: int) -> None:
+        """Apply the look picked, or save or delete one; the combo back on its prompt either way."""
+        from app.utils import graph_templates
+
+        choice = self._look_combo.currentData()
+        self._look_combo.setCurrentIndex(0)
+        if not choice or self._repo is None or self._figure_id is None:
+            return
+        names = graph_templates.list_templates()
+        if choice == self.SAVE_LOOK:
+            title = self._repo.get_figure_title(self._figure_id) or _("My template")
+            name, accepted = QInputDialog.getItem(
+                self, _("Save as template"), _("Template name (an existing name is replaced):"),
+                names or [title], 0, True,
+            )
+            if accepted and str(name).strip():
+                self.look_template_save_requested.emit(str(name).strip())
+        elif choice == self.DELETE_LOOK:
+            name, accepted = QInputDialog.getItem(self, _("Delete a template"), field_label(_("Template")), names, 0, False)
+            if accepted:
+                graph_templates.delete_template(str(name))
+                applogger.info("Graph template %r deleted.", name)
+        else:
+            self.look_template_requested.emit(str(choice))
+        self._fill_look_combo()
 
     #: The combo's data for a template (a prefix before its path) and for "save one".
     TEMPLATE_PREFIX = "template:"

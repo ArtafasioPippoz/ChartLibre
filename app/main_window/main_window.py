@@ -2678,6 +2678,8 @@ class MainWindow(QMainWindow):
         self._figure_widget.layout_mosaic_requested.connect(self._on_layout_mosaic_requested)
         self._figure_widget.template_requested.connect(self._on_template_requested)
         self._figure_widget.template_save_requested.connect(self._on_template_save_requested)
+        self._figure_widget.look_template_requested.connect(self._on_look_template_requested)
+        self._figure_widget.look_template_save_requested.connect(self._on_look_template_save_requested)
         self._figure_widget.figure_options_requested.connect(self._on_figure_options_requested)
         self._axis_widget.axis_selected.connect(self._on_axis_selected)
         # Chosen here, shown there: the chart highlights the axis or series for a moment (S-01).
@@ -3000,6 +3002,41 @@ class MainWindow(QMainWindow):
             return
         path = figure_templates.save(figure_templates.to_template(descriptor, name))
         applogger.info(_("Template saved: {path}").format(path=path))
+
+    def _on_look_template_requested(self, name: str) -> None:
+        """Give the current figure the saved look *name*, one undo step; its data, titles and labels stay."""
+        from app.utils import graph_templates
+
+        if self._properties_figure_id is None:
+            return
+        try:
+            template = graph_templates.load_template(name)
+            self._snapshot_descriptors(_("Apply template"))
+            changed = graph_templates.apply_template(self._repo, int(self._properties_figure_id), template)
+        except (OSError, ValueError, DatabaseError):
+            applogger.exception("Could not apply the template %r", name)
+            QMessageBox.warning(self, _("Apply a template"), _("The template could not be applied; see the log."))
+            return
+        applogger.info("Graph template %r applied to figure %s (%d items).", name, self._properties_figure_id, changed)
+        self._reload_property_widgets()
+        self._redraw_properties_chart()
+
+    def _on_look_template_save_requested(self, name: str) -> None:
+        """The current figure's look - style, axes, series - saved as graph template *name*."""
+        from app.utils import graph_templates
+
+        if self._properties_figure_id is None:
+            return
+        descriptor = self._repo.load_figure_descriptor(figure_id=int(self._properties_figure_id))
+        if descriptor is None:
+            return
+        try:
+            path = graph_templates.save_template(name, graph_templates.template_from_figure(descriptor))
+        except OSError:
+            applogger.exception("Could not save the template %r", name)
+            show_message(self, "chart.save_failed")
+            return
+        applogger.info("Graph template %r saved: %s", name, path)
 
     def _on_layout_preset_requested(self, preset: str) -> None:
         """Arrange every axis of the current figure using *preset*.

@@ -75,22 +75,59 @@ def test_a_template_carries_the_look_and_not_the_content(showcase, tmp_path: Pat
     assert gt.list_templates(tmp_path) == []
 
 
-def test_applying_from_the_chart_menu_can_be_undone(qapp, showcase, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_the_figure_properties_apply_save_and_delete_a_look_and_apply_undoes(qapp, showcase, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """The look templates live in the Figure properties' Look row, not in the chart's menu."""
+    from types import SimpleNamespace
+
     from PySide6.QtWidgets import QInputDialog
 
-    from app.widgets.chart_panel import ChartPanel
+    from app.main_window.main_window import MainWindow
+    from app.widgets.chart_properties.figure_properties import FigurePropertiesWidget
 
     repo, _ids = showcase
     source = _scatter_figure(repo, "menu source", title="S", style={"color": "#2ca02c"}, axis_options={"grid": True})
     target = _scatter_figure(repo, "menu target", title="T", style={}, axis_options={})
     monkeypatch.setattr(gt, "TEMPLATES_DIR", tmp_path)
-    gt.save_template("Green", gt.template_from_figure(repo.load_figure_descriptor(figure_id=source)), tmp_path)  # pyright: ignore[reportArgumentType]
+    panel = FigurePropertiesWidget(None)
+    panel._repo, panel._figure_id = repo, source
+    combo = panel._look_combo
+    window = SimpleNamespace(
+        _repo=repo, _properties_figure_id=source,
+        _snapshot_descriptors=lambda label: repo.snapshot_for_undo(repo.DESCRIPTOR_TABLES, label=label),
+        _reload_property_widgets=lambda: None, _redraw_properties_chart=lambda: None,
+    )
+    panel.look_template_save_requested.connect(lambda name: MainWindow._on_look_template_save_requested(window, name))  # pyright: ignore[reportArgumentType]
+    panel.look_template_requested.connect(lambda name: MainWindow._on_look_template_requested(window, name))  # pyright: ignore[reportArgumentType]
+
+    def pick(data: object) -> None:
+        index = combo.findData(data)
+        assert index > 0
+        combo.setCurrentIndex(index)
+        combo.activated.emit(index)
+        assert combo.currentIndex() == 0
+
+    assert combo.findData(panel.DELETE_LOOK) < 0  # nothing saved yet, nothing to delete
     monkeypatch.setattr(QInputDialog, "getItem", staticmethod(lambda *_a, **_k: ("Green", True)))
-    panel = ChartPanel(repo, target)
-    panel.apply_saved_template()
+    pick(panel.SAVE_LOOK)
+    assert gt.list_templates(tmp_path) == ["Green"] and combo.findData("Green") > 0
+
+    panel._figure_id = window._properties_figure_id = target
+    pick("Green")
     assert repo.load_figure_descriptor(figure_id=target).axes[0].series[0].options["color"] == "#2ca02c"  # pyright: ignore[reportOptionalMemberAccess]
     assert repo.undo_last() is not None
     assert "color" not in (repo.load_figure_descriptor(figure_id=target).axes[0].series[0].options or {})  # pyright: ignore[reportOptionalMemberAccess]
+
+    pick(panel.DELETE_LOOK)
+    assert gt.list_templates(tmp_path) == [] and combo.findData("Green") < 0
+    panel.close()
+
+
+def test_the_chart_menus_no_longer_carry_templates_or_add_annotation(qapp, showcase) -> None:
+    from app.widgets.chart_panel import ChartPanel
+
+    repo, ids = showcase
+    panel = ChartPanel(repo, next(iter(ids.values())))
+    assert not hasattr(panel, "apply_saved_template") and not hasattr(panel, "_add_annotation")
     panel.close()
 
 

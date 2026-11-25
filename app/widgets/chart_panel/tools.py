@@ -1,9 +1,8 @@
 """The chart panel's tools and view: interactive tools (crosshair, dragged annotations, box selection,
 live updates, ruler), resize modes, zoom, background and the figure's geometry, and what the panel
-does to its chart (copy, save, export, templates, delete)."""
+does to its chart (copy, save, export, delete)."""
 from __future__ import annotations
 
-from app.styles.style import field_label
 import csv
 import html
 import json
@@ -20,15 +19,13 @@ from PySide6.QtWidgets import (
     QApplication,
     QFileDialog,
     QFrame,
-    QInputDialog,
-    QMessageBox,
     QSizePolicy,
     QWidget,
 )
 
 from app.data.data_source import quote_identifier
 from app.data.repo.function_sql import function_names
-from app.data.sqlite_repo import ROW_ID, DatabaseError
+from app.data.sqlite_repo import ROW_ID
 from app.logs.logger import applogger
 from app.plugin_api.charts.descriptor_grid import (
     descriptor_axis_count,
@@ -1824,7 +1821,7 @@ class ChartToolsMixin(_Host):
             )
 
     # ==================================================================
-    # Actions: What the panel does to its chart: copy, save, export, templates, delete.
+    # Actions: What the panel does to its chart: copy, save, export, delete.
     # ==================================================================
     # ------------------------------------------------------------------
     # Local actions
@@ -1917,63 +1914,6 @@ class ChartToolsMixin(_Host):
         from app.dialogs.project_report_dialog import ProjectReportDialog
 
         ProjectReportDialog(self._repo, self, figure_id=self._figure_id).exec()
-
-    def save_as_template(self) -> None:
-        """Save this figure's look as a named graph template."""
-        from app.utils import graph_templates
-
-        names = graph_templates.list_templates()
-        name, accepted = QInputDialog.getItem(
-            self, _("Save as template"), _("Template name (an existing name is replaced):"),
-            names or [self._repo.get_figure_title(self._figure_id) or _("My template")], 0, True,
-        )
-        if not accepted or not str(name).strip():
-            return
-        descriptor = self._repo.load_figure_descriptor(figure_id=self._figure_id)
-        if descriptor is None:
-            return
-        try:
-            path = graph_templates.save_template(str(name), graph_templates.template_from_figure(descriptor))
-        except OSError:
-            applogger.exception("Could not save the template %r", name)
-            show_message(self, "chart.save_failed")
-            return
-        applogger.info("Graph template %r saved: %s", name, path)
-
-    def apply_saved_template(self) -> None:
-        """Give this figure the look of a saved template. Undoable."""
-        from app.utils import graph_templates
-
-        names = graph_templates.list_templates()
-        if not names:
-            QMessageBox.information(self, _("Apply a template"), _("No template saved yet: save one from a figure first."))
-            return
-        name, accepted = QInputDialog.getItem(self, _("Apply a template"), field_label(_("Template")), names, 0, False)
-        if not accepted:
-            return
-        try:
-            template = graph_templates.load_template(str(name))
-            self._repo.snapshot_for_undo(self._repo.DESCRIPTOR_TABLES, label=_("Apply template"))
-            changed = graph_templates.apply_template(self._repo, self._figure_id, template)
-        except (OSError, ValueError, DatabaseError):
-            applogger.exception("Could not apply the template %r", name)
-            QMessageBox.warning(self, _("Apply a template"), _("The template could not be applied; see the log."))
-            return
-        applogger.info("Graph template %r applied to figure %s (%d items).", name, self._figure_id, changed)
-        self.reload()
-        self.figure_edited.emit()
-
-    def delete_saved_template(self) -> None:
-        from app.utils import graph_templates
-
-        names = graph_templates.list_templates()
-        if not names:
-            QMessageBox.information(self, _("Delete a template"), _("No template saved yet."))
-            return
-        name, accepted = QInputDialog.getItem(self, _("Delete a template"), field_label(_("Template")), names, 0, False)
-        if accepted:
-            graph_templates.delete_template(str(name))
-            applogger.info("Graph template %r deleted.", name)
 
     def delete_chart(self) -> None:
         """Ask for confirmation and close/delete the current chart panel."""
