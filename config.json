@@ -458,13 +458,6 @@
       "SegoeFluent": "E8A5",
       "ThemeIcon": "document-export"
     },
-    "graph_template": {
-      "text": "Templates",
-      "description": "Save this figure's look - style, axes, series colours and markers - and put it on other figures",
-      "SFSymbol": "paintbrush",
-      "SegoeFluent": "E790",
-      "ThemeIcon": "applications-graphics"
-    },
     "project_images": {
       "text": "Pictures...",
       "description": "The pictures kept in the project for markers drawn as pictures: add, rename, remove, credit",
