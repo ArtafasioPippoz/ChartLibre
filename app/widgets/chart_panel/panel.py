@@ -78,6 +78,7 @@ from app.widgets.chart_panel.constants import (
     TOOLBAR_ACTIONS_TO_REMOVE,
     axis_text,
 )
+from app.widgets.chart_panel.draw_tools import DrawToolsMixin
 from app.widgets.chart_panel.tools import ChartToolsMixin
 from app.widgets.html_results import HtmlResultsView
 
@@ -237,7 +238,7 @@ def _style_steps(
     return True, steps
 
 
-class ChartPanel(ChartToolsMixin, QFrame):
+class ChartPanel(DrawToolsMixin, ChartToolsMixin, QFrame):
     """Embed a repository-backed Matplotlib chart.
 
     Important sizing rule:
@@ -364,6 +365,7 @@ class ChartPanel(ChartToolsMixin, QFrame):
         self._init_hover_readout()
         self._init_ruler()
         self._init_path()
+        self._init_draw_tools()
         self._init_crosshair()
         self._init_annotation_drag()
         self._init_box_selection()
@@ -568,6 +570,11 @@ class ChartPanel(ChartToolsMixin, QFrame):
         self._canvas.mpl_connect("button_press_event", self._on_annotation_drag_press)
         self._canvas.mpl_connect("motion_notify_event", self._on_annotation_drag_motion)
         self._canvas.mpl_connect("button_release_event", self._on_annotation_drag_release)
+        # The drawing tools (the pill's Draw button): press, drag, release and the keys, while one is active.
+        self._canvas.mpl_connect("button_press_event", self._on_draw_press)
+        self._canvas.mpl_connect("motion_notify_event", self._on_draw_motion)
+        self._canvas.mpl_connect("button_release_event", self._on_draw_release)
+        self._canvas.mpl_connect("key_press_event", self._on_draw_key)
         # Box selection: an alternative tool, toggled on from the actions
         # menu - see _on_annotation_drag_press's own guard for why the two
         # never fire on the same drag.
@@ -629,7 +636,9 @@ class ChartPanel(ChartToolsMixin, QFrame):
         """Show what Matplotlib's navigation says - the cursor's x and y, the active tool - beside the buttons."""
         label = getattr(self, "_coordinates_label", None)
         if label is not None:
-            label.setText(" ".join(str(text or "").split()))
+            hint = self._draw_hint()
+            reading = " ".join(str(text or "").split())
+            label.setText(f"{reading}    ·    {hint}" if hint and reading else (hint or reading))
 
     def _build_navigation_pill(self, parent: QWidget) -> QFrame:
         """The chart's navigation buttons in one rounded group: reset, back, forward | pan, zoom."""
@@ -663,6 +672,14 @@ class ChartPanel(ChartToolsMixin, QFrame):
             button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
             button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
             layout.addWidget(button)
+        # The drawing tools: one button, the last tool used, with the menu of the others.
+        separator = QFrame(pill)
+        separator.setObjectName("chartNavSeparator")
+        separator.setFixedSize(1, 16)
+        layout.addSpacing(3)
+        layout.addWidget(separator, 0, Qt.AlignmentFlag.AlignVCenter)
+        layout.addSpacing(3)
+        layout.addWidget(self._build_draw_button(pill))
         # Copy and Save, out of the menu: after the navigation, before Delete.
         separator = QFrame(pill)
         separator.setObjectName("chartNavSeparator")
@@ -861,6 +878,7 @@ class ChartPanel(ChartToolsMixin, QFrame):
         self._discard_hover_annotation()
         self._discard_ruler()
         self._discard_path()
+        self._discard_draw_tools()
         self._discard_crosshair()
         self._discard_annotation_drag()
         self._discard_box_selection()
@@ -1134,7 +1152,7 @@ class ChartPanel(ChartToolsMixin, QFrame):
             return
         if abs(event.x - start[0]) > self.CLICK_SLOP_PX or abs(event.y - start[1]) > self.CLICK_SLOP_PX:
             return
-        if str(getattr(self._toolbar, "mode", "")) != "" or getattr(self, "_select_mode_enabled", False):
+        if str(getattr(self._toolbar, "mode", "")) != "" or getattr(self, "_select_mode_enabled", False) or self._draw_tool is not None:
             return
         axes, part = event.inaxes, None
         if axes is None:
@@ -1150,7 +1168,7 @@ class ChartPanel(ChartToolsMixin, QFrame):
         """Esc on the chart goes back to the figure, as a click outside every axis would."""
         if event.key != "escape":
             return
-        if str(getattr(self._toolbar, "mode", "")) != "" or getattr(self, "_select_mode_enabled", False):
+        if str(getattr(self._toolbar, "mode", "")) != "" or getattr(self, "_select_mode_enabled", False) or self._draw_tool is not None:
             return
         self.chart_object_clicked.emit({"axis_id": None, "series": None, "part": None})
 
@@ -1643,6 +1661,8 @@ class ChartPanel(ChartToolsMixin, QFrame):
         Deliberately does no work: this runs on every mouse move, and a hit
         test here would be the thing that makes the chart feel slow.
         """
+        if self._draw_tool is not None:
+            return  # a drawing tool owns the pointer: no readout over what is being drawn
         self._hover_event = event
         if not self._hover_timer.isActive():
             self._hover_timer.start()

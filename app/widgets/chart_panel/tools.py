@@ -311,7 +311,7 @@ class ChartToolsMixin(_Host):
         drag never has to guess whether it started a selection or moved
         an annotation.
         """
-        if self._select_mode_enabled:
+        if self._select_mode_enabled or getattr(self, "_draw_tool", None) is not None:
             return
         if event.button != 1 or event.inaxes is None:
             return
@@ -418,6 +418,8 @@ class ChartToolsMixin(_Host):
         self._selection_rect_artist = None
 
     def _on_toggle_select_mode(self, checked: bool) -> None:
+        if checked and getattr(self, "_draw_tool", None) is not None:
+            self.set_draw_tool(None)  # one tool owns the mouse at a time
         self._select_mode_enabled = bool(checked)
         if not self._select_mode_enabled:
             self._discard_box_selection()
