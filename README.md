@@ -1,10 +1,10 @@
 # ChartLibre
 
-**A free, open-source desktop application for turning data into scientific charts — without writing code, and without a licence fee.**
+**A free, open-source desktop application for analysing data and turning it into scientific charts — a free alternative to JMP, Minitab, Origin and Prism for everyday work, without writing code and without a licence fee.**
 
-Scientific charting software is usually the expensive part of a small lab's or a student's toolchain. ChartLibre covers the everyday ground those packages are bought for — import a dataset, query it, plot it, fit it, export it at publication resolution — as a plain MIT-licensed desktop application you install and use for free, on Windows and macOS.¹
+Statistics and charting software is usually the expensive part of a small lab's or a student's toolchain. ChartLibre covers the everyday ground those packages are bought for — import a dataset, query it, test it, model it, fit it, plot it, export it at publication resolution — as a plain MIT-licensed desktop application you install and use for free, on Windows and macOS.¹
 
-It is built on Matplotlib, so the charts are Matplotlib charts: the same output a Python script would produce, reached through a GUI instead of code.
+Under the dialogs is the scientific Python stack — NumPy, pandas, SciPy, **statsmodels**, scikit-learn and SymPy — and the charts are **Matplotlib** charts, with broad support for it: 65 chart types, multi-axis layouts, annotations, the full rcParams style editor and a library of ready-made `.mplstyle` styles. You get the same results a Python script would give you, reached through a GUI, and every analysis can be copied out as the Python call that makes it.
 
 ![The ChartLibre main window](docs/manual/screenshots/screenshot_main_window.png)
 
@@ -35,11 +35,14 @@ Free, no account, nothing else to install. Then follow the [installation steps](
 
 ## Why it exists
 
-If you need to plot measurements, fit a curve, find peaks in a spectrum or build a control chart, the usual options are a commercial package (Origin, SigmaPlot, Prism, Igor Pro, KaleidaGraph), a spreadsheet that was never meant for it, or writing Matplotlib by hand every time.
+If you need to compare groups, fit a model, find peaks in a spectrum, build a control chart or plot the result, the usual options are a commercial package (JMP, Minitab, SPSS, Origin, SigmaPlot, Prism, Igor Pro, KaleidaGraph), a spreadsheet that was never meant for it, or writing Python by hand every time.
 
 ChartLibre aims at the first of those without the price tag:
 
 - **Free of charge, and free to modify** — MIT licence, no tiers, no seats, no activation, no account.
+- **Real analysis, not just plots** — statistical tests, regression and generalized models, decision trees and forests, clustering, spectral analysis, control charts, design of experiments. [Guided analysis](#start-from-a-question--guided-analysis) picks the right test from the question you ask.
+- **Open numerics** — the calculations run on NumPy, pandas, SciPy, statsmodels, scikit-learn and SymPy, not a black box: fits are validated against the NIST StRD certified values, and an analysis can be exported as a Python script and run again.
+- **Broad Matplotlib support** — 65 chart types, several axes per figure, annotations and reference lines, a style editor for every rcParam with `.mplstyle` files you can save and share, the bundled SciencePlots styles, and export to PNG, JPEG, SVG and PDF.
 - **No code required** — every chart, fit and transformation is a dialog. The data stays queryable in SQL when you want that power.
 - **Your file stays yours** — a project is one `.dhub` file (a SQLite database) holding *both* the data and every chart definition built on it. Copy it, email it, commit it to git. No proprietary container, no cloud, no lock-in: any SQLite tool can read the data back out.
 - **Publication output** — export to PNG, JPEG, **SVG** and **PDF** at a DPI you choose.
@@ -53,6 +56,19 @@ ChartLibre aims at the first of those without the price tag:
 ---
 
 ## What it does
+
+### The analysis engine — the scientific Python stack, behind dialogs
+
+| Library | What ChartLibre uses it for |
+|---|---|
+| **Matplotlib** | Every chart. 65 chart types, several axes per figure, annotations, a style editor for rcParams, `.mplstyle` files and bundled styles, SVG and PDF export. |
+| **NumPy · pandas** | Tables, columns and every calculation on them. |
+| **SciPy** | Curve fitting, interpolation, smoothing, filtering and spectral analysis, statistical tests. |
+| **statsmodels** | ANOVA and linear models, time-series tests (ADF, KPSS, autocorrelation), smoothing and gauge studies. |
+| **scikit-learn** | Clustering, outlier detection, decision trees, Bootstrap Forest and Boosted Tree, Lasso / Ridge / Elastic Net, Partial Least Squares, Gaussian-process regression, decomposition. |
+| **SymPy** | Your own fit functions as expressions, stored functions, symbolic calculus, and the *SymPy workpad* (Tools) for working with formulas next to the data. |
+
+Every analysis the Tables menu offers is also a Python call — `Analysis("Are there differences?", "Birds", roles={...})` — in the workpad or a script. *Project > History* lists each analysis you ran, with **Copy as Python**, **Save as function** and **Export script**, so a result can be run again on other data.
 
 ### Charts — 65 types
 
