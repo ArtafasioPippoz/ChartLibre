@@ -2,7 +2,7 @@
 
     python3 dev/tools/nist_report.py
 
-The table behind dev/tests/test_nist_validation.py (todo R-13): for every
+The table behind dev/tests/test_nist_validation.py: for every
 dataset, the correct significant digits (LRE) of what ChartLibre computes
 against the certified values NIST publishes. 15 (11 for the nonlinear
 problems) means every digit certified; 0 means none.

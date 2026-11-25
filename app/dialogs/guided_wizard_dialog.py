@@ -1,4 +1,4 @@
-"""The guided analysis wizard: pick columns, then see them and ask of them (G-02).
+"""The guided analysis wizard: pick columns, then see them and ask of them.
 
 Columns first, for someone who knows their data but not the name of the
 function they need:

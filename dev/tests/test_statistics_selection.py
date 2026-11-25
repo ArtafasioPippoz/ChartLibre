@@ -96,7 +96,7 @@ def test_only_the_checked_series_is_measured(
 
 
 # ----------------------------------------------------------------------
-# Controls that do nothing (todo.txt P3-x)
+# Controls that do nothing
 # ----------------------------------------------------------------------
 
 

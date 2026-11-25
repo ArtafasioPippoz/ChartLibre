@@ -1,4 +1,4 @@
-"""Decomposition and manifold learning across several series (todo.txt P2-15).
+"""Decomposition and manifold learning across several series.
 
 Every other operation in this app reads its selected series one at a time,
 each producing its own independent result. This one is the exception: PCA,

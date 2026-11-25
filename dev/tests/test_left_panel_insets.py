@@ -1,4 +1,4 @@
-"""The left panel's cards keep the same gap from its right and bottom edges as from the rail (todo W-01).
+"""The left panel's cards keep the same gap from its right and bottom edges as from the rail.
 
 On Windows' white page the cards ran flush to the panel's right and bottom
 edges; the left side had the rail's spacing, the other two had nothing.
@@ -65,8 +65,7 @@ def test_the_chart_surface_has_round_corners_its_bars_do_not_cover(
     qapp: QApplication, window: MainWindow, request: pytest.FixtureRequest
 ) -> None:
     """Windows: the chart pane is rounded like the left pane (bugs2.pptx), and its jump
-    bar is rounded with it - square, it covered the curve (todo W-02, when the pane
-    was made square instead).
+    bar is rounded with it - square, it covered the curve (when the pane was made square instead).
 
     Windows only: on macOS the chart pane is a plain white surface with no
     outline at all.

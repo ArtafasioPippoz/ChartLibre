@@ -1,4 +1,4 @@
-"""PLS (Analysis): Y from many collinear X - a spectrum's wavelengths - through a few components (AN-17).
+"""PLS (Analysis): Y from many collinear X - a spectrum's wavelengths - through a few components.
 
 Y and the X are cast from the table's columns. The number of components is
 chosen by cross-validation unless set. The report gives the

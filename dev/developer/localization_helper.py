@@ -1,5 +1,4 @@
-"""Edit Localization: a table editor for one language's .po catalogue
-(todo.txt P3-5).
+"""Edit Localization: a table editor for one language's .po catalogue.
 
 Every row is a source string ``_()``/``tr()`` wraps somewhere in the app
 (``i18n.source_translator_calls()``, an AST sweep of the source) unioned

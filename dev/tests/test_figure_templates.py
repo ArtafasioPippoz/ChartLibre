@@ -1,4 +1,4 @@
-"""Figure templates (G-18): a figure's layout and settings saved and applied, no data, no style."""
+"""Figure templates: a figure's layout and settings saved and applied, no data, no style."""
 from __future__ import annotations
 
 from pathlib import Path

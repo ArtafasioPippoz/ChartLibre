@@ -1,4 +1,4 @@
-"""Renderer Helper: scaffold a new chart-type renderer file (todo.txt P3-6).
+"""Renderer Helper: scaffold a new chart-type renderer file.
 
 A chart type lives entirely in one file under app/charts/ (built in) or
 user/charts/ (user-authored, kept out of the app's own source tree - see

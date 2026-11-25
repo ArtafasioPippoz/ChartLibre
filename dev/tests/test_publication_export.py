@@ -1,4 +1,4 @@
-"""Publication export (todo R-09): graph templates and the project report."""
+"""Publication export: graph templates and the project report."""
 from __future__ import annotations
 
 import sys

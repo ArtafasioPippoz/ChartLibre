@@ -67,7 +67,7 @@ def test_the_dialog_applies_an_iir_lowpass(
 
 
 # ----------------------------------------------------------------------
-# The default cutoff follows fs (todo P0-1)
+# The default cutoff follows fs
 # ----------------------------------------------------------------------
 @pytest.fixture
 def dated_series(repo: SqliteRepo):

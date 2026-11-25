@@ -202,7 +202,7 @@ def test_the_dialog_fills_only_empty_cells(qapp, monkeypatch: pytest.MonkeyPatch
 
 
 # ----------------------------------------------------------------------
-# DeepL (todo A-08)
+# DeepL
 # ----------------------------------------------------------------------
 class _Answer:
     """What urlopen returns, as a context manager."""

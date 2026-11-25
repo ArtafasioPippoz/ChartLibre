@@ -26,7 +26,7 @@ from app.styles.style import apply_dialog_shell
 from app.utils import screen_fit
 
 # ======================================================================
-# todo N-12: one factor for every font of a figure, and one per axis.
+# one factor for every font of a figure, and one per axis.
 # (was test_font_scale.py)
 # ======================================================================
 matplotlib.use("Agg")
@@ -279,7 +279,7 @@ EXTRA_THEME_ICON_NAMES: frozenset[str] = frozenset(
         # "x-office-spreadsheet" above, this one for LibreOffice Base's .odb.
         "x-office-database",
         "x-office-spreadsheet",
-        # Developer-menu stubs (todo.txt P3-4/P3-5/P3-6): freedesktop Icon
+        # Developer-menu stubs: freedesktop Icon
         # Naming Specification categories, not covered by Qt's own smaller
         # ThemeIcon enum.
         "applications-development",

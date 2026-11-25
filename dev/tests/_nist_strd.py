@@ -1,4 +1,4 @@
-"""Read the NIST Statistical Reference Datasets in dev/tests/data/nist (todo R-13).
+"""Read the NIST Statistical Reference Datasets in dev/tests/data/nist.
 
 The files are the originals from https://www.itl.nist.gov/div898/strd/,
 unchanged: certified values and data together, so a test can say where

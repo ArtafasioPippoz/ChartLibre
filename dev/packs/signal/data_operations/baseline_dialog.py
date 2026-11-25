@@ -4,7 +4,7 @@ A spectrum, a chromatogram or any similarly peaky series often sits on a
 wandering background - fluorescence, detector drift, scattering - that has
 nothing to do with the peaks themselves. Peak heights, and especially peak
 areas, are wrong until that background is estimated and removed. This is a
-declared prerequisite for meaningful peak areas (see todo.txt P2-3).
+declared prerequisite for meaningful peak areas.
 
 Two estimators, in order of how much they assume:
 

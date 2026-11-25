@@ -1,4 +1,4 @@
-"""Shape-aware anomaly detection in the Outliers dialog (todo.txt P2-15).
+"""Shape-aware anomaly detection in the Outliers dialog.
 
 The four original methods (Z-score, IQR, MAD, rolling median) all test y
 alone. Isolation Forest, Local Outlier Factor, One-Class SVM and Elliptic

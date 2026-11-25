@@ -1,4 +1,4 @@
-"""Animated charts: a figure played through the values of a column, or of a function's parameter (todo I-03).
+"""Animated charts: a figure played through the values of a column, or of a function's parameter.
 
 Two sources of frames, one setting each, kept in the figure's options under ``"animation"``:
 

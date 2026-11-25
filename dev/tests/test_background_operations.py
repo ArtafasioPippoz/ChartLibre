@@ -1,4 +1,4 @@
-"""Preview and Apply on a worker thread (todo R-02): the same tables, Stop, the bar, OK.
+"""Preview and Apply on a worker thread: the same tables, Stop, the bar, OK.
 
 Every other test runs the operations on the GUI thread (see conftest); these
 are marked ``background`` and run them the way the app does.

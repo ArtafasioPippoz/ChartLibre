@@ -1,4 +1,4 @@
-"""What the guided analysis wizard offers for the columns someone picked (G-02).
+"""What the guided analysis wizard offers for the columns someone picked.
 
 Columns first: a person picks one to three columns of a table, and this
 says what can be done with them - charts to see them ("See it") and

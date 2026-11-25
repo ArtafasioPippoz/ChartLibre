@@ -1,4 +1,4 @@
-"""Spreadsheet formats beyond Excel's own: LibreOffice, Excel binary (todo I-01). Parquet and Feather are in the data_formats pack."""
+"""Spreadsheet formats beyond Excel's own: LibreOffice, Excel binary. Parquet and Feather are in the data_formats pack."""
 from __future__ import annotations
 
 import pandas as pd

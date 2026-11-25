@@ -6,8 +6,7 @@ Laplace transform along a vertical line of the s-plane, a Morlet wavelet
 power spectrum, the dominant frequency over time (short-time FFT), and
 auto- and cross-correlation. Plain arrays and a
 :class:`SpectralParams` in, a :class:`Spectrum` out: no Qt, no repository,
-so the same code runs behind the dialog, in a test or on a worker thread
-(todo R-01).
+so the same code runs behind the dialog, in a test or on a worker thread.
 
 A problem with the data or the method is a ``ValueError``. Nothing is
 logged here; the caller decides how to tell the user.

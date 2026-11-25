@@ -86,7 +86,7 @@ def test_every_result_of_a_batch_is_written(repo: SqliteRepo) -> None:
 
 
 # ----------------------------------------------------------------------
-# Applying an operation is one undoable step (todo.txt P2-11)
+# Applying an operation is one undoable step
 # ----------------------------------------------------------------------
 def test_applying_an_operation_can_be_taken_back(qapp, repo, tmp_db_path) -> None:
     """The result table and the series descriptor that draws it go back

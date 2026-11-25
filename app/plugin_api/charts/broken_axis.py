@@ -1,4 +1,4 @@
-"""A broken axis (G-17): the values between two ends left out, the axis drawn on as one.
+"""A broken axis: the values between two ends left out, the axis drawn on as one.
 
 Matplotlib's own example (gallery "Broken axis") draws two axes and hides the
 spines between them. Here it is one axes and a function scale: everything

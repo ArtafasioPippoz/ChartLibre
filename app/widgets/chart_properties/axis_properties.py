@@ -417,7 +417,7 @@ class AxisPropertiesWidget(BaseProperties):
         self._secondary_combo.setToolTip(_("A second scale along the top (x) or the right (y): this axis in other units."))
         for value, text in secondary_axis.conversion_choices():
             self._secondary_combo.addItem(_(text), value)
-        # A broken axis (G-17): the values between two ends left out.
+        # A broken axis: the values between two ends left out.
         self._break_edit = QLineEdit(self)
         self._break_edit.setPlaceholderText(_("from, to"))
         self._break_edit.setToolTip(_("Leave out the values between two ends - 10, 90 - so the two sides fill "

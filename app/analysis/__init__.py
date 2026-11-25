@@ -3,7 +3,7 @@
 Each module takes plain arrays and parameters and returns plain results, so
 the same code runs behind a dialog, in a test, in a script or on a worker
 thread. A dialog's job is to collect the parameters and present the result;
-the arithmetic lives here. See todo.txt R-01.
+the arithmetic lives here.
 """
 
 
@@ -23,7 +23,7 @@ class Stopped(BaseException):
 #: or singular sample (ValueError, numpy's LinAlgError among them), overflow
 #: or a division by zero (ArithmeticError), a solver that does not converge
 #: (RuntimeError). Caught where such data is a normal outcome to report; a
-#: TypeError, AttributeError or NameError is a bug, and propagates (todo R-12).
+#: TypeError, AttributeError or NameError is a bug, and propagates.
 NUMERICAL_FAILURES: tuple[type[Exception], ...] = (ValueError, ArithmeticError, RuntimeError)
 
 

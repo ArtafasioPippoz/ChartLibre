@@ -434,7 +434,7 @@ class ImportDataDialog(SettingsTableDialog):
     def _build_read_card(self, left: QWidget, cfg: dict) -> TitledCard:
         """The Read options card: delimiter, encoding, header and rows to skip."""
         # -- Read options: closed - the delimiter and the encoding are found
-        # by themselves, the header nearly always is the first row (todo H-10).
+        # by themselves, the header nearly always is the first row.
         read = TitledCard(left, _("Read options"), "importReadCard", collapsible=True, collapsed=True)
         options_form = QFormLayout()
         stdSizeAndlayout(options_form)

@@ -1,4 +1,4 @@
-"""Factor Analysis (Analysis): a few hidden factors behind many correlated columns (AN-04).
+"""Factor Analysis (Analysis): a few hidden factors behind many correlated columns.
 
 As JMP's Factor Analysis (Multivariate Methods): the common factors of the
 columns' correlations, by Maximum Likelihood or Principal Axis, rotated so

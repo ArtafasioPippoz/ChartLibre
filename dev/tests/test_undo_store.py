@@ -139,7 +139,7 @@ def test_the_stack_is_capped(connection, store) -> None:
 
 
 # ----------------------------------------------------------------------
-# Descriptor edits and applied operations (todo.txt P2-11)
+# Descriptor edits and applied operations
 # ----------------------------------------------------------------------
 
 

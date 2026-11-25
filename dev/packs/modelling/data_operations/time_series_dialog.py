@@ -1,4 +1,4 @@
-"""Time Series (Analysis): a measure in time order - its autocorrelation, its parts, its forecast (AN-05).
+"""Time Series (Analysis): a measure in time order - its autocorrelation, its parts, its forecast.
 
 As JMP's Time Series platform: Y is the measure, the time column orders it
 (the rows' order without one); an input X gives the cross-correlation. The report gives the autocorrelation and

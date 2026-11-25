@@ -40,7 +40,7 @@ import app.data.descriptors
 
 # Re-exported, not just imported: "from app.data.sqlite_repo import
 # DatabaseReport" is what the rest of the application writes, and the split
-# of its helpers into app/data/repo/ is meant to be invisible from outside (todo.txt N-5).
+# of its helpers into app/data/repo/ is meant to be invisible from outside.
 from app.data.repo.images import ImagesMixin
 from app.data.repo._common import (
     _RETURNS_ROWS_RE,
@@ -242,7 +242,7 @@ class SqliteRepo(TablesMixin, ProjectMixin, ImagesMixin):
     _preview_savepoint_name: str | None = None
 
     # --- series cache -----------------------------------------------------
-    # Holds SeriesFrame, not DataFrame (todo.txt P2-17); .to_pandas() on a
+    # Holds SeriesFrame, not DataFrame; .to_pandas() on a
     # returned frame for a caller that wants one.
     _series_cache: OrderedDict[str, SeriesFrame] = field(default_factory=OrderedDict)
     _series_cache_stamp: tuple[int, int, int] | None = None
@@ -533,7 +533,7 @@ class SqliteRepo(TablesMixin, ProjectMixin, ImagesMixin):
         return SeriesFrame.from_rows(names, rows)
 
     # =====================================================================
-    # SQL guard (todo N-05): only at open and where SQL is written by hand
+    # SQL guard: only at open and where SQL is written by hand
     # =====================================================================
     def refuse_if_blocked(self, sql: str | None) -> None:
         """Raise ValueError for SQL that the opening scan found would write."""

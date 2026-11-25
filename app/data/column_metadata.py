@@ -1,4 +1,4 @@
-"""What a table's columns are, beyond their values: label, unit, notes, modelling type, format (R-08).
+"""What a table's columns are, beyond their values: label, unit, notes, modelling type, format.
 
 As JMP's Column Info. Kept with the table's information (``__table_descriptors__``,
 key "columns": one entry per column name), so it travels with the project and

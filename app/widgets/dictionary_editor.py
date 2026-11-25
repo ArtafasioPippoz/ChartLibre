@@ -149,7 +149,7 @@ _GROUP_ORDER = [
     "Appearance", "Line", "Marker", "Patch", "Error bars", "Geometry",
     "Text", "Behavior", "Other",
 ]
-#: The options nobody changes (todo H-15): real Matplotlib keywords, kept in one
+#: The options nobody changes: real Matplotlib keywords, kept in one
 #: closed group at the bottom - "Advanced" - rather than among the ones in use.
 #: A renderer can send its own there with "advanced": True in the key's spec.
 _ADVANCED_GROUP = "Advanced"

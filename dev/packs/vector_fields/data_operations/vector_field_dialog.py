@@ -1,4 +1,4 @@
-"""Vector Field (I-04): the divergence and curl of a field sampled on a grid, in 2D or 3D.
+"""Vector Field: the divergence and curl of a field sampled on a grid, in 2D or 3D.
 
 Choose the coordinates (x, y, and z for 3D) and the components (u, v, and w).
 app.analysis.vector_calculus differentiates the field; OK writes the nodes

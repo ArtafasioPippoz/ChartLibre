@@ -7,7 +7,7 @@ defined - many are legitimately undefined over part of a range (a log below
 zero, a pole in a rational), and the useful behaviour is to draw the part
 that exists and say how much was dropped. The function is any callable
 ``model(x, parameters)``; where the library of functions lives is not this
-module's business. No Qt, nothing logged (todo R-01).
+module's business. No Qt, nothing logged.
 """
 from __future__ import annotations
 

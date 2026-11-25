@@ -30,10 +30,6 @@ from app.plugin_api.functions.optimizers import (
 Model = Callable[[np.ndarray, np.ndarray], np.ndarray]
 
 
-class FitStopped(Stopped):
-    """The fit was asked to stop before it finished. See app.analysis.Stopped."""
-
-
 @dataclass(slots=True)
 class CurveFit:
     """One fitted (or merely evaluated) model."""
@@ -268,7 +264,7 @@ def confidence_band(
 # ----------------------------------------------------------------------
 @dataclass(frozen=True, slots=True)
 class GlobalLayout:
-    """Where each series' parameters sit in a global fit's vector (R-05).
+    """Where each series' parameters sit in a global fit's vector.
 
     A global fit fits one model to several series at once. A shared
     parameter is one entry for all of them; an unshared one is an entry per
@@ -490,12 +486,12 @@ def fit_curve(
     computed at that point, so a hand-tuned curve still gets error bars.
 
     *should_stop* is polled before every evaluation of the model; when it
-    returns True the fit raises :class:`FitStopped` - how a fit running in
+    returns True the fit raises :class:`Stopped` - how a fit running in
     the background is stopped.
 
     *sigma* is each point's own error - an error-bar column - and weighs
     each residual by 1/sigma; it wins over *weighted*, the relative weights
-    1/|target| for data that has no errors of its own (R-05).
+    1/|target| for data that has no errors of its own.
     """
     if optimizer not in BY_KEY:
         # Before the exact linear path too, which never reaches an optimiser.
@@ -527,7 +523,7 @@ def fit_curve(
 
         def residual_fun(p_free: np.ndarray) -> np.ndarray:
             if should_stop is not None and should_stop():
-                raise FitStopped("The fit was stopped.")
+                raise Stopped("The fit was stopped.")
             p = p0.copy()
             p[free] = p_free
             r = target - model(x, p)

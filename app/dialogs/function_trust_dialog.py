@@ -1,4 +1,4 @@
-"""Ask before a project's stored functions run on this computer (todo ID47).
+"""Ask before a project's stored functions run on this computer.
 
 A stored function - Function's Expression or Code, kept in the project's __sympy__ table - runs its text with
 sympify or exec whenever it is drawn or fitted, and the import guard is no sandbox: a project from someone else

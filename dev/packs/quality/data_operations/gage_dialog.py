@@ -1,4 +1,4 @@
-"""Gage R&R (AN-06): how much of the variation the measuring system adds - JMP's Variability / Gauge Chart.
+"""Gage R&R: how much of the variation the measuring system adds - JMP's Variability / Gauge Chart.
 
 Choose the measurements, the parts and (for reproducibility) the operators; a
 tolerance (USL - LSL) adds % Tolerance. app.analysis.gage gives the variance

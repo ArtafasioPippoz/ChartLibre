@@ -855,7 +855,7 @@ class TablesMixin(_Host):
     def sql_with_row_id(self, sql_query: str) -> str:
         """*sql_query* selecting its table's row id too, as ROW_ID - where a point is one row.
 
-        For a series' query (todo R-07): a point drawn from it then names
+        For a series' query: a point drawn from it then names
         its table row. Left as it is when its rows are not rows of one table
         - a WITH, a join, a union, a grouping or an aggregate - and when it
         selects the row id already. A series over a saved query reads it as a
@@ -1753,7 +1753,7 @@ class TablesMixin(_Host):
         It used to read the whole table and quote the role names as columns:
         another series' rows were searched (and could be hidden), and a role
         naming an alias ("date AS x") was read by SQLite as the text 'x', so
-        no point was usable and nothing was hidden (todo O-01).
+        no point was usable and nothing was hidden.
         """
         assert self._con is not None
         base = self.sql_without_hide_filter(sql_query)

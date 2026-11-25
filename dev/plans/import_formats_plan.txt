@@ -1,4 +1,4 @@
-IMPORT OF MORE FILE FORMATS - IMPLEMENTATION PLAN (todo I-01)
+IMPORT OF MORE FILE FORMATS - IMPLEMENTATION PLAN
 Written 2026-10-19. Status: PLAN ONLY, NOTHING IMPLEMENTED YET (but the two fixes in section 3).
 Wait for the owner's go before coding.
 

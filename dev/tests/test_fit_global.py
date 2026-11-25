@@ -1,4 +1,4 @@
-"""Global fit: several series, some parameters shared (R-05)."""
+"""Global fit: several series, some parameters shared."""
 from __future__ import annotations
 
 from collections.abc import Iterator

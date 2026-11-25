@@ -1,4 +1,4 @@
-"""Rescale or reshape a chart series' Y distribution (todo.txt P2-15).
+"""Rescale or reshape a chart series' Y distribution.
 
 Unlike Calculus or Regression, a transform never changes what x means or
 adds a curve beside the data - it replaces Y with a reshaped version of

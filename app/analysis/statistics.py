@@ -611,7 +611,7 @@ def tukey_hsd(groups: Mapping[str, Any]) -> list[dict[str, Any]]:
 
 
 # ----------------------------------------------------------------------
-# Contingency tables (todo R-04)
+# Contingency tables
 # ----------------------------------------------------------------------
 #: Monte Carlo tables for Fisher's test on tables larger than 2x2, and the
 #: seed that makes its p-value the same every run.
@@ -841,7 +841,7 @@ def stratified_2x2(rows: Any, columns: Any, strata: Any, weights: Any = None) ->
 
 
 # ----------------------------------------------------------------------
-# Two-way ANOVA (todo R-04)
+# Two-way ANOVA
 # ----------------------------------------------------------------------
 def two_way_anova(first: Any, second: Any, response: Any) -> dict[str, Any]:
     """Two factors and their interaction on one response: Type II ANOVA.
@@ -908,7 +908,7 @@ def two_way_anova(first: Any, second: Any, response: Any) -> dict[str, Any]:
 
 
 # ----------------------------------------------------------------------
-# Survival (todo R-04)
+# Survival
 # ----------------------------------------------------------------------
 def survival_summary(time: Any, event: Any, groups: Any = None, *, confidence: float = 0.95) -> dict[str, Any]:
     """Kaplan-Meier per group, with medians, and the log-rank test between them.

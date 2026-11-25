@@ -2,7 +2,7 @@
 
 Two estimators of the slow background under a peaky series - asymmetric
 least squares (Eilers & Boelens 2005) and the rubber band (the lower
-convex hull) - over plain arrays. No Qt, nothing logged (todo R-01); a bad
+convex hull) - over plain arrays. No Qt, nothing logged; a bad
 parameter or too short a series is a ``ValueError``.
 """
 from __future__ import annotations

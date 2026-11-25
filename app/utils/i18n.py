@@ -306,7 +306,7 @@ def _joined_constant(value: ast.AST) -> str:
 TRANSLATED_ATTRIBUTES: frozenset[str] = frozenset({
     "MODEL_LABEL", "MODEL_TOOLTIP",
     # A plugin's own name, sentence and section, and a table analysis' parameters tab:
-    # the panels, the catalogue and the dialogs show them through _() (todo: multilanguage).
+    # the panels, the catalogue and the dialogs show them through _().
     "Name", "Description", "Category", "PARAMETERS_TAB",
     "TITLE", "HINT", "NAME_PLACEHOLDER", "FILE_PLACEHOLDER", "DESCRIPTION_PLACEHOLDER",
     "BAD_FILE_NAME", "FILE_EXISTS", "NAME_TAKEN", "NOT_DISCOVERED",

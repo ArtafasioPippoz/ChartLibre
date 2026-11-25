@@ -1,4 +1,4 @@
-"""Project report: the whole project as one HTML or PDF file (todo R-09).
+"""Project report: the whole project as one HTML or PDF file.
 
 The report is built by app/utils/project_report.py; this asks what to put in
 it and writes it. HTML is one self-contained file, its pictures inside it -

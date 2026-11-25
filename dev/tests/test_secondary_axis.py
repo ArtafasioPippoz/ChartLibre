@@ -1,4 +1,4 @@
-"""A secondary axis as the primary one in other units (G-17)."""
+"""A secondary axis as the primary one in other units."""
 from __future__ import annotations
 
 import numpy as np

@@ -1,4 +1,4 @@
-"""Other statistics programs' files: Stata, SAS, SPSS, R (todo I-01).
+"""Other statistics programs' files: Stata, SAS, SPSS, R.
 
 Read through pandas (Stata and SAS with nothing more; SPSS with pyreadstat) and
 pyreadr for R. Stata's and SPSS' value labels come in as the labels themselves,

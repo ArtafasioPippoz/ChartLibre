@@ -4,7 +4,7 @@ SciPy's k-means and vector quantisation, its hierarchical linkages, and
 scikit-learn's algorithms (k-means, DBSCAN, OPTICS, mean shift, spectral,
 agglomerative, BIRCH, Gaussian mixtures...) over a feature matrix built from a
 series' columns, with stable 1-based cluster ids and an optional time limit.
-No Qt, no repository, nothing logged (todo R-01): a request the data cannot
+No Qt, no repository, nothing logged: a request the data cannot
 meet is a ``ValueError``, a run past its time limit a ``TimeoutError``.
 """
 from __future__ import annotations

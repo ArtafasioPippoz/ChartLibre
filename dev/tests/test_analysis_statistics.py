@@ -1,7 +1,7 @@
 """The statistics engine, checked against published and independent values.
 
 No Qt here: that the calculations run without it is the point of
-app.analysis (todo.txt R-01).
+app.analysis.
 """
 from __future__ import annotations
 

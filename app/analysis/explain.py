@@ -1,4 +1,4 @@
-"""What a fitted model has learned, for any model: permutation importance and partial dependence (AN-18).
+"""What a fitted model has learned, for any model: permutation importance and partial dependence.
 
 Model-agnostic: all either needs is a prediction function over a numeric
 matrix, so the same two answers come out of a tree, a forest, a boosted
@@ -65,7 +65,7 @@ def accuracy(y: np.ndarray, predicted: np.ndarray) -> float:
 
 
 def roc(actual: np.ndarray, probabilities: np.ndarray, levels: list[str]) -> tuple[pd.DataFrame, dict[str, float]]:
-    """ROC curves, one level against the rest each, and their areas (AN-19).
+    """ROC curves, one level against the rest each, and their areas.
 
     *probabilities* is (rows, levels) in *levels*' order. A level absent from
     *actual*, or the only one present, has no curve. With two levels the

@@ -1,4 +1,4 @@
-"""Column Info: one column's name, type and description, as JMP's Column Info dialog (R-08).
+"""Column Info: one column's name, type and description, as JMP's Column Info dialog.
 
 Opened from a column's context menu in the table preview. What it changes:
 

@@ -1,4 +1,4 @@
-"""Broken axis (G-17): the gap between two values takes no room, its ticks are dropped, marks are drawn."""
+"""Broken axis: the gap between two values takes no room, its ticks are dropped, marks are drawn."""
 from __future__ import annotations
 
 import numpy as np

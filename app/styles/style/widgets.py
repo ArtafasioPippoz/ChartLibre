@@ -145,7 +145,7 @@ class TitledCard(QWidget):
 
     *collapsible*: an arrow before the title shows or hides the box - a
     click on the title too - for the options most people leave alone
-    ("More options", todo H-10); *collapsed* is how it starts.
+    ("More options"); *collapsed* is how it starts.
     """
 
     def __init__(

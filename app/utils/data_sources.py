@@ -61,7 +61,7 @@ CLIPBOARD_SOURCE_NAME: str = "from_clipboard"
 #: and what a drop onto the main window is accepted for.  One list: the dialog
 #: filter and the drop test used to be two literals, and a format added to the
 #: reader was a format the window still refused.
-#: The readers here, then every file importer's (app/importers, todo I-01).
+#: The readers here, then every file importer's (app/importers).
 _OWN_SUFFIXES: tuple[str, ...] = (".csv", ".tsv", ".txt", ".xlsx", ".xlsm", ".xls", ".json", ".xml")
 IMPORTABLE_SUFFIXES: tuple[str, ...] = _OWN_SUFFIXES + tuple(
     suffix for suffix in importer_scanner.importer_suffixes() if suffix not in _OWN_SUFFIXES
@@ -394,7 +394,7 @@ def read_sqlite_query(
     "Use a query" option. Whatever *sql* does is on the person who typed it,
     same as any other SQL box in this application; it has to be one SELECT
     (or WITH), and it runs on a read-only connection with SQLite itself
-    refusing anything that writes (todo N-05).
+    refusing anything that writes.
     """
     ensure_read_only_select(sql)
     conn = sqlite3.connect(f"{Path(path).resolve().as_uri()}?mode=ro", uri=True)

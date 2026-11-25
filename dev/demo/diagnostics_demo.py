@@ -5,7 +5,7 @@ a normal Q-Q plot; Michelson's speed of light (NIST's Michelso) for a P-P
 plot; the 6-MP leukaemia trial (Freireich 1963), the textbook Kaplan-Meier
 example; and the BCG vaccine trials (Colditz 1994), the textbook forest
 plot, pooled by DerSimonian and Laird. Every figure carries a note on what
-to look for (todo R-06).
+to look for.
 
     python3 -m dev.demo.diagnostics_demo
 """

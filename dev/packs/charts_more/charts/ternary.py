@@ -1,4 +1,4 @@
-"""Ternary plot: three parts of a whole as a point in a triangle (todo C-02).
+"""Ternary plot: three parts of a whole as a point in a triangle.
 
 As JMP's Graph > Ternary Plot: a mixture's three components (A, B, C, in
 any units - each row is divided by its own sum), each corner one pure

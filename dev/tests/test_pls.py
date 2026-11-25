@@ -1,4 +1,4 @@
-"""PLS (AN-17): the components a synthetic spectrum holds, its band found by VIP; the dialog writes."""
+"""PLS: the components a synthetic spectrum holds, its band found by VIP; the dialog writes."""
 from __future__ import annotations
 
 import time

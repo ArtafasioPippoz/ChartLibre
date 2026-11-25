@@ -4,7 +4,7 @@ Several series are combined into one feature matrix - columns are series,
 rows are a shared grid of x values every series is resampled onto - and
 reduced: PCA, ICA and NMF give components that mean something as a curve
 over the grid; t-SNE, Isomap and LLE give an exploratory 2D embedding of
-the grid samples. Plain arrays in, no Qt, nothing logged (todo R-01); what
+the grid samples. Plain arrays in, no Qt, nothing logged; what
 had to be adjusted to fit the data comes back as notes for the caller to show.
 """
 from __future__ import annotations

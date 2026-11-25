@@ -1,75 +1,27 @@
-# ChartLibre — Prioritized Roadmap
+# ChartLibre — Master plan
 
-**State:** `app/` has 115,803 lines of code in 304 Python files; `dev/tests` has 35,185 lines in 301
- files (measured at this commit).
+**State:** `app/` has 115,797 lines of code in 304 Python files; `dev/tests` has 35,184 lines in 301 files (measured at this commit).
 
-**Audience:** engineers, scientists, and students who need an affordable desktop workflow from raw data to analysed, documented figures and reports.
+This is the only TODO. The work still open lives in the plans under `dev/plans/`. The list below links the plans still to complete, in the order to take them. A plan that is finished leaves this list; its file stays in the history.
 
-## Scoring
+## Rules
 
-- **Priority:** 1 = highest expected user value; ranked by breadth of demand, workflow impact, and competitive gap.
-- **Complexity:** 1 = low; 5 = very high. This is a relative delivery estimate, not a schedule.
-- **Gap:** the main competing capability that users are likely to notice. `Core` means a foundational ChartLibre capability rather than a direct competitor gap.
+- One step of a plan is one commit on `main`, with the tests of its area and the State line above updated.
+- New work gets a plan file in `dev/plans/` before any code, and a line here.
+- Strings are written in English; the owner translates them.
 
-The order is a single recommended backlog. Related items have been merged, and completed work has been removed. “Requested most” is an informed proxy based on the stated audience and market gaps; validate the top ten with user interviews, issue tags, and usage data.
+## Plans to complete
 
-
-| ID | Priority | Complexity | Initiative | Simplified scope | Main gap / user need |
-|---|---:|---:|---|---|---|
-| ID03 | 3 | 4 | **Graph Builder** (G-01) | Build charts by dragging columns onto visual roles; change marks and grouping live. | **JMP**; a major discoverability and chart-authoring gap. |
-| ID04 | 4 | 2 | **Local data filtering** (G-04) | A filter by column values for every chart and report of a table (selecting rows on a chart and Show only Selected are done). | **JMP**; fundamental exploratory-analysis workflow. |
-| ID07 | 7 | 3 | **Units and uncertainty propagation** (H-02) | Assign units to columns; carry them through axes, fits, and error calculations. | **Engineering/science tools**; critical for physical-science work. |
-| ID08 | 8 | 3 | **Model comparison and validation** (G-03, AN-12) | Compare models on shared validation data with R², RMSE, AUC, bootstrap, permutation, and cross-validation options. | **JMP / scikit-learn**; safer model choice. |
-| ID09 | 9 | 2 | **Plain-language errors and onboarding** (H-11, H-08) | Actionable import/SQL errors, a demo dataset, guided first-run flow, and product tour. | **Core**; improves activation and support load. |
-| ID12 | 12 | 2 | **Quality and measurement tools** (G-06) | Add process screening (EWMA, CUSUM, Levey–Jennings with Westgard, g and t charts, Bland–Altman, Deming and Passing–Bablok are done). | **JMP / Minitab**; strong engineering and QA gap. |
-| ID13 | 13 | 2 | **Robust regression diagnostics** (R-04, G-25) | Add VIF, leverage, AIC comparison, WLS/GLS, and remaining ANOVA diagnostics. | **statsmodels / JMP**; makes existing modelling more trustworthy. |
-| ID14 | 14 | 2 | **Missing-data and model preprocessing** (G-22, G-24) | Table-level imputation plus saved scaling, encoding, and feature generation. | **scikit-learn**; prerequisite for reusable models. |
-| ID15 | 15 | 2 | **Nonparametric and distribution tests** (G-30, G-07) | Add exact tests, TOST equivalence, and matched pairs (Friedman, Mood median, Fligner–Killeen, Page trend, tolerance/prediction intervals are done). | **SciPy / JMP**; broad, low-effort statistical coverage. |
-| ID16 | 16 | 3 | **Reliability and survival analysis** (AN-08, G-08) | Add censored life distributions, life regression, reliability growth, and Cox models. | **JMP**; high-value specialist workflow. |
-| ID17 | 17 | 3 | **Hyperparameter tuning and ML metrics** (G-20, G-21) | Provide search, learning/validation curves, calibration and precision–recall views, and threshold tuning. | **scikit-learn**; makes ML results defensible. |
-| ID18 | 18 | 2 | **Tabulate report builder** (G-10) | Create drag-and-drop grouped summary tables without making an intermediate table. | **JMP**; frequent reporting need. |
-| ID19 | 19 | 3 | **More predictive models** (G-19, AN-24) | Add k-NN, SVM, naive Bayes, histogram gradient boosting, ensembles, and MLP. | **scikit-learn**; expands modelling choices after validation tooling. |
-| ID20 | 20 | 3 | **More GLM and robust models** (G-26, G-27) | Add negative-binomial, zero-inflated, gamma/Tweedie, GEE, quantile/robust regression, MANOVA, and Hotelling T². | **statsmodels**; specialist analysis coverage. |
-| ID21 | 21 | 3 | **Profiler, optimisation, and DOE expansion** (AN-07, G-05, G-32) | Add desirability/contour profilers, D-optimal and screening designs, Taguchi/mixture designs, and constrained optimisation. | **JMP / Minitab**; valuable industrial workflow. |
-| ID22 | 22 | 2 | **Background computation controls** (R-02) | Preview long operations and allow safe cancellation inside long loops. | **Core**; responsiveness on real datasets. |
-| ID23 | 23 | 2 | **Data-operation tools for the AI assistant** (AI-01) | Let the assistant execute approved data operations, not only analyses. | **Core / AI assistants**; useful after operation safety is clear. |
-| ID24 | 24 | 2 | **Signal and scientific modelling** (AN-13, G-31) | Add uneven-sampling spectra, resampling, filter response, deconvolution, ODE kinetics, dose response, and peak deconvolution. | **SciPy / Origin**; specialist scientific workflows. |
-| ID26 | 26 | 2 | **Importer plugin system** (I-02) | Let labs build, test, install, and manage importers for custom formats. | **Core / Origin**; scalable solution for long-tail formats. |
-| ID28 | 28 | 1 | **Advanced clustering** (G-23) | Add HDBSCAN (DBSCAN, OPTICS, Birch and spectral clustering are in Clustering). | **scikit-learn**; moderate specialist gap. |
-| ID29 | 29 | 2 | **Spatial and circular analysis** (G-33, G-34) | Add spatial geometry/interpolation and circular statistics. | **SciPy**; niche scientific coverage. |
-| ID30 | 30 | 3 | **Live instrument data** (H-06) | Watch folders, append CSV/serial data, and feed live charts. | **Lab software**; requires clear device and reliability scope. |
-| ID32 | 32 | 2 | **Animated charts** (I-03) | Still missing: MP4 export, frames drawn in place for big charts (playing a column or a function parameter, Save as GIF are done; dev/plans/animated_charts_plan.txt). | **Origin / Plotly**; presentation-oriented. |
-| ID33 | 33 | 3 | **3D parametric curves** (I-04) | Plot x(t), y(t), z(t), with units and uncertainty support. | **Scientific plotting tools**; narrow audience. |
-| ID34 | 34 | 2 | **Result mini-charts** (I-05) | Show a compact chart beside an operation result. | **Core**; polish and scanability. |
-| ID35 | 35 | 4 | **Functional Data Explorer** (G-09) | Analyse one curve per ID with smoothing, functional PCA, clusters, and shape models. | **JMP**; advanced, specialist capability. |
-| ID36 | 36 | 4 | **Mixed models and power analysis** (AN-09) | Add REML mixed models plus power and sample-size tools. | **JMP / statsmodels**; high value for research, complex delivery. |
-| ID37 | 37 | 2 | **Assistant transparency and Windows release polish** (AI-02, AI-03) | Show requests/cache activity; package Anthropic/keyring support and document secure key storage. | **Core**; improve trust and Windows usability. |
-| ID38 | 38 | 2 | **Windows UI parity** (H-12) | Test dialogs at 1366×768 and 125% scaling in CI. | **Core**; prevents platform-specific friction. |
-| ID41 | 41 | 4 | **Text Explorer** (G-11) | Add word counts, n-grams, and topics for text columns. | **JMP**; weak fit for the primary audience. |
-| ID46 | 46 | 2 | **Marker editor and rotation** (dev/plans/line_editor_plan.txt B, C) | Still missing: a point/SVG-path marker editor and a `__markers__` table of saved markers; marker rotation by a constant or a column (arrows), with an Arrow entry; custom dashes for overlay/reference lines. Custom dashes and markers (character, mathtext, polygon tuple) are done. | **Origin / matplotlib**; vector-field and wind-direction charts. |
-| ID48 | 48 | 2 | **Preferences: icons and an advanced mode** (requested 2026-11-11) | Each section with an icon of its own (not alike); an "Advanced mode" setting - off, the window hides the assistant, the workpads (SymPy, SQL) and the other expert tools. | **Core**; a simpler first contact for students. |
-| ID49 | 3 | 2 | **Rebuild the manuals** (requested 2026-11-14) | Regenerate the user manual PDF (docs/manual) and the developer manual with every change of 2026-11-12/14: the new Chart properties (icons, sections, filter, X/Y/Z, Ticks and grid), the Project page (information with database facts, history with Delete / Copy as Python / Save as function / settings / script), Preferences (Log, Advanced: SQL guard, SymPy filter, Optimize database), the animation demos; and the Python chapter (docs/manual/sections/scripting.typ): `Analysis(...)`, `Chart(...)`, `Model(...)`, `result.report/tables/table()/figures/code()/rerun()/save()/fitted/save_model()`, `Analysis.from_file()`, `analysis_names()`, `describe_analysis()`, `functions()`, `models()`, saved functions, the JSON settings file, Export script, Run again, with a worked example per command; retake the panel screenshots (dev/manual/make_screenshots.py); list the new strings for translation. | **Core**; the manual is out of step with the app. |
-
-## User-owned / release-readiness tasks
-
-| ID | Priority | Complexity | Task | Simplified scope |
-|---|---:|---:|---|---|
-| ID43 | 2 | 1 | Improve GitHub presence (A-05) | Add description, topics, and social-preview image. |
-| ID44 | 3 | 2 | Test Linux (A-06) | Validate installation and core workflows on a supported distribution. |
-| ID45 | 4 | 3 | Package and distribution work (I-08) | Sign the macOS app and produce a Windows installer. |
-
-## Suggested near-term sequence
-
-1. **Foundation for repeatable work:** ID01, ID14, ID04.
-2. **Visible product differentiation:** ID03, ID05, ID06, ID07.
-3. **Statistical depth with broad reach:** ID08, ID13, ID15, ID12.
-4. **Specialist expansion:** imports/plugins, reliability, DOE, signal/science, ML and time series.
-
-## Notes on consolidation
-
-- R-07 and G-04 are one linked-selection/filtering initiative.
-- H-01 and I-07 are one reproducibility initiative.
-- H-03 and I-08 are one templates/batch initiative; signing and installers remain release work.
-- R-04 and G-25 overlap in regression diagnostics.
-- AN-07, G-05, and G-32 form one DOE/profiler/optimisation area.
-- Items described as already done in the source were excluded from the active roadmap.
+1. [SQL workpad](dev/plans/sql_workpad_plan.txt): A to D done. Open: a CSV export of a result, a Stop button, views and indexes kept.
+2. [Chart properties interface](dev/plans/chart_properties_ui_plan.txt): A to H done. Open: I, partly done.
+3. [Path effects](dev/plans/path_effects_plan.txt): steps 1 to 3 and C4 done. Open: E (copy as a call or a script), then G (cost rule) and H (themes, if wanted).
+4. [Line editor](dev/plans/line_editor_plan.txt): the editor for dashes and markers. Not built yet.
+5. [Animated charts](dev/plans/animated_charts_plan.txt): open: MP4 with ffmpeg, artists updated in place (each frame is a full render), pausing while live updates redraw.
+6. [Image markers](dev/plans/image_markers_plan.txt): A and B done, C partly (scatter and line markers). Open: the shipped library and the online search.
+7. [Saved models](dev/plans/saved_models_plan.txt): A to F done, one family left. Open: the portable JSON form of Fit Model's models (E), and the predictions kept in the history.
+8. [Extension packs](dev/plans/extension_packs_plan.txt): steps 1 to 5 done. Open: the pack builder, the first packs of section 8, the documentation and the manual chapter.
+9. [Small models, guided](dev/plans/small_models_guided_plan.txt): guided generation (fill()) for analyses and charts. So far 0 of 15 runs produced one.
+10. [Import formats](dev/plans/import_formats_plan.txt): plan only; nothing implemented yet, except the two fixes in its section 3.
+11. [Importer plugins](dev/plans/importer_plugins_plan.txt): plan only for the parts marked TO DO; the first importer is done.
+12. [Random data](dev/plans/random_data_plan.txt): all nine steps built; the open questions at the end wait for the owner.
+13. [ID09 and ID11](dev/plans/id09_id11_plan.txt): nothing is built before the owner's go.

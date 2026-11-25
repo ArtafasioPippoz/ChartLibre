@@ -2,7 +2,7 @@
 
 Reshapes the y values of a series point for point - a power transform, a
 quantile map, standardising or robust scaling (scikit-learn) - over plain
-arrays. No Qt, nothing logged (todo R-01); a request the data cannot meet
+arrays. No Qt, nothing logged; a request the data cannot meet
 (Box-Cox on a value that is not positive) is a ``ValueError``.
 """
 from __future__ import annotations

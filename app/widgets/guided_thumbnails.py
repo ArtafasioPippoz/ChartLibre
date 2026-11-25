@@ -1,4 +1,4 @@
-"""Thumbnails of the guided wizard's chart ideas, drawn from the table's own rows (G-02).
+"""Thumbnails of the guided wizard's chart ideas, drawn from the table's own rows.
 
 Small and quick, with plain Matplotlib rather than the chart renderers: a
 picture of what the chart will show - the shape of the data - not the chart

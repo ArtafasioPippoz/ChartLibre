@@ -75,7 +75,7 @@ __all__ = [
 class SeriesData:
     """One series as a renderer sees it: its name, its rows, and its styling.
 
-    ``df`` is a :class:`~app.data.series_frame.SeriesFrame` (todo.txt P2-17) -
+    ``df`` is a :class:`~app.data.series_frame.SeriesFrame` -
     columns of numpy arrays, not a ``pd.DataFrame`` - but every renderer keeps
     reading it the same way: ``sd.df["x"]``, ``"x" in sd.df.columns``,
     ``sd.df.loc[mask, "color"]``. See that module's docstring for why the
@@ -92,7 +92,7 @@ class SeriesData:
     df: SeriesFrame
     style: dict
     roles: dict = field(default_factory=dict)
-    #: The table row id of each row of ``df`` (todo R-07), when the series'
+    #: The table row id of each row of ``df``, when the series'
     #: query selects it - taken out of ``df``, so no renderer draws it.
     ids: np.ndarray | None = None
 
@@ -400,7 +400,7 @@ class BaseAxisRenderer:
         """Return the series worth drawing: visible, mapped, and not empty.
 
         The same three conditions were written out in fifteen renderers and
-        then in six more as they were added (todo.txt P2-14), which is
+        then in six more as they were added, which is
         twenty-one places for one of them to be forgotten - and the one
         that gets forgotten is ``visible``, because a hidden series looks
         exactly like a series until you hide it.

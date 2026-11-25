@@ -278,7 +278,7 @@ class SettingsDialog(PanelDialog):
         self._mpl_style_combo.setToolTip(tr("The chart style of every figure that has none of its own."))
         form.addRow(tr("Default chart style"), self._mpl_style_combo)
 
-        # Every report's "How to read this" box (H-04): on for a new install - students first.
+        # Every report's "How to read this" box: on for a new install - students first.
         from app.plugin_api import reading_guide
         from app.plugin_api.data_operations import next_steps
 
@@ -312,7 +312,7 @@ class SettingsDialog(PanelDialog):
         form.addRow(self._packs_panel)
 
         # What most people never change, closed - unless the SQL guard is off, the one thing in it that is
-        # not as it came and matters (todo H-10). Developer mode alone does not open it: the Developer menu
+        # not as it came and matters. Developer mode alone does not open it: the Developer menu
         # says it, and opened it made the window taller than a laptop's screen.
         form = self._section(tr("Advanced"), forms)
         # Red: switching it off lets typed SQL change the database.

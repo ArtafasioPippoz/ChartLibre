@@ -1,4 +1,4 @@
-"""Time Series: a measure in time order - its memory, its parts and its future (AN-05).
+"""Time Series: a measure in time order - its memory, its parts and its future.
 
 As JMP's Time Series platform, for one measure ordered by a date, a time or
 a number (the rows' order when there is none):

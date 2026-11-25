@@ -48,7 +48,7 @@ def test_a_plain_frame_gives_the_table_to_sql_gave(repo: SqliteRepo) -> None:
     repo.import_dataframe(frame, table_name="pandas", normalize_columns=False, dtype_overrides={})  # {} is the to_sql path
     assert _table(repo, "direct") == _table(repo, "pandas")
     schema, rows = _table(repo, "direct")
-    # The row id first (R-07), numbered from 1.
+    # The row id first, numbered from 1.
     assert schema[0] == ("_id", "INTEGER") and [row[0] for row in rows] == [1, 2, 3, 4]
     assert dict(schema[1:]) == {"x": "REAL", "n": "INTEGER", "flag": "INTEGER", "label": "TEXT", "mixed": "TEXT",
                                   "Selected": "INTEGER"}

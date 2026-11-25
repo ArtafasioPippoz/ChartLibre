@@ -1,4 +1,4 @@
-"""Fit Y by X: one response against one factor, the analysis chosen by the two columns' types (AN-03).
+"""Fit Y by X: one response against one factor, the analysis chosen by the two columns' types.
 
 As JMP's platform of the same name:
 

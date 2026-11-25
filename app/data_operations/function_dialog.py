@@ -444,7 +444,7 @@ class SeriesFunctionDialog(DataOperationDialogBase):
         """The editor holds one of the project's stored functions, not trusted here: ask before running it.
 
         Code typed or imported here is the user's own; a stored function from a project made elsewhere runs
-        only once trusted on this computer (todo ID47).
+        only once trusted on this computer.
         """
         current = {"source_type": self._editor.source_type(), "code_string": self._editor.text.toPlainText()}
         wanted = stored_fingerprint(current)

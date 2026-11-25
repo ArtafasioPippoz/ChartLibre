@@ -4,7 +4,7 @@ A curve's peaks come from ``scipy.signal.find_peaks`` filtered by prominence
 (default) or height, and are measured by their width at half prominence and
 the x bounds of that width - what the Calculus operation's integral wants. A
 surface's local maxima come from a neighbourhood filter instead. Plain
-arrays in, no Qt, nothing logged (todo R-01).
+arrays in, no Qt, nothing logged.
 
 **Prominence is the default filter, not height.** Height compares a peak to
 zero, which is only meaningful when the baseline is at zero - on a sloping

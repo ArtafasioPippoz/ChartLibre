@@ -1,4 +1,4 @@
-"""Chart properties > Animation: what the figure plays along, and how (todo I-03).
+"""Chart properties > Animation: what the figure plays along, and how.
 
 A column of the series' tables - each frame its rows with one value, all up to it, or the last few - or, for a
 figure drawing a stored function, one of the function's parameters from a value to another. Stored in the

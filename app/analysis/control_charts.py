@@ -3,7 +3,7 @@
 Shewhart charts for measurements (individuals and moving range, X-bar with R
 or S) and for counts (p, np, c, u), the Nelson rules that flag what stays
 inside the limits, and the second pass that recomputes the limits without the
-flagged points. Plain arrays in, no Qt, nothing logged (todo R-01): what the
+flagged points. Plain arrays in, no Qt, nothing logged: what the
 caller should tell the user comes back as notes.
 """
 from __future__ import annotations

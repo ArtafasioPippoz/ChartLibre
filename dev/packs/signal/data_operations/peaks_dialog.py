@@ -194,7 +194,7 @@ class SeriesPeaksDialog(DataOperationDialogBase):
     )
 
     # "Mark peaks only" was declared here and read nowhere - a checkbox that
-    # did nothing at all, for either of its states (todo.txt P3-x). It is
+    # did nothing at all, for either of its states. It is
     # gone rather than implemented because neither reading of it survives
     # contact with what this dialog already does: the result table carries
     # every measurement because the report is built from it, and the chart

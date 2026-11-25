@@ -1,4 +1,4 @@
-"""Distribution (Analysis): one series' quantiles, moments and normality (AN-02).
+"""Distribution (Analysis): one series' quantiles, moments and normality.
 
 Each checked series gets its own report: the quantile table, the moments, the normality tests and the
 distribution fitted to it, with its parameters and goodness of fit. OK draws the series' histogram beside

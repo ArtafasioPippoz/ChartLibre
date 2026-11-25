@@ -5,7 +5,7 @@ five closed forms (exponential, logarithmic, power, Gaussian, sigmoid), NumPy's
 linear interpolation and SciPy's PCHIP, Akima, cubic, B-spline and smoothing
 splines - and evaluated at x values chosen by a spacing rule (evenly, on a log
 or geometric scale, on integer steps, at Chebyshev nodes, at the original x or
-at values typed in). Plain arrays in, no Qt, nothing logged (todo R-01): a
+at values typed in). Plain arrays in, no Qt, nothing logged: a
 request the data cannot meet is a ``ValueError``.
 """
 from __future__ import annotations

@@ -1,4 +1,4 @@
-"""ChartLibre against the NIST Statistical Reference Datasets (todo R-13).
+"""ChartLibre against the NIST Statistical Reference Datasets.
 
 The certified values come with the data in dev/tests/data/nist; agreement is
 counted in correct significant digits (LRE, see _nist_strd.py), the measure

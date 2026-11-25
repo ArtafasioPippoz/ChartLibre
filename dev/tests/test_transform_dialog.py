@@ -1,4 +1,4 @@
-"""Transform dialog: rescale or reshape a series' Y distribution (P2-15).
+"""Transform dialog: rescale or reshape a series' Y distribution.
 
 Unlike Calculus or Regression, x is carried through unchanged here - only Y
 is reshaped, point for point, same length. See transform_dialog.py's own

@@ -25,7 +25,7 @@ def _scientific_import(name: str, globals: Any = None, locals: Any = None, froml
 TABLE = "__sympy__"
 IMPLICIT = ("x", "y", "z")
 #: The stored functions this computer runs, by fingerprint (user.json): those saved here, and those the user
-#: trusted when asked (todo ID47). A project's function runs code - sympify and exec - when drawn or fitted.
+#: trusted when asked. A project's function runs code - sympify and exec - when drawn or fitted.
 TRUST_KEY = "trusted_functions"
 
 

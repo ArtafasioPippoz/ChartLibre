@@ -1,4 +1,4 @@
-"""A secondary axis that is the primary one in other units (todo G-17).
+"""A secondary axis that is the primary one in other units.
 
 ``ax.secondary_xaxis`` / ``secondary_yaxis`` draw a second scale along the
 top or the right of an axes, as a function of the first: degrees Celsius

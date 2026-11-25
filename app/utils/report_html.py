@@ -204,7 +204,7 @@ _DIV_TAG = re.compile(r"<div\b[^>]*>|</div>", re.IGNORECASE)
 
 
 def reading_guide(title: str, lines: Iterable[str]) -> str:
-    """The "How to read this" box (H-04): a soft panel, its title, a paragraph per number explained; "" for none."""
+    """The "How to read this" box: a soft panel, its title, a paragraph per number explained; "" for none."""
     paragraphs = "".join(f"<p style='margin:4px 0;'>{html.escape(line)}</p>" for line in lines if line)
     if not paragraphs:
         return ""

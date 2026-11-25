@@ -1149,7 +1149,7 @@ class MainWindow(QMainWindow):
         header = CustomTitleBar(cast(Any, self), is_macos=True) if IS_MACOS else None
         # The pages keep the same gap from the rail as from the panel's right
         # and bottom edges - flush, every card ran into the rail and the
-        # window's edge, which showed on Windows' white page (todo W-01).
+        # window's edge, which showed on Windows' white page.
         navigation = NavigationBar(
             sections, parent=self, header=header,
             # Less room above the page's first title and below its last frame off macOS:
@@ -1515,7 +1515,7 @@ class MainWindow(QMainWindow):
         applogger.info("Histogram of %s.%s made as figure %d.", source, column, figure_id)
 
     def _open_guided_wizard(self, table: str | None = None) -> None:
-        """Help me choose (G-02): the wizard on *table* - the selected one by default."""
+        """Help me choose: the wizard on *table* - the selected one by default."""
         from app.dialogs.guided_wizard_dialog import GuidedWizardDialog
         from app.plugin_api.data_operations import table_profile
 
@@ -1713,7 +1713,7 @@ class MainWindow(QMainWindow):
             self._open_next_step(step)
 
     def _open_next_step(self, step) -> None:
-        """Open the analysis a "What next?" link asks for, on its table, the columns cast (G-02).
+        """Open the analysis a "What next?" link asks for, on its table, the columns cast.
 
         A data operation's step (it names a figure) opens on that figure instead.
         """
@@ -1962,7 +1962,7 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
 
     def _on_rows_selected(self, tables: list[str]) -> None:
-        """Rows of *tables* were marked Selected (a box on a chart, the preview): every chart and the preview show them (R-07).
+        """Rows of *tables* were marked Selected (a box on a chart, the preview): every chart and the preview show them.
 
         A chart of a table that shows only its Selected rows draws again: the selection is what it shows."""
         for index in range(self._tabs.count()):
@@ -1975,14 +1975,14 @@ class MainWindow(QMainWindow):
         self._preview.show_selected_rows(list(tables))
 
     def _on_selected_only_changed(self, tables: list[str]) -> None:
-        """Show only Selected switched for *tables*: every chart of them draws again (R-07)."""
+        """Show only Selected switched for *tables*: every chart of them draws again."""
         for index in range(self._tabs.count()):
             panel = self._tabs.widget(index)
             if isinstance(panel, ChartPanel) and set(tables) & panel.row_tables():
                 panel.reload()
 
     def _reload_function_charts(self) -> None:
-        """The project's functions trusted: every chart of one draws again (todo ID47)."""
+        """The project's functions trusted: every chart of one draws again."""
         for index in range(self._tabs.count()):
             panel = self._tabs.widget(index)
             if isinstance(panel, ChartPanel) and panel.drawn_functions():
@@ -3448,7 +3448,7 @@ class MainWindow(QMainWindow):
         Every descriptor table, not the one this edit will touch: they hold
         a few rows each, so working out which is more expensive than
         copying all four - and getting that wrong is an undo that restores
-        half of a change (todo.txt P2-11).
+        half of a change.
 
         A run of identical labels inside SNAPSHOT_COALESCE_SECONDS is one
         edit: the auto-applying property panels call this on every debounced

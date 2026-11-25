@@ -1,4 +1,4 @@
-"""Discriminant analysis (AN-20): the numbers against scikit-learn and the known iris values; the dialog writes."""
+"""Discriminant analysis: the numbers against scikit-learn and the known iris values; the dialog writes."""
 from __future__ import annotations
 
 import numpy as np

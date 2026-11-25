@@ -1,4 +1,4 @@
-"""SQL stays in app/data (todo R-11): widgets ask the repository.
+"""SQL stays in app/data: widgets ask the repository.
 
 The project's rule is that only app/data talks to the database. Two things
 are checked: the repository methods the table views and the outlier dialog

@@ -48,7 +48,7 @@ D. "Copy as Python" and "Save as function": from a recorded operation (Project h
    in the Tables panel with the other stored functions, callable from the workpad. A figure's descriptor gives
    Chart(...) the same way.
 E. The whole history: "Export script" writes every recorded operation in order as one .py (imports, the calls,
-   a run_all() and the table names as arguments) and "Re-run all" runs them on a project (todo ID02, H-01/I-07).
+   a run_all() and the table names as arguments) and "Re-run all" runs them on a project.
 F. Manual chapter and the strings (listed for translation, not translated); the Developer manual says how an
    analysis plugin becomes callable (nothing to do: the catalogue is the API).
 

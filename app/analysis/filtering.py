@@ -2,7 +2,7 @@
 
 Zero-phase IIR and FIR filters, the analytic signal (envelope, phase,
 instantaneous frequency) and detrending, over plain arrays - no Qt, no
-repository, nothing logged (todo R-01). A problem with the request (a cutoff
+repository, nothing logged. A problem with the request (a cutoff
 above the Nyquist frequency, a missing second cutoff) is a ``ValueError``.
 """
 from __future__ import annotations

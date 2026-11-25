@@ -3,14 +3,14 @@
 What goes to a supervisor, a reviewer or a lab notebook: each figure drawn
 again at a fixed size, with the notes written beside it; then the tables,
 with their sizes and notes; then what was done to them - the operation
-history (todo R-03). No SQL: the report is for readers of the results, not
+history. No SQL: the report is for readers of the results, not
 of the queries. One HTML file with the pictures inside it, or a PDF made
 from the same page (app/dialogs/project_report_dialog.py). The same report
 of one figure alone is the chart's own "Export report".
 
 The pictures are named ``figure-<id>.png`` (or ``.svg``) in the page and
 returned beside it, so the HTML writer can put them inline and the PDF
-writer can hand them to Qt. No Qt here (todo R-09).
+writer can hand them to Qt. No Qt here.
 """
 from __future__ import annotations
 

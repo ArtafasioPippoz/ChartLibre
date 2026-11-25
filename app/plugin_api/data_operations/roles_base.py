@@ -182,13 +182,13 @@ class RolesOperationDialogBase(DataOperationDialogBase):
                                     report_html.with_reading_guide(body, box) + what_next)
 
     def how_to_read(self, result: Any, /) -> list[str]:
-        """The "How to read this" box (H-04): the two or three numbers the report hinges on, each in two
+        """The "How to read this" box: the two or three numbers the report hinges on, each in two
         sentences (app.plugin_api.reading_guide); none by default."""
         del result
         return []
 
     def next_steps(self, result: Any) -> list[next_steps.NextStep]:
-        """The questions this answer leads to, listed under "What next?" as links (G-02); none by default."""
+        """The questions this answer leads to, listed under "What next?" as links; none by default."""
         del result
         return []
 
@@ -444,11 +444,11 @@ class RolesOperationDialogBase(DataOperationDialogBase):
         frame = frame.reset_index(drop=True)
         self.row_ids = frame[ROW_ID].astype("Int64") if ROW_ID in frame.columns else pd.Series(dtype="Int64")
         frame = frame.drop(columns=[c for c in frame.columns if c in APPLICATION_COLUMNS or c == ROW_ID])
-        # Column Info (R-08): missing codes read as empty, value labels in place of their codes.
+        # Column Info: missing codes read as empty, value labels in place of their codes.
         return column_metadata.apply_to_frame(cast(pd.DataFrame, frame), column_metadata.column_info(self._repo, table))
 
     def _open_column_info(self, column: str) -> None:
-        """Column Info (R-08) from the column list: the description, then the table is read again.
+        """Column Info from the column list: the description, then the table is read again.
 
         A type forced there, a missing-value code or a value label changes what the
         analysis sees, so the frame and the column types are reloaded.

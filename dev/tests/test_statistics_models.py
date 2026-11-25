@@ -1,4 +1,4 @@
-"""Statistics on tables by role (todo R-04): contingency, two-way ANOVA, survival."""
+"""Statistics on tables by role: contingency, two-way ANOVA, survival."""
 from __future__ import annotations
 
 import re

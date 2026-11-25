@@ -4,7 +4,7 @@ Robust (RANSAC, Huber) and non-parametric (isotonic, random forest,
 gradient boosting) regression of one series, predicted over a dense evenly
 spaced grid across its own x range - so a forest does not read as a jagged
 line through exactly the input points. Plain arrays in, no Qt, nothing
-logged (todo R-01).
+logged.
 """
 from __future__ import annotations
 

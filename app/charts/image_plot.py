@@ -1,4 +1,4 @@
-"""Image plot: a table of numbers, or a picture file, drawn as an image (todo G-16).
+"""Image plot: a table of numbers, or a picture file, drawn as an image.
 
 ``imshow`` / ``matshow`` read a matrix as it is laid out: each row of the
 table is a row of the picture and each numeric column a column, coloured by

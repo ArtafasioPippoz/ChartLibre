@@ -1,4 +1,4 @@
-"""Fit Y by X (Analysis): one Y against each X, the analysis chosen by their types (AN-03).
+"""Fit Y by X (Analysis): one Y against each X, the analysis chosen by their types.
 
 Continuous by continuous is a Bivariate fit, continuous by groups a Oneway
 (means, ANOVA, Tukey / Games-Howell / Dunn), groups by groups a Contingency

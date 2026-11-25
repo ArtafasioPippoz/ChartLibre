@@ -1,4 +1,4 @@
-"""The Query Builder's Build frame: a form per Tables operation that writes its SQL (AN-11).
+"""The Query Builder's Build frame: a form per Tables operation that writes its SQL.
 
 Select, Join, Union, Stack, Split, Transpose, Recode, Bin, Group: each form collects
 the choices JMP's Tables menu asks for and returns the statement

@@ -1,4 +1,4 @@
-"""Other programs' and instruments' files (todo I-01): each built-in importer on a small file written here.
+"""Other programs' and instruments' files: each built-in importer on a small file written here.
 
 The files are synthetic but laid out as the programs write them; the
 packages that are not always installed (pyreadstat, pyarrow...) are only

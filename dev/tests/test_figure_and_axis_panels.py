@@ -1,4 +1,4 @@
-"""Figure and Axis properties as todo P-01..P-03 asked: View on its own above Style, no Default
+"""Figure and Axis properties: View on its own above Style, no Default
 style button, the Grid card folds, Border draws a line round the figure, the axis title takes two lines."""
 from __future__ import annotations
 

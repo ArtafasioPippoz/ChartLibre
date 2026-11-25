@@ -7,7 +7,7 @@ that converge, diverge or cross are an interaction, the thing a two-way
 ANOVA tests and this chart shows. Error bars give each mean's standard
 error, confidence interval or standard deviation.
 
-The cell means are computed in app/analysis/diagnostics.py (todo R-06).
+The cell means are computed in app/analysis/diagnostics.py.
 
 Roles:
     x        required, the factor on the horizontal axis (categories)

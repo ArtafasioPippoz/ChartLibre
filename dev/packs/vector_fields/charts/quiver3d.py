@@ -1,4 +1,4 @@
-"""Quiver 3D (I-04): an arrow per sample of a field in space - Axes3D.quiver.
+"""Quiver 3D: an arrow per sample of a field in space - Axes3D.quiver.
 
 The x, y, z position and the u, v, w components at it; an optional fourth
 column colours the arrows through the colormap (a field's magnitude, its

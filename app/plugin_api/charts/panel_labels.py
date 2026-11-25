@@ -1,4 +1,4 @@
-"""Panel letters on a multi-axis figure: (a), (b), (c) - what a paper's text refers to (todo G-18).
+"""Panel letters on a multi-axis figure: (a), (b), (c) - what a paper's text refers to.
 
 A figure option (``panel_labels``) names the style, ``panel_label_position`` says
 where the letter goes. The letters follow the axes' order in the grid - left to

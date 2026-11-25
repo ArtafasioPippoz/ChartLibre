@@ -1,4 +1,4 @@
-"""Gaussian process regression, with its own uncertainty band (todo.txt P2-15).
+"""Gaussian process regression, with its own uncertainty band.
 
 Every other regression-shaped operation in this app returns one curve. This
 one is worth a dialog of its own because a GP is the one smoother here that

@@ -1,4 +1,4 @@
-"""Discriminant analysis: which group a row belongs to, from continuous measures (AN-20).
+"""Discriminant analysis: which group a row belongs to, from continuous measures.
 
 As JMP's Discriminant platform: each group of the response is a cloud of
 points in the covariates' space, and a row goes to the group whose cloud it

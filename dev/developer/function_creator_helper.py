@@ -1,4 +1,4 @@
-"""Function Creator: scaffold a new fit-function file (todo.txt P3-4).
+"""Function Creator: scaffold a new fit-function file.
 
 A fit function lives entirely in one file, as a class that directly
 subclasses base_function (app/plugin_api/functions/base.py) - functions_scanner.py

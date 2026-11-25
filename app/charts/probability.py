@@ -10,7 +10,7 @@ compares probabilities instead, and is sharp in the middle.
 The points are drawn by :class:`ScatterAxisRenderer`, the way the ECDF is,
 so a series' colour, marker and size apply unchanged; this module adds the
 reference line and the confidence band. The arithmetic is in
-app/analysis/diagnostics.py (todo R-06).
+app/analysis/diagnostics.py.
 
 Roles:
     value    required numeric sample

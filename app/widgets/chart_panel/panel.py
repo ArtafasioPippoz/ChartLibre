@@ -272,13 +272,13 @@ class ChartPanel(DrawToolsMixin, ChartToolsMixin, QFrame):
     selection_changed = Signal(str)
     #: A plain click on the chart: {"axis_id": int | None, "series": str | None} (see the Picking section).
     chart_object_clicked = Signal(dict)
-    #: The tables whose Selected rows a box selection on this chart just set (todo R-07).
+    #: The tables whose Selected rows a box selection on this chart just set.
     rows_selected = Signal(list)
-    #: The tables whose Show only Selected this chart just switched (R-07): every chart of them draws again.
+    #: The tables whose Show only Selected this chart just switched: every chart of them draws again.
     selected_only_changed = Signal(list)
     #: A "What next?" link in the notes (a report kept with the chart) was clicked: its URL.
     next_step_requested = Signal(str)
-    #: The project's stored functions were trusted from this chart's note (todo ID47): the charts of them draw again.
+    #: The project's stored functions were trusted from this chart's note: the charts of them draw again.
     functions_trusted = Signal()
 
     def __init__(
@@ -480,7 +480,7 @@ class ChartPanel(DrawToolsMixin, ChartToolsMixin, QFrame):
         self._main_layout = QVBoxLayout(self._chart_area)
         self._main_layout.setContentsMargins(0, 0, 0, 0)
         self._main_layout.setSpacing(0)
-        # Show only Selected on one of the chart's tables: said over the chart, with the way back (R-07).
+        # Show only Selected on one of the chart's tables: said over the chart, with the way back.
         self._filter_note = QLabel(self._chart_area)
         self._filter_note.setProperty("muted", True)
         self._filter_note.setWordWrap(True)
@@ -853,7 +853,7 @@ class ChartPanel(DrawToolsMixin, ChartToolsMixin, QFrame):
             # attaches its own database, which SQLite forbids mid-transaction.
             # Every descriptor table, since the cascade takes the figure, its
             # axes and their series together and undo has to bring back all
-            # three (todo.txt P2-11). Done here rather than in delete_figure
+            # three. Done here rather than in delete_figure
             # so the operation dialogs' cleanup of an unapplied result figure
             # does not leave a spurious entry behind. The label is a plain
             # string, not translated - the same as delete_table's, so the two
@@ -1982,7 +1982,7 @@ class ChartPanel(DrawToolsMixin, ChartToolsMixin, QFrame):
                     checked=self._select_mode_enabled,
                     icon="select_points",
                 ),
-                # Show only Selected, for each table this chart reads rows of (R-07).
+                # Show only Selected, for each table this chart reads rows of.
                 *(MenuItem(
                     text=_("Show only the Selected rows of '{table}'").format(table=table),
                     tooltip=_("Every chart of '{table}' draws only its rows marked Selected; the others stay, "

@@ -1,4 +1,4 @@
-"""Frame titles keep the case they are written in ("Select Columns", not "SELECT COLUMNS"), as macOS's own (I-09)."""
+"""Frame titles keep the case they are written in ("Select Columns", not "SELECT COLUMNS"), as macOS's own."""
 from __future__ import annotations
 
 import re

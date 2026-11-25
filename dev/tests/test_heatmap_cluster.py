@@ -1,4 +1,4 @@
-"""Heatmap clustered (G-14): rows and columns reordered so alike ones sit together, the trees beside them."""
+"""Heatmap clustered: rows and columns reordered so alike ones sit together, the trees beside them."""
 from __future__ import annotations
 
 import pandas as pd

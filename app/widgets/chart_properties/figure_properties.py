@@ -596,7 +596,7 @@ class FigurePropertiesWidget(BaseProperties):
         # No text of its own: the row's label already says "Frame", and a
         # sentence beside the box ran off the edge of the panel.
         self._fig_frameon = QCheckBox(opts_section)
-        # The width a journal's column asks for (todo H-05); the height follows, the proportions kept.
+        # The width a journal's column asks for; the height follows, the proportions kept.
         self._journal_combo = QComboBox(opts_section)
         self._configure_combo_width(self._journal_combo, minimum_contents_length=14)
         self._journal_combo.addItem(_("Journal column…"), None)
@@ -607,7 +607,7 @@ class FigurePropertiesWidget(BaseProperties):
         # A line round the whole figure. (Matplotlib's frameon is the figure's
         # background, which on a white page showed no change at all.)
         self._fig_frameon.setToolTip(_("Draw a line round the whole figure"))
-        # Every font of the figure at once, on top of its style (todo N-12).
+        # Every font of the figure at once, on top of its style.
         self._font_scale = FontScaleControl(opts_section)
         fit_spin_width(self._font_scale)
         self._font_scale.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
@@ -635,7 +635,7 @@ class FigurePropertiesWidget(BaseProperties):
         )
 
         # A large series drawn in full costs more the more of it there is to
-        # paint - see todo.txt P2-5. Rather than one hard-coded cutoff, this
+        # paint. Rather than one hard-coded cutoff, this
         # offers a few, so a figure with genuinely huge series can pick one
         # deliberately instead of the application guessing at what "large"
         # means for it.

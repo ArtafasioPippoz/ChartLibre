@@ -1,4 +1,4 @@
-"""Cell plot: the table itself, a coloured cell per value (todo C-02).
+"""Cell plot: the table itself, a coloured cell per value.
 
 As JMP's Graph > Cell Plot: one column of cells per variable, one row of
 cells per row of the table, each coloured by its value on its own column's

@@ -140,7 +140,7 @@ _combo_init_patched = False
 
 
 def _frameless_combo_popups() -> None:
-    """Give every combo's pop-up container a frameless sheet as the combo is made (todo P-02).
+    """Give every combo's pop-up container a frameless sheet as the combo is made.
 
     On macOS the container paints a grey menu panel inside the pop-up window,
     which the system already frames with its rounded edge and shadow: two

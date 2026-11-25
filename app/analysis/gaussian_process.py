@@ -3,7 +3,7 @@
 A GP is the one smoother in the application that quantifies its own
 uncertainty: fitting it gives a mean curve and a posterior standard
 deviation at every point, so the result is three curves - the mean and a
-+/-2 sigma band. Plain arrays in, no Qt, nothing logged (todo R-01).
++/-2 sigma band. Plain arrays in, no Qt, nothing logged.
 """
 from __future__ import annotations
 

@@ -5,7 +5,7 @@ deviation, residual from a rolling median - and four fit the joint (x, y)
 point cloud (scikit-learn: Isolation Forest, Local Outlier Factor, One-Class
 SVM, Elliptic Envelope), which catches a point at an ordinary y but far from
 the curve everything else traces at that x. Plain arrays in, a mask out; no
-Qt, no repository, nothing logged (todo R-01). What is done with the outliers
+Qt, no repository, nothing logged. What is done with the outliers
 - hiding or colouring the rows - is the dialog's business.
 """
 from __future__ import annotations

@@ -1,4 +1,4 @@
-"""An axis is named after its column's Column Info label and unit, when nothing else names it (R-08)."""
+"""An axis is named after its column's Column Info label and unit, when nothing else names it."""
 from __future__ import annotations
 
 from pathlib import Path

@@ -56,7 +56,7 @@ def _rows(repo: SqliteRepo) -> list[tuple]:
 
 
 def _columns(repo: SqliteRepo) -> list[str]:
-    return [c for c in repo.get_columns("people") if c != "Selected"]  # not the row id column (R-07), nor the flag
+    return [c for c in repo.get_columns("people") if c != "Selected"]  # not the row id column, nor the flag
 
 
 def _select_cell(dialog: TableEditorDialog, row: int, column: int) -> None:

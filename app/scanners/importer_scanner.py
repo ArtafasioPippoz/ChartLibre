@@ -1,4 +1,4 @@
-"""Discovery of the file importers (todo I-01).
+"""Discovery of the file importers.
 
 Classes directly subclassing FileImporter in app/importers (and user/importers,
 for a lab's own formats) are found by an AST scan and loaded from disk when a

@@ -1,4 +1,4 @@
-"""Fit weights from the series' error column (R-05)."""
+"""Fit weights from the series' error column."""
 from __future__ import annotations
 
 from collections.abc import Iterator

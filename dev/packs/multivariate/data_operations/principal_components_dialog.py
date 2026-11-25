@@ -1,4 +1,4 @@
-"""Principal Components (Analysis): a few directions that carry most of the columns' variation (AN-04).
+"""Principal Components (Analysis): a few directions that carry most of the columns' variation.
 
 As JMP's Principal Components platform: the eigenvalues - the variance each
 component carries, and its share - the loadings (each column's correlation

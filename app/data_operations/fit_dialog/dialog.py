@@ -447,7 +447,7 @@ class SeriesFitDialog(DataOperationDialogBase):
         # combos paired per row still did. A QFormLayout gives each combo the
         # whole row to grow into, which is what a translated label this long
         # actually needs.
-        # Closed (todo H-10): the default algorithm, loss and weights fit nearly
+        # Closed: the default algorithm, loss and weights fit nearly
         # every curve; the arrow opens them.
         fit_options = TitledCard(outer, _("Advanced"), collapsible=True, collapsed=True)
         fit_options_layout = QFormLayout()
@@ -1816,7 +1816,7 @@ class SeriesFitDialog(DataOperationDialogBase):
         if self._selected_model.get("_sympy_stored"):
             from app.dialogs.function_trust_dialog import allowed_to_run
 
-            # The project's code: run only once trusted on this computer (todo ID47).
+            # The project's code: run only once trusted on this computer.
             if not allowed_to_run(self, self._repo, self._selected_model):
                 return None
             try:

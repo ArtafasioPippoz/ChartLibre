@@ -1,4 +1,4 @@
-"""Robust and machine-learning regression of a chart series (todo.txt P2-15).
+"""Robust and machine-learning regression of a chart series.
 
 A separate dialog from Fit rather than another model on its combo: Fit's
 whole shape is "an algebraic expression with named parameters" - Gaussian,

@@ -1,4 +1,4 @@
-"""Multivariate (Analysis): how continuous columns move together, two by two (AN-04).
+"""Multivariate (Analysis): how continuous columns move together, two by two.
 
 As JMP's Multivariate platform: the correlation matrix, and a row per pair -
 its correlation, confidence interval, p-value and count, each pair on the

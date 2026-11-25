@@ -64,4 +64,4 @@ def test_ignore_column_not_imported(tmp_db_path: Path, test_results_dir: Path) -
     db_path = repo.ensure_dhub_extension(tmp_db_path)
     with sqlite3.connect(str(db_path)) as con:
         cols = [r[1] for r in con.execute('PRAGMA table_info(t_ignore)').fetchall()]
-    assert cols == ['_id', 'a', 'c', 'Selected']  # the row id first (R-07)
+    assert cols == ['_id', 'a', 'c', 'Selected']  # the row id first

@@ -1,4 +1,4 @@
-"""Panel letters, mosaic and stacked/side-by-side presets (G-18)."""
+"""Panel letters, mosaic and stacked/side-by-side presets."""
 from __future__ import annotations
 
 import pytest

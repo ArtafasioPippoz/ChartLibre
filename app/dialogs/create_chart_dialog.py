@@ -1310,7 +1310,7 @@ class NewPlotTabDialog(ColumnsDialog):
         for draft in drafts:
             if not self._validate_series(chart_type, draft):
                 return
-        # SQL typed here by hand: the SQL guard's moment (todo N-05).
+        # SQL typed here by hand: the SQL guard's moment.
         for draft in drafts:
             sql = str(draft.sql or "").strip()
             if " " not in sql:

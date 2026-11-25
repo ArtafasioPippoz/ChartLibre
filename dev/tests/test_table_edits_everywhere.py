@@ -1,4 +1,4 @@
-"""The table edits the data preview offers, from the table list and in the editor (todo N-01, N-06)."""
+"""The table edits the data preview offers, from the table list and in the editor."""
 from __future__ import annotations
 
 from collections.abc import Iterator

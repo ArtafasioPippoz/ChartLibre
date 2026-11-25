@@ -89,7 +89,7 @@ class SeriesTable:
         return projection_source(self.sql, column) or column
 
 
-#: Models that read a series' columns by role (todo R-04): each checked
+#: Models that read a series' columns by role: each checked
 #: series is analysed on its own, and none of them is part of "All".
 FRAME_MODELS: frozenset[str] = frozenset({"contingency", "two_way", "survival"})
 
@@ -886,7 +886,7 @@ class SeriesStatisticsDialog(DataOperationDialogBase):
         return section
 
     # ------------------------------------------------------------------
-    # Models that read columns by role (todo R-04)
+    # Models that read columns by role
     # ------------------------------------------------------------------
     MODEL_TITLES: Mapping[str, str] = {
         "contingency": "Contingency table",
@@ -1056,7 +1056,7 @@ class SeriesStatisticsDialog(DataOperationDialogBase):
                 self._applied = True
                 self.results_published.emit(self.results_report_html(formatted, results))
                 # A report and nothing written: kept in the history all the
-                # same, with the series and settings it came from (todo R-03).
+                # same, with the series and settings it came from.
                 self.record_applied([], formatted or "")
                 self.applied.emit()
             return True

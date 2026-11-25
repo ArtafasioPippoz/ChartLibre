@@ -1,4 +1,4 @@
-"""Image Plot: a table as a matrix, or a file (G-16)."""
+"""Image Plot: a table as a matrix, or a file."""
 from __future__ import annotations
 
 from pathlib import Path

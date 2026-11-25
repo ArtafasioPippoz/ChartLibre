@@ -1,4 +1,4 @@
-"""SQL for the Tables operations of JMP and the like (AN-11): join, union, stack, split, transpose, recode, bin.
+"""SQL for the Tables operations of JMP and the like: join, union, stack, split, transpose, recode, bin.
 
 The Query Builder writes these statements into its editor, where they can
 be read, changed, run and saved as a query (read live) or as a table - so

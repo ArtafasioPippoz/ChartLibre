@@ -370,7 +370,7 @@ class TableEditorDialog(SettingsTableDialog):
         menu = TidyMenu(parent)
         # Hide rows by the selected column: the same comparisons the data
         # preview offers, so the editor is not the one place they are
-        # missing (todo N-06). Inside this session's undo entry.
+        # missing. Inside this session's undo entry.
         for flag, action_id, empty_text, same_text in (
             ("Hide", "table_hide_rows", _("Hide NULL / empty values"), _("Hide rows equal to selected cell")),
             ("Selected", "table_select_rows", _("Select NULL / empty values"), _("Select rows equal to selected cell")),

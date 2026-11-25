@@ -1,4 +1,4 @@
-"""Animated charts: frames along a column or a function's parameter, each frame's rows, the GIF (todo I-03)."""
+"""Animated charts: frames along a column or a function's parameter, each frame's rows, the GIF."""
 from __future__ import annotations
 
 from pathlib import Path

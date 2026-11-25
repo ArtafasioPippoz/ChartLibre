@@ -1,4 +1,4 @@
-"""Multi-vari chart (AN-06): where a measure varies - within a cell, between cells, between groups.
+"""Multi-vari chart: where a measure varies - within a cell, between cells, between groups.
 
 JMP's Variability Chart and Minitab's Multi-Vari: the outer factor's levels
 side by side along x, the inner factor's levels within each, every value as a

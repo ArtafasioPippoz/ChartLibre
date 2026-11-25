@@ -8,7 +8,7 @@ Shading by the Pearson residual (Friendly's mosaic) colours the tiles that
 hold more rows than independence would give in blue and fewer in red; the
 chi-squared test of independence is written in the log.
 
-The tiles are computed in app/analysis/diagnostics.py (todo R-06).
+The tiles are computed in app/analysis/diagnostics.py.
 
 Roles:
     x        required, the first variable: the columns

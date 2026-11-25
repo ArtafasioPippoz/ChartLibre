@@ -1,4 +1,4 @@
-"""Formats no free reader opens: say so, and how to get the data out (todo I-01)."""
+"""Formats no free reader opens: say so, and how to get the data out."""
 from __future__ import annotations
 
 from pathlib import Path

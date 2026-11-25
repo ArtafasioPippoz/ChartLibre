@@ -1,4 +1,4 @@
-"""SeriesFrame: what ``SeriesData.df`` actually holds now (todo.txt P2-17).
+"""SeriesFrame: what ``SeriesData.df`` actually holds now.
 
 A chart series used to travel SQLite -> ``pd.read_sql_query`` -> a cached
 ``pd.DataFrame`` -> every renderer's ``sd.df``. The DataFrame in the middle

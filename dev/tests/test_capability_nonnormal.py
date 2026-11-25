@@ -1,4 +1,4 @@
-"""Capability of a process that is not normal (AN-06): the percentile method on a fitted distribution."""
+"""Capability of a process that is not normal: the percentile method on a fitted distribution."""
 from __future__ import annotations
 
 import numpy as np

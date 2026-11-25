@@ -11,7 +11,7 @@ changes how the figure looks and nothing it says.
 
 Templates are JSON files in ``user/templates``, one per name, kept with the
 user's other plugins rather than in a project, so one template serves every
-project. No Qt here (todo R-09).
+project. No Qt here.
 """
 from __future__ import annotations
 

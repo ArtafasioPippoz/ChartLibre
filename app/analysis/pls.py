@@ -1,4 +1,4 @@
-"""Partial least squares regression, for spectra and other wide, collinear X (AN-17).
+"""Partial least squares regression, for spectra and other wide, collinear X.
 
 As JMP's PLS platform: Y (one or more) from many X that move together -
 hundreds of wavelengths of a spectrum - through a few latent components,

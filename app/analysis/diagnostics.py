@@ -1,4 +1,4 @@
-"""The numbers behind the diagnostic plots (todo R-06), without any Qt.
+"""The numbers behind the diagnostic plots, without any Qt.
 
 Each chart in app/charts that draws a diagnostic - Q-Q and P-P, Kaplan-Meier,
 the interaction plot, the mosaic - asks one function here for its points

@@ -1,4 +1,4 @@
-"""What to ask next: links at the end of a report that open the next analysis, its columns cast (G-02).
+"""What to ask next: links at the end of a report that open the next analysis, its columns cast.
 
 The quick answers lead on to one another as a person's questions do:
 are there differences? -> what has the most impact? -> a model on the

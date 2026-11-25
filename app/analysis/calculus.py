@@ -3,7 +3,7 @@
 Derivatives of a sampled curve (Savitzky-Golay, finite difference, smoothing
 spline), its running and definite integrals (trapezoid, Simpson) with an
 optional baseline taken off first, and the gradient and the volume of a
-gridded surface. Plain arrays in, no Qt, nothing logged (todo R-01): what the
+gridded surface. Plain arrays in, no Qt, nothing logged: what the
 caller should tell the user comes back as a note.
 """
 from __future__ import annotations

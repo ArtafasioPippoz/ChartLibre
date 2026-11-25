@@ -1,4 +1,4 @@
-"""The base of a file importer: one format, its suffixes, the packages it needs, how it reads (todo I-01).
+"""The base of a file importer: one format, its suffixes, the packages it needs, how it reads.
 
 A plugin family like the charts and the operations (app.scanners.importer_scanner):
 a class deriving from FileImporter in app/importers - or user/importers, for a

@@ -101,7 +101,7 @@ def test_a_function_of_x_and_y_keeps_its_y_range_and_an_older_store_gains_it(tmp
 
 
 def test_a_function_from_another_computer_runs_only_once_trusted(qapp, repo: SqliteRepo, monkeypatch) -> None:
-    """todo ID47: a project's stored function runs code; made elsewhere, it is asked about first, its code shown."""
+    """a project's stored function runs code; made elsewhere, it is asked about first, its code shown."""
     from app.data_operations.fit_dialog import SeriesFitDialog
     from app.dialogs import function_trust_dialog
     from app.dialogs.function_trust_dialog import FunctionTrustDialog

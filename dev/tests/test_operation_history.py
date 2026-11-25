@@ -1,4 +1,4 @@
-"""Every Apply is recorded in the project's __operations__ (todo R-03)."""
+"""Every Apply is recorded in the project's __operations__."""
 from __future__ import annotations
 
 import time

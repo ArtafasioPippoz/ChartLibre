@@ -1,4 +1,4 @@
-"""MATLAB and audio files, read with SciPy (todo I-01)."""
+"""MATLAB and audio files, read with SciPy."""
 from __future__ import annotations
 
 from collections import Counter

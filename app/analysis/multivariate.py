@@ -1,4 +1,4 @@
-"""Multivariate and Principal Components: how continuous columns move together (AN-04).
+"""Multivariate and Principal Components: how continuous columns move together.
 
 As JMP's Multivariate platform, correlations for every pair of columns: the
 matrix, and a row per pair with its confidence interval, p-value and count.
@@ -157,7 +157,7 @@ def principal_components(frame: pd.DataFrame, columns: list[str], *, on: str = C
 
 
 # ----------------------------------------------------------------------
-# Factor Analysis (AN-04)
+# Factor Analysis
 # ----------------------------------------------------------------------
 ML = "ml"
 PRINCIPAL_AXIS = "principal"

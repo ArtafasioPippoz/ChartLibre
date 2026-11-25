@@ -94,7 +94,7 @@ def _dialog(cls, repo: SqliteRepo, figure_id: int):
 
 # ----------------------------------------------------------------------
 # Calculus on dates: seconds-since-epoch is correct but unreadable
-# (todo.txt P-01) - a derivative/integral against raw seconds is ~86400x
+# - a derivative/integral against raw seconds is ~86400x
 # smaller/larger than what daily data means intuitively.
 # ----------------------------------------------------------------------
 def test_a_derivative_of_a_dated_series_is_scaled_per_day_not_per_second(

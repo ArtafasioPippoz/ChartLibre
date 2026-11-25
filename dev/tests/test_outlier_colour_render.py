@@ -81,7 +81,7 @@ def test_a_time_series_keeps_its_line_and_marks_the_outliers(qapp, repo: SqliteR
 
 
 def _from_table(repo: SqliteRepo, chart: str, action: str = ACTION_COLOUR) -> tuple[Figure, str]:
-    """Outliers on a table's column drawn as *chart* (todo ID49); the figure as the chart panel draws it."""
+    """Outliers on a table's column drawn as *chart*; the figure as the chart panel draws it."""
     values = np.random.default_rng(1).normal(10.0, 0.5, 60)
     values[[10, 40]] = [60.0, -40.0]
     repo.import_dataframe(pd.DataFrame({"n": np.arange(60.0), "v": values}), table_name="t", normalize_columns=False)

@@ -1,4 +1,4 @@
-"""One string for a word and its colon (todo ID101): a label is written _("Name") and field_label() puts the colon on
+"""One string for a word and its colon: a label is written _("Name") and field_label() puts the colon on
 or leaves it off as the platform does; a catalogue string never ends in a colon for a label."""
 from __future__ import annotations
 

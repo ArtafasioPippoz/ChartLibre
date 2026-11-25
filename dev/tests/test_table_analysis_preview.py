@@ -1,4 +1,4 @@
-"""Table analyses preview their charts (todo O-01): drawn inside a savepoint, rolled back, kept on OK."""
+"""Table analyses preview their charts: drawn inside a savepoint, rolled back, kept on OK."""
 from __future__ import annotations
 
 import numpy as np

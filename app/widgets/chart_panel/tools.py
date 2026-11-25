@@ -485,7 +485,7 @@ class ChartToolsMixin(_Host):
         y_min, y_max = sorted((y0, y1))
         if x_min == x_max or y_min == y_max:
             # A click, not a drag: the point under it selects its row - Shift adds it or takes it away - and
-            # a click on nothing clears the selection (R-07).
+            # a click on nothing clears the selection.
             self._last_selection = None
             self._click_select(axes, event)
             self._canvas.draw_idle()
@@ -569,7 +569,7 @@ class ChartToolsMixin(_Host):
     @staticmethod
     def _in_axis_units(axis: Any, values: pd.Series) -> np.ndarray:
         """*values* as *axis* draws them: dates and categories through its own units, as the renderer's points
-        were (R-07); NaN where it cannot place one."""
+        were; NaN where it cannot place one."""
         coerced, temporal = coerce_axis(values)
         if temporal or coerced.notna().any():
             try:
@@ -643,7 +643,7 @@ class ChartToolsMixin(_Host):
         return None if best is None else (best[1], best[2])
 
     def _select_table_rows(self, selection: dict[str, Any], *, add: bool = False) -> None:
-        """Mark the rows behind the selected points Selected in their tables, and show them (todo R-07).
+        """Mark the rows behind the selected points Selected in their tables, and show them.
 
         Only for a series whose query names its rows (the row id, ROW_ID);
         every chart of those tables then rings the same rows
@@ -694,7 +694,7 @@ class ChartToolsMixin(_Host):
         return function_names(queries)
 
     def untrusted_functions(self) -> list[str]:
-        """The stored functions this chart draws that this computer does not run: drawn empty (todo ID47)."""
+        """The stored functions this chart draws that this computer does not run: drawn empty."""
         used = self.drawn_functions()
         if not used:
             return []
@@ -742,7 +742,7 @@ class ChartToolsMixin(_Host):
         return tables
 
     def _draw_selected_rows(self) -> None:
-        """A ring round every point of this chart whose table row is Selected (todo R-07).
+        """A ring round every point of this chart whose table row is Selected.
 
         Drawn over the chart, not part of it: on flat axes, for a series
         whose query names its rows and whose x and y are numbers. Never
@@ -787,7 +787,7 @@ class ChartToolsMixin(_Host):
 
         Not a rowid-based Hide flag (that only ever worked for a series
         reading a plain table, and even then turned out unreliable in
-        practice - see todo.txt P-02). Wrapping the series' existing SQL in
+        practice). Wrapping the series' existing SQL in
         a WHERE clause that keeps only the points OUTSIDE the rectangle
         works for any series, table-backed or not - the same
         "read the series' own query as a subquery" idea

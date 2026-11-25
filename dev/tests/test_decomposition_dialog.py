@@ -1,4 +1,4 @@
-"""Decomposition and manifold learning across several series (todo.txt P2-15).
+"""Decomposition and manifold learning across several series.
 
 Unlike every other data operation, this one combines several *selected*
 series into one shared-grid feature matrix rather than reading each one

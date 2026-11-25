@@ -7,7 +7,6 @@ Function, New Chart and Chart properties > Series each edited some of these thei
     Parameters    each with its value: a=1, b=2 - an expression's parameters are the names written here, a
                   Code's are its def's arguments (each needs its value here)
     Expression    the text: a few lines, growing as it is written - checked as text, never run to be checked
-                  (todo ID47)
     x range       xmin / xmax / points / spacing; y range the same, shown only when the formula uses y
 
 The values and the range are a chart's (its series' query keeps them: sympy_store.source_sql); the formula is
@@ -256,7 +255,7 @@ class FunctionEditor(QFrame):
             self._form.setRowVisible(widget, visible)
 
     def set_read_only(self, read_only: bool) -> None:
-        """The formula shown but not editable - a function this computer does not trust (todo ID47)."""
+        """The formula shown but not editable - a function this computer does not trust."""
         for widget in (self.description, self.text):
             widget.setReadOnly(read_only)
         self.symbols.setReadOnly(read_only)

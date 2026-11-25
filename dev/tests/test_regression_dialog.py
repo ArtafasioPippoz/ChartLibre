@@ -1,4 +1,4 @@
-"""Robust/ML regression dialog (todo.txt P2-15).
+"""Robust/ML regression dialog.
 
 A dedicated dialog rather than another Fit model: Fit's shape is "an
 algebraic expression with named parameters," and these five models have

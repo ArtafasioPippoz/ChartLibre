@@ -2,7 +2,7 @@
 
 Split out of ``sqlite_repo`` so the pieces of that module - saved queries,
 maintenance, and whatever follows them - can be modules of their own
-without importing the class they are part of (todo.txt N-5). Nothing here
+without importing the class they are part of. Nothing here
 knows about SqliteRepo: it is the SQL-shaped helpers, the two small result
 types, and the decorator every method that touches the connection wears.
 
@@ -107,7 +107,7 @@ _SAVED_QUERY_OPENER_RE = re.compile(r"^\s*(select|with)\b", re.IGNORECASE)
 #: ``replace`` is deliberately absent: it is also SQLite's string function, and
 #: ``SELECT replace(name, 'a', 'b')`` is perfectly read-only.  The statement
 #: form is caught by _REPLACE_INTO_RE instead.
-#: Permissive on purpose (todo N-05): the point is that nothing a person
+#: Permissive on purpose: the point is that nothing a person
 #: types can change or damage the database, not to police what they read -
 #: so PRAGMA reads, ATTACH, transactions and every function stay allowed.
 _WRITE_KEYWORDS: frozenset[str] = frozenset(
@@ -308,7 +308,7 @@ def _is_ident(name: str) -> bool:
 #: Every user table's row id: its INTEGER PRIMARY KEY, so SQLite's own rowid
 #: under a name - kept by VACUUM, by a copy and by Undo, unlike a bare rowid -
 #: and selectable by any query, so a point drawn from a table names its row
-#: (todo R-07). A table with an INTEGER PRIMARY KEY of its own uses that one.
+#:. A table with an INTEGER PRIMARY KEY of its own uses that one.
 #: Hidden from the table views, the column lists and exports.
 ROW_ID: str = "_id"
 

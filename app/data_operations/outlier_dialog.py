@@ -165,7 +165,7 @@ class SeriesOutlierDialog(DataOperationDialogBase):
     # it flags are not the outliers.
     INPUT_REQUIRES_SORTED_X = True
     INPUT_MINIMUM_POINTS = 3
-    # From a table: a scatter of y against x, or y alone - its box plot, its distribution (todo ID49).
+    # From a table: a scatter of y against x, or y alone - its box plot, its distribution.
     TABLE_CHARTS = ("Scatter Plot", "Box Plot", "Histogram")
 
     # Replaces the three hand-built spin boxes, their three signal

@@ -9,7 +9,7 @@ every censored row, and the shaded band is the pointwise confidence
 interval. With two or more curves the log-rank test says whether they
 differ by more than chance.
 
-The arithmetic is in app/analysis/diagnostics.py (todo R-06).
+The arithmetic is in app/analysis/diagnostics.py.
 
 Roles:
     time     required, time to the event or to the end of observation (>= 0)

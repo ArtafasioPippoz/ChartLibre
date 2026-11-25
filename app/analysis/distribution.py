@@ -1,4 +1,4 @@
-"""Distribution of one column, as JMP's platform: quantiles, moments, normality (AN-02).
+"""Distribution of one column, as JMP's platform: quantiles, moments, normality.
 
 The histogram, the Q-Q plot, the normality tests and the distribution fits
 already exist as charts and series operations; this puts what a person asks

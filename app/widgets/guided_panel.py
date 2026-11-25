@@ -1,7 +1,7 @@
 """The Guided analysis panel (navigation rail): the table, its quick answers, the common charts, the wizard.
 
 For someone who knows what they want to find out but not the name of the
-function that does it. Light on purpose (G-02): the table selected in the
+function that does it. Light on purpose: the table selected in the
 Tables panel in one line, concrete questions of it - each opening its quick
 answer with the columns already cast (:attr:`question_requested`) - the
 general quick answers (:attr:`entry_requested`), and "Help me choose…",

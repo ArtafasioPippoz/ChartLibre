@@ -9,7 +9,7 @@ Google is the better of the two, MyMemory answers when Google does not -
 Google turns away addresses that ask too often, and says so with an HTTP
 429 on the very first request. DeepL is the best of the three and needs an
 API key - the free plan's will do - typed in Settings and kept in user.json
-on this computer, never in the repository (todo A-08). DeepL is called
+on this computer, never in the repository. DeepL is called
 directly rather than through ``deep_translator``, whose DeepL client sends
 the key in the URL, a form DeepL no longer accepts; so DeepL works even
 without ``deep_translator`` installed.

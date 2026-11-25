@@ -123,7 +123,7 @@ class ResponseFit:
     auc: dict[str, float] = field(default_factory=dict)
     confusion: pd.DataFrame | None = None
     #: Least squares: tests of the residuals - heteroskedasticity, autocorrelation, functional form,
-    #: normality - as Test, Statistic, Prob, Note (G-25).
+    #: normality - as Test, Statistic, Prob, Note.
     diagnostics: pd.DataFrame = field(default_factory=pd.DataFrame)
     #: What the standard errors in the estimates are ("" for the classical ones).
     std_errors_note: str = ""
@@ -481,7 +481,7 @@ def _diagnostics(model) -> pd.DataFrame:
 
 
 def _fit_penalized(frame: pd.DataFrame, spec: ModelSpec, response: str) -> ResponseFit:
-    """Generalized regression: least squares with a Lasso, Ridge or Elastic Net penalty (AN-16).
+    """Generalized regression: least squares with a Lasso, Ridge or Elastic Net penalty.
 
     For many factors, or factors that move together, where least squares
     overfits or cannot separate them. The design is the model's own (coded

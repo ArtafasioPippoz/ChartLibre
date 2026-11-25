@@ -10,7 +10,7 @@ so a function source is a query - a recursive CTE counting the grid's points, th
 chart of it draws the new one at its next read; each chart keeps its own parameters and range.
 
 The formula is read from __sympy__ at each call - a primary-key read, cheap - and its compiled model kept by
-fingerprint, so a saved change is seen at once. A function this computer does not trust (todo ID47) is NULL
+fingerprint, so a saved change is seen at once. A function this computer does not trust is NULL
 everywhere: nothing of it runs.
 """
 from __future__ import annotations

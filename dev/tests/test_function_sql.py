@@ -52,7 +52,7 @@ def test_a_function_of_x_and_y_is_a_grid_x_fastest(repo: SqliteRepo) -> None:
 
 
 def test_an_untrusted_or_failing_function_draws_nothing(repo: SqliteRepo) -> None:
-    # Written as a project made elsewhere has it: never saved, never trusted here (todo ID47).
+    # Written as a project made elsewhere has it: never saved, never trusted here.
     repo.save_sympy_function("Foreign", "expression", "a", "a*x + 0.123456")
     sql = function_sql("Foreign", {"a": 1.0}, GridRange(0, 1, 3))
     assert [row[1] for row in repo._con.execute(sql)] == [None, None, None]
@@ -190,7 +190,7 @@ def test_a_chart_of_an_untrusted_function_says_so_and_draws_once_trusted(qapp, r
     from app.dialogs.function_trust_dialog import FunctionTrustDialog
     from app.widgets.chart_panel import ChartPanel
 
-    # A project made elsewhere: its function never saved here (todo ID47).
+    # A project made elsewhere: its function never saved here.
     repo.save_sympy_function("Wave", "expression", "a", "a*sin(x) + 0.25", 0.0, 3.0, 4)
     sql = f'SELECT "x" AS x, "y" AS y FROM {repo.get_data_source("Wave").from_clause()}'
     assert function_names([sql, 'SELECT 1']) == {"Wave"}

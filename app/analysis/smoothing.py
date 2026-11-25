@@ -4,7 +4,7 @@ Fourteen methods for a 1D series (a moving average up to total-variation
 denoising), six for a 2D surface and five for a 3D volume. Every function
 takes plain arrays and a mapping of parameters and returns arrays - no Qt,
 no repository, no dialog - so the same code runs behind the window, in a
-test or on a worker thread (todo R-01).
+test or on a worker thread.
 
 A problem with the data or the method is a ``ValueError``; a method whose
 optional package is not installed is an ``ImportError``. Neither is logged

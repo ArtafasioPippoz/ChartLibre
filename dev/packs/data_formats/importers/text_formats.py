@@ -1,4 +1,4 @@
-"""Program text formats read without any package: GPX tracks and GraphPad .pzfx (todo I-01).
+"""Program text formats read without any package: GPX tracks and GraphPad .pzfx.
 
 Moved from app/importers into the data_formats pack; JCAMP-DX and LabVIEW .lvm are in the instruments pack.
 """

@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 import statsmodels.api as sm
 
-from app.analysis import fit
+from app.analysis import Stopped, fit
 from dev.tests._cases import check_all
 
 MISRA1A_X = np.array([77.6, 114.9, 141.1, 190.8, 239.9, 289.0, 332.8, 378.4, 434.8, 477.3, 536.8, 593.1, 689.1, 760.0])
@@ -132,7 +132,7 @@ def _a_stop_request_ends_the_fit(optimizer) -> None:
         calls["n"] += 1
         return calls["n"] > 5
 
-    with pytest.raises(fit.FitStopped):
+    with pytest.raises(Stopped):
         fit.fit_curve(
             misra1a, MISRA1A_X, MISRA1A_Y, np.array([500.0, 1e-4]),
             optimizer=optimizer, should_stop=stop_after_five,

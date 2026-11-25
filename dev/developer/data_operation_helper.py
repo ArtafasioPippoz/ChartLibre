@@ -1,5 +1,4 @@
-"""Data Operation Builder: scaffold a new data-operation dialog file
-(todo.txt P3-6).
+"""Data Operation Builder: scaffold a new data-operation dialog file.
 
 A data operation lives entirely in one file under app/data_operations/
 (built in) or user/data_operations/ (user-authored, kept out of the

@@ -236,7 +236,7 @@ python3 install.py        # creates .venv and installs requirements.txt
 |---|---|
 | [**User manual**](docs/manual/user_manual.pdf) | The whole application, chapter by chapter (PDF). |
 | [**Developer guide**](dev/DEVELOPMENT.md) | Architecture, the render pipeline, and how to add a chart type or an operation. |
-| [`todo.txt`](todo.txt) | Known issues and what is being worked on, ranked. |
+| [`todo.txt`](todo.txt) | The master plan: the open plans in `dev/plans/`, in the order to take them. |
 
 ## Built with
 

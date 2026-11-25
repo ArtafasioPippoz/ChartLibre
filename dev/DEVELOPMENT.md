@@ -4,7 +4,7 @@ This document is for anyone changing the code, not using the app. It covers
 the architecture, the extension points (new chart type, new data
 operation), the figure layout system, styling, localization and testing.
 
-For user-facing behaviour and known issues, see `todo.txt` at the repo root.
+For what is still to be done, see the master plan `todo.txt` at the repo root: it links the open plans in `dev/plans/`.
 
 ## 1. What this app is
 
@@ -182,7 +182,7 @@ docstring.
 ### 4.1 What a renderer receives: `SeriesData.df` is a `SeriesFrame`
 
 `SeriesData.df` is an `app.data.series_frame.SeriesFrame`, not a
-`pandas.DataFrame` (todo.txt P2-17). A `SeriesFrame` is a dict of numpy
+`pandas.DataFrame`. A `SeriesFrame` is a dict of numpy
 arrays, typed straight from the sqlite3 cursor: `from_rows` makes a column
 `float64` (NaN for NULL) when sqlite only ever handed back int/float/None
 for it, and leaves anything else as an object array — the same split
@@ -388,7 +388,7 @@ dialog: a module there takes arrays and parameters and returns results, and
 imports nothing from Qt or the repository. The dialog reads the window,
 calls the engine and shows what comes back. Statistics, Fit and Geometry
 are split this way; the other operations still compute inside their
-dialogs and move over one at a time (todo.txt R-01).
+dialogs and move over one at a time.
 
 `DataOperationDialogBase` gives every operation one way to compute:
 
@@ -611,7 +611,7 @@ Violations carry **every** Nelson rule a point broke, not the first: the rule
 numbers are historical, not a severity ranking.
 
 The same dialog also draws the **attribute** charts — p, np, c and u — which
-were a separate dialog until they were merged into this one (todo.txt N-3):
+were a separate dialog until they were merged into this one:
 "which control chart do I want" is one question, and answering it twice, in
 two places, was the only thing two dialogs bought. Attribute limits are
 binomial (p, np) or Poisson (c, u) rather than sigma-from-range, and they

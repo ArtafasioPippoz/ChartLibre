@@ -1,4 +1,4 @@
-"""Label and field pairs that reflow instead of clipping a number (todo A-01)."""
+"""Label and field pairs that reflow instead of clipping a number."""
 from __future__ import annotations
 
 import pytest

@@ -1,4 +1,4 @@
-"""Gage R&R (AN-06): the variance components of a crossed study, recovered from data built with known ones."""
+"""Gage R&R: the variance components of a crossed study, recovered from data built with known ones."""
 from __future__ import annotations
 
 import numpy as np

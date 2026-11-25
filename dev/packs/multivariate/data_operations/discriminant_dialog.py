@@ -1,4 +1,4 @@
-"""Discriminant (Analysis): which group a row belongs to, from continuous measures (AN-20).
+"""Discriminant (Analysis): which group a row belongs to, from continuous measures.
 
 As JMP's Discriminant platform: Y is the group, the X covariates the
 measures. The report gives the misclassification, Wilks' lambda, the

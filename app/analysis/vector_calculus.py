@@ -1,4 +1,4 @@
-"""Divergence and curl of a vector field on a grid (I-04).
+"""Divergence and curl of a vector field on a grid.
 
 A field sampled on a regular grid - x, y (and z) with the components u, v
 (and w) at each node, one row per node - differentiated by central

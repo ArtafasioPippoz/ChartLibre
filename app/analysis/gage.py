@@ -1,4 +1,4 @@
-"""Gage R&R (AN-06): how much of the variation a measuring system adds, by the ANOVA method.
+"""Gage R&R: how much of the variation a measuring system adds, by the ANOVA method.
 
 A crossed study - every operator measures every part, each more than once - as
 JMP's Variability / Gauge Chart and the AIAG MSA manual analyse it. A two-way

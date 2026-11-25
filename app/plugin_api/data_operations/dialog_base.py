@@ -583,7 +583,7 @@ class DataOperationDialogBase(QDialog):
         super().__init__(parent)
 
         # The operation's own Name, as the Analysis panel, the catalogue and
-        # the report call it (todo H-09) - not a second name of its own.
+        # the report call it - not a second name of its own.
         self.setWindowTitle(_(title or self.Name or "Data Operation"))
         self.resize(width or self.WINDOW_SIZE[0], height or self.WINDOW_SIZE[1])
 
@@ -2022,7 +2022,7 @@ class DataOperationDialogBase(QDialog):
 
         Byte-identical copies of this lived in the calculus, control-chart
         and peaks dialogs, and a fourth was about to be written for the root
-        finder - see todo.txt P2-14. Every operation needs the same three
+        finder. Every operation needs the same three
         steps and makes the same two decisions, so both live here:
 
         *Which columns.* The series' own roles first, since that is what the
@@ -2346,7 +2346,7 @@ class DataOperationDialogBase(QDialog):
                                      *(self.result_section(result) for result in results))
 
     def how_to_read(self, results: Sequence[Any], /) -> list[str]:
-        """The "How to read this" box (H-04): the numbers the report hinges on, each in two sentences
+        """The "How to read this" box: the numbers the report hinges on, each in two sentences
         (app.plugin_api.reading_guide); none by default."""
         del results
         return []

@@ -6,7 +6,7 @@ interpolant of the series (linear by default, cubic or PCHIP on request) by
 Brent, bisection, TOMS 748 or the secant method - the last checked against
 the bracket it came from. On a surface the roots are a whole level curve,
 read back from matplotlib's contour extraction. Plain arrays in, no Qt,
-nothing logged (todo R-01): a bracket the interpolant does not really cross
+nothing logged: a bracket the interpolant does not really cross
 comes back as a note.
 
 See app/data_operations/roots_dialog.py's docstring for why the bracket,
@@ -77,7 +77,7 @@ def extract_level_curves(
     algorithm and corner masking as matplotlib's defaults, so the curves are
     the ones a contour plot draws. Not through a Figure: that touched
     pyplot's global state, which is not safe off the GUI thread, and this
-    runs in the background (todo R-02).
+    runs in the background.
     """
     import contourpy
 

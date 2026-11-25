@@ -1,4 +1,4 @@
-"""Parallel plot: each row a line across one vertical axis per variable (todo C-02).
+"""Parallel plot: each row a line across one vertical axis per variable.
 
 As JMP's Graph > Parallel Plot: several measurements side by side, each on
 its own scale, every row a polyline through its values - patterns across

@@ -1,6 +1,6 @@
 ID09 Plain-language errors and onboarding, ID11 More instrument and scientific imports (2026-11-16)
 =====================================================================================================
-Both are in the todo's "Foundation" and "Core" groups. ID11's long plan exists (import_formats_plan.txt,
+Both are foundation work. ID11's long plan exists (import_formats_plan.txt,
 importer_plugins_plan.txt); this file says where it stands and what to do next. ID09 had no plan. One step = one
 commit on main, the tests of the area, the size line of todo.txt. Nothing is built before the owner's go.
 
@@ -62,7 +62,7 @@ Where it stands (read in app/importers, the plan's status)
   Dataset combo and metadata. Built: Parquet, Feather/Arrow, ODS, XLSB, MATLAB, WAV, Stata, SAS, SPSS, R,
   Touchstone, SPICE raw, VCD, JCAMP-DX, LabVIEW .lvm, GPX, Prism, and the closed formats (JMP, Minitab, Origin)
   refused with the way to export.
-- Missing from the todo's list: HDF5/NetCDF, TDMS, compressed JCAMP, and "common instrument exports" (Keysight
+- Not in the plan yet: HDF5/NetCDF, TDMS, compressed JCAMP, and "common instrument exports" (Keysight
   B1500/EasyEXPERT, Keithley 4200A/Clarius, oscilloscope files, STDF/KLARF).
 - Packages: h5py, netCDF4, npTDMS, scikit-rf, pyarrow, pyreadstat are not installed in the dev environment, so the
   readers for them are tested only through the "missing package" path.

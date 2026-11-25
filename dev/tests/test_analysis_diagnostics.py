@@ -1,4 +1,4 @@
-"""The numbers behind the diagnostic plots (todo R-06), against published values."""
+"""The numbers behind the diagnostic plots, against published values."""
 from __future__ import annotations
 
 import numpy as np

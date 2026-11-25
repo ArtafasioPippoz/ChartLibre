@@ -1,4 +1,4 @@
-"""Microelectronics files read without any package: Touchstone, SPICE .raw, VCD (todo I-01).
+"""Microelectronics files read without any package: Touchstone, SPICE .raw, VCD.
 
 * Touchstone .sNp (v1): a VNA's S-, Y- or Z-parameters. The option line
   ("# GHz S MA R 50") says the frequency unit, the parameter, the format (MA

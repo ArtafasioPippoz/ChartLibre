@@ -1,4 +1,4 @@
-"""Column Info opens from an analysis' column list, and the analysis sees what it changed (R-08)."""
+"""Column Info opens from an analysis' column list, and the analysis sees what it changed."""
 from __future__ import annotations
 
 from pathlib import Path

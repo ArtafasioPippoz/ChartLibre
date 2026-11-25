@@ -1,4 +1,4 @@
-"""todo N-05: the SQL guard - where a person writes SQL, and when a project opens.
+"""the SQL guard - where a person writes SQL, and when a project opens.
 
 It never runs while charts are drawn; user.json "sql_guard": false turns
 it off.

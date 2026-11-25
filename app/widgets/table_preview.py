@@ -184,9 +184,9 @@ class TablePreviewPanel(QWidget):
     statistics_requested = Signal(str, str)
     #: A SELECT of the selected cells' columns and rows, for the Query Builder.
     query_requested = Signal(str)
-    #: Rows of these tables were marked Selected here: the charts ring them too (todo R-07).
+    #: Rows of these tables were marked Selected here: the charts ring them too.
     selected_rows_changed = Signal(list)
-    #: Show only Selected switched for the table shown: every chart of it draws again (R-07).
+    #: Show only Selected switched for the table shown: every chart of it draws again.
     selected_only_changed = Signal(list)
 
     def __init__(self, parent: QWidget, repo:SqliteRepo) -> None:
@@ -248,7 +248,7 @@ class TablePreviewPanel(QWidget):
         self.view.setModel(None)
 
     def _open_column_info(self, column: str) -> None:
-        """Column Info (R-08): the column's name, types and description; the preview reloads after."""
+        """Column Info: the column's name, types and description; the preview reloads after."""
         from app.dialogs.column_info_dialog import ColumnInfoDialog
 
         if self._repo is None or not self._table:

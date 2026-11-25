@@ -1,4 +1,4 @@
-"""Distribution (AN-02), Fit Y by X (AN-03) and the control chart's capability: engines against hand-worked values, the windows' OK."""
+"""Distribution, Fit Y by X and the control chart's capability: engines against hand-worked values, the windows' OK."""
 from __future__ import annotations
 
 import time

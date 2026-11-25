@@ -1148,7 +1148,7 @@ def _load_series_df(
         return SeriesFrame()
 
     try:
-        # Show only Selected on the series' table: its other rows out of view (R-07).
+        # Show only Selected on the series' table: its other rows out of view.
         sql = repo.sql_selected_only(sql)
         frame_filter = _frame_filter.get()
         if frame_filter is not None:  # one frame of an animation: its rows only

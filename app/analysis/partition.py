@@ -93,11 +93,11 @@ class PartitionResult:
     note: str = ""
     #: The spec's method: TREE has leaves and a split history; an ensemble neither.
     method: str = "tree"
-    #: Permutation importance (AN-18): Column, Importance, Std, on Rows (validation, or training without it).
+    #: Permutation importance: Column, Importance, Std, on Rows (validation, or training without it).
     importance: pd.DataFrame = field(default_factory=pd.DataFrame)
     #: Partial dependence of the most important factors: Factor, Value, Label, Predicted.
     dependence: pd.DataFrame = field(default_factory=pd.DataFrame)
-    #: A nominal response's ROC curves (Level, FPR, TPR) and areas, on the same rows (AN-19).
+    #: A nominal response's ROC curves (Level, FPR, TPR) and areas, on the same rows.
     roc: pd.DataFrame = field(default_factory=pd.DataFrame)
     auc: dict[str, float] = field(default_factory=dict)
     #: The fitted model, as a SavedModel (app/analysis/models.py): keep it, or score new rows with it.
@@ -405,7 +405,7 @@ DEPENDENCE_FACTORS = get_constant("partition_dependence_factors", 4)
 
 def _explain(result: PartitionResult, model: Any, x: np.ndarray, y: np.ndarray, train: np.ndarray,
              valid: np.ndarray, nominal: bool, levels: list[str], orders: dict[str, list[str]]) -> None:
-    """Permutation importance and partial dependence of the fitted model (AN-18), into *result*."""
+    """Permutation importance and partial dependence of the fitted model, into *result*."""
     from app.analysis import explain
 
     rows = valid if valid.any() else train

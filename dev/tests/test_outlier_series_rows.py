@@ -1,4 +1,4 @@
-"""Outliers hide the series' own rows (todo O-01).
+"""Outliers hide the series' own rows.
 
 The detection used to read the whole source table and quote the roles as
 column names: a series filtered to one ticker searched all of them, and a

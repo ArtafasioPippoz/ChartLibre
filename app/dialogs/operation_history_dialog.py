@@ -1,4 +1,4 @@
-"""How a table came to be: the operations recorded in the project (todo R-03).
+"""How a table came to be: the operations recorded in the project.
 
 Every Apply of a data operation is kept in ``__operations__`` (see
 ``app/data/repo/operations.py``); this shows the ones that read or wrote one

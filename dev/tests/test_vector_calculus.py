@@ -1,4 +1,4 @@
-"""Divergence and curl of a gridded field (I-04), against fields whose answers are known in closed form."""
+"""Divergence and curl of a gridded field, against fields whose answers are known in closed form."""
 from __future__ import annotations
 
 import numpy as np

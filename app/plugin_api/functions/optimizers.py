@@ -237,7 +237,7 @@ def run_optimizer(
 
     An unknown *key* is a ValueError naming the known ones. It used to fall
     back to the trust region quietly, so a misspelt method ran - and was
-    reported as - a different one (todo R-13).
+    reported as - a different one.
     """
     optimizer = BY_KEY.get(str(key))
     if optimizer is None:
