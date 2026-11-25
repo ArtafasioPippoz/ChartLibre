@@ -640,6 +640,11 @@ class BaseAxisRenderer:
         finds the stored path a click landed on by it, as the annotation drag does with annotations."""
         from app.plugin_api.charts.path_geometry import build_path, has_curves, parse_nodes
 
+        if getattr(ax, "name", "") == "3d":
+            # A 2D patch on a 3D axes breaks Matplotlib's 3D draw ("PathPatch has no do_3d_projection"), and the
+            # stored path would break every redraw of the chart: paths are drawn on 2D axes only.
+            applogger.warning("Path skipped: paths are drawn on 2D axes only, and this axis is 3D.")
+            return
         nodes = parse_nodes(path.get("points"))
         points = [(x, y) for x, y, _hx, _hy in nodes]
         if len(points) < 2:

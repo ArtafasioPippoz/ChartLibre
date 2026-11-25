@@ -286,6 +286,10 @@ class DrawToolsMixin:
         axis_id = getattr(axes, "_chartlibre_axis_id", None)
         if axis_id is None:
             return
+        if tool.kind in ("edit", "pen", "drag") and getattr(axes, "name", "") == "3d":
+            # Paths and shapes are 2D patches, which a 3D axes cannot draw (see BaseAxisRenderer.apply_path).
+            self.selection_changed.emit(_("Paths and shapes are drawn on 2D axes only."))
+            return
         if tool.kind == "edit":
             self._edit_press(event, axes, int(axis_id))
             return
