@@ -833,6 +833,13 @@ class ChartToolsMixin(_Host):
             colour = line.get_color() if face in (None, "auto", "none") else face
             return {"marker": line.get_marker(), "sizes": np.array([float(line.get_markersize()) ** 2]),
                     "colours": np.array([to_rgba(colour)]), "count": len(line.get_xdata())}
+        # A line with no marker: a small dot in proportion to the line, not a full-size marker it never had.
+        bare = [ln for ln in axes.lines if ln.get_label() != label]
+        line = next((ln for ln in bare if ln.get_label() == name), None) or (bare[0] if bare else None)
+        if line is not None:
+            diameter = max(3.0, 2.5 * float(line.get_linewidth()))
+            return {"marker": "o", "sizes": np.array([diameter ** 2]), "colours": np.array([to_rgba(line.get_color())]),
+                    "count": len(line.get_xdata())}
         return {"marker": "o", "sizes": np.array([float(rcParams.get("lines.markersize", 6.0)) ** 2]),
                 "colours": np.array([to_rgba("C0")]), "count": 0}
 
@@ -870,8 +877,8 @@ class ChartToolsMixin(_Host):
             edge, width = np.array([darker(to_rgba(self.SELECT_COLOR), 0.55)] * count), 1.2
         else:  # bold: the same marker, solid, darker and with a heavy edge
             sizes = sizes * scale ** 2
-            face = np.array([darker(c, 0.72) for c in colours])
-            edge, width = np.array([darker(c, 0.38) for c in colours]), 1.4
+            face = np.array([darker(c, 0.8) for c in colours])
+            edge, width = np.array([darker(c, 0.55) for c in colours]), 1.1
         offsets = np.column_stack([np.asarray(xs, dtype=float), np.asarray(ys, dtype=float)])
         if "paths" in template:
             collection = PathCollection(template["paths"], sizes=sizes, offsets=offsets, offset_transform=axes.transData,
