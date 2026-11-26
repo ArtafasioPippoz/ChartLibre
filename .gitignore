@@ -83,3 +83,7 @@ python.nosync/
 # Packs installed from the .clpack files at start (app/utils/packs.py): made again whenever needed
 app/packages/installed/
 dev/appsize.csv
+
+# The environment, out of iCloud: .venv links to .venv.nosync (a .nosync folder is never synced).
+.venv
+.venv.nosync/
