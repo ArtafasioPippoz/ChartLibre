@@ -4,8 +4,10 @@
  * AppKit gives an app the current look - Liquid Glass window buttons, menus and bars - only when its main
  * executable was linked against a recent SDK; python3 from python-build-standalone says SDK 15, so ChartLibre run
  * by it got the compatibility look. This program loads .python's libpython with dlopen (no version linked in: a
- * newer runtime works too) and calls Py_BytesMain in its own process. When there is no libpython it execs
- * .python/bin/python3, as the app's script did.
+ * newer runtime works too) and calls Py_BytesMain in its own process. Without .python it takes the project's
+ * .venv: the libpython of the Python it was made from (pyvenv.cfg's home), and .venv/bin/python3 as the executable,
+ * so Python finds pyvenv.cfg and the libraries in .venv. When there is no libpython it execs python3, as the app's
+ * script did.
  *
  * Built by dev/tools/make_launcher.py (clang, the Command Line Tools) into
  * ChartLibre.app/Contents/MacOS/ChartLibreNative; the script beside it starts it when it is there.
@@ -51,6 +53,24 @@ int main(int argc, char **argv) {
     args[1] = script;
     for (int index = 1; index < argc; ++index) args[index + 1] = argv[index];
 
+    /* No .python: the project's .venv, on the libpython of the Python it was made from. */
+    int venv = 0;
+    if (access(python, X_OK) != 0) {
+        char config[PATH_MAX], line[PATH_MAX];
+        snprintf(config, sizeof config, "%s/.venv/pyvenv.cfg", root);
+        FILE *file = fopen(config, "r");
+        while (file != NULL && fgets(line, sizeof line, file) != NULL) {
+            if (strncmp(line, "home = ", 7) != 0) continue;
+            line[strcspn(line, "\r\n")] = '\0';
+            snprintf(runtime, sizeof runtime, "%s", line + 7);
+            up(runtime, 1); /* .../Versions/3.15/bin -> .../Versions/3.15 */
+            snprintf(python, sizeof python, "%s/.venv/bin/python3", root);
+            venv = 1;
+            break;
+        }
+        if (file != NULL) fclose(file);
+    }
+
     snprintf(pattern, sizeof pattern, "%s/lib/libpython3.*.dylib", runtime);
     glob_t found;
     if (glob(pattern, 0, NULL, &found) == 0 && found.gl_pathc > 0) {
@@ -59,7 +79,8 @@ int main(int argc, char **argv) {
         if (py_main != NULL) {
             /* The runtime's own home, and its python3 as sys.executable: a subprocess started with
                sys.executable must be Python, not this app again. */
-            setenv("PYTHONHOME", runtime, 1);
+            if (venv) unsetenv("PYTHONHOME"); /* the .venv's own: Python reads it from pyvenv.cfg */
+            else setenv("PYTHONHOME", runtime, 1);
             setenv("PYTHONEXECUTABLE", python, 1);
             return py_main(argc + 1, args);
         }
