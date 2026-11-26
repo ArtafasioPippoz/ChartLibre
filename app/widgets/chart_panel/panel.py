@@ -52,7 +52,7 @@ from app.styles.style import (
     create_toolbar_button,
     theme_is_dark,
 )
-from app.utils.config import get_section, update_section
+from app.utils.config import get_constant, get_section, update_section
 from app.utils.i18n import _
 from app.widgets.chart_panel.canvas import ChartCanvas
 from app.widgets.chart_panel.constants import (
@@ -339,11 +339,12 @@ class ChartPanel(DrawToolsMixin, ChartToolsMixin, QFrame):
         self._config = get_section(CONFIG_SECTION)
         chart_config: dict[str, Any] = self._config
 
+        # The range is config.json's (constants); a person's own in user.json wins.
         self._min_zoom_percent:int = int(
-            chart_config.get(CONFIG_MIN_ZOOM, 25)
+            chart_config.get(CONFIG_MIN_ZOOM, get_constant("chart_min_zoom_percent", 25))
         )
         self._max_zoom_percent:int = int(
-            chart_config.get(CONFIG_MAX_ZOOM, 250)
+            chart_config.get(CONFIG_MAX_ZOOM, get_constant("chart_max_zoom_percent", 500))
         )
         if self._max_zoom_percent < self._min_zoom_percent:
             self._max_zoom_percent = self._min_zoom_percent

@@ -1530,6 +1530,8 @@
     "num_recent_charts": 3,
     "font_scale_min_percent": 50,
     "font_scale_max_percent": 300,
-    "font_scale_step_percent": 10
+    "font_scale_step_percent": 10,
+    "chart_min_zoom_percent": 25,
+    "chart_max_zoom_percent": 500
   }
 }
