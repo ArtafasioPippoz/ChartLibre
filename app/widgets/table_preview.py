@@ -446,6 +446,23 @@ class TablePreviewPanel(QWidget):
                     key=None, action=lambda _=False: self._set_selected_rows_hidden(False),
                 )
                 show.setEnabled(lazy_model.any_hidden(rows_selected))
+                # Selected = 1 and = 0 on the same rows: what Show only the Selected rows on the charts draws.
+                block_ids = {row_id for row in rows_selected if (row_id := lazy_model.row_id(row)) is not None}
+                marked = set(self._repo.selected_row_ids(table))
+                create_menu_item(
+                    parent=self, icons=CONTEXT_MENU_ICONS, menu=menu, icon="select_points", checkable=False,
+                    text=_("Mark the selected rows as Selected"),
+                    tooltip=_("Set Selected = 1 on the selected rows: with Show only the Selected rows on, the charts "
+                              "of '{table}' draw them.").format(table=table),
+                    key=None, action=lambda _=False: self._set_selected_rows_marked(True),
+                )
+                unmark = create_menu_item(
+                    parent=self, icons=CONTEXT_MENU_ICONS, menu=menu, icon="select_points", checkable=False,
+                    text=_("Unmark the selected rows"),
+                    tooltip=_("Set Selected = 0 on the selected rows; the other rows keep their Selected value."),
+                    key=None, action=lambda _=False: self._set_selected_rows_marked(False),
+                )
+                unmark.setEnabled(bool(block_ids & marked))
         if column or lazy_model is not None:
             menu.addSeparator()
 
@@ -696,6 +713,20 @@ class TablePreviewPanel(QWidget):
         else:
             self._reload_model()  # the Hide column was just added
         self.refresh.emit()
+
+    def _set_selected_rows_marked(self, marked: bool) -> None:
+        """Mark, or unmark, the rows that hold a selected cell as Selected (Selected = 1, or 0); the others keep theirs."""
+        model = self._model()
+        if model is None or self._repo is None or not self._table:
+            return
+        ids = [row_id for row in self._selected_block()[0] if (row_id := model.row_id(row)) is not None]
+        changed = self._repo.set_rows_selected(self._table, ids, marked)
+        applogger.info("%s: %d rows %s.", self._table, changed, "marked Selected" if marked else "unmarked")
+        if model.has_column("Selected"):
+            model.reread()  # where they are, the selection kept
+        else:
+            self._reload_model()  # the Selected column was just added
+        self.selected_rows_changed.emit([self._table])
 
     def _flag_done(self, flag: str, count: int) -> None:
         if flag == "Selected" and self._table:

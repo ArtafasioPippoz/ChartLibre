@@ -200,6 +200,35 @@ def test_set_rows_hidden_counts_only_the_rows_it_changed(tmp_db_path: Path) -> N
     assert sorted(repo.hidden_rowids("t1")) == [1, 3]
 
 
+def test_selected_rows_are_marked_and_unmarked_from_the_menu(qapp, tmp_db_path: Path) -> None:
+    repo = _repo_with_table_and_query(tmp_db_path)
+    host = QWidget()
+    panel = TablePreviewPanel(parent=host, repo=repo)
+    panel.set_context(repo, "t1")
+    changed: list[list[str]] = []
+    panel.selected_rows_changed.connect(changed.append)
+
+    _select_rows(panel, [0, 2])
+    menu = panel._build_context_menu(OUTSIDE_CELLS)
+    assert not _action(menu, "Unmark the selected rows").isEnabled()  # none of them is Selected yet
+    _action(menu, "Mark the selected rows as Selected").trigger()
+    assert repo.selected_row_ids("t1") == [1, 3] and changed == [["t1"]]
+
+    _select_rows(panel, [2])
+    menu = panel._build_context_menu(OUTSIDE_CELLS)
+    assert _action(menu, "Unmark the selected rows").isEnabled()
+    _action(menu, "Unmark the selected rows").trigger()
+    assert repo.selected_row_ids("t1") == [1]
+
+
+def test_set_rows_selected_counts_only_the_rows_it_changed(tmp_db_path: Path) -> None:
+    repo = _repo_with_table_and_query(tmp_db_path)
+    assert repo.set_rows_selected("t1", [1, 2], True) == 2
+    assert repo.set_rows_selected("t1", [1, 2, 3], True) == 1
+    assert repo.set_rows_selected("t1", [2], False) == 1
+    assert repo.selected_row_ids("t1") == [1, 3]
+
+
 def test_statistics_of_a_column_opens_the_statistics_analysis(qapp, repo) -> None:
     import pandas as pd
     from PySide6.QtCore import QPoint

@@ -1665,6 +1665,24 @@ class TablesMixin(_Host):
         self._commit()
         return changed
 
+    @ensure_connection_wrapper
+    def set_rows_selected(self, table_name: str, row_ids: Sequence[int], selected: bool) -> int:
+        """Mark (Selected = 1) or unmark (Selected = 0) exactly *row_ids*; how many rows changed.
+
+        The other rows keep their Selected value - unlike select_rows, which leaves exactly the rows it is given.
+        """
+        assert self._con is not None
+        self.ensure_column(table_name=table_name, col_name="Selected", col_type="INTEGER")
+        value = 1 if selected else 0
+        before = self._con.total_changes
+        self._con.executemany(
+            f'UPDATE {_quote_ident(table_name)} SET "Selected" = ? WHERE rowid = ? AND COALESCE("Selected", 0) <> ?',
+            [(value, int(row_id), value) for row_id in row_ids],
+        )
+        changed = self._con.total_changes - before
+        self._commit()
+        return changed
+
     def ensure_hide_column(self, table_name: str) -> None:
         """Ensure a boolean-compatible Hide column exists on a user data table."""
         self.ensure_column(table_name=table_name,col_name="Hide",col_type="INTEGER")
