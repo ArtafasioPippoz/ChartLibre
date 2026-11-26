@@ -547,12 +547,11 @@ class ChartToolsMixin(_Host):
                     continue
                 xs, ys = points[:, 0].astype(float), points[:, 1].astype(float)
             else:
+                # The line's own data in the units its axis draws them in: a date is its day, not its count of
+                # microseconds, and a category its place - the box is drawn in those units.
                 x_data, y_data = artist.get_data()
-                try:
-                    xs = np.asarray(x_data, dtype=float)
-                    ys = np.asarray(y_data, dtype=float)
-                except (TypeError, ValueError):
-                    continue
+                xs = self._in_axis_units(axes.xaxis, pd.Series(np.asarray(x_data)))
+                ys = self._in_axis_units(axes.yaxis, pd.Series(np.asarray(y_data)))
 
             mask = (xs >= x_min) & (xs <= x_max) & (ys >= y_min) & (ys <= y_max)
             if not mask.any():
