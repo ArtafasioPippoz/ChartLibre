@@ -5,8 +5,8 @@
   <key>CFBundleName</key><string>ChartLibre Developer</string>
   <key>CFBundleDisplayName</key><string>ChartLibre Developer</string>
   <key>CFBundleIdentifier</key><string>org.chartlibre.developer</string>
-  <key>CFBundleVersion</key><string>0.2.0</string>
-  <key>CFBundleShortVersionString</key><string>0.2.0</string>
+  <key>CFBundleVersion</key><string>0.3.0</string>
+  <key>CFBundleShortVersionString</key><string>0.3.0</string>
   <key>CFBundleExecutable</key><string>ChartLibre Developer</string>
   <key>CFBundleIconFile</key><string>ChartLibre Developer</string>
   <key>CFBundlePackageType</key><string>APPL</string>

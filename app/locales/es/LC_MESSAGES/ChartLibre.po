@@ -148,8 +148,41 @@ msgstr "Un cuadro \"Cómo leer esto\" en cada informe"
 msgid "A \"What next?\" section at the end of every table analysis"
 msgstr "Una sección de \"¿Qué sigue?\" al final de cada análisis de tabla"
 
+msgid "A GPX file's track, route and waypoints: latitude, longitude, elevation, time."
+msgstr "Pista, ruta y waypoints de un archivo GPX: latitud, longitud, altura, tiempo."
+
+msgid "A LabVIEW Write To Measurement File text file: each segment a dataset."
+msgstr "Un archivo de texto LabVIEW Write To Measurement File: cada segmento es un conjunto de datos."
+
+msgid "A MATLAB .mat file (v4 to v7): each numeric variable a dataset, or all of one length side by side."
+msgstr "Un archivo .mat de MATLAB (v4 a v7): cada variable numérica es un conjunto de datos, o todos de una longitud uno al lado del otro."
+
+msgid "A National Instruments .tdms file (LabVIEW, DAQ): each group a dataset, its channels as columns."
+msgstr "Un archivo .tdms de National Instruments (LabVIEW, DAQ): cada grupo es un conjunto de datos, sus canales son columnas."
+
+msgid "A NetCDF file (.nc): the variables of each set of dimensions as one table."
+msgstr "Un archivo NetCDF (.nc): las variables de cada conjunto de dimensiones como una sola tabla."
+
+msgid "A Prism XML project: each data table a dataset, replicates as numbered columns."
+msgstr "Un proyecto Prism XML: cada tabla de datos es un conjunto de datos, se replica como columnas numeradas."
+
+msgid "A SAS dataset (.sas7bdat) or transport file (.xpt)."
+msgstr "Un conjunto de datos SAS (.sas7bdat) o un archivo de transporte (.xpt)."
+
+msgid "A Stata dataset (.dta), value labels as categories."
+msgstr "Un conjunto de datos de Stata (.dta), etiquetas de valor como categorías."
+
+msgid "A VNA's .sNp file: frequency and each S (or Y, Z) parameter as its file gives it."
+msgstr "Archivo .sNp de un VNA: frecuencia y cada parámetro S (o Y, Z) que su archivo le da."
+
+msgid "A WAV recording: time and one column per channel."
+msgstr "Una grabación WAV: tiempo y una columna por canal."
+
 msgid "A chart of the selected columns: a histogram of one, else New plot"
 msgstr "Un gráfico de las columnas seleccionadas: un histograma de una, de lo contrario Nueva parcela"
+
+msgid "A circuit simulation's waveforms: one column per trace; each plot a dataset, .step runs numbered."
+msgstr "Formas de onda de una simulación de circuito: una columna por traza; cada gráfico es un conjunto de datos, las ejecuciones de .step están numeradas."
 
 msgid "A column"
 msgstr "Una columna"
@@ -190,11 +223,8 @@ msgstr "Parámetro de una función"
 msgid "A guide line under the pointer, shared across every axes of this figure."
 msgstr "Una línea guía debajo del puntero, compartida en todos los ejes de esta figura."
 
-msgid "A line across the whole axes, at this x."
-msgstr "Una línea a través de todos los ejes, en esta x."
-
-msgid "A line along the whole axes, at this y."
-msgstr "Una línea a lo largo de todos los ejes, en esta y."
+msgid "A logic analyser's or a digital simulation's signals: a row per change, every signal's value."
+msgstr "Señales de un analizador lógico o de una simulación digital: una fila por cambio, el valor de cada señal."
 
 msgid "A measure in time order: its autocorrelation (ACF, PACF, Ljung-Box), its trend and season (STL), and an ARIMA or exponential-smoothing forecast with its prediction interval."
 msgstr "Una medida en orden temporal: su autocorrelación (ACF, PACF, Ljung-Box), su tendencia y temporada (STL) y un pronóstico ARIMA o de suavizado exponencial con su intervalo de predicción."
@@ -235,6 +265,9 @@ msgstr "Una imagen llamada \"{name}\" ya está guardada. ¿Reemplazarla?"
 msgid "A picture of the project (Project > Pictures) drawn instead of the plain bars."
 msgstr "Una imagen del proyecto (Proyecto  ⁇  Pictures) dibujado en lugar de las barras simples."
 
+msgid "A polygon or a polyline through points in data coordinates, written as \"x,y; x,y; ...\" (at least two). Closed joins the last point to the first; Edge and Fill are colors; anything else goes in Kwargs JSON, for example: {\"linewidth\": 2}."
+msgstr "Un polígono o una polilínea que pasa por puntos en coordenadas de datos, escritos como «x,y; x,y; ...» (al menos dos). «Cerrado» une el último punto con el primero; «Borde» y «Relleno» son colores; cualquier otra cosa va en Kwargs JSON, por ejemplo: {\"linewidth\": 2}."
+
 msgid "A query's or a function's column: named and typed by its SQL or its formula."
 msgstr "Una columna de consulta o una función: nombrada y escrita por su SQL o su fórmula."
 
@@ -249,6 +282,9 @@ msgstr "Una serie extraída de una función SymPy almacenada se diferencia o int
 
 msgid "A skewed noise is centred on 0 so the signal does not drift; tick to leave its mean where the distribution has it."
 msgstr "Un ruido estriado se centra en 0 por lo que la señal no se desvía; marca para dejar su media donde la distribución la tiene."
+
+msgid "A spectrum (IR, UV-Vis, Raman, NMR, MS) in JCAMP-DX: x and y with their units; each block a dataset."
+msgstr "Un espectro (IR, UV-Vis, Raman, NMR, MS) en JCAMP-DX: x e y con sus unidades; cada uno bloquea un conjunto de datos."
 
 msgid "A step lasts from then on; a pulse affects that one time only."
 msgstr "Un paso dura desde entonces; un pulso afecta eso solo una vez."
@@ -270,9 +306,6 @@ msgstr "Las columnas de una tabla, cada una en el rol en el que se lee la operac
 
 msgid "A term is significant when its p-value is at most this; the Stepwise personality adds or keeps only such terms."
 msgstr "Un término es significativo cuando su valor p es a lo sumo este; la personalidad Stepwise añade o mantiene solo dichos términos."
-
-msgid "A text note pinned to this point: x = {x}, y = {y}."
-msgstr "Una nota de texto anclada a este punto: x = {x}, y = {y}."
 
 msgid "A vector field sampled on a grid: its divergence (where it spreads out or gathers) and its curl (where and how fast it turns), in 2D or 3D."
 msgstr "Un campo vectorial muestreado en una cuadrícula: su divergencia (donde se extiende o se reúne) y su rizo (dónde y qué tan rápido gira), en 2D o 3D."
@@ -370,11 +403,14 @@ msgstr "Añadir una imagen SVG, PNG o JPEG al proyecto y utilizarla como marcado
 msgid "Add annotation"
 msgstr "Añadir anotación"
 
-msgid "Add annotation here…"
-msgstr "Añadir anotación aquí..."
-
 msgid "Add another column to the summary"
 msgstr "Añadir otra columna al resumen"
+
+msgid "Add area"
+msgstr "Añadir área"
+
+msgid "Add arrow"
+msgstr "Añadir flecha"
 
 msgid "Add column"
 msgstr "Añadir columna"
@@ -382,14 +418,14 @@ msgstr "Añadir columna"
 msgid "Add computed column"
 msgstr "Añadir columna calculada"
 
+msgid "Add ellipse"
+msgstr "Añadir elipse"
+
 msgid "Add from a file…"
 msgstr "Añadir desde un archivo…"
 
 msgid "Add from file…"
 msgstr "Añadir desde el archivo..."
-
-msgid "Add horizontal line at y = {value}"
-msgstr "Añadir línea horizontal en y = {value}"
 
 msgid "Add line"
 msgstr "Añadir línea"
@@ -403,8 +439,14 @@ msgstr "Añadir medida"
 msgid "Add new axis"
 msgstr "Añadir nuevo eje"
 
+msgid "Add node"
+msgstr "Añadir nodo"
+
 msgid "Add noise"
 msgstr "Agregar ruido"
+
+msgid "Add path"
+msgstr "Añadir trayectoria"
 
 msgid "Add picture"
 msgstr "Agregar imagen"
@@ -415,6 +457,9 @@ msgstr "Agregar fotos"
 msgid "Add random noise, outliers or missing values to a series, to test what comes after"
 msgstr "Agregue el ruido aleatorio, los valores o los valores perdidos a una serie, para probar lo que viene después"
 
+msgid "Add rectangle"
+msgstr "Añadir rectángulo"
+
 msgid "Add source"
 msgstr "Añadir fuente"
 
@@ -423,9 +468,6 @@ msgstr "Añade la interacción de las columnas seleccionadas; una sola columna d
 
 msgid "Add the selected columns as main effects."
 msgstr "Añada las columnas seleccionadas como efectos principales."
-
-msgid "Add vertical line at x = {value}"
-msgstr "Añadir línea vertical en x = {value}"
 
 msgid "Add {orientation} line"
 msgstr "Añadir {orientation} línea"
@@ -483,6 +525,12 @@ msgstr "Todos"
 
 msgid "All ({count} frames)"
 msgstr "Todos ({count} marcos)"
+
+msgid "All analyses"
+msgstr "Todos los análisis"
+
+msgid "All charts"
+msgstr "Todos los gráficos"
 
 msgid "All checked series"
 msgstr "Todas las series comprobadas"
@@ -544,6 +592,18 @@ msgstr "Un libro .ods: cada hoja es un conjunto de datos."
 msgid "An .xlsb workbook: each sheet a dataset."
 msgstr "Un libro .xlsb: cada hoja es un conjunto de datos."
 
+msgid "An Apache Arrow IPC file (Feather)."
+msgstr "Un archivo IPC de Apache Arrow (Feather)."
+
+msgid "An Apache Parquet file."
+msgstr "Un archivo Apache Parquet."
+
+msgid "An R data file (.rds, .RData): each object a dataset."
+msgstr "Un archivo de datos R (.rds, .RData): cada objeto es un conjunto de datos."
+
+msgid "An SPSS data file (.sav, .zsav), value labels as categories."
+msgstr "Un archivo de datos SPSS (.sav, .zsav), etiquetas de valor como categorías."
+
 msgid "An evenly spaced column needs at least 2 points"
 msgstr "Una columna uniforme necesita al menos 2 puntos"
 
@@ -555,6 +615,9 @@ msgstr "Un esbozo, una sombra o un resplandor dibujado bajo el texto, por lo que
 
 msgid "Analyse frequencies"
 msgstr "Analizar frecuencias"
+
+msgid "Analyses"
+msgstr "Análisis"
 
 msgid "Analysis"
 msgstr "Análisis"
@@ -598,6 +661,9 @@ msgstr "Animated GIF (*.gif)"
 msgid "Animation"
 msgstr "Animación"
 
+msgid "Annotation"
+msgstr "Anotación"
+
 msgid "Annotation text"
 msgstr "Texto de anotación"
 
@@ -622,6 +688,9 @@ msgstr "Estilo de aplicación"
 msgid "Appearance"
 msgstr "Aspecto"
 
+msgid "Apple Foundation Models"
+msgstr "Modelos de Apple Foundation"
+
 msgid "Application Log"
 msgstr "Registro de aplicaciones"
 
@@ -643,6 +712,9 @@ msgstr "El deshacer lo lleva todo."
 msgid "Apply"
 msgstr "Aplicar"
 
+msgid "Apply a look…"
+msgstr "Aplicar un aspecto…"
+
 msgid "Apply a model kept in the project to this table: its predictions in a new table"
 msgstr "Aplicar un modelo guardado en el proyecto a esta tabla: sus predicciones en una nueva tabla"
 
@@ -651,9 +723,6 @@ msgstr "Aplicar un ajuste preestablecido..."
 
 msgid "Apply a template"
 msgstr "Aplicar una plantilla"
-
-msgid "Apply a template…"
-msgstr "Aplicar una plantilla..."
 
 msgid "Apply multi-peak"
 msgstr "Aplicar multi-peak"
@@ -673,8 +742,14 @@ msgstr "¿Hay diferencias en {response} en {factor}?"
 msgid "Are there differences?"
 msgstr "¿Hay diferencias?"
 
+msgid "Area (filled shape)"
+msgstr "Área (forma rellena)"
+
 msgid "Arrange every axis in this figure using the chosen layout."
 msgstr "Organice todos los ejes de esta figura utilizando el diseño elegido."
+
+msgid "Arrow"
+msgstr "Flecha"
 
 msgid "As a fraction of the signal's full range. 0.1 keeps peaks standing at least a tenth of the range above their surroundings."
 msgstr "Como una fracción del rango completo de la señal. 0.1 mantiene los picos al menos una décima parte del rango por encima de su entorno."
@@ -695,7 +770,7 @@ msgid "Ask an AI about the project's data - and, as Settings allow, have it run 
 msgstr "Pregunte a una IA sobre los datos del proyecto y, si la configuración lo permite, pídale que realice análisis o cambie los datos"
 
 msgid "Asked {requested:g}"
-msgstr ""
+msgstr "Preguntado {requested:g}"
 
 msgid "Asked {requested:g}: a Gaussian copula gives a Spearman of {expected:.3f}"
 msgstr "Preguntado {requested:g}: una copula gais da un Spearman de {expected:.3f}"
@@ -913,9 +988,6 @@ msgstr "CUSUM k (sigma)"
 msgid "Cancel"
 msgstr "Cancelar"
 
-msgid "Cancel measurement"
-msgstr "Cancelar medición"
-
 msgid "Canonical analysis"
 msgstr "Análisis canónico"
 
@@ -1111,6 +1183,9 @@ msgstr "Elija qué sección de estadísticas mostrar."
 msgid "Choosing k"
 msgstr "Elegir k"
 
+msgid "Circuit simulation"
+msgstr "Simulación de circuitos"
+
 msgid "Citation"
 msgstr "Cita"
 
@@ -1132,6 +1207,24 @@ msgstr "Borrar menú"
 msgid "Clear the log at start"
 msgstr "Borrar el registro al inicio"
 
+msgid "Click a path, an arrow, a note, a ruler or a line · drag nodes and handles · double-click: add or smooth · Delete: remove · Esc"
+msgstr "Haga clic en una trayectoria, una flecha, una nota, una regla o una línea · Arrastre nodos y controladores · Haga doble clic: añadir o suavizar · Supr: eliminar · Esc"
+
+msgid "Click: a line across the chart at this x"
+msgstr "Haga clic: una línea a través del gráfico en esta x"
+
+msgid "Click: a line across the chart at this y"
+msgstr "Haga clic: una línea a lo largo del gráfico en esta y"
+
+msgid "Click: a note here · drag from the point to where the note goes · Esc: cancel"
+msgstr "Haga clic: una nota aquí · arrastre desde el punto hasta donde va la nota · Esc: cancelar"
+
+msgid "Click: corner · drag: curve · Enter: finish · C: close · Esc: cancel"
+msgstr "Clic: esquina · Arrastrar: curva · Intro: finalizar · C: cerrar · Esc: cancelar"
+
+msgid "Click: corner · drag: curve · Enter: finish · Esc: cancel"
+msgstr "Clic: esquina · Arrastrar: curva · Intro: finalizar · Esc: cancelar"
+
 msgid "Clipboard"
 msgstr "Portapapeles"
 
@@ -1143,6 +1236,9 @@ msgstr "Cerrar el registro"
 
 msgid "Close to the R² of the fit ({r2}): what it learnt holds on rows it has not seen."
 msgstr "Cerca del R² del ajuste ({r2}): lo que aprendió se mantiene en filas que no ha visto."
+
+msgid "Closed formats (JMP, Minitab, Origin)"
+msgstr "Formatos cerrados (JMP, Minitab, Origin)"
 
 msgid "Cluster"
 msgstr "Clúster"
@@ -1215,6 +1311,9 @@ msgstr "Extensión de columna"
 
 msgid "Column {number} of {count}"
 msgstr "Columna {number} de {count}"
+
+msgid "Columnar and scientific"
+msgstr "Columnar y científico"
 
 msgid "Columns"
 msgstr "Columnas"
@@ -1567,8 +1666,20 @@ msgstr "Eliminar una plantilla"
 msgid "Delete a template…"
 msgstr "Eliminar una plantilla..."
 
+msgid "Delete annotation"
+msgstr "Eliminar anotación"
+
 msgid "Delete column"
 msgstr "Eliminar columna"
+
+msgid "Delete line"
+msgstr "Eliminar línea"
+
+msgid "Delete measurement"
+msgstr "Eliminar medición"
+
+msgid "Delete path"
+msgstr "Eliminar trayectoria"
 
 msgid "Delete rows"
 msgstr "Eliminar filas"
@@ -1774,6 +1885,18 @@ msgstr "Haga doble clic en un efecto para eliminarlo."
 msgid "Drag a rectangle over the chart to select points, for hiding or splitting into a new series."
 msgstr "Arrastre un rectángulo sobre el gráfico para seleccionar puntos, para ocultar o dividir en una nueva serie."
 
+msgid "Drag across the box the ellipse fits in · Esc: cancel"
+msgstr "Arrastre a través del recuadro en el que cabe la elipse · Esc: cancelar"
+
+msgid "Drag between two points to measure them · Esc: cancel"
+msgstr "Arrastre entre dos puntos para medirlos · Esc: cancelar"
+
+msgid "Drag from one corner to the opposite one · Esc: cancel"
+msgstr "Arrastrar desde una esquina hasta la opuesta · Esc: cancelar"
+
+msgid "Drag from the tail to the head · Esc: cancel"
+msgstr "Arrastrar desde la cola hasta la cabeza · Esc: cancelar"
+
 msgid "Draw a box and whisker plot."
 msgstr "Dibuja un gráfico de cajas y bigotes."
 
@@ -1789,6 +1912,9 @@ msgstr "Dibuja y comprueba la muestra muchas veces (semillas de semillas, semill
 msgid "Draw at most this many points per series, sampling the rest away."
 msgstr "Dibuja a lo sumo este número de puntos por serie, muestreando el resto."
 
+msgid "Draw lines, bars and frames as if by hand, as in the xkcd comics."
+msgstr "Dibuja líneas, barras y marcos como si lo hicieras a mano, al estilo de los cómics de xkcd."
+
 msgid "Draw on"
 msgstr "Dibujar sobre"
 
@@ -1800,6 +1926,9 @@ msgstr "Dibuja la curva más allá de los datos, en cada lado, por esta parte de
 
 msgid "Draw the estimated baseline itself."
 msgstr "Dibuja la línea de base estimada en sí."
+
+msgid "Draw: {tool}"
+msgstr "Dibujar: {tool}"
 
 msgid "Drawing every figure and writing the report…"
 msgstr "Dibujando cada figura y escribiendo el informe..."
@@ -1888,8 +2017,14 @@ msgstr "Editar celdas, añadir o eliminar filas y columnas, cambiar el tipo de c
 msgid "Edit function…"
 msgstr "Editar función..."
 
+msgid "Edit path"
+msgstr "Editar trayectoria"
+
 msgid "Edit query…"
 msgstr "Editar consulta..."
+
+msgid "Edit shapes"
+msgstr "Editar formas"
 
 msgid "Edit table"
 msgstr "Editar tabla"
@@ -1935,6 +2070,9 @@ msgstr "Valores propios"
 
 msgid "Eigenvectors"
 msgstr "Autovectores"
+
+msgid "Ellipse"
+msgstr "Elipse"
 
 msgid "Elliptic"
 msgstr "Elíptica"
@@ -1989,6 +2127,15 @@ msgstr "Ancho igual"
 
 msgid "Equal-count bins chi-square"
 msgstr "Cuentos iguales chi-square"
+
+msgid "Equation helper"
+msgstr "Asistente de ecuaciones"
+
+msgid "Equation..."
+msgstr "Ecuación..."
+
+msgid "Equations"
+msgstr "Ecuaciones"
 
 msgid "Error variance ratio"
 msgstr "Relación de varianza de error"
@@ -2170,6 +2317,9 @@ msgstr "Tasa de falsos positivos"
 msgid "Family"
 msgstr "Familia"
 
+msgid "Feather / Arrow"
+msgstr "Pluma / Flecha"
+
 msgid "Features"
 msgstr "Características"
 
@@ -2205,6 +2355,9 @@ msgstr "Figuras"
 
 msgid "File"
 msgstr "Archivo"
+
+msgid "Files of programs whose format has no free reader: export them as CSV or Excel."
+msgstr "Archivos de programas cuyo formato no tiene lector libre: exportarlos como CSV o Excel."
 
 msgid "Fill"
 msgstr "Rellenar"
@@ -2259,9 +2412,6 @@ msgstr "Encuentra la función para lo que quieres averiguar"
 
 msgid "Find where a series crosses a level"
 msgstr "Encuentra dónde una serie cruza un nivel"
-
-msgid "Finish the measurement at this point."
-msgstr "Termina la medición en este punto."
 
 msgid "First quartile"
 msgstr "Primer cuartil"
@@ -2347,20 +2497,17 @@ msgstr "Pronóstico"
 msgid "Forecast periods"
 msgstr "Períodos de previsión"
 
-msgid "Forget a saved template"
-msgstr "Olvidar una plantilla guardada"
-
 msgid "Forget the list of recently opened projects"
 msgstr "Olvídate de la lista de proyectos abiertos recientemente"
 
 msgid "Forget the operations listed here"
 msgstr "Olvidar las operaciones enumeradas aquí"
 
-msgid "Forget the pending point without finishing the measurement."
-msgstr "Olvídese del punto pendiente sin terminar la medición."
-
 msgid "Format"
 msgstr "Formato"
+
+msgid "Formula f ="
+msgstr "Fórmula f ="
 
 msgid "Found on the surface's own exact x/y grid."
 msgstr "Se encuentra en la propia cuadrícula x/y exacta de la superficie."
@@ -2380,6 +2527,9 @@ msgstr "Fracción de la gama"
 msgid "Fraction of the series' sd"
 msgstr "Fracción del sd de la serie"
 
+msgid "Frame"
+msgstr "Marco"
+
 msgid "Frames"
 msgstr "Frames"
 
@@ -2394,6 +2544,12 @@ msgstr "Desde"
 
 msgid "From -1 to 1 (0: independent). The three together must be possible."
 msgstr "De -1 a 1 (0: independiente). Los tres juntos deben ser posibles."
+
+msgid "From a formula, the analyses and charts that suit it"
+msgstr "A partir de una fórmula, los análisis y gráficos que le corresponden"
+
+msgid "From equations, a system, an inequality or a differential equation: ways to solve and draw"
+msgstr "A partir de ecuaciones, un sistema, una desigualdad o una ecuación diferencial: formas de resolver y representar gráficamente"
 
 msgid "Full factorial"
 msgstr "Factorial completo"
@@ -2413,6 +2569,9 @@ msgstr "Expresión de función"
 msgid "Function expression with evaluated parameters"
 msgstr "Expresión de función con parámetros evaluados"
 
+msgid "Function helper"
+msgstr "Ayudante de funciones"
+
 msgid "Function name"
 msgstr "Nombre de la función"
 
@@ -2422,8 +2581,14 @@ msgstr "Función de '{name}'"
 msgid "Function of x and y"
 msgstr "Función de x y y"
 
+msgid "Function..."
+msgstr "Función..."
+
 msgid "Functions"
 msgstr "Funciones"
+
+msgid "GPS track (GPX)"
+msgstr "Seguimiento GPS (GPX)"
 
 msgid "Gage R&R"
 msgstr "Gage R&R"
@@ -2458,14 +2623,20 @@ msgstr "Esquema de tabla generado"
 msgid "Generated tables"
 msgstr "Cuadros generados"
 
+msgid "GitHub Copilot"
+msgstr "Copiloto de GitHub"
+
+msgid "GitHub Copilot's models through GitHub Models, with a GitHub token - or any OpenAI-compatible chat endpoint."
+msgstr "Modelos de GitHub Copilot a través de modelos de GitHub, con un token de GitHub, o cualquier punto final de chat compatible con OpenAI."
+
 msgid "Give X, Y and Z this coordinate's grid and ticks."
 msgstr "Dale a X, Y y Z la cuadrícula y las marcas de esta coordenada."
 
 msgid "Give every figure of the project this style"
 msgstr "Dale este estilo a cada figura del proyecto"
 
-msgid "Give this figure the look of a saved template; its data, titles and labels stay"
-msgstr "Dale a esta figura el aspecto de una plantilla guardada; sus datos, títulos y etiquetas permanecen"
+msgid "Give this figure the look of a saved template - style, axes and series colours and markers; its data, titles and labels stay."
+msgstr "Dé a esta figura el aspecto de una plantilla guardada: estilo, ejes y colores y marcadores de las series; sus datos, títulos y etiquetas se mantienen."
 
 msgid "Global fit"
 msgstr "Ajuste global"
@@ -2484,6 +2655,9 @@ msgstr "Causalidad de Granger (VAR)"
 
 msgid "Graph"
 msgstr "Gráfico"
+
+msgid "GraphPad Prism (.pzfx)"
+msgstr "GraphPad Prism (.pzfx)"
 
 msgid "Greater"
 msgstr "Mayor"
@@ -2544,6 +2718,9 @@ msgstr "La mitad del turno para detectar, en sigmas: 0.5 para un turno de un sig
 
 msgid "Half-prominence bounds"
 msgstr "Límites de media prominencia"
+
+msgid "Hand-drawn"
+msgstr "Dibujado a mano"
 
 msgid "Has a measure moved - a steady trend or a sudden change? The tests are chosen for you, and the answer is given in words."
 msgstr "¿Se ha movido una medida: una tendencia constante o un cambio repentino? Las pruebas se eligen para usted y la respuesta se da en palabras."
@@ -2652,6 +2829,9 @@ msgstr "Historia..."
 
 msgid "Hold the axes"
 msgstr "Sostenga los ejes"
+
+msgid "Horizontal line"
+msgstr "Línea horizontal"
 
 msgid "Host"
 msgstr "Anfitrión"
@@ -2968,6 +3148,9 @@ msgstr "Su tendencia, temporada y previsión: Serie temporal de {measure}"
 msgid "Its width at half that height is {width} in x: the span to integrate for its area (Calculus)."
 msgstr "Su anchura a la mitad de esa altura es {width} en x: el lazo para integrarse para su área (Calculus)."
 
+msgid "JCAMP-DX spectrum"
+msgstr "Espectro JCAMP-DX"
+
 msgid "JMP documentation"
 msgstr "Documentación JMP"
 
@@ -3015,9 +3198,6 @@ msgstr "Mantenga este SELECT como una consulta guardada del proyecto"
 
 msgid "Keep this analysis as a Python function of the project, to call from the workpad"
 msgstr "Mantener este análisis como una función Python del proyecto, para llamarlo desde el espacio de trabajo"
-
-msgid "Keep this figure's style, axes and series look under a name"
-msgstr "Mantenga el estilo, los ejes y la apariencia de la serie de esta figura bajo un nombre"
 
 msgid "Keep this fitted model in the project, to predict new rows with it"
 msgstr "Mantener este modelo ajustado en el proyecto para predecir nuevas filas con él"
@@ -3073,6 +3253,12 @@ msgstr "Algoritmo LHS"
 msgid "LHS samples"
 msgstr "Muestras LHS"
 
+msgid "Lab instruments"
+msgstr "Instrumentos de laboratorio"
+
+msgid "LabVIEW measurement (.lvm)"
+msgstr "Medición LabVIEW (.lvm)"
+
 msgid "Label"
 msgstr "Etiqueta"
 
@@ -3111,9 +3297,6 @@ msgstr "El último valor de la X uniformemente espaciada."
 
 msgid "Last value of the grid's Y."
 msgstr "El último valor de la rejilla es Y."
-
-msgid "Later"
-msgstr "Más tarde"
 
 msgid "Latin hypercube"
 msgstr "Hipercubo latino"
@@ -3271,6 +3454,9 @@ msgstr "Matriz de carga"
 msgid "Loading plot"
 msgstr "Gráfico de carga"
 
+msgid "Location"
+msgstr "Ubicación"
+
 msgid "Log"
 msgstr "Registro"
 
@@ -3291,6 +3477,9 @@ msgstr "El espaciado logarítmico requiere un rango estrictamente superior a cer
 
 msgid "Lognormal"
 msgstr "Lognormal"
+
+msgid "Look"
+msgstr "Aspecto"
 
 msgid "Loop"
 msgstr "Loop"
@@ -3324,6 +3513,9 @@ msgstr "Inferior a..."
 
 msgid "Lowpass"
 msgstr "Lowpass"
+
+msgid "MATLAB"
+msgstr "MATLAB"
 
 msgid "MC batch"
 msgstr "Lote MC"
@@ -3363,6 +3555,9 @@ msgstr "Mapa (contorno, o los defectos)"
 
 msgid "Mark at"
 msgstr "Marcar en"
+
+msgid "Mark the selected rows as Selected"
+msgstr "Marcar las filas seleccionadas como Seleccionadas"
 
 msgid "Marker"
 msgstr "Marcador"
@@ -3465,12 +3660,6 @@ msgstr "Media {column}"
 
 msgid "Measure"
 msgstr "Medida"
-
-msgid "Measure from here"
-msgstr "Medir desde aquí"
-
-msgid "Measure to here"
-msgstr "Medir hasta aquí"
 
 msgid "Measured vs. fit"
 msgstr "Medido vs. ajuste"
@@ -3610,6 +3799,12 @@ msgstr "Movimiento"
 msgid "Move annotation"
 msgstr "Mover anotación"
 
+msgid "Move line"
+msgstr "Mover línea"
+
+msgid "Move measurement"
+msgstr "Mover medición"
+
 msgid "Move x by"
 msgstr "Mover x por"
 
@@ -3636,6 +3831,9 @@ msgstr "Mis bordes"
 
 msgid "My template"
 msgstr "Mi plantilla"
+
+msgid "NI TDMS"
+msgstr "NI TDMS"
 
 msgid "Name"
 msgstr "Nombre"
@@ -3690,6 +3888,9 @@ msgstr "Vecinos"
 
 msgid "Nelson rules"
 msgstr "Reglas de Nelson"
+
+msgid "NetCDF"
+msgstr "NetCDF"
 
 msgid "New"
 msgstr "Nuevo"
@@ -3853,12 +4054,6 @@ msgstr "Sin error estándar: el cuarto momento de la distribución es indefinido
 msgid "No table selected."
 msgstr "No hay mesa seleccionada."
 
-msgid "No template saved yet."
-msgstr "Aún no se ha guardado ninguna plantilla."
-
-msgid "No template saved yet: save one from a figure first."
-msgstr "No se guarda plantilla todavía: guardar uno de una figura primero."
-
 msgid "No values"
 msgstr "No hay valores"
 
@@ -3897,6 +4092,9 @@ msgstr "No analizado: este modelo necesita {needs}."
 
 msgid "Not drawn: {names} - the project's functions are not trusted on this computer."
 msgstr "No dibujado: {names} - las funciones del proyecto no se confían en este ordenador."
+
+msgid "Not now"
+msgstr "Ahora no"
 
 msgid "Not run: the function '{name}' is not trusted on this computer."
 msgstr "No se ejecuta: la función '{name}' no es de confianza en este ordenador."
@@ -4147,6 +4345,12 @@ msgstr "Orden del polinomio instalado sobre cada ventana."
 msgid "Orientation mark"
 msgstr "Marca de orientación"
 
+msgid "Oscilloscopes and logic"
+msgstr "Osciloscopios y lógica"
+
+msgid "Other"
+msgstr "Otros"
+
 msgid "Outliers"
 msgstr "Aparatos"
 
@@ -4210,6 +4414,9 @@ msgstr "Estimaciones de parámetros (unidades codificadas)"
 msgid "Parameters"
 msgstr "Parámetros"
 
+msgid "Parquet"
+msgstr "Parquet"
+
 msgid "Part"
 msgstr "Parte"
 
@@ -4245,6 +4452,15 @@ msgstr "Paste"
 
 msgid "Paste picture"
 msgstr "Imagen del sabor"
+
+msgid "Path (line and curve)"
+msgstr "Trayectoria (línea y curva)"
+
+msgid "Paths"
+msgstr "Trayectorias"
+
+msgid "Paths and shapes are drawn on 2D axes only."
+msgstr "Las trayectorias y las formas se dibujan únicamente en ejes 2D."
 
 msgid "Pattern"
 msgstr "Patrón"
@@ -4525,6 +4741,12 @@ msgstr "Respuestas rápidas"
 msgid "Q² = {value}: on rows left out of each fit, the model accounts for {percent}% of how much {y} varies - its R² for prediction."
 msgstr "Q2 = {value}: en filas dejadas fuera de cada ajuste, el modelo representa {percent}% de cuánto {y} varía - su R2 para la predicción."
 
+msgid "R"
+msgstr "R"
+
+msgid "RF"
+msgstr "RF"
+
 msgid "RMSE = {value}: a value of {y} predicted by the fit is typically off by about {value}, in {y}'s own units."
 msgstr "RMSE = {value}: un valor de {y} predicho por el ajuste es normalmente apagado por alrededor {value}, en las propias unidades de {y}."
 
@@ -4603,6 +4825,9 @@ msgstr "Análisis recientes"
 msgid "Recomputes the limits without the points they flagged - the trial-limits-then-revised-limits pass every SPC text runs. Use only when the flagged points have an assigned cause you have removed; otherwise it hides the problem."
 msgstr "Recomputes the limits without the points they flagged - the trial-limits-then-revised-limits pass every SPC text runs. Use only when the flagged points have an assigned cause you have removed; otherwise it hides the problem."
 
+msgid "Rectangle"
+msgstr "Rectángulo"
+
 msgid "Redraw this chart every {seconds:g}s, for a source table a rig or an import keeps filling in."
 msgstr "Redira este gráfico cada {seconds:g}s, para una tabla fuente una plataforma o una importación se mantiene llenado."
 
@@ -4650,6 +4875,9 @@ msgstr "Retirar"
 
 msgid "Remove a constant or linear trend from each segment first. A trend leaks into the lowest frequency bins and hides everything near it."
 msgstr "Eliminar una tendencia constante o lineal de cada segmento primero. Una tendencia se filtra en los contenedores de frecuencia más bajos y oculta todo cerca de él."
+
+msgid "Remove node"
+msgstr "Eliminar nodo"
 
 msgid "Remove the effect"
 msgstr "Eliminar el efecto"
@@ -4894,6 +5122,9 @@ msgstr "Filas: {ra} añadido, {rr} removido, {rm} modificado · Columnas: {ca} a
 msgid "Rule"
 msgstr "Artículo"
 
+msgid "Ruler"
+msgstr "Regla"
+
 msgid "Run"
 msgstr "Corre"
 
@@ -4921,6 +5152,9 @@ msgstr "Corresponde"
 msgid "R² = {value}: the fit accounts for {percent}% of how much {y} varies from row to row; the other {rest}% it leaves unexplained. Near 1 is a close fit - how close is enough depends on the field."
 msgstr "R2 = {value}: el ajuste representa {percent}% de cuánto {y} varía de fila a fila; el otro {rest}% i no deja sin explicar. Cerca de 1 es un ajuste cercano - lo cerca es suficiente depende del campo."
 
+msgid "SAS"
+msgstr "SAS"
+
 msgid "SD of the differences"
 msgstr "SD de las diferencias"
 
@@ -4929,6 +5163,12 @@ msgstr "SELECT ... de ..."
 
 msgid "SELECT x, y FROM my_table WHERE ..."
 msgstr "SELECT x, y DESDE my_table WHERE ..."
+
+msgid "SPICE raw (LTspice, ngspice)"
+msgstr "SPICE crudo (LTspice, ngspice)"
+
+msgid "SPSS"
+msgstr "SPSS"
 
 msgid "SQL"
 msgstr "SQL"
@@ -5254,6 +5494,12 @@ msgstr "Período de sesiones"
 msgid "Set Figure layout to Manual to edit spacing by hand."
 msgstr "Configurar el diseño de la Figura a Manual para editar el espaciamiento a mano."
 
+msgid "Set Selected = 0 on the selected rows; the other rows keep their Selected value."
+msgstr "Establecer Seleccionado = 0 en las filas seleccionadas; las otras filas mantienen su valor de Seleccionado."
+
+msgid "Set Selected = 1 on the selected rows: with Show only the Selected rows on, the charts of '{table}' draw them."
+msgstr "Establecer Seleccionadas = 1 en las filas seleccionadas: con la opción Mostrar solo las filas seleccionadas activada, los gráficos de «{table}» las dibujan."
+
 msgid "Set the width a journal's column asks for; the height keeps the proportions."
 msgstr "Establece el ancho que pide la columna de una revista; la altura mantiene las proporciones."
 
@@ -5301,6 +5547,9 @@ msgstr "Oído por x"
 
 msgid "Sheet"
 msgstr "Sheet"
+
+msgid "Show"
+msgstr "Show"
 
 msgid "Show all"
 msgstr "Mostrar todo"
@@ -5452,6 +5701,9 @@ msgstr "Spearman contra el que pidió"
 msgid "Spearman correlation"
 msgstr "Correlación de Spearman"
 
+msgid "Spectroscopy and XRD"
+msgstr "Espectroscopia y XRD"
+
 msgid "Speed"
 msgstr "La velocidad"
 
@@ -5512,9 +5764,6 @@ msgstr "Errores estándar"
 msgid "Standardized canonical coefficients"
 msgstr "Coeficientes canónicos estandarizados"
 
-msgid "Start measuring the distance and slope to another point."
-msgstr "Comience a medir la distancia y la pendiente a otro punto."
-
 msgid "Start of the range to evaluate over."
 msgstr "Comienza el rango para evaluarlo."
 
@@ -5530,6 +5779,9 @@ msgstr "Empieza a adivinar por lo rápido que el ajuste puede variar con x. Re-o
 msgid "Starting guess for the observation noise variance, added to the kernel. Also re-optimized while fitting."
 msgstr "Empezar conjetura para la varianza de ruido de observación, añadido al núcleo. También re-optimizado mientras se ajusta."
 
+msgid "Stata"
+msgstr "Stata"
+
 msgid "Stationarity tests"
 msgstr "Pruebas de estabilidad"
 
@@ -5544,6 +5796,9 @@ msgstr "Estadísticas de '{column}'"
 
 msgid "Statistics of '{column}'…"
 msgstr "Estadísticas de '{column}'..."
+
+msgid "Statistics software"
+msgstr "Programas informáticos de estadísticas"
 
 msgid "Status"
 msgstr "Situación"
@@ -5998,6 +6253,9 @@ msgstr "La medida, un valor por vez."
 msgid "The measured values."
 msgstr "Los valores medidos."
 
+msgid "The model built into macOS (Apple Intelligence): no key, and nothing leaves the computer."
+msgstr "El modelo incorporado en macOS (Apple Intelligence): ninguna llave, y nada deja el ordenador."
+
 msgid "The model has no effects: select columns and press Add."
 msgstr "El modelo no tiene efectos: seleccionar columnas y presionar Add."
 
@@ -6191,7 +6449,7 @@ msgid "The y value to solve for. 0 finds the zeros; any other value finds where 
 msgstr "El valor y para resolver. 0 encuentra los ceros; cualquier otro valor encuentra donde la serie cruza ese nivel, que es el mismo problema cambiado."
 
 msgid "The {distribution} distribution has no parameter {names}"
-msgstr ""
+msgstr "La distribución {distribution} no tiene el parámetro {names}"
 
 msgid "The {parameter} of the {distribution} distribution must be a number"
 msgstr "El {parameter} de la {distribution} distribución debe ser un número"
@@ -6334,6 +6592,9 @@ msgstr "Top"
 msgid "Total"
 msgstr "Total"
 
+msgid "Touchstone S-parameters"
+msgstr "Parámetros S de Touchstone"
+
 msgid "Traced on the surface's own exact x/y grid."
 msgstr "Trazado en la propia red x/y exacta de la superficie."
 
@@ -6475,6 +6736,9 @@ msgstr "Diseño desconocido '{layout}'. Disponible: {names}"
 msgid "Unknown way to give the amount of noise: {mode}"
 msgstr "Una forma desconocida de dar la cantidad de ruido: {mode}"
 
+msgid "Unmark the selected rows"
+msgstr "Desmarcar las filas seleccionadas"
+
 msgid "Unsupported DOE model: {model}"
 msgstr "Modelo DOE sin apoyo: {model}"
 
@@ -6535,6 +6799,9 @@ msgstr "Usar y en el cuerpo lo hace una superficie f(x, y)."
 msgid "V"
 msgstr "V"
 
+msgid "VCD (value change dump)"
+msgstr "VCD (valor de cambio de dump)"
+
 msgid "VIP {value} for {variable}, the most important: how much it weighs in the components, against the average variable's 1. Above 0.8, the usual line, a variable is worth keeping."
 msgstr "VIP {value} para {variable}, el más importante: cuánto pesa en los componentes, contra la variable media 1. Por encima de 0.8, la línea habitual, una variable vale la pena mantener."
 
@@ -6555,6 +6822,9 @@ msgstr "Valores que significan \"no valor\", separados por comas: se importan co
 
 msgid "Values that stand for \"no value\", separated by commas: filled like the empty cells. Text is matched whatever its case (na is NA); a number by its value (-999 is -999.0). Empty cells - NULL and blank text - are always filled."
 msgstr "Los valores que representan \"no valor\", separados por comas: llenos como las celdas vacías. El texto se combina con cualquier caso (na es NA); un número por su valor (-999 es -999.0). Las células vacías - NULL y texto en blanco - están siempre llenas."
+
+msgid "Variable"
+msgstr "Variable"
 
 msgid "Variable (in column order)"
 msgstr "Variable (en orden de columna)"
@@ -6583,6 +6853,9 @@ msgstr "Vector Field"
 msgid "Version"
 msgstr "Versión"
 
+msgid "Vertical line"
+msgstr "Línea vertical"
+
 msgid "View"
 msgstr "Ver"
 
@@ -6597,6 +6870,9 @@ msgstr "Visible"
 
 msgid "W"
 msgstr "W"
+
+msgid "WAV audio"
+msgstr "WAV audio"
 
 msgid "Wafer"
 msgstr "Wafer"
@@ -6790,6 +7066,9 @@ msgstr "Escribe una carta en cada panel de una figura de ejes múltiples."
 msgid "Write a table's name"
 msgstr "Escribir el nombre de una tabla"
 
+msgid "Write in the workpad"
+msgstr "Escribir en el bloc de trabajo"
+
 msgid "Write the frame's value at the top right of the figure"
 msgstr "Escriba el valor del marco en la parte superior derecha de la figura"
 
@@ -6928,6 +7207,9 @@ msgstr "al menos"
 msgid "at most"
 msgstr "a la mayoría"
 
+msgid "at the point"
+msgstr "en el punto"
+
 msgid "auto"
 msgstr "auto"
 
@@ -6976,6 +7258,12 @@ msgstr "e.g. Especies SELECT, AVG(body_mass_g) DESDE Pingüinos GROUP POR especi
 msgid "e.g. m = get('Penguins', 'body_mass_g'); mean(m)"
 msgstr "e.g. m = get('Penguins', 'body_mass_g'); mean(m)"
 
+msgid "e.g. sin(x)*exp(-x/5)   x^3 - 2x + 1   1/(x-1)"
+msgstr "p. ej., sin(x)*exp(-x/5)   x^3 - 2x + 1   1/(x-1)"
+
+msgid "e.g. x^2 - 3x = -2   x + y = 3; x - y = 1   x^2 > 4   y' + 2y = sin(x); y(0) = 1"
+msgstr "p. ej., x^2 - 3x = -2   x + y = 3; x - y = 1   x^2 > 4   y' + 2y = sin(x); y(0) = 1"
+
 msgid "e.g. ★  or  $\\clubsuit$  or  (5, 1, 0)"
 msgstr "e.g. ★ or $\\clubsuit$ or (5, 1, 0)"
 
@@ -6990,6 +7278,9 @@ msgstr "cae mientras se levanta"
 
 msgid "fit"
 msgstr "ajuste"
+
+msgid "from"
+msgstr "desde"
 
 msgid "from, to"
 msgstr "de, a"
@@ -7150,6 +7441,9 @@ msgstr "pequeño efecto"
 msgid "space"
 msgstr "espacio"
 
+msgid "start near"
+msgstr "empezar cerca de"
+
 msgid "t and p test whether each parameter is zero, with {dof} residual degrees of freedom. Fixed parameters have no error, so none is shown."
 msgstr "t y p prueban si cada parámetro es cero, con {dof} grados residuales de libertad. Parámetros fijos no tienen error, por lo que no se muestra ninguno."
 
@@ -7200,6 +7494,9 @@ msgstr "los dos medios son {value} Desviaciones estándar aparte"
 
 msgid "their means differ"
 msgstr "sus medios difieren"
+
+msgid "to"
+msgstr "hasta"
 
 msgid "truncated"
 msgstr "truncado"
@@ -7283,7 +7580,7 @@ msgid "{count} peaks kept; the most prominent is at x = {x}, standing {prominenc
 msgstr "{count} picos guardados; el más prominente es en x = {x}, de pie {prominence} sobre el suelo más bajo que lo separa de uno más alto."
 
 msgid "{count} permutations"
-msgstr ""
+msgstr "{count} permutaciones"
 
 msgid "{count} point(s) embedded from {series} series into 2 dimensions."
 msgstr "{count} punto(s) incrustado de {series} serie en 2 dimensiones."
@@ -7553,7 +7850,7 @@ msgid "{test}, {p}: values like these are common from a normal distribution, so 
 msgstr "{test}, {p}: valores como estos son comunes de una distribución normal, por lo que nada aquí dice {column} no es normal. Debajo {alpha}, la línea habitual, diría que sí."
 
 msgid "{title} {version}, licence {license}. {shown}"
-msgstr ""
+msgstr "{title} {version}, permiso {license}. {shown}"
 
 msgid "{what} of {element}"
 msgstr "{what} de {element}"
@@ -7585,6 +7882,63 @@ msgstr "{y} no dependía de {x}"
 msgid "▲ number · ● category · ◐ ordered category · ◷ date"
 msgstr "Número de identificación · ● categoría ·  ⁇"
 
+msgid "A line across the whole axes, at this x."
+msgstr "Una línea a través de todos los ejes, en esta x."
+
+msgid "A line along the whole axes, at this y."
+msgstr "Una línea a lo largo de todos los ejes, en esta y."
+
+msgid "A text note pinned to this point: x = {x}, y = {y}."
+msgstr "Una nota de texto anclada a este punto: x = {x}, y = {y}."
+
+msgid "Add annotation here…"
+msgstr "Añadir anotación aquí..."
+
+msgid "Add horizontal line at y = {value}"
+msgstr "Añadir línea horizontal en y = {value}"
+
+msgid "Add vertical line at x = {value}"
+msgstr "Añadir línea vertical en x = {value}"
+
+msgid "Apply a template…"
+msgstr "Aplicar una plantilla..."
+
+msgid "Cancel measurement"
+msgstr "Cancelar medición"
+
+msgid "Finish the measurement at this point."
+msgstr "Termina la medición en este punto."
+
+msgid "Forget a saved template"
+msgstr "Olvidar una plantilla guardada"
+
+msgid "Forget the pending point without finishing the measurement."
+msgstr "Olvídese del punto pendiente sin terminar la medición."
+
+msgid "Give this figure the look of a saved template; its data, titles and labels stay"
+msgstr "Dale a esta figura el aspecto de una plantilla guardada; sus datos, títulos y etiquetas permanecen"
+
+msgid "Keep this figure's style, axes and series look under a name"
+msgstr "Mantenga el estilo, los ejes y la apariencia de la serie de esta figura bajo un nombre"
+
+msgid "Later"
+msgstr "Más tarde"
+
+msgid "Measure from here"
+msgstr "Medir desde aquí"
+
+msgid "Measure to here"
+msgstr "Medir hasta aquí"
+
+msgid "No template saved yet."
+msgstr "Aún no se ha guardado ninguna plantilla."
+
+msgid "No template saved yet: save one from a figure first."
+msgstr "No se guarda plantilla todavía: guardar uno de una figura primero."
+
+msgid "Start measuring the distance and slope to another point."
+msgstr "Comience a medir la distancia y la pendiente a otro punto."
+
 msgid "The dates' format, in strftime codes: %d day, %m month, %Y year, %H:%M:%S time, %b month name."
 msgstr "El formato de las fechas, en los códigos strftime: %d día, %m mes, %Y year, %H:%M:%S time, %b month name."
 
@@ -7594,20 +7948,11 @@ msgstr "códigos strftime: %d día, %m mes, %Y year, %H:%M:%S time, %b month nam
 msgid "A pack switched on or off is applied the next time the app starts."
 msgstr "Un paquete activado o desactivado se aplica la próxima vez que se inicie la aplicación."
 
-msgid "Apple Foundation Models"
-msgstr "Modelos de Apple Foundation"
-
 msgid "Delete a pack you added. A pack that came with ChartLibre can only be switched off."
 msgstr "Eliminar un paquete que ha añadido. Un paquete que venía con ChartLibre solo se puede desactivar."
 
 msgid "Download and install, into ChartLibre's own Python, the libraries the chosen pack needs. It needs the Internet."
 msgstr "Descargue e instale, en el propio Python de ChartLibre, las bibliotecas que necesita el paquete elegido. Necesita Internet."
-
-msgid "GitHub Copilot"
-msgstr "Copiloto de GitHub"
-
-msgid "GitHub Copilot's models through GitHub Models, with a GitHub token - or any OpenAI-compatible chat endpoint."
-msgstr "Modelos de GitHub Copilot a través de modelos de GitHub, con un token de GitHub, o cualquier punto final de chat compatible con OpenAI."
 
 msgid "Install the libraries"
 msgstr "Instalar las bibliotecas"
@@ -7621,137 +7966,14 @@ msgstr "Instalando {names}…"
 msgid "Open folder"
 msgstr "Abrir carpeta"
 
-msgid "The model built into macOS (Apple Intelligence): no key, and nothing leaves the computer."
-msgstr "El modelo incorporado en macOS (Apple Intelligence): ninguna llave, y nada deja el ordenador."
-
 msgid "{names} could not be installed. {why}"
 msgstr "No se ha podido instalar {names}. {why}"
-
-msgid "A GPX file's track, route and waypoints: latitude, longitude, elevation, time."
-msgstr "Pista, ruta y waypoints de un archivo GPX: latitud, longitud, altura, tiempo."
-
-msgid "A LabVIEW Write To Measurement File text file: each segment a dataset."
-msgstr "Un archivo de texto LabVIEW Write To Measurement File: cada segmento es un conjunto de datos."
-
-msgid "A MATLAB .mat file (v4 to v7): each numeric variable a dataset, or all of one length side by side."
-msgstr "Un archivo .mat de MATLAB (v4 a v7): cada variable numérica es un conjunto de datos, o todos de una longitud uno al lado del otro."
-
-msgid "A Prism XML project: each data table a dataset, replicates as numbered columns."
-msgstr "Un proyecto Prism XML: cada tabla de datos es un conjunto de datos, se replica como columnas numeradas."
-
-msgid "A SAS dataset (.sas7bdat) or transport file (.xpt)."
-msgstr "Un conjunto de datos SAS (.sas7bdat) o un archivo de transporte (.xpt)."
-
-msgid "A Stata dataset (.dta), value labels as categories."
-msgstr "Un conjunto de datos de Stata (.dta), etiquetas de valor como categorías."
-
-msgid "A VNA's .sNp file: frequency and each S (or Y, Z) parameter as its file gives it."
-msgstr "Archivo .sNp de un VNA: frecuencia y cada parámetro S (o Y, Z) que su archivo le da."
-
-msgid "A WAV recording: time and one column per channel."
-msgstr "Una grabación WAV: tiempo y una columna por canal."
-
-msgid "A circuit simulation's waveforms: one column per trace; each plot a dataset, .step runs numbered."
-msgstr "Formas de onda de una simulación de circuito: una columna por traza; cada gráfico es un conjunto de datos, las ejecuciones de .step están numeradas."
-
-msgid "A logic analyser's or a digital simulation's signals: a row per change, every signal's value."
-msgstr "Señales de un analizador lógico o de una simulación digital: una fila por cambio, el valor de cada señal."
-
-msgid "A spectrum (IR, UV-Vis, Raman, NMR, MS) in JCAMP-DX: x and y with their units; each block a dataset."
-msgstr "Un espectro (IR, UV-Vis, Raman, NMR, MS) en JCAMP-DX: x e y con sus unidades; cada uno bloquea un conjunto de datos."
-
-msgid "An Apache Arrow IPC file (Feather)."
-msgstr "Un archivo IPC de Apache Arrow (Feather)."
-
-msgid "An Apache Parquet file."
-msgstr "Un archivo Apache Parquet."
-
-msgid "An R data file (.rds, .RData): each object a dataset."
-msgstr "Un archivo de datos R (.rds, .RData): cada objeto es un conjunto de datos."
-
-msgid "An SPSS data file (.sav, .zsav), value labels as categories."
-msgstr "Un archivo de datos SPSS (.sav, .zsav), etiquetas de valor como categorías."
-
-msgid "Circuit simulation"
-msgstr "Simulación de circuitos"
-
-msgid "Closed formats (JMP, Minitab, Origin)"
-msgstr "Formatos cerrados (JMP, Minitab, Origin)"
-
-msgid "Columnar and scientific"
-msgstr "Columnar y científico"
-
-msgid "Feather / Arrow"
-msgstr "Pluma / Flecha"
-
-msgid "Files of programs whose format has no free reader: export them as CSV or Excel."
-msgstr "Archivos de programas cuyo formato no tiene lector libre: exportarlos como CSV o Excel."
-
-msgid "GPS track (GPX)"
-msgstr "Seguimiento GPS (GPX)"
-
-msgid "GraphPad Prism (.pzfx)"
-msgstr "GraphPad Prism (.pzfx)"
-
-msgid "JCAMP-DX spectrum"
-msgstr "Espectro JCAMP-DX"
-
-msgid "Lab instruments"
-msgstr "Instrumentos de laboratorio"
-
-msgid "LabVIEW measurement (.lvm)"
-msgstr "Medición LabVIEW (.lvm)"
-
-msgid "MATLAB"
-msgstr "MATLAB"
 
 msgid "Options"
 msgstr "Opciones"
 
-msgid "Oscilloscopes and logic"
-msgstr "Osciloscopios y lógica"
-
-msgid "Other"
-msgstr "Otros"
-
 msgid "Panel letters"
 msgstr "Cartas redondas"
-
-msgid "Parquet"
-msgstr "Parquet"
-
-msgid "R"
-msgstr "R"
-
-msgid "RF"
-msgstr "RF"
-
-msgid "SAS"
-msgstr "SAS"
-
-msgid "SPICE raw (LTspice, ngspice)"
-msgstr "SPICE crudo (LTspice, ngspice)"
-
-msgid "SPSS"
-msgstr "SPSS"
-
-msgid "Spectroscopy and XRD"
-msgstr "Espectroscopia y XRD"
-
-msgid "Stata"
-msgstr "Stata"
-
-msgid "Statistics software"
-msgstr "Programas informáticos de estadísticas"
-
-msgid "Touchstone S-parameters"
-msgstr "Parámetros S de Touchstone"
-
-msgid "VCD (value change dump)"
-msgstr "VCD (valor de cambio de dump)"
-
-msgid "WAV audio"
-msgstr "WAV audio"
 
 msgid "(Default)"
 msgstr "(Predeterminado)"
@@ -8013,9 +8235,6 @@ msgstr "Guardar la figura"
 
 msgid "Search source or translation…"
 msgstr "Fuente de búsqueda o traducción..."
-
-msgid "Show"
-msgstr "Show"
 
 msgid "Show the tools for extending the app"
 msgstr "Mostrar las herramientas para ampliar la aplicación"
