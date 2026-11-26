@@ -415,6 +415,8 @@ class ChartToolsMixin(_Host):
         self._selection_start: tuple[Any, float, float] | None = None
         #: The rubber-band rectangle artist while a drag is in progress.
         self._selection_rect_artist: Any | None = None
+        #: The figure as drawn without the rectangle, for the drag to put the rectangle back on (blitting).
+        self._selection_background: Any | None = None
         #: The last completed selection - axis id, its bounds, and per
         #: series (keyed by the series' own name, the same identity the
         #: pick/legend code already matches artists by) the descriptor
@@ -432,6 +434,18 @@ class ChartToolsMixin(_Host):
         """
         self._selection_start = None
         self._selection_rect_artist = None
+        self._selection_background = None
+
+    def _clamped_data_point(self, axes: Any, event: Any) -> tuple[float, float] | None:
+        """The pointer in *axes*' data units, held to its edge when it has left it - another chart, the margin."""
+        if event.inaxes is axes and event.xdata is not None and event.ydata is not None:
+            return float(event.xdata), float(event.ydata)  # on it: exactly where matplotlib says, so a click stays one
+        if event.x is None or event.y is None:
+            return None
+        left, bottom, right, top = axes.bbox.extents
+        x, y = axes.transData.inverted().transform((min(max(float(event.x), left), right),
+                                                    min(max(float(event.y), bottom), top)))
+        return float(x), float(y)
 
     def _on_toggle_select_mode(self, checked: bool) -> None:
         if checked and getattr(self, "_draw_tool", None) is not None:
@@ -461,24 +475,36 @@ class ChartToolsMixin(_Host):
             linewidth=1.0,
             linestyle="--",
             zorder=9_500,
+            animated=True,
         )
         event.inaxes.add_patch(rect)
         self._selection_rect_artist = rect
-        self._canvas.draw_idle()
+        # The figure is drawn once, without the rectangle; the drag then only puts the rectangle back on that
+        # picture. Drawing the whole figure at every move made the drag crawl on a figure of several charts.
+        self._canvas.draw()
+        self._selection_background = self._canvas.copy_from_bbox(event.inaxes.bbox)
+        event.inaxes.draw_artist(rect)
+        self._canvas.blit(event.inaxes.bbox)
 
     def _on_box_select_motion(self, event: Any) -> None:
         """Grow the rubber-band rectangle to follow the pointer."""
         if self._selection_start is None or self._selection_rect_artist is None:
             return
         axes, x0, y0 = self._selection_start
-        if event.inaxes is not axes or event.xdata is None or event.ydata is None:
+        point = self._clamped_data_point(axes, event)
+        if point is None:
             return
 
-        x1, y1 = float(event.xdata), float(event.ydata)
+        x1, y1 = point
         self._selection_rect_artist.set_bounds(
             min(x0, x1), min(y0, y1), abs(x1 - x0), abs(y1 - y0)
         )
-        self._canvas.draw_idle()
+        if self._selection_background is None:
+            self._canvas.draw_idle()
+            return
+        self._canvas.restore_region(self._selection_background)
+        axes.draw_artist(self._selection_rect_artist)
+        self._canvas.blit(axes.bbox)
 
     def _on_box_select_release(self, event: Any) -> None:
         """Finish the drag: collect the points it covers, or drop it."""
@@ -488,15 +514,18 @@ class ChartToolsMixin(_Host):
         self._selection_start = None
         rect_artist = self._selection_rect_artist
         self._selection_rect_artist = None
+        self._selection_background = None
         if rect_artist is not None:
             rect_artist.remove()
 
-        if event.inaxes is not axes or event.xdata is None or event.ydata is None:
+        # Released over another chart or the margin: the box ends at the edge of the chart it started in.
+        point = self._clamped_data_point(axes, event)
+        if point is None:
             self._last_selection = None
             self._canvas.draw_idle()
             return
 
-        x1, y1 = float(event.xdata), float(event.ydata)
+        x1, y1 = point
         x_min, x_max = sorted((x0, x1))
         y_min, y_max = sorted((y0, y1))
         if x_min == x_max or y_min == y_max:
