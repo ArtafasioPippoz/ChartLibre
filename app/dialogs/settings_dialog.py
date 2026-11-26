@@ -278,6 +278,28 @@ class SettingsDialog(PanelDialog):
         self._mpl_style_combo.setToolTip(tr("The chart style of every figure that has none of its own."))
         form.addRow(tr("Default chart style"), self._mpl_style_combo)
 
+        # Selected rows, as they show on a chart (the points whose table rows are Selected).
+        from app.utils import config as _config
+
+        self._selected_style_combo = self._combo(
+            card,
+            [("bold", tr("Bold, like JMP")), ("ring", tr("Ring")), ("fill", tr("Highlight colour"))],
+            _config.selected_points_style(),
+        )
+        self._selected_style_combo.setToolTip(tr(
+            "Bold: the series' own marker again, darker and with a heavy edge. Ring: a circle round the point. "
+            "Highlight colour: the point filled with the selection colour."))
+        form.addRow(tr("Selected points"), self._selected_style_combo)
+        self._selected_size_spin = QSpinBox(card)
+        self._selected_size_spin.setRange(*_config.SELECTED_SIZE_RANGE)
+        self._selected_size_spin.setSingleStep(10)
+        self._selected_size_spin.setSuffix(" %")
+        self._selected_size_spin.setValue(_config.selected_points_size())
+        self._selected_size_spin.setToolTip(tr(
+            "The selected points' marker, as a percentage of the series' own (its diameter). Drawn the next "
+            "time the chart is."))
+        form.addRow(tr("Selected marker size"), self._selected_size_spin)
+
         # Every report's "How to read this" box: on for a new install - students first.
         from app.plugin_api import reading_guide
         from app.plugin_api.data_operations import next_steps
@@ -694,6 +716,10 @@ class SettingsDialog(PanelDialog):
         set_value("language", self._value(self._language_combo))
         set_value(CONFIG_SAVE_FORMAT, self._value(self._format_combo))
         set_value(DEFAULT_MPL_STYLE_KEY, self._value(self._mpl_style_combo))
+        from app.utils import config as _config
+
+        set_value(_config.SELECTED_STYLE_KEY, self._value(self._selected_style_combo))
+        set_value(_config.SELECTED_SIZE_KEY, int(self._selected_size_spin.value()))
         set_value(SQL_GUARD_KEY, bool(self._sql_guard_check.isChecked()))
         set_value(WORKPAD_FILTER_KEY, bool(self._workpad_filter_check.isChecked()))
         from app.plugin_api import reading_guide

@@ -355,6 +355,31 @@ def clear_log_at_start() -> bool:
     return bool(get_value(CLEAR_LOG_KEY, False))
 
 
+#: Settings > Charts: how the points whose table rows are Selected show on a chart. "bold" draws the series' own
+#: marker again, in a darker solid colour and a heavy edge - how JMP marks selected rows; "ring" circles them;
+#: "fill" fills them with the selection colour.
+SELECTED_STYLE_KEY = "selected_points_style"
+SELECTED_STYLES: tuple[str, ...] = ("bold", "ring", "fill")
+#: ... and how big, as a percentage of the series' own marker (its diameter).
+SELECTED_SIZE_KEY = "selected_points_size"
+SELECTED_SIZE_RANGE: tuple[int, int] = (50, 400)
+
+
+def selected_points_style() -> str:
+    """The style of the selected points: one of SELECTED_STYLES, "bold" when unset or not one of them."""
+    value = str(get_value(SELECTED_STYLE_KEY, "bold") or "bold")
+    return value if value in SELECTED_STYLES else "bold"
+
+
+def selected_points_size() -> int:
+    """The size of the selected points' marker, in percent of the series' own (100 when unset or not a number)."""
+    try:
+        value = int(get_value(SELECTED_SIZE_KEY, 100))
+    except (TypeError, ValueError):
+        return 100
+    return min(max(value, SELECTED_SIZE_RANGE[0]), SELECTED_SIZE_RANGE[1])
+
+
 def get_last_database() -> Path | None:
     """Return the last opened database, or None if it is gone."""
     raw = get_value("last_database")
