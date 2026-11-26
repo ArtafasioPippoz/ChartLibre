@@ -11,7 +11,7 @@ from functools import cache
 import shiboken6
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QIcon, QImage, QPixmap
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QWidget
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QToolButton, QWidget
 
 from app.plugin_api.charts.path_effects import is_valid, parse
 from app.utils.i18n import _
@@ -109,9 +109,10 @@ class PathEffectCombo(QWidget):
         self._preview.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)  # level with the row's label
         self._preview.setToolTip(_("The effect on a piece of text, over a dark line"))
         layout.addWidget(self._preview, 1)
-        self._reset = QPushButton(self)  # a button of the app's theme, with the app's trash can, in red
+        # A tool button: on macOS a push button shows words only (its stylesheet gives it no icon size), so a push
+        # button with just the trash can drew empty.
+        self._reset = QToolButton(self)
         self._reset.setIcon(_red_trash())
-        self._reset.setFixedWidth(36)
         self._reset.setToolTip(_("Back to %s") % inherit if inherit else _("Remove the effect"))
         self._reset.clicked.connect(self._on_reset)
         layout.addWidget(self._reset)
