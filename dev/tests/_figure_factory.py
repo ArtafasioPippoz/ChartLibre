@@ -47,6 +47,7 @@ SHOWCASE_CHART_TYPES: tuple[str, ...] = (
     "Stem Plot",
     "Quiver",
     "Stream Plot",
+    "Domain Colouring",
     "Triangular Mesh",
     "Triangular Color Mesh",
     "Scatter Plot (3D)",
@@ -781,6 +782,16 @@ def _showcase_definitions() -> list[dict[str, Any]]:
             "axis_options": {"title": "Stem Plot"},
             "series": [
                 ("impulses", "SELECT t AS x, v AS y FROM src_series LIMIT 40", {}),
+            ],
+        },
+        {
+            # The rows only set the region: f is the renderer's own default function.
+            "chart_type": "Domain Colouring",
+            "name": "Domain Colouring showcase",
+            "labels": ("Re z", "Im z"),
+            "axis_options": {"title": "Domain Colouring", "modulus": "rings", "phase_lines": 12},
+            "series": [
+                ("region", "SELECT x, y FROM src_grid", {}),
             ],
         },
         {
