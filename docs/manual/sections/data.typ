@@ -36,6 +36,8 @@ The preview shows the selected table's rows. Each column header carries the colu
   [*Copy*], [Copy the selected cells.],
   [*Statistics of a column*], [Count, empty cells, distinct values, minimum, maximum, mean and median of the column.],
   [*Histogram and statistics*], [With exactly one column selected: a new figure with that column's histogram, shown at once, and its statistics — mean with its 95% confidence interval, standard deviation, quartiles, skewness, kurtosis — in the figure's notes. Hidden rows are left out.],
+  [*Mark the selected rows as Selected* / *Unmark the selected rows*], [Set the `Selected` column to 1, or 0, on the rows you have highlighted in the preview; the other rows keep theirs. The charts of the table show the change at once.],
+  [*Show only the Selected rows on the charts*], [Every chart of the table draws only its rows marked *Selected*; switch it off to see every row again. Nothing is hidden and analyses read every row.],
   [*Hide rows* / *Select rows*], [Mark the rows equal to the selected cell, different from it, higher, lower, or where the column is empty — in the `Hide` column, which every chart skips, or in the `Selected` column, which only marks them. The rows stay in the table.],
   [*Export rows…*], [Save the selected rows as CSV or Excel.],
   [*New chart from selected columns*], [Opens New plot with the selected columns as x, y and z.],

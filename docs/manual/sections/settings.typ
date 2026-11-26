@@ -10,6 +10,7 @@
   [*App style*], [The look of the interface. The platform's native style, plus any Qt styles installed on the system (Breeze, Fusion, ...) and *Browse…* for a Qt stylesheet (`.qss`) of your own.],
   [*Language*], [*Auto* follows the operating system's language, falling back to English. Each language is listed under its own name: English, *Italiano* and *Français* are complete; *Español* and *Deutsch* are only started and still read mostly English.],
   [*Default export format*], [The format *Save figure* proposes: PNG, JPEG, SVG or PDF.],
+  [*Selected points*], [How the points of *Selected* rows show on a chart: *Bold, like JMP* (the series' own marker, darker and solid), *Ring*, or *Highlight colour*, and their size as a percentage of the series' marker.],
   [*Advanced*], [Closed unless something in it was changed: the three settings below.],
   [*SQL guard*], [*Refuse SQL that would change the database* (on by default, shown in red): `UPDATE`, `DELETE`, `DROP` and the like are refused when a query is saved or typed and when a project is opened. Switch it off only if you know why you need to.],
   [*Developer mode*], [*Show the tools for extending the app*: *Edit Localization*, *Data Operation Builder*, *Function Creator* and *Renderer Helper* appear on the *Project* page, and the DeepL key below. Off by default; applied at once.],

@@ -73,6 +73,7 @@ The chart panel shows one *figure* at a time. The strip above the chart names th
   [*Pan*], [Drag to move the view; right-drag to zoom each axis separately.],
   [*Zoom*], [Drag a rectangle to zoom in.],
   [*Zoom to fit*], [Bring the whole chart back within the panel.],
+  [*Zoom slider*], [Shows the chart from 25 % to 500 % of its size, for a small figure - a journal's column - to fill the window. The range is in `config.json`, `chart_min_zoom_percent` and `chart_max_zoom_percent` in its `constants`.],
 )
 
 Resting the pointer on a point shows a label with its series name and its x and y values. Very large series are *downsampled* for drawing (see the Figure options); the data itself is never changed.
@@ -87,21 +88,23 @@ Right-clicking the chart opens its menu:
   [*Save figure*], [Save the chart as PNG, JPEG, SVG or PDF, at the figure's own DPI (see @output).],
   [*Export report…*], [This chart alone, with its notes, as an HTML or PDF report (see @output).],
   [*Export view as CSV…*], [The rows actually on screen now — after zoom and downsampling — as a CSV file, each row tagged with its axis and series.],
-  [*Templates*], [*Save this look as a template…*, *Apply a template…*, *Delete a template…* (see @templates).],
   [*Crosshair*], [A guide line under the pointer, shared by every axis of the figure.],
-  [*Link zoom/pan across axes*], [Zooming or panning the x range of one axis applies it to every axis of the figure — for stacked time series.],
+  [*Link zoom/pan across axes*], [Zooming or panning the x range of one axis applies it to every axis of the figure that reads x the same way — dates with dates, numbers with numbers: a lag axis (an ACF) does not follow a date axis. *Back*, *Forward* and *Home* put each axis back on its own view.],
   [*Select points*], [Turns the pointer into a rectangle selection tool (see below).],
+  [*Deselect all*], [Shown while rows of the chart's tables are *Selected*: unmarks them all.],
   [*Live updates*], [Redraws the chart on a timer, for a table that an external process keeps filling.],
   [*Delete*], [Deletes the figure, after confirmation.],
 )
 
-Right-clicking *inside an axis* adds actions for the exact point clicked: *Add vertical line at x = …*, *Add horizontal line at y = …*, *Add annotation here…*, and *Measure from here* / *Measure to here*.
+Reference lines, annotations and measurements are drawn with the tools of the *Draw* button in the toolbar. A figure's look is saved and applied as a template from the *Look* row of the Figure properties (see @templates).
 
 === Measuring, annotating and selecting points
 
-*Measure from here* and then *Measure to here* record a two-click measurement — distance, Δx, Δy and slope — kept on the chart like a reference line. Annotations, reference lines and measurements each have a tab in *Overlay properties* (in Chart properties) where they can be edited by exact values or deleted. An annotation can also be dragged on the chart.
+A measurement records — distance, Δx, Δy and slope — kept on the chart like a reference line. Annotations, reference lines and measurements each have a tab in *Overlay properties* (in Chart properties) where they can be edited by exact values or deleted. An annotation can also be dragged on the chart.
 
-With *Select points* on, drag a rectangle over the chart: every point it covers, from every series of that axis, is selected. The menu then offers:
+With *Select points* on, drag a rectangle over the chart: every point it covers, from every series of that axis, is selected. The rectangle stays on the axis it started in - past its edge it stops at the edge. A click selects the point under it, *Shift*-click adds or takes away one, a click on nothing clears the selection.
+
+The selected points' rows are marked *Selected* in their table (the `Selected` column), so every chart of that table and the table preview show them too. They are drawn as *Settings > Charts > Selected points* says (bold like JMP, a ring, or the highlight colour, at the size chosen there); on a line without markers the selected stretch of the line itself is drawn darker and thicker. *Show only the Selected rows on the charts*, in the preview's menu, makes every chart of the table draw only those rows; nothing is deleted, and analyses still read every row. The menu then offers:
 
 #defs(
   [*Hide N selected point(s)*], [Removes the points from the chart without touching the table: the series' query is narrowed to exclude them. Undo brings them back.],

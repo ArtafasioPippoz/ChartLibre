@@ -150,6 +150,7 @@ Highlights:
 
 - **Matplotlib style editor** — edit rcParams and save `.mplstyle` files; styles that look like JMP, Minitab and SPSS ship ready to use.
 - **Click to edit** — a click on a figure, an axis or a series opens its properties.
+- **Linked selection** — select points on a chart with a box or a click: their rows are marked in the table and in every chart of it, drawn darker as JMP does, and *Show only the Selected rows* narrows every chart to them.
 - **Extensible without forking** — drop a Python file into `user/charts/`, `user/data_operations/` or `user/functions/` and it appears in the application. GUI scaffolding tools generate a working skeleton for each.
 - **Localisation** — English and Italian complete; French, German and Portuguese mostly done — with a built-in catalogue editor and machine translation for adding more.
 
@@ -246,6 +247,7 @@ python3 install.py        # creates .venv and installs requirements.txt
 
 ChartLibre also ships, or draws on, other people's work:
 
+- **[Comic Neue](https://comicneue.com/)** by Craig Rozynski — the font of the hand-drawn (XKCD) style, in `app/fonts` under the SIL Open Font License.
 - **[SciencePlots](https://github.com/garrettj403/SciencePlots)** by John D. Garrett — the Matplotlib styles in `mplstyles/` (MIT, see [`mplstyles/LICENSE-SciencePlots`](mplstyles/LICENSE-SciencePlots)).
 - **Icons**: [SF Symbols](https://developer.apple.com/sf-symbols/) on macOS and [Segoe Fluent Icons](https://learn.microsoft.com/windows/apps/design/style/segoe-fluent-icons-font) on Windows, both drawn from the system rather than shipped.
 - **Demo data** in `dev/demo/sample data/`:

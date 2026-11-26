@@ -35,7 +35,7 @@ The options are the same for both:
 A *template* keeps the *look* of a figure and none of its content: the figure's style sheet and layout, each axis' options except its title, labels, limits and annotations, and each series' colour, marker and line style. Applied to another figure, it changes how that figure looks and nothing it says.
 
 #defs(
-  [*Save this look as a template…*], [Chart menu → *Templates*. Give it a name.],
+  [*Save this look as a template…*], [Figure properties → *Look*. Give it a name.],
   [*Apply a template…*], [Gives the active figure the look of a saved template, axis by axis and series by series, in order. Undo takes it back.],
   [*Delete a template…*], [Forgets a template.],
 )
