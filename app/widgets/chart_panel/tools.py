@@ -785,7 +785,7 @@ class ChartToolsMixin(_Host):
 
     def _draw_selected_row_rings(self) -> None:
         for axes in self._canvas.figure.axes:
-            for artist in [a for a in axes.collections if a.get_label() == self.SELECTED_ROWS_LABEL]:
+            for artist in [a for a in (*axes.collections, *axes.lines) if a.get_label() == self.SELECTED_ROWS_LABEL]:
                 artist.remove()
         selected: dict[str, set[int]] = {}
         for axes in self._canvas.figure.axes:
@@ -833,13 +833,13 @@ class ChartToolsMixin(_Host):
             colour = line.get_color() if face in (None, "auto", "none") else face
             return {"marker": line.get_marker(), "sizes": np.array([float(line.get_markersize()) ** 2]),
                     "colours": np.array([to_rgba(colour)]), "count": len(line.get_xdata())}
-        # A line with no marker: a small dot in proportion to the line, not a full-size marker it never had.
+        # A line with no marker: its selected stretch is drawn again, not dotted - on a dense line dots run together.
         bare = [ln for ln in axes.lines if ln.get_label() != label]
         line = next((ln for ln in bare if ln.get_label() == name), None) or (bare[0] if bare else None)
         if line is not None:
-            diameter = max(3.0, 2.5 * float(line.get_linewidth()))
-            return {"marker": "o", "sizes": np.array([diameter ** 2]), "colours": np.array([to_rgba(line.get_color())]),
-                    "count": len(line.get_xdata())}
+            return {"marker": "o", "sizes": np.array([float(line.get_linewidth()) ** 2]),
+                    "colours": np.array([to_rgba(line.get_color())]), "count": len(line.get_xdata()),
+                    "linewidth": float(line.get_linewidth()), "line": line}
         return {"marker": "o", "sizes": np.array([float(rcParams.get("lines.markersize", 6.0)) ** 2]),
                 "colours": np.array([to_rgba("C0")]), "count": 0}
 
@@ -880,6 +880,28 @@ class ChartToolsMixin(_Host):
             face = np.array([darker(c, 0.8) for c in colours])
             edge, width = np.array([darker(c, 0.55) for c in colours]), 1.1
         offsets = np.column_stack([np.asarray(xs, dtype=float), np.asarray(ys, dtype=float)])
+        if "line" in template:
+            # A line without markers: the selected stretch of the line as it is drawn - smoothed or thinned,
+            # its own vertices at the selected x - darker and twice as thick, broken where the selection is;
+            # a lone selected point is a dot as thick as that line.
+            drawn = np.column_stack([np.asarray(template["line"].get_xdata(orig=False), dtype=float),
+                                     np.asarray(template["line"].get_ydata(orig=False), dtype=float)])
+            wanted = np.unique(offsets[:, 0][np.isfinite(offsets[:, 0])])
+            nearest = np.clip(np.searchsorted(wanted, drawn[:, 0]), 1, max(len(wanted) - 1, 1)) if len(wanted) else None
+            if nearest is None:
+                return
+            close = np.minimum(np.abs(drawn[:, 0] - wanted[nearest - 1]), np.abs(drawn[:, 0] - wanted[np.minimum(nearest, len(wanted) - 1)]))
+            kept = np.flatnonzero(close <= 1e-9 * max(1.0, float(np.nanmax(np.abs(wanted)))))
+            if not len(kept):
+                return
+            breaks = np.flatnonzero(np.diff(kept) > 1) + 1
+            path = np.insert(drawn[kept], breaks, np.nan, axis=0)
+            width = 2.0 * template["linewidth"] * scale
+            colour = darker(colours[0], 0.7)
+            axes.plot(path[:, 0], path[:, 1], color=colour, linewidth=width, linestyle="-", marker="o",
+                      markersize=width, markeredgewidth=0, solid_capstyle="round", zorder=9_000,
+                      label=self.SELECTED_ROWS_LABEL)
+            return
         if "paths" in template:
             collection = PathCollection(template["paths"], sizes=sizes, offsets=offsets, offset_transform=axes.transData,
                                         facecolors=face, edgecolors=edge, linewidths=width, zorder=9_000,
