@@ -2026,7 +2026,25 @@ class ChartPanel(DrawToolsMixin, ChartToolsMixin, QFrame):
 
         menu = self._build_actions_menu()
         self._add_selection_menu_items(menu, target[0])
+        self._add_deselect_menu_item(menu)
         return menu
+
+    def _add_deselect_menu_item(self, menu: QMenu) -> None:
+        """"Deselect all", while any row of this chart's tables is Selected (or a box selection waits)."""
+        if not self.has_selected_rows():
+            return
+        menu.addSeparator()
+        create_menu_item(
+            icons=CONTEXT_MENU_ICONS,
+            parent=self,
+            menu=menu,
+            icon="clear",
+            checkable=False,
+            text=_("Deselect all"),
+            tooltip=_("Unselect every selected point and row, in this chart and in the table."),
+            key=None,
+            action=self.deselect_all,
+        )
 
     def _add_selection_menu_items(self, menu: QMenu, axis_id: int) -> None:
         """Add "Hide"/"New series" for the pending box selection, if any.

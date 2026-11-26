@@ -611,13 +611,7 @@ class ChartToolsMixin(_Host):
         if hit is None:
             if shift:
                 return
-            cleared = [table for table in tables if self._repo.selected_row_ids(table)]
-            for table in cleared:
-                self._repo.select_rows(table, [])
-            if cleared:
-                self._draw_selected_rows()
-                self.rows_selected.emit(sorted(cleared))
-                self.selection_changed.emit(_("Selection cleared."))
+            self.deselect_all()
             return
         table, row_id = hit
         selected = set(self._repo.selected_row_ids(table))
@@ -633,6 +627,27 @@ class ChartToolsMixin(_Host):
         self.rows_selected.emit(sorted(changed))
         self.selection_changed.emit(_("{count} row(s) of '{table}' selected.").format(count=len(selected),
                                                                                         table=table))
+
+    def has_selected_rows(self) -> bool:
+        """True if any row of a table this chart reads is Selected - or a box selection is waiting for an action."""
+        return bool(self._last_selection) or any(self._repo.selected_row_ids(table) for table in self.row_tables())
+
+    def deselect_all(self) -> bool:
+        """Unselect every selected row of the tables this chart reads, and forget a waiting box selection.
+
+        The other charts and the table preview follow (rows_selected). True if there was something selected.
+        """
+        cleared = [table for table in self.row_tables() if self._repo.selected_row_ids(table)]
+        had_box = self._last_selection is not None
+        self._last_selection = None
+        for table in cleared:
+            self._repo.select_rows(table, [])
+        self._draw_selected_rows()
+        self._canvas.draw_idle()
+        if cleared:
+            self.rows_selected.emit(sorted(cleared))
+            self.selection_changed.emit(_("Selection cleared."))
+        return bool(cleared) or had_box
 
     def _row_under(self, axes: Any, axis_id: int, px: float, py: float) -> tuple[str, int] | None:
         """The table and row of the point nearest (*px*, *py*) - display pixels - within CLICK_RADIUS_PX."""
@@ -791,11 +806,82 @@ class ChartToolsMixin(_Host):
                 picked = rows[rows[ROW_ID].isin(selected[table])]
                 if picked.empty:
                     continue
-                axes.scatter(
+                self._add_selected_markers(
+                    axes, str(row["name"] or ""), rows, picked,
                     self._in_axis_units(axes.xaxis, picked["x"]), self._in_axis_units(axes.yaxis, picked["y"]),
-                    s=110, facecolors="none", edgecolors=self.SELECT_COLOR,
-                    linewidths=1.6, zorder=9_000, label=self.SELECTED_ROWS_LABEL,
                 )
+
+    @staticmethod
+    def _series_marker(axes: Any, name: str, label: str) -> dict[str, Any]:
+        """The marker the series *name* is drawn with on *axes*: its shape (paths or a marker code), sizes (area,
+        points squared), face colours and how many points it holds. A plain circle when nothing matches."""
+        from matplotlib.collections import PathCollection
+        from matplotlib.colors import to_rgba
+
+        collections = [a for a in axes.collections if isinstance(a, PathCollection) and a.get_label() != label]
+        artist = next((a for a in collections if a.get_label() == name), None) or (collections[0] if collections else None)
+        if artist is not None:
+            artist.update_scalarmappable()
+            sizes = np.asarray(artist.get_sizes(), dtype=float)
+            colours = np.asarray(artist.get_facecolor(), dtype=float)
+            return {"paths": artist.get_paths(), "sizes": sizes if sizes.size else np.array([36.0]),
+                    "colours": colours if colours.size else np.array([to_rgba("C0")]), "count": len(artist.get_offsets())}
+        lines = [ln for ln in axes.lines if str(ln.get_marker()) not in ("", "None", "none") and ln.get_label() != label]
+        line = next((ln for ln in lines if ln.get_label() == name), None) or (lines[0] if lines else None)
+        if line is not None:
+            face = line.get_markerfacecolor()
+            colour = line.get_color() if face in (None, "auto", "none") else face
+            return {"marker": line.get_marker(), "sizes": np.array([float(line.get_markersize()) ** 2]),
+                    "colours": np.array([to_rgba(colour)]), "count": len(line.get_xdata())}
+        return {"marker": "o", "sizes": np.array([float(rcParams.get("lines.markersize", 6.0)) ** 2]),
+                "colours": np.array([to_rgba("C0")]), "count": 0}
+
+    def _add_selected_markers(self, axes: Any, name: str, rows: pd.DataFrame, picked: pd.DataFrame,
+                              xs: Any, ys: Any) -> None:
+        """Draw the selected points of one series as Settings > Charts says: the series' own marker, same size
+        (scaled by the setting), made bold - darker, solid, heavy edged - or ringed or filled with the selection colour."""
+        from matplotlib.collections import PathCollection
+        from matplotlib.colors import to_rgb, to_rgba
+        from matplotlib.transforms import IdentityTransform
+
+        from app.utils.config import selected_points_size, selected_points_style
+
+        style, scale = selected_points_style(), selected_points_size() / 100.0
+        template = self._series_marker(axes, name, self.SELECTED_ROWS_LABEL)
+        count = len(picked)
+        positions = np.flatnonzero(rows[ROW_ID].isin(picked[ROW_ID]).to_numpy())
+        sizes, colours = template["sizes"], template["colours"]
+        # Per point when the series' arrays are one entry per row, otherwise the first (or the middle one).
+        sizes = sizes[positions] if len(sizes) == len(rows) and len(positions) == count else np.full(count, float(np.median(sizes)))
+        colours = (colours[positions] if len(colours) == len(rows) and len(positions) == count
+                   else np.tile(colours[0], (count, 1)))
+
+        def darker(colour: Any, factor: float) -> tuple[float, float, float, float]:
+            red, green, blue = to_rgb(colour[:3])
+            return red * factor, green * factor, blue * factor, 1.0
+
+        if style == "ring":
+            # A circle round the marker: a few points wider than it, however big it is.
+            sizes = (np.sqrt(sizes) * scale + 5.0) ** 2
+            face, edge, width = "none", np.array([to_rgba(self.SELECT_COLOR)] * count), 1.5
+        elif style == "fill":
+            sizes = sizes * scale ** 2
+            face = np.array([to_rgba(self.SELECT_COLOR)] * count)
+            edge, width = np.array([darker(to_rgba(self.SELECT_COLOR), 0.55)] * count), 1.2
+        else:  # bold: the same marker, solid, darker and with a heavy edge
+            sizes = sizes * scale ** 2
+            face = np.array([darker(c, 0.72) for c in colours])
+            edge, width = np.array([darker(c, 0.38) for c in colours]), 1.4
+        offsets = np.column_stack([np.asarray(xs, dtype=float), np.asarray(ys, dtype=float)])
+        if "paths" in template:
+            collection = PathCollection(template["paths"], sizes=sizes, offsets=offsets, offset_transform=axes.transData,
+                                        facecolors=face, edgecolors=edge, linewidths=width, zorder=9_000,
+                                        label=self.SELECTED_ROWS_LABEL)
+            collection.set_transform(IdentityTransform())  # sizes are points, as Axes.scatter sets it
+            axes.add_collection(collection, autolim=False)
+        else:
+            axes.scatter(offsets[:, 0], offsets[:, 1], s=sizes, marker=template["marker"], facecolors=face,
+                         edgecolors=edge, linewidths=width, zorder=9_000, label=self.SELECTED_ROWS_LABEL)
 
     def _hide_selection(self) -> None:
         """Hide every selected point by rewriting its series' own query.
