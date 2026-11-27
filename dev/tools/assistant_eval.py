@@ -124,7 +124,7 @@ def run_case(provider, index: int, case: Case, level: str, api_key: str, folder:
     from app.utils.assistant import system_prompt
     from app.utils.assistant import AssistantTools
     from app.data.sqlite_repo import SqliteRepo
-    from app.plugin_api.ai.provider import ACCURATE, ToolResult
+    from app.plugin_api.ai import ACCURATE, ToolResult
 
     copy = folder / f"case{index}.dhub"
     shutil.copy2(DEMO, copy)

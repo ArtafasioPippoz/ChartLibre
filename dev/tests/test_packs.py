@@ -12,7 +12,7 @@ from app.scanners.plugin_family import PluginFamily
 from app.utils import config, packs
 
 IMPORTER = '''
-from app.plugin_api.importers.base import FileImporter
+from app.plugin_api.importers import FileImporter
 
 class TdmsLike(FileImporter):
     Name = "Pack reader"

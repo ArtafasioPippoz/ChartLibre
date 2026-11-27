@@ -6,7 +6,7 @@ from collections import Counter
 import numpy as np
 import pandas as pd
 
-from app.plugin_api.importers.base import ALL_DATASETS, FileImporter, ImportedData
+from app.plugin_api.importers import ALL_DATASETS, FileImporter, ImportedData
 
 
 def _mat_arrays(path: str) -> dict[str, np.ndarray]:

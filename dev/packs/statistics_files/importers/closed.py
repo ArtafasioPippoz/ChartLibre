@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app.plugin_api.importers.base import FileImporter, ImportedData
+from app.plugin_api.importers import FileImporter, ImportedData
 
 _EXPORT = {
     ".jmp": "In JMP: File > Export > CSV (or Excel).",

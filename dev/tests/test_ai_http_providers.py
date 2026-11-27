@@ -14,7 +14,7 @@ import pytest
 
 from dev.packs.assistant_providers.ai_providers.github_models_provider import GitHubModelsProvider
 from app.ai_providers.ollama_provider import OllamaProvider
-from app.plugin_api.ai.provider import ACCURATE, FAST, ToolResult, ToolSpec
+from app.plugin_api.ai import ACCURATE, FAST, ToolResult, ToolSpec
 
 TOOLS = [ToolSpec("list_tables", "The project's tables.", {"type": "object", "properties": {}})]
 

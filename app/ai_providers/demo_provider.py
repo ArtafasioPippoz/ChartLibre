@@ -17,7 +17,7 @@ import time
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 
-from app.plugin_api.ai.provider import (
+from app.plugin_api.ai import (
     ACCURATE,
     FAST,
     AIProvider,

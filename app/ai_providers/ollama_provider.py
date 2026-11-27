@@ -19,14 +19,14 @@ import urllib.parse
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
-from app.plugin_api.ai.http_chat import (
+from app.plugin_api.ai import (
     ProviderHTTPError,
     get_json,
     json_lines,
     post_json,
     stream_lines,
 )
-from app.plugin_api.ai.provider import (
+from app.plugin_api.ai import (
     ACCURATE,
     FAST,
     AIProvider,

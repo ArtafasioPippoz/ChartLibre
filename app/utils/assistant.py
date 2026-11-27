@@ -43,7 +43,7 @@ from PySide6.QtCore import QObject, QTimer, Signal
 
 from app.analysis_api import closest as _closest, describe_analysis, make_chart, run_analysis
 from app.data.repo._common import is_read_only_select
-from app.plugin_api.ai.provider import ACCURATE, FAST, AIProvider, ToolResult, ToolSpec, Turn
+from app.plugin_api.ai import ACCURATE, FAST, AIProvider, ToolResult, ToolSpec, Turn
 from app.plugin_api.data_operations.column_roles import declared_kind, guess_kind
 from app.utils.background import BackgroundTask, run_in_background
 from app.utils.coercion import to_numbers

@@ -1,4 +1,4 @@
-"""Discovery of the assistant's providers (app.plugin_api.ai.provider).
+"""Discovery of the assistant's providers (app.plugin_api.ai).
 
 Classes directly subclassing AIProvider in app/ai_providers (and
 user/ai_providers, for the user's own) are found by an AST scan - the

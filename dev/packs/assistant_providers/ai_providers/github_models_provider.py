@@ -15,13 +15,13 @@ import threading
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
-from app.plugin_api.ai.http_chat import (
+from app.plugin_api.ai import (
     ProviderHTTPError,
     post_json,
     server_events,
     stream_lines,
 )
-from app.plugin_api.ai.provider import (
+from app.plugin_api.ai import (
     ACCURATE,
     FAST,
     AIProvider,

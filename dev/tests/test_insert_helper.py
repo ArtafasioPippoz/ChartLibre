@@ -63,7 +63,7 @@ def test_the_assistant_writes_plain_names_and_requests(qapp, repo) -> None:
 
 def test_send_reaches_a_provider_whose_check_is_asynchronous(qapp, repo, monkeypatch) -> None:
     """Ollama: Send asked the server again in the background and dropped the question while it waited."""
-    from app.plugin_api.ai.provider import AIProvider
+    from app.plugin_api.ai import AIProvider
     from app.widgets import assistant_panel
 
     class Local(AIProvider):

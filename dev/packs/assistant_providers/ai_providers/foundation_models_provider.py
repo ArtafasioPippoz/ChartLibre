@@ -18,7 +18,7 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
-from app.plugin_api.ai.provider import (
+from app.plugin_api.ai import (
     ACCURATE,
     FAST,
     AIProvider,

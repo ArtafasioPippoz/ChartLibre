@@ -9,7 +9,7 @@ import xml.etree.ElementTree as ET
 import numpy as np
 import pandas as pd
 
-from app.plugin_api.importers.base import (
+from app.plugin_api.importers import (
     ALL_DATASETS,
     FileImporter,
     ImportedData,

@@ -661,7 +661,7 @@ new subfolder — no registration needed.
 
 One file in `app/importers/` (built in) or `user/importers/` (a lab's own),
 holding a class that directly subclasses
-`app.plugin_api.importers.base.FileImporter`; `app/scanners/importer_scanner.py`
+`app.plugin_api.importers.FileImporter`; `app/scanners/importer_scanner.py`
 finds it by an AST scan, with no registration. Literal class attributes:
 `Name`, `Description`, `Suffixes` (a user importer wins over a built-in one
 for the same suffix), `Category` (its group in the file dialog's filter),

@@ -58,7 +58,7 @@ from app.utils.logger import applogger
 # existing external imports of these names from this module - the test suite
 # and app.main_window.main_window - keep working unchanged.
 # -----------------------------------------------------------------------------
-from app.plugin_api.importers.base import ALL_DATASETS, ImportedData
+from app.plugin_api.importers import ALL_DATASETS, ImportedData
 from app.styles.style import (
     TitledCard,
     action_presentation,

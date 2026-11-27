@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from app.plugin_api.importers.base import ALL_DATASETS
+from app.plugin_api.importers import ALL_DATASETS
 from app.scanners import importer_scanner
 from app.utils import data_sources
 

@@ -42,7 +42,7 @@ def test_a_model_far_bigger_than_the_memory_is_warned_about(monkeypatch) -> None
 
 def test_the_models_are_a_drop_down_list_of_what_ollama_has(qapp, monkeypatch) -> None:
     from app.dialogs.settings_dialog import SettingsDialog, _EditableChoice
-    from app.plugin_api.ai import http_chat
+    from app.plugin_api import ai as http_chat
 
     # The provider classes are loaded from their files afresh: the HTTP helper they import is the one to replace.
     monkeypatch.setattr(http_chat, "get_json", lambda url, **kw: {"models": [{"name": "llama3.2:latest"},
@@ -59,7 +59,7 @@ def test_the_models_are_a_drop_down_list_of_what_ollama_has(qapp, monkeypatch) -
 
 
 def test_with_ollama_off_there_are_no_choices_and_the_models_stay_lines(monkeypatch) -> None:
-    from app.plugin_api.ai.http_chat import ProviderHTTPError
+    from app.plugin_api.ai import ProviderHTTPError
 
     def fail(self):
         raise ProviderHTTPError("down")

@@ -14,7 +14,7 @@ from app.utils import assistant as settings
 from app.utils.assistant import Assistant
 from app.utils.assistant import AssistantTools
 from app.data.sqlite_repo import SqliteRepo
-from app.plugin_api.ai.provider import (
+from app.plugin_api.ai import (
     ACCURATE,
     FAST,
     AIProvider,
@@ -162,7 +162,7 @@ def test_the_panel_says_what_is_missing_before_anything_is_sent(qapp, monkeypatc
 
 
 def test_a_provider_that_asks_the_network_is_asked_off_the_gui_thread(qapp, monkeypatch) -> None:
-    from app.plugin_api.ai.provider import AIProvider
+    from app.plugin_api.ai import AIProvider
     from app.widgets import assistant_panel
 
     class Slow(AIProvider):

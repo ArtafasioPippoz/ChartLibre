@@ -12,7 +12,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from app.plugin_api.importers.base import ALL_DATASETS, FileImporter, ImportedData, combine
+from app.plugin_api.importers import ALL_DATASETS, FileImporter, ImportedData, combine
 
 
 def _plain(value: Any) -> Any:

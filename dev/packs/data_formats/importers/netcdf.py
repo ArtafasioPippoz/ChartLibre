@@ -11,7 +11,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from app.plugin_api.importers.base import ALL_DATASETS, FileImporter, ImportedData, combine
+from app.plugin_api.importers import ALL_DATASETS, FileImporter, ImportedData, combine
 
 #: Long form multiplies the dimensions: more rows than this are not a table to read whole.
 MAX_ROWS = 5_000_000

@@ -110,7 +110,7 @@ Esito (2026-11-27)
       unico cambierebbe quando avviene la scansione;
   6 - user_functions e user_surface_functions sono due modelli per l'utente,
       separati apposta;
-  7 - API dei pacchetti: in attesa di conferma dell'utente.
+  7 - fatto dopo la conferma: plugin_api/ai.py e plugin_api/importers.py.
   Misura: app/ 305 -> 301 file, 29 -> 25 cartelle con codice; dev/tests 306 -> 282 file,
   2 -> 1 cartella. Test: tutti passano tranne tre che falliscono già su
   e9901c86 (test_overlay_columns, test_renderer_picker sul pacchetto Complex,

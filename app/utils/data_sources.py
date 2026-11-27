@@ -44,7 +44,7 @@ import pandas as pd
 from app import APP_NAME, APP_VERSION
 from app.data.repo._common import ensure_read_only_select, read_only
 from app.utils.logger import applogger
-from app.plugin_api.importers.base import ALL_DATASETS, FileImporter, ImportedData
+from app.plugin_api.importers import ALL_DATASETS, FileImporter, ImportedData
 from app.scanners import importer_scanner
 from app.utils.config import get_constant
 
