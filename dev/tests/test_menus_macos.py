@@ -4,7 +4,7 @@ from __future__ import annotations
 from PySide6.QtGui import QAction, QIcon, QKeySequence, QPixmap
 
 from app.styles.style import CONTEXT_MENU_ICONS, TidyMenu
-from app.styles.style.widgets import IS_MACOS
+from app.styles.widgets import IS_MACOS
 
 
 def _icon() -> QIcon:

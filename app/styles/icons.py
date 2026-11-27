@@ -25,8 +25,8 @@ from PySide6.QtGui import (
 from PySide6.QtSvg import QSvgRenderer
 
 from app.utils.logger import applogger
-from app.styles.style.catalogue import ActionSpec, _catalog, action
-from app.styles.style.metrics import _IS_MACOS, _IS_WINDOWS
+from app.styles.catalogue import ActionSpec, _catalog, action
+from app.styles.metrics import _IS_MACOS, _IS_WINDOWS
 
 # Icons
 # ----------------------------------------------------------------------

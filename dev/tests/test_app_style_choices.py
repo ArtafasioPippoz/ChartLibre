@@ -42,7 +42,7 @@ def test_the_default_chart_style_is_grouped_by_folder() -> None:
 
 
 def test_light_or_dark_is_a_choice_of_its_own_and_the_old_dark_style_reads_as_dark(monkeypatch) -> None:
-    from app.styles.style import themes
+    from app.styles import themes
 
     assert "dark" not in APP_STYLE_QSS  # no longer a style: a theme, for every style
     stored = {"app_style": "dark"}

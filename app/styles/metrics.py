@@ -12,8 +12,8 @@ from PySide6.QtGui import QIcon, QKeySequence
 
 from app.utils.config import get_constant
 
-# This module is in app/styles/style/; the UI directory is app/styles.
-_UI_DIR = Path(__file__).resolve().parent.parent
+# This module is in app/styles/, the UI directory, beside the stylesheets.
+_UI_DIR = Path(__file__).resolve().parent
 _APP_DIR = _UI_DIR.parent
 _STYLES_DIR = _APP_DIR / "styles"
 _IS_MACOS = platform.system().lower() == "darwin"

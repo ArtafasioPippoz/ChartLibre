@@ -11,9 +11,9 @@ from PySide6.QtWidgets import QApplication, QWidget
 
 from app.utils.logger import applogger
 from app.styles.palettes import themed_qss
-from app.styles.style import icons as _icons
-from app.styles.style.icons import _substitute_qss_symbols, substitute_ui_font
-from app.styles.style.metrics import _STYLES_DIR, PlatformStyle
+from app.styles import icons as _icons
+from app.styles.icons import _substitute_qss_symbols, substitute_ui_font
+from app.styles.metrics import _STYLES_DIR, PlatformStyle
 from app.utils.config import get_value
 
 
@@ -245,7 +245,7 @@ def apply_platform_style(
 
     qss, path = _load_qss(qss_name) if qss_name else ("", None)
     # Labels follow the sheet, not the machine: the Windows 11 look on a Mac writes "Title", not "Title:".
-    from app.styles.style.widgets import set_label_colon
+    from app.styles.widgets import set_label_colon
 
     set_label_colon(str(qss_name).startswith("macos") if qss_name else None)
 

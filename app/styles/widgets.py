@@ -26,8 +26,8 @@ from PySide6.QtWidgets import (
 )
 
 from app.utils.logger import applogger
-from app.styles.style.icons import action_presentation, load_icon
-from app.styles.style.metrics import (
+from app.styles.icons import action_presentation, load_icon
+from app.styles.metrics import (
     _COMBO_CHROME_WIDTH,
     COMBO_MIN_CONTENTS_LENGTH,
     DIALOG_SIZES,

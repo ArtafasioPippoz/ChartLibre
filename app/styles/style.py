@@ -14,7 +14,7 @@ If a dialog hand-rolls a margin or a button it will drift from the rest of the
 app; route it through here instead.
 """
 # The package's modules, re-exported: every name app.styles.style had, private ones included.
-from app.styles.style.catalogue import (
+from app.styles.catalogue import (
     ActionSpec,
     _actions_section,
     _cache,
@@ -24,7 +24,7 @@ from app.styles.style.catalogue import (
     action,
     action_menu_item,
 )
-from app.styles.style.icons import (
+from app.styles.icons import (
     _ACTIVE_THEME_IS_DARK,
     _FALLBACK_ICON_THEMES,
     _FLUENT_DEFAULT_COLOR,
@@ -80,7 +80,7 @@ from app.styles.style.icons import (
     theme_is_dark,
     ui_font_family,
 )
-from app.styles.style.metrics import (
+from app.styles.metrics import (
     _APP_DIR,
     _COMBO_CHROME_WIDTH,
     _IS_MACOS,
@@ -106,7 +106,7 @@ from app.styles.style.metrics import (
     PlatformStyle,
     ShortcutLike,
 )
-from app.styles.style.themes import (
+from app.styles.themes import (
     APP_APPEARANCES,
     APP_STYLE_AUTOMATIC,
     APP_STYLE_LABELS,
@@ -122,7 +122,7 @@ from app.styles.style.themes import (
     resolve_app_appearance,
     resolve_app_style,
 )
-from app.styles.style.widgets import (
+from app.styles.widgets import (
     _PRIMARY_BUTTON_TEXTS,
     CONTEXT_MENU_ICONS,
     KEEP_MINIMUM_WIDTH,

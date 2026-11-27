@@ -352,7 +352,7 @@ class InspectorSection(QWidget):
         self._header.setChecked(is_open)
 
     def _apply(self, is_open: bool) -> None:
-        from app.styles.style.widgets import chevron_icon
+        from app.styles.widgets import chevron_icon
 
         # A thin chevron before the title: right when closed, down when open (as Claude's own sections).
         if getattr(self, "_foldable", True):

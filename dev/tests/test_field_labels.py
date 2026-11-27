@@ -7,7 +7,7 @@ import pytest
 from PySide6.QtWidgets import QFormLayout, QLabel, QLineEdit, QWidget
 
 from app.styles.style import field_label, normalize_form_labels
-from app.styles.style import widgets as style_widgets
+from app.styles import widgets as style_widgets
 
 
 @pytest.mark.parametrize("platform, expected", [("darwin", "Name:"), ("win32", "Name"), ("linux", "Name")])

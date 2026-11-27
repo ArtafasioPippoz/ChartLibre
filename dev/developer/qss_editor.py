@@ -34,7 +34,7 @@ from PySide6.QtWidgets import (
 
 from app.styles.palettes import PALETTES, themed_qss
 from app.styles.style import TitledCard, apply_platform_style, load_icon
-from app.styles.style.icons import _substitute_qss_symbols, substitute_ui_font
+from app.styles.icons import _substitute_qss_symbols, substitute_ui_font
 
 STYLES_DIR = Path(__file__).resolve().parents[2] / "app" / "styles"
 TOKEN = re.compile(r"@([A-Z][A-Z0-9_]*)@")

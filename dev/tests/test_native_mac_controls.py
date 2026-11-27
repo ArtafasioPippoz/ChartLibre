@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QLabel
 
-from app.styles.style.themes import _without_native_mac_rules
+from app.styles.themes import _without_native_mac_rules
 from app.widgets.chart_properties.axis_properties import AxisPropertiesWidget
 
 

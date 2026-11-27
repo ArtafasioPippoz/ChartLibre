@@ -6,7 +6,7 @@ from typing import Any
 
 from app import SVG
 from app.utils.logger import applogger
-from app.styles.style.metrics import MenuItem, ShortcutLike
+from app.styles.metrics import MenuItem, ShortcutLike
 from app.utils.config import get_section
 from app.utils.i18n import tr
 

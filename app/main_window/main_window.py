@@ -1039,7 +1039,7 @@ class MainWindow(QMainWindow):
         """
         if not IS_MACOS:
             return False
-        from app.styles.style.themes import resolve_app_style
+        from app.styles.themes import resolve_app_style
         return resolve_app_style() == "fluent_win11"
 
     def _create_navigation(self) -> NavigationBar:
