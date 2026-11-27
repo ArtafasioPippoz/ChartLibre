@@ -521,7 +521,7 @@ class SettingsDialog(PanelDialog):
 
     def _build_assistant_section(self, card: QWidget, forms: list[QFormLayout]) -> None:
         """The assistant: its provider, the key (kept by the system), what it may do and what it may send."""
-        from app.ai import settings as assistant
+        from app.utils import assistant as assistant
         from app.scanners.ai_provider_scanner import ai_providers, provider_class
 
         # Folded like Advanced: most people never open it.
@@ -608,7 +608,7 @@ class SettingsDialog(PanelDialog):
 
     def _assistant_provider_changed(self) -> None:
         """A provider that needs no key (Demo): the key and its test are not for it."""
-        from app.ai import settings as assistant
+        from app.utils import assistant as assistant
 
         chosen = self._value(self._assistant_provider)
         needs_key = bool(self._assistant_key_names.get(chosen))
@@ -624,7 +624,7 @@ class SettingsDialog(PanelDialog):
         """Try the key on a worker thread; say what came of it under the field."""
         import shiboken6
 
-        from app.ai import settings as assistant
+        from app.utils import assistant as assistant
         from app.scanners.ai_provider_scanner import ai_providers, provider_class
         from app.utils.background import run_in_background
 
@@ -675,7 +675,7 @@ class SettingsDialog(PanelDialog):
             self.resize(self.width(), height)
 
     def _save_assistant(self) -> None:
-        from app.ai import settings as assistant
+        from app.utils import assistant as assistant
 
         assistant.set_in_navigation(self._assistant_in_navigation.isChecked())
         provider = self._value(self._assistant_provider)

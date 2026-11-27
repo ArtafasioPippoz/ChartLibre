@@ -153,7 +153,7 @@ class OllamaSession(ChatSession):
         return turn
 
 
-    # -- the form (app.ai.form): a small model fills one form instead of choosing tools -----------------------
+    # -- the form (app.utils.assistant_form): a small model fills one form instead of choosing tools -----------------------
 
     def fill(self, *, model: str, instructions: str, schema: Mapping[str, Any], text: str,
              cancel: threading.Event) -> dict[str, Any]:

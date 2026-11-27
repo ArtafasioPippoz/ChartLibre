@@ -31,7 +31,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from app.ai.tools import AssistantTools
+from app.utils.assistant import AssistantTools
 
 #: Builtins a workpad may call with the filter on.
 SAFE_BUILTINS = (

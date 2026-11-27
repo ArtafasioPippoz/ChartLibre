@@ -15,7 +15,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from app.ai.tools import AssistantTools
+from app.utils.assistant import AssistantTools
 
 #: action -> (what it is for, said to the model)
 ACTIONS: dict[str, str] = {

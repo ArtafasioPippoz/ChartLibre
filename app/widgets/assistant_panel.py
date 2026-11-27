@@ -26,9 +26,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from app.ai import settings
-from app.ai.assistant import Assistant
-from app.ai.tools import AssistantTools
+from app.utils import assistant as settings
+from app.utils.assistant import Assistant
+from app.utils.assistant import AssistantTools
 from app.styles.style import create_action_button, stdSizeAndlayout
 from app.utils.background import run_in_background
 from app.utils.i18n import _

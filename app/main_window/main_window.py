@@ -60,7 +60,7 @@ from PySide6.QtWidgets import (
 )
 
 from app import APP_ICON, APP_NAME
-from app.ai import settings as assistant_settings
+from app.utils import assistant as assistant_settings
 from app.data.demos import PROJECTS_DIR, DemoProject, copy_demo_project
 from app.data.repo._common import ensure_read_only_select
 from app.data.repo.function_sql import function_names
@@ -1062,7 +1062,7 @@ class MainWindow(QMainWindow):
         guided_panel.set_table(self._table_panel.current)
         self._guided_panel = guided_panel
         developer_panel = self._create_developer_page()
-        # The assistant: a conversation with an AI about the project (app.ai), its provider a plugin.
+        # The assistant: a conversation with an AI about the project (app.utils.assistant), its provider a plugin.
         assistant_panel = self._assistant_panel = AssistantPanel(
             self, repo=lambda: self._repo,
             current_figure=lambda: getattr(self._current_chart_panel(), "figure_id", None),

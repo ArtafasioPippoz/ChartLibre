@@ -10,9 +10,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from app.ai import settings
-from app.ai.assistant import Assistant
-from app.ai.tools import AssistantTools
+from app.utils import assistant as settings
+from app.utils.assistant import Assistant
+from app.utils.assistant import AssistantTools
 from app.data.sqlite_repo import SqliteRepo
 from app.plugin_api.ai.provider import (
     ACCURATE,
@@ -367,7 +367,7 @@ def test_a_small_model_fills_the_form_and_the_application_runs_it(qapp, repo) ->
 
 
 def test_the_form_mends_a_chart_s_roles(repo) -> None:
-    from app.ai import form
+    from app.utils import assistant_form as form
 
     tools, made = _tools(repo)
     action, text, failed = form.execute(tools, {"action": "create_chart", "table": "birds", "chart_type": "Box Plot",

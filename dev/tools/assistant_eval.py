@@ -6,7 +6,7 @@
 
 Run by hand, one provider at a time and never beside the test suite: a local model takes the memory of a small
 Mac. Each case runs on a fresh copy of the penguin demo, in a fresh conversation, with the same system prompt and
-tools the panel gives (app.ai.assistant); the tools run without a window and every change is accepted.
+tools the panel gives (app.utils.assistant); the tools run without a window and every change is accepted.
 
 A case passes when a tool it accepts ran without error, with the columns it names among its arguments, and its
 outcome is there: a figure drawn, a number in the answer, or an answer at all. Printed: each case's verdict and why,
@@ -121,8 +121,8 @@ def judge(case: Case, result: Result) -> tuple[bool, str]:
 
 
 def run_case(provider, index: int, case: Case, level: str, api_key: str, folder: Path, use_form: bool = True) -> Result:
-    from app.ai.assistant import system_prompt
-    from app.ai.tools import AssistantTools
+    from app.utils.assistant import system_prompt
+    from app.utils.assistant import AssistantTools
     from app.data.sqlite_repo import SqliteRepo
     from app.plugin_api.ai.provider import ACCURATE, ToolResult
 
@@ -144,7 +144,7 @@ def run_case(provider, index: int, case: Case, level: str, api_key: str, folder:
                                  tools=tools.specs(level))
         pieces: list[str] = []
         if use_form and provider.SMALL_MODEL and hasattr(session, "fill"):
-            from app.ai import form
+            from app.utils import assistant_form as form
 
             filled = session.fill(model=model, instructions=form.instructions(tools, level),
                                   schema=form.schema(tools, level), text=case.request, cancel=threading.Event())
@@ -193,7 +193,7 @@ def main() -> int:
     ensure_visible_plugins()  # macOS may have flagged Qt's plugins hidden
     from PySide6.QtWidgets import QApplication
 
-    from app.ai import settings
+    from app.utils import assistant as settings
     from app.widgets.assistant_panel import _load_provider
 
     app = QApplication.instance() or QApplication([])  # some analyses build their dialog off screen
