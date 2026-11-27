@@ -80,3 +80,54 @@ def test_re_and_im_columns_are_drawn_as_given() -> None:
     drawn = np.asarray(ax.images[0].get_array())
     assert drawn.shape == (3, 5, 3)
     assert np.allclose(drawn, cp.domain_colours(w))
+
+
+def test_equal_scale_widens_the_view_and_the_function_follows() -> None:
+    fig = Figure(figsize=(8, 4))
+    ax = fig.add_subplot()
+    frame = pd.DataFrame({"x": [-1.0, 1.0], "y": [-1.0, 1.0]})
+    _renderer().render_axis(ax, [_series(frame)], {"function": "z", "resolution": 60})
+    fig.canvas.draw() if hasattr(fig.canvas, "draw") else None
+    ax.apply_aspect()
+    x0, x1 = sorted(ax.get_xlim())
+    assert x1 - x0 > 2.5  # a wide axes shows more of Re than of Im
+    assert tuple(ax.images[0].get_extent())[:2] == (x0, x1)
+
+
+def _path_renderer():
+    spec = importlib.util.spec_from_file_location("complex_path_under_test", PACK_CHART.with_name("complex_path.py"))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.ComplexPathAxisRenderer()
+
+
+def _circle(n: int = 101) -> pd.DataFrame:
+    t = np.linspace(0, 1, n)
+    return pd.DataFrame({"x": np.cos(2 * np.pi * t), "y": np.sin(2 * np.pi * t), "t": t})
+
+
+def test_a_path_is_drawn_in_order_of_t_and_coloured_by_it() -> None:
+    ax = Figure().add_subplot()
+    frame = _circle().sample(frac=1.0, random_state=3)  # rows shuffled: t puts them back in order
+    _path_renderer().render_axis(ax, [_series(frame)], {"arrows": 3})
+    collection = ax.collections[0]
+    segments = collection.get_segments()
+    assert len(segments) == 100
+    assert np.allclose(segments[0][0], [1, 0]) and np.allclose(segments[-1][1], [1, 0], atol=1e-9)
+    assert np.all(np.diff(collection.get_array()) > 0)
+    assert ax.get_aspect() == 1.0
+
+
+def test_the_image_of_a_circle_under_z_cubed_winds_three_times() -> None:
+    ax = Figure().add_subplot()
+    _path_renderer().render_axis(ax, [_series(_circle(301))], {"function": "z^3", "arrows": 0})
+    points = np.array([segment[0] for segment in ax.collections[0].get_segments()])
+    turns = np.sum(np.diff(np.unwrap(np.angle(points[:, 0] + 1j * points[:, 1])))) / (2 * np.pi)
+    assert round(turns) == 3
+
+
+def test_a_pole_on_the_path_breaks_it_instead_of_joining_across_infinity() -> None:
+    ax = Figure().add_subplot()
+    frame = pd.DataFrame({"x": [-1.0, -0.5, 0.0, 0.5, 1.0], "y": [0.0] * 5})
+    _path_renderer().render_axis(ax, [_series(frame)], {"function": "1/z", "arrows": 0, "mark_ends": False})
+    assert len(ax.collections[0].get_segments()) == 2

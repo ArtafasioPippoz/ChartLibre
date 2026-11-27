@@ -62,6 +62,9 @@ class DomainColouringAxisRenderer(BaseAxisRenderer):
                     "description": "How the modulus shows: 'smooth' darkens towards 0 and lightens "
                                    "towards infinity, 'rings' adds a ring at every doubling, 'none' "
                                    "shows the phase alone."},
+        "equal_scale": {"default": True, "type": bool, "group": "Appearance",
+                        "description": "The same scale on Re and Im, so angles and circles look true. "
+                                       "Off, the plane stretches to fill the axes."},
         "phase_lines": {"default": 0, "type": int, "min": 0, "max": 72, "group": "Appearance",
                         "description": "Rays of constant argument drawn darker: 12 marks every 30 degrees."},
     }
@@ -91,6 +94,9 @@ class DomainColouringAxisRenderer(BaseAxisRenderer):
             except ValueError as error:
                 applogger.warning("Domain Colouring, series '%s': %s", sd.name, error)
             break  # one function per axes
+        if bool(self.opt_typed("equal_scale", options)):
+            # The view widens to fill the axes; a function is evaluated again over the wider view.
+            ax.set_aspect("equal", adjustable="datalim")
         self.apply_annotations(ax, options)
 
     @staticmethod

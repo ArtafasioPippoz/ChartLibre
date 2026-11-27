@@ -48,6 +48,7 @@ SHOWCASE_CHART_TYPES: tuple[str, ...] = (
     "Quiver",
     "Stream Plot",
     "Domain Colouring",
+    "Complex Path",
     "Triangular Mesh",
     "Triangular Color Mesh",
     "Scatter Plot (3D)",
@@ -782,6 +783,17 @@ def _showcase_definitions() -> list[dict[str, Any]]:
             "axis_options": {"title": "Stem Plot"},
             "series": [
                 ("impulses", "SELECT t AS x, v AS y FROM src_series LIMIT 40", {}),
+            ],
+        },
+        {
+            # A circle of radius 1.2, coloured by t, with its direction and ends.
+            "chart_type": "Complex Path",
+            "name": "Complex Path showcase",
+            "labels": ("Re", "Im"),
+            "axis_options": {"title": "Complex Path"},
+            "series": [
+                ("circle", "SELECT 1.2 * cos(t * pi() / 100) AS x, 1.2 * sin(t * pi() / 100) AS y, t "
+                           "FROM src_series WHERE t <= 200", {}),
             ],
         },
         {
