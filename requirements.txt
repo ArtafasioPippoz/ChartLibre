@@ -74,7 +74,7 @@ PyMySQL==1.2.4
 certifi==2026.11.20
 
 
-# Optional: the Assistant panel (app/ai, its provider a plugin in app/ai_providers).
+# Optional: the Assistant panel (app/utils/assistant.py, its provider a plugin in app/ai_providers).
 # Without anthropic the panel says how to enable Claude and the rest of the
 # application is the same; without keyring the API key is read from the
 # environment (ANTHROPIC_API_KEY) instead of the macOS Keychain or the Windows

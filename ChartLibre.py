@@ -11,7 +11,7 @@ ensure_visible_plugins()
 # ----------------------------------------------------------------------
 # Logging
 # ----------------------------------------------------------------------
-from app.logs.logger import AppLogger, applogger, clear_log_file
+from app.utils.logger import AppLogger, applogger, clear_log_file
 from app.utils.config import clear_log_at_start
 
 AppLogger.configure()

@@ -2,7 +2,7 @@ Riorganizzazione dei file di app/ e dev/tests - piano (2026-11-27)
 ===================================================================
 
 Punto di partenza (file .py tracciati in git)
-  app/        364 file, 28 cartelle con codice
+  app/        305 file tracciati (364 con le copie dei pacchetti), 29 cartelle con codice
   dev/tests   306 file, 2 cartelle (dev/tests, dev/tests/legacy_functions)
 
 Fuori dal piano, di proposito
@@ -95,7 +95,7 @@ Per ogni passo
   - commit su main con todo.txt "State" e dev/appsize.csv aggiornati.
 
 Risultato atteso
-  app/:      28 -> 24 cartelle (22 col passo 7), circa 364 -> 350 file
+  app/:      29 -> 25 cartelle (23 col passo 7)
   dev/tests: 2 -> 1 cartella, circa 306 -> 278 file
 
 Esito (2026-11-27)
@@ -111,7 +111,7 @@ Esito (2026-11-27)
   6 - user_functions e user_surface_functions sono due modelli per l'utente,
       separati apposta;
   7 - API dei pacchetti: in attesa di conferma dell'utente.
-  Misura: app/ 305 -> 301 file, 28 -> 24 cartelle; dev/tests 306 -> 282 file,
+  Misura: app/ 305 -> 301 file, 29 -> 25 cartelle con codice; dev/tests 306 -> 282 file,
   2 -> 1 cartella. Test: tutti passano tranne tre che falliscono già su
   e9901c86 (test_overlay_columns, test_renderer_picker sul pacchetto Complex,
   la stringa con i due punti in random_data_dialog.py).
