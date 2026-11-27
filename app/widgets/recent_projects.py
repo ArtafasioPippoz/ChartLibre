@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
+    QLineEdit,
     QListWidget,
     QListWidgetItem,
     QPushButton,
@@ -208,16 +209,30 @@ class DemoProjectsView(ProjectListView):
     """The shipped demos, each category under its heading; Open loads a fresh copy."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        super().__init__(parent, clearable=False)
+        super().__init__(parent, clearable=False, empty_text=_("No demo matches the search"))
         # Rows a little apart: one line each, and many of them.
         self._list.setSpacing(3)
+        # Search, over the list: by name, category or description.
+        self._search = QLineEdit(self)
+        self._search.setObjectName("demoSearch")
+        self._search.setPlaceholderText(_("Search"))
+        self._search.setClearButtonEnabled(True)
+        self._search.textChanged.connect(self.refresh)
+        self.layout().insertWidget(0, self._search)
         self.refresh()
 
+    @staticmethod
+    def _matches(demo: DemoProject, words: list[str]) -> bool:
+        text = " ".join((_(demo.file_name), _(demo.category), _(demo.description))).casefold()
+        return all(word in text for word in words)
+
     def refresh(self) -> None:
+        words = self._search.text().casefold().split()
         self._list.blockSignals(True)
         self._list.clear()
         for name in DEMO_CATEGORIES:
-            demos = [demo for demo in DEMO_PROJECTS if demo.category == name]
+            demos = [demo for demo in DEMO_PROJECTS
+                     if demo.category == name and self._matches(demo, words)]
             if not demos:
                 continue
             heading = QListWidgetItem(_(name).upper(), self._list)
