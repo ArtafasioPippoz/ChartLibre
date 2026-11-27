@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 
 from app.functions import library
-from dev.tests.legacy_functions import basic, nist, surfaces
+from dev.tests import legacy_basic as basic, legacy_nist as nist, legacy_surfaces as surfaces
 
 
 def _classes() -> dict[str, type]:

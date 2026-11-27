@@ -1,4 +1,4 @@
-"""Write app/functions/library.py: the old fit-function classes (dev/tests/legacy_functions) as SymPy expressions.
+"""Write app/functions/library.py: the old fit-function classes (dev/tests/legacy_*.py) as SymPy expressions.
 
 Each class's execute() is run once with SymPy symbols in place of x, y and the parameters, and a stand-in
 for numpy and scipy.special that answers with SymPy: np.exp -> exp, np.where -> Piecewise, np.clip ->
@@ -22,7 +22,7 @@ from pathlib import Path
 
 import sympy as sp
 
-from dev.tests.legacy_functions import basic, nist, surfaces
+from dev.tests import legacy_basic as basic, legacy_nist as nist, legacy_surfaces as surfaces
 
 TARGET = Path(__file__).resolve().parents[2] / "app" / "functions" / "library.py"
 POS, NZ, SAFE, FINITE = sp.Function("pos"), sp.Function("nz"), sp.Function("safe"), sp.Function("finite")
