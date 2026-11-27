@@ -170,6 +170,14 @@ Dated events along a horizontal baseline, each on its own vertical stem with its
 #use[Release histories, project milestones, incident lists — anything that is a list of moments.]
 Key settings: *levels* (how many stem heights to cycle through), *annotate*, *annotation font size*, *stem colour*.
 
+=== Complex Path
+A path $z(t)$ in the complex plane — `x` its real part, `y` its imaginary part — coloured by its parameter `t`, with arrows for its direction, a dot where it starts and a square where it ends. With a *Function* set (written as in Domain Colouring), the image $f(z(t))$ is drawn instead; a pole on the way breaks the path rather than joining it across infinity. The same series on two axes, one without a function and one with it, shows a curve and its image coloured alike, so each point can be followed to where it goes. From the *Complex numbers* pack.
+#roles[`x`, `y`][`t`]
+#mpl("Axes.add_collection", "Axes.annotate")
+#example("chart_complex_path", width: 100%)
+#use[The argument principle (a circle around a zero of order $n$ winds $n$ times around 0 in the image), conformal maps (a grid of lines and its image under $e^z$, still at right angles), the trajectory of a pole or a root as a parameter changes.]
+Key settings: *Function*, *colormap* of `t`, number of *arrows*, *mark ends*, *equal scale*, *colour bar*. Without `t`, the rows are taken in order.
+
 // ======================================================================
 == Statistical distributions
 
@@ -381,6 +389,15 @@ The meteorological symbol for a vector: a shaft pointing along (`u`, `v`) with f
 #use[Wind data, where meteorologists read speed from the flags more precisely than from arrow length.]
 Key settings: *length*, *barb colour*, *flip barb* (the flags' side, which depends on the hemisphere).
 
+=== Domain Colouring
+A complex function $f(z)$ drawn over the complex plane: every point $z = x + i y$ is painted with the value $f(z)$, the hue for its argument (red at 0, then yellow, green, cyan, blue and back to red at $2 pi$) and the lightness for its modulus (dark towards 0, white towards infinity). A zero is a point where all the colours meet going round one way, a pole is where they meet going round the other way, and the number of times the colours go round is the order. From the *Complex numbers* pack.
+#roles[`x`, `y`][`re`, `im`]
+#mpl("Axes.imshow")
+#example("chart_domain_colouring")
+#use[Seeing at a glance where a complex function vanishes, blows up or jumps: zeros and poles of a transfer function, branch cuts, essential singularities.]
+The function comes from one of two places. With only `x` and `y` mapped, it is the *Function* setting, written in `z` — for example `(z - 1) * (z + 1i)^2 / (z^3 + 2)` — with `i`, `pi`, `e`, `+ - * / ^` and `exp`, `log`, `sqrt`, `sin`, `cos`, `tan`, their hyperbolic and inverse versions, `abs`, `conj`, `real`, `imag` and `angle`; the rows only say which region to show, and the function is evaluated again at each zoom or pan, so detail never runs out. With `re` and `im` mapped too, the values are read from the table instead, on a complete x/y grid.
+Key settings: *Function*, *resolution* (points across the width), *modulus* (`smooth`; `rings`, a ring at each doubling of $|f|$; `none`, the phase alone), *phase lines* (rays of constant argument: 12 marks every 30°), *equal scale* (the same scale on Re and Im, on by default).
+
 // ======================================================================
 == Irregularly gridded data
 
@@ -450,6 +467,14 @@ A bar at each (x, y) rising to height `z`.
 #example("chart_3d_bar_chart")
 #use[A small table of values read both ways at once — a value per pair of categories — where a heatmap's colour alone is not enough to compare heights.]
 Key settings: bar *width* and *depth*, *bottom*, *shade*.
+
+=== Riemann Surface
+All the values of a many-valued function drawn as one surface over the complex plane: $z^(p\/q)$, which has $q$ values at each $z$, or $log z$, which has infinitely many. One part of $w$ is the height and the other the colour. Going once around 0 climbs from one sheet to the next: after $q$ turns $z^(p\/q)$ is back where it started, while $log z$ climbs for ever, as a helicoid. The sheets are drawn joined along the branch cut, as they really are. From the *Complex numbers* pack.
+#roles[`x`, `y`]
+#mpl("Axes3D.plot_surface")
+#example("chart_riemann_surface")
+#use[Teaching and seeing branch points and branch cuts: why $sqrt(z)$ changes sign after one turn around 0, and why $log z$ grows by $2 pi i$.]
+The surface is drawn out to the largest $|z|$ among the rows. Key settings: *function* (`power` or `log`), *numerator* $p$ and *denominator* $q$, *sheets* (turns of $log z$), *height* (`imag` or `real`: the other part is the colour), *colormap*, *radial* and *angular* resolution.
 
 // ======================================================================
 == Medicine

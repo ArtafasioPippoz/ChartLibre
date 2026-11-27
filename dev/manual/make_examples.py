@@ -36,6 +36,8 @@ MULTI = (9.0, 5.6)
 
 #: Chart type -> the demo figure that shows it best (by part of its name); otherwise the first single-axis one.
 PREFERRED = {
+    "Domain Colouring": "Zeros and poles",
+    "Riemann Surface": "two sheets",
     "Scatter Plot": "Penguin bill dimensions",
     "Histogram": "Penguin body mass",
     "Box Plot": "Employee compensation",
@@ -180,6 +182,7 @@ def main() -> int:
     charts(demos)
     demo_figures(demos, "Data operations", OPERATIONS, SINGLE)
     demo_figures(demos, "3D Data Operations", {"op_surface": "Data Operations on 3D data"}, MULTI)
+    demo_figures(demos, "Complex numbers", {"chart_complex_path": "The argument principle"}, MULTI)
     demo_figures(demos, "Designed experiment", {"analysis_fit_model": "Fit Model · Yield"}, (9.0, 3.4))
     demo_figures(demos, "Quick answers", {"answer_differences": "Are there differences?",
                                           "answer_impact": "What has the most impact?",

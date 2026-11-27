@@ -74,11 +74,11 @@ Every analysis the Tables menu offers is also a Python call — `Analysis("Are t
 
 | Family | Types |
 |---|---|
-| **Pairwise (x, y)** | Scatter, Bar, Horizontal Bar, Broken Bar (+ vertical), Time Series, Fill Between, Stack Plot, Stairs, Stem, Lollipop, Dumbbell, Slope, Waterfall |
+| **Pairwise (x, y)** | Scatter, Bar, Horizontal Bar, Broken Bar (+ vertical), Time Series, Fill Between, Stack Plot, Stairs, Stem, Lollipop, Dumbbell, Slope, Waterfall, Complex Path |
 | **Statistical distributions** | Histogram, 2D Histogram, Box, Violin, Strip, Ridgeline, Joint, ECDF, Hexbin, Event Plot, Pie |
-| **Gridded data** | Contour, Heatmap, Calendar Heatmap, Cell Plot, Image, Spectrogram, Quiver, Stream Plot, Wind Barbs |
+| **Gridded data** | Contour, Heatmap, Calendar Heatmap, Cell Plot, Image, Spectrogram, Quiver, Stream Plot, Wind Barbs, Domain Colouring |
 | **Irregularly gridded** | Contour (scattered), Triangular Mesh, Triangular Colour Mesh |
-| **3D and volumetric** | Surface, Surface (scattered), 3D Scatter, 3D Line, 3D Bar, 3D Quiver |
+| **3D and volumetric** | Surface, Surface (scattered), 3D Scatter, 3D Line, 3D Bar, 3D Quiver, Riemann Surface |
 | **Diagnostic** | Q-Q, P-P, Kaplan-Meier, Forest, Interaction, Pareto, Pair Plot, Parallel, Radar, Mosaic, Dendrogram, Fishbone (Ishikawa) |
 | **Quality and process** | Wafer Map, Multi-Vari |
 | **Specialized** | Sankey, Treemap, Ternary, Wind Rose, Timeline, Bullet, Table, Text |
@@ -200,7 +200,7 @@ To remove it: *Settings → Apps → Installed apps → ChartLibre → Uninstall
 
 ### Your first steps
 
-When ChartLibre opens it asks whether to create a new project, open one, or **load a demo**. Start with one of the forty-five demos: each opens a project with data and charts already made, which is the quickest way to see what ChartLibre does — *Quick answers* asks three questions of real data and answers them in words. The [user manual](docs/manual/user_manual.pdf) explains every window.
+When ChartLibre opens it asks whether to create a new project, open one, or **load a demo**. Start with one of the fifty-two demos: each opens a project with data and charts already made, which is the quickest way to see what ChartLibre does — *Quick answers* asks three questions of real data and answers them in words. The [user manual](docs/manual/user_manual.pdf) explains every window.
 
 <details>
 <summary>Mac with an Intel processor, Linux, or the source code</summary>
