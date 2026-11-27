@@ -1,0 +1,99 @@
+Riorganizzazione dei file di app/ e dev/tests - piano (2026-11-27)
+===================================================================
+
+Punto di partenza (file .py tracciati in git)
+  app/        364 file, 28 cartelle con codice
+  dev/tests   306 file, 2 cartelle (dev/tests, dev/tests/legacy_functions)
+
+Fuori dal piano, di proposito
+  - app/charts/<pack>, app/data_operations/<pack>, app/importers/<pack>,
+    app/ai_providers/assistant_providers: copie GENERATE da app/utils/packs.py
+    all'installazione dei pacchetti (non tracciate). Il percorso
+    app/<famiglia>/<pack id>/ è il contratto dei pacchetti: non si tocca.
+  - Le cartelle delle famiglie di plugin (charts, data_operations, importers,
+    functions, ai_providers): le scansiona lo scanner, restano dove sono.
+  - analysis/, dialogs/, widgets/ e le loro sottocartelle, data/repo,
+    data_operations/fit_dialog: grandi e coerenti.
+  - locales/, packages/, i .po (le traduzioni sono dell'utente: mai le msgstr).
+
+Separazione sviluppatore / utente (requisito dell'utente)
+  Tutto ciò che è per gli sviluppatori - dev/ (test, tools, packs, plans,
+  dev/developer, dev/ChartLibreDeveloper.py) e i launcher "ChartLibre
+  Developer" - resta a parte e NON entra nel pacchetto dell'utente.
+  Stato verificato oggi con dev/tools/build_bundle.py:wanted_file():
+    - dev/ è già escluso (tranne dev/tools/launcher/chartlibre.png). OK.
+    - BUG: "ChartLibre Developer.app", ".bat" e ".exe" nella radice sono
+      inclusi nel pacchetto di tutti e tre i sistemi (non sono in LAUNCHERS
+      né in LEAVE_OUT), e lì non funzionano perché dev/ manca.
+  Regole per questo piano:
+    - nessun file di app/ importa da dev/ (verificato: nessuno), e nessuno
+      spostamento porta codice sviluppatore in app/ o codice utente in dev/;
+    - i test restano tutti in dev/tests.
+
+Passi (uno per commit, ognuno con i test mirati e l'avvio dell'app)
+
+ 0. (scelta dell'utente) Spostare i launcher "ChartLibre Developer.app",
+    ".bat" e ".exe" dalla radice in dev/launchers/: dev/ è già escluso dal
+    pacchetto, quindi spariscono dal download dell'utente.
+    Da aggiornare: make_launcher.py (dove li scrive), i percorsi relativi
+    dentro i launcher (la radice del progetto ora è ../.. ), DEVELOPMENT.md,
+    CONTRIBUTING.md, il manuale e i test dei launcher
+    (test_developer_launchers.py). Test: wanted_file() li esclude per tutti
+    e tre i sistemi; il launcher spostato avvia ancora ChartLibreDeveloper.
+
+ 1. app/logs/logger.py  ->  app/utils/logger.py                 (-1 cartella)
+    ~156 file importano app.logs.logger: sostituzione meccanica, senza alias.
+
+ 2. app/styles/style/*  ->  app/styles/  (catalogue, icons, metrics, themes,
+    widgets accanto a palettes.py)                               (-1 cartella)
+
+ 3. app/workpad/ (engine, equation_helper, function_helper)
+    ->  un modulo app/utils/workpad.py (~820 righe)        (-1 cartella, -3 file)
+
+ 4. app/ai/ (assistant, form, settings, tools)
+    ->  app/utils/assistant.py (~840 righe)                (-1 cartella, -4 file)
+    (se troppo eterogeneo: assistant.py + assistant_tools.py)
+
+ 5. app/scanners/: i 5 scanner piccoli (ai_provider, importer, data_operation,
+    axis_renderer, plugin_family: ~305 righe) in plugin_scanners.py; restano
+    class_discovery e functions_scanner.                              (-4 file)
+
+ 6. app/functions/user_functions.py + user_surface_functions.py (43+44)
+    -> user_functions.py, se lo scanner delle funzioni lo consente.  (-1 file)
+
+ 7. DA CONFERMARE (API pubblica dei pacchetti):
+    app/plugin_api/ai/ (provider, http_chat) -> app/plugin_api/ai.py
+    app/plugin_api/importers/base.py         -> app/plugin_api/importers.py
+    Cambia gli import nei sorgenti dev/packs/ e richiede di ricostruire i
+    .clpack con make_pack.py.                          (-2 cartelle, -4 file)
+
+ 8. dev/tests/legacy_functions/ (basic, nist, surfaces)
+    -> dev/tests/legacy_functions.py; aggiornare test_function_library.py
+    e dev/tools/translate_function_library.py.        (-1 cartella, -3 file)
+
+ 9. Test piccoli (< 60 righe, 99 file) uniti per tema, per esempio:
+    - test_developer.py: developer_window, developer_app, developer_launchers,
+      sql_workpad_developer
+    - test_axes.py: axis_title_removed, axis_legend, axis_interval_render,
+      broken_axis, secondary_axis, reciprocal_scale, fit_tick_labels
+    - test_box_selection.py: box_selects_dated_lines,
+      box_selection_follows_the_pointer, box_follows_style, box_series_style
+    - test_scatter_colours.py: scatter_color_categories, scatter_point_colours
+    - test_html_results.py: html_results_park, html_results_lazy_show
+    - test_histogram.py: histogram_fit_cleared, histogram_binning
+    - test_column_info.py: column_info_button, column_info_from_analyses
+    - test_strings.py: po_escapes, localization, label_strings,
+      section_titles_case, field_labels
+    - test_window_fit.py: screen_fit_before_show, operation_pages_fit,
+      window_resize_edges
+    Un commit per gruppo; nomi delle funzioni di test invariati. ~ -25 file.
+
+Per ogni passo
+  - grep di tutti i riferimenti: import, stringhe di import dinamici,
+    dev/tools, dev/packs, packaging (build_bundle, installer), manuale.
+  - test pertinenti con .venv/bin/python3, GUI offscreen; avvio dell'app.
+  - commit su main con todo.txt "State" e dev/appsize.csv aggiornati.
+
+Risultato atteso
+  app/:      28 -> 24 cartelle (22 col passo 7), circa 364 -> 350 file
+  dev/tests: 2 -> 1 cartella, circa 306 -> 278 file

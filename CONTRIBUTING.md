@@ -38,7 +38,7 @@ agreement.
 ## Translating
 
 The catalogue editor is built in: *Developer → Edit Localization* (open the
-Developer launcher, `ChartLibre Developer`). The catalogues live in
+Developer launcher, `dev/launchers/ChartLibre Developer`). The catalogues live in
 `app/locales/<language>/LC_MESSAGES/` as `.po` files. Existing languages:
 Arabic, German, Spanish, French, Hindi, Italian, Japanese, Portuguese.
 Proofreading an existing language is as useful as adding a new one. Section 9
