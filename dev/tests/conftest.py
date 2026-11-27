@@ -90,8 +90,11 @@ def _no_windows_left_from_the_last_file():
     if app is None:
         return
     for widget in QApplication.topLevelWidgets():
-        widget.close()
-        widget.deleteLater()
+        try:
+            widget.close()
+            widget.deleteLater()
+        except RuntimeError:  # its C++ side already deleted (a parent closed before it): nothing to close
+            pass
     QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
 
 

@@ -42,11 +42,16 @@ def test_a_model_far_bigger_than_the_memory_is_warned_about(monkeypatch) -> None
 
 def test_the_models_are_a_drop_down_list_of_what_ollama_has(qapp, monkeypatch) -> None:
     from app.dialogs.settings_dialog import SettingsDialog, _EditableChoice
-    from app.plugin_api import ai as http_chat
+    import sys
 
-    # The provider classes are loaded from their files afresh: the HTTP helper they import is the one to replace.
-    monkeypatch.setattr(http_chat, "get_json", lambda url, **kw: {"models": [{"name": "llama3.2:latest"},
-                                                                          {"name": "qwen2.5:3b"}], "version": "x"})
+    from app.scanners.ai_provider_scanner import ai_providers, provider_class
+
+    # The HTTP helper is replaced in the module of the class the dialog uses: an earlier test of the same
+    # process may have loaded it already, with its own name for get_json - patching the API's did nothing.
+    (entry,) = [entry for entry in ai_providers if entry["value"] == "Ollama"]
+    module = sys.modules[provider_class(entry).__module__]
+    monkeypatch.setattr(module, "get_json", lambda url, **kw: {"models": [{"name": "llama3.2:latest"},
+                                                                       {"name": "qwen2.5:3b"}], "version": "x"})
     dialog = SettingsDialog(None)
     edit, _value = dialog._assistant_options["Ollama"]["accurate_model"]
     assert isinstance(edit, _EditableChoice)

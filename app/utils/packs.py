@@ -342,9 +342,35 @@ def _sync() -> None:
             except PackError as exc:
                 applogger.error("The pack %s is left out. %s", pack.path.name, exc)
                 continue
+        for family in FAMILIES:
+            _remove_sync_copies(family_folder(family, pack_id), pack_id)
         lib = _installed_dir() / pack_id / "lib"
         if lib.is_dir() and str(lib) not in sys.path:
             sys.path.append(str(lib))  # the pack's own modules: "from <pack id> import ..."
+
+
+#: A copy a file-syncing service (iCloud Drive, OneDrive, Dropbox) makes when a file is replaced under it:
+#: "peaks_dialog 2.py" beside "peaks_dialog.py".
+_SYNC_COPY = re.compile(r"^(?P<stem>.+) \d+(?P<suffix>\.py)$")
+
+
+def _remove_sync_copies(folder: Path, pack_id: str) -> None:
+    """Take out of an installed pack's folder the copies a syncing service left beside its files.
+
+    The project folder may be in iCloud Drive (the Desktop often is): installing a pack again replaces its
+    files, and the service may keep the old one as "<name> 2.py" - a second plugin of the same name, run
+    with the imports of the old version. Only a folder the pack owns (its marker) and only a copy whose
+    original is there.
+    """
+    if not folder.is_dir() or _marker(folder).get("id") != pack_id:
+        return
+    for path in folder.rglob("* *.py"):
+        match = _SYNC_COPY.match(path.name)
+        if match and (path.parent / f"{match['stem']}{match['suffix']}").is_file():
+            try:
+                path.unlink()
+            except OSError as exc:
+                applogger.warning("A synced copy in the pack %s is left: %s (%s)", pack_id, path, exc)
 
 
 def pack_of(path: Path) -> str:

@@ -124,6 +124,7 @@ def test_fit_y_by_x_on_a_scree_plot_draws_without_an_empty_table(qapp, repo: Sql
     written, "CREATE TABLE t ()" failed and nothing was drawn."""
     from app.data_operations.fit_y_by_x_dialog import FitYByXDialog
     from app.utils.logger import applogger
+    from dev.tests._helpers import wait_for_job
 
     failures: list[str] = []
     monkeypatch.setattr(applogger, "exception", lambda message, *a, **k: failures.append(str(message)))
@@ -141,8 +142,7 @@ def test_fit_y_by_x_on_a_scree_plot_draws_without_an_empty_table(qapp, repo: Sql
         dialog.source_chart_radio.setChecked(True)
         assert dialog.roles_widget.casting().roles == {"response": ["Eigenvalue"], "factor": ["Number"]}
         assert dialog.preview()
-        for _step in range(20):
-            qapp.processEvents()
+        wait_for_job(qapp, dialog)  # a fixed number of event rounds was too few on a busy machine
         assert not failures
         assert dialog.created_figure_ids
     finally:

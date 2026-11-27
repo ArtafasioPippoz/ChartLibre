@@ -159,3 +159,15 @@ def test_a_packs_own_modules_are_importable_by_its_id(folders):
     import labtools
 
     assert labtools.ANSWER == 42
+
+
+def test_the_copies_a_syncing_service_leaves_beside_a_packs_files_are_taken_out(folders):
+    """iCloud Drive keeps a replaced file as "reader 2.py": a second plugin of the same name, with old imports."""
+    make_pack(packs.BUILTIN_DIR, manifest={"default": True})
+    assert len(family(folders).discover()) == 1
+    folder = packs.family_folder("importers", "lab")
+    (folder / "reader 2.py").write_text((folder / "reader.py").read_text(), encoding="utf-8")
+    (folder / "notes 2.py").write_text("x = 1\n", encoding="utf-8")  # no original beside it: not a copy
+    (entry,) = family(folders).discover()
+    assert entry["path"].endswith("reader.py")
+    assert not (folder / "reader 2.py").exists() and (folder / "notes 2.py").exists()
