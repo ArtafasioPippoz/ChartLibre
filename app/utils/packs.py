@@ -33,7 +33,7 @@ from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 
 from app import APP_VERSION
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.utils.config import USER_CONTENT_DIR, get_value, set_value
 
 SUFFIX = ".clpack"

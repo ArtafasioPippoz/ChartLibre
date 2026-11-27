@@ -32,7 +32,7 @@ from app.data.sqlite_repo import (
     dump_references,
     parse_references,
 )
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.styles.style import TitledCard, create_action_button, mark_editor_panel, stdSizeAndlayout
 from app.utils.config import get_value, set_value
 from app.utils.i18n import _

@@ -19,7 +19,7 @@ from typing import Any, ClassVar
 
 import numpy as np
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api.charts.base import (
     LEGEND_OPTIONS,
     BaseAxisRenderer,

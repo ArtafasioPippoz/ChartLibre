@@ -24,7 +24,7 @@ from typing import Any
 
 from app.data.demos import DEMO_DIR, DEMO_PROJECTS, DemoProject
 from app.data.sqlite_repo import SqliteRepo
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from dev.demo.build_demos import TABLE_SOURCES, demo_style
 
 #: The figure options key the chart panel keeps its results pane in.

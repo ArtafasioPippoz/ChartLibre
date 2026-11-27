@@ -45,7 +45,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from app.data.data_source import quote_identifier as _quote
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.utils.config import get_constant
 
 #: How many actions can be taken back. Ten is more than anyone reaches for

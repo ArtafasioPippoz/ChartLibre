@@ -21,7 +21,7 @@ from functools import cache
 from pathlib import Path
 from typing import Any
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 
 # ----------------------------------------------------------------------
 # What the last scan read from each file, kept between runs

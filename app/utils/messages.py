@@ -52,7 +52,7 @@ from typing import Any, Literal
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QMessageBox, QWidget
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.utils.config import get_section
 from app.utils.i18n import tr
 

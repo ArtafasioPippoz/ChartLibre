@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Any
 from PySide6.QtCore import QObject, Qt, QTimer, Signal
 from PySide6.QtWidgets import QApplication, QFileDialog, QProgressDialog, QWidget
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api.charts import animation as anim
 from app.utils.i18n import _
 from app.utils.messages import show_message

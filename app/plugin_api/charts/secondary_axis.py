@@ -17,7 +17,7 @@ from typing import Any
 
 import numpy as np
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 
 Function = Callable[[Any], Any]
 

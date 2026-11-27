@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.utils import report_html
 from app.utils.i18n import _
 

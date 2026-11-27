@@ -17,7 +17,7 @@ from PySide6.QtGui import QGuiApplication, QIcon
 from PySide6.QtWidgets import QApplication, QDialog, QLabel, QVBoxLayout
 
 import app.dialogs.log_viewer_dialog as viewer_module
-import app.logs.logger as logger_module
+import app.utils.logger as logger_module
 import app.main_window.main_window as main_window_module
 from app.data.sqlite_repo import SqliteRepo
 from app.dialogs.create_chart_dialog import NewPlotTabResult

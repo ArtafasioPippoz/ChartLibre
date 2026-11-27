@@ -82,7 +82,7 @@ from app.analysis.clustering import (
     TOOL_WHITEN,
 )
 from app.data.data_source import parse_roles, resolve_role_column
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api import reading_guide
 from app.plugin_api.data_operations.dialog_base import (
     DataOperationDialogBase,

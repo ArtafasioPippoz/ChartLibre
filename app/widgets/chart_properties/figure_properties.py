@@ -33,7 +33,7 @@ from app.dialogs.edit_mpl_styles_dialog import (
     MplStyleEditorDialog,
     _sanitize_mplstyle_text,
 )
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api.charts import layout_presets, panel_labels
 from app.plugin_api.charts.render_figure import (
     DEFAULT_MPL_STYLE_KEY,

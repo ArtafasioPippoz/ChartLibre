@@ -9,7 +9,7 @@ from PySide6 import QtWidgets
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QWidget
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.styles.palettes import themed_qss
 from app.styles.style import icons as _icons
 from app.styles.style.icons import _substitute_qss_symbols, substitute_ui_font

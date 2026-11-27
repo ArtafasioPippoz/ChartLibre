@@ -26,7 +26,7 @@ from dev.packs.vector_fields.data_operations.geometry_dialog import (
     TRANSLATE,
     SeriesGeometryDialog,
 )
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 
 #: A unit square plus a point off-centre, so a mirror and a shear have
 #: something asymmetric to move - four corners alone look the same after

@@ -30,7 +30,7 @@ from typing import Any
 
 from PySide6.QtCore import QObject, QRunnable, QThreadPool, Signal, Slot
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 
 
 class _Runner(QRunnable):

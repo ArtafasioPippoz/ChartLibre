@@ -25,7 +25,7 @@ from __future__ import annotations
 import importlib
 import sys
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 
 #: The modules the data operations import, slowest first.
 MODULES: tuple[str, ...] = (

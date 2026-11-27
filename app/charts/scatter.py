@@ -15,7 +15,7 @@ from matplotlib import rcParams
 from matplotlib.patches import Ellipse
 from matplotlib.transforms import Affine2D
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api.charts.base import (
     ERROR_BAR_KWARGS,
     BaseAxisRenderer,

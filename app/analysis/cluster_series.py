@@ -22,7 +22,7 @@ from app.analysis.clustering import (
     numeric_matrix,
 )
 from app.data.select_sql import sql_insert_select_expression
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api.data_operations.results import FrameResult
 from app.utils.coercion import column_of, to_numbers
 

@@ -45,7 +45,7 @@ from PySide6.QtWidgets import (
 
 from app.data import column_metadata
 from app.data.sqlite_repo import ROW_ID, SqliteRepo
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api import reading_guide
 from app.plugin_api.data_operations import chart_source, next_steps
 from app.plugin_api.data_operations.column_roles import (

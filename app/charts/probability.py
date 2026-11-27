@@ -30,7 +30,7 @@ from app.analysis.diagnostics import (
 )
 from app.charts.scatter import ScatterAxisRenderer
 from app.data.series_frame import SeriesFrame
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api.charts.base import BaseAxisRenderer, SeriesData, merge
 from app.utils.coercion import column_of, to_numbers
 

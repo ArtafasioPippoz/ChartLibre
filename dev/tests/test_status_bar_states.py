@@ -6,7 +6,7 @@ from pathlib import Path
 import pandas as pd
 
 from app.data.sqlite_repo import SqliteRepo
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.main_window import main_window as main_window_module
 
 

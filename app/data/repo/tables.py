@@ -39,7 +39,7 @@ from app.data.select_sql import (
     top_level_from,
     top_level_match,
 )
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.utils.coercion import column_of, to_numbers
 
 if TYPE_CHECKING:

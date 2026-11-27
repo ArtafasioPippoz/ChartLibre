@@ -26,7 +26,7 @@ import numpy as np
 
 from app.data.demos import DEMO_DIR, DEMO_PROJECTS, DemoProject
 from app.data.sqlite_repo import SqliteRepo
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 
 TABLE = "Reaction_DOE"
 

@@ -23,7 +23,7 @@ from scipy import stats
 
 from app.analysis import NUMERICAL_FAILURES
 from app.analysis.randomness import all_diagnostics, finite
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.utils.coercion import column_of
 from app.utils.config import get_constant
 from app.utils.i18n import _

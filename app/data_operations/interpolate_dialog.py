@@ -52,7 +52,7 @@ from app.analysis.interpolation import (
     parse_values,
 )
 from app.data.data_source import parse_roles, resolve_role_column
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api import reading_guide
 from app.plugin_api.data_operations.dialog_base import (
     CallJob,

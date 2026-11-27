@@ -18,7 +18,7 @@ from __future__ import annotations
 import shutil
 from functools import lru_cache
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 
 # rcParams that require a working TeX installation.  Anything under these
 # prefixes is dropped together with the exact keys.

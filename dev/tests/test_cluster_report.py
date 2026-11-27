@@ -102,7 +102,7 @@ def test_a_previews_figure_goes_with_close(qapp, repo: SqliteRepo, blobs: int) -
 def test_the_results_pane_explains_each_series_once_and_logs_no_error(qapp, repo: SqliteRepo, blobs: int) -> None:
     import logging
 
-    from app.logs.logger import applogger
+    from app.utils.logger import applogger
 
     class Errors(logging.Handler):
         def __init__(self) -> None:

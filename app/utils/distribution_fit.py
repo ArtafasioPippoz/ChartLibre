@@ -18,7 +18,7 @@ import numpy as np
 from scipy import stats
 
 from app.analysis import NUMERICAL_FAILURES
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 
 #: What measurement data actually looks like.  Fifteen, in a deliberate order:
 #: the first few are what most samples turn out to be, so a reader scanning the

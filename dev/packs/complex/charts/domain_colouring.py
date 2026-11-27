@@ -19,7 +19,7 @@ from typing import Any, ClassVar
 import numpy as np
 
 from app.analysis import complex_plane as cp
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api.charts.base import BaseAxisRenderer, SeriesData
 from app.plugin_api.charts.grids import pivot_to_grid
 from app.utils.coercion import column_of, to_numbers

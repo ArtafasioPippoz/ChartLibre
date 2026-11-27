@@ -56,7 +56,7 @@ from app.analysis.smoothing import (
     smooth_series,
 )
 from app.data.data_source import parse_roles, row_value
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api import reading_guide
 from app.plugin_api.data_operations.dialog_base import (
     DataOperationDialogBase,

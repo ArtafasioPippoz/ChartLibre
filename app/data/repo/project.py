@@ -28,7 +28,7 @@ from app.data.repo._common import (
     ensure_connection_wrapper,
     ensure_read_only_select,
 )
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.utils.coercion import to_numbers
 from app.utils.import_cleaning import AUTO, convert_dates, date_kind, matches_missing
 

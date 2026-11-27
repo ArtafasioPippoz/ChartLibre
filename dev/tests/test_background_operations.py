@@ -19,7 +19,7 @@ from PySide6.QtWidgets import QApplication, QDialog, QStatusBar
 
 import app.data_operations as operations
 from app.data.sqlite_repo import SqliteRepo
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api.data_operations.dialog_base import DataOperationDialogBase
 
 #: module, class: every operation that computes in the background.

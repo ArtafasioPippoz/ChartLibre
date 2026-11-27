@@ -36,7 +36,7 @@ from PySide6.QtWidgets import (
 
 from app.data.sqlite_repo import SqliteRepo
 from app.dialogs.two_panels_dialog_base import SettingsTableDialog
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.styles.style import load_icon, mark_editor_panel, stdSizeAndlayout
 from app.utils.config import get_constant
 from app.utils.i18n import _

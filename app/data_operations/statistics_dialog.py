@@ -34,7 +34,7 @@ from app.analysis import NUMERICAL_FAILURES
 from app.analysis import statistics as st
 from app.data.data_source import parse_roles, quote_identifier, row_value
 from app.data.select_sql import projection_source
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api import reading_guide
 from app.plugin_api.data_operations.dialog_base import (
     DataOperationDialogBase,

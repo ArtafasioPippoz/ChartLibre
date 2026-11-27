@@ -45,7 +45,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.utils.i18n import AUTO_LANGUAGE
 
 

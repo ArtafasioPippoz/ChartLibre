@@ -20,7 +20,7 @@ from app.data.demos import DEMO_DIR, DEMO_PROJECTS, DemoProject
 from app.data.repo.function_sql import GridRange, function_sql
 from app.data.sqlite_repo import SqliteRepo
 from app.data_operations import sympy_store
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from dev.demo.build_demos import demo_style
 from dev.demo.demo_operations import (
     OperationDemo,

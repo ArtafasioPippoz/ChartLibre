@@ -17,7 +17,7 @@ from matplotlib.colors import to_rgba
 from matplotlib.dates import AutoDateLocator, ConciseDateFormatter
 
 from app.data.series_frame import SeriesFrame
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api.charts.base import (
     ERROR_BAR_KWARGS,
     BaseAxisRenderer,

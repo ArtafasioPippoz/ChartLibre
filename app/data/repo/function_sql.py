@@ -24,7 +24,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 
 FUNCTION = "chartlibre_function"
 GRID = "chartlibre_grid"

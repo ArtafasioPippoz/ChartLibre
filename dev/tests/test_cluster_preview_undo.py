@@ -16,7 +16,7 @@ import pytest
 
 from app.data.sqlite_repo import SqliteRepo
 from dev.packs.multivariate.data_operations.cluster_dialog import SeriesClusterDialog
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 
 
 class _Errors(logging.Handler):

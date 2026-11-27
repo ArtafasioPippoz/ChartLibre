@@ -22,7 +22,7 @@ import pandas as pd
 
 from app.data.demos import DEMO_DIR, DEMO_PROJECTS, DemoProject
 from app.data.sqlite_repo import SqliteRepo
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from dev.demo.demo_operations import (
     OperationDemo,
     _create_source_figure,

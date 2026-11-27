@@ -33,7 +33,7 @@ from PySide6.QtWidgets import (
 from app.data import column_metadata as cm
 from app.data.repo.project import CAST_TYPES
 from app.dialogs.two_panels_dialog_base import Column, ColumnsDialog
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.styles.style import stdSizeAndlayout
 from app.utils.i18n import _
 from app.utils.messages import show_message

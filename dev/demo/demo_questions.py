@@ -26,7 +26,7 @@ from typing import Any
 
 from app.data.demos import DEMO_DIR, DEMO_PROJECTS, DemoProject
 from app.data.sqlite_repo import SqliteRepo
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 
 #: The table Has it changed over time? is asked of: a figure of its years and anomalies.
 CHANGE_TABLE = "global_temperature"

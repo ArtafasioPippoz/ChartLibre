@@ -17,7 +17,7 @@ from typing import Any, cast
 from pandas._typing import DtypeArg
 
 from app.data.sqlite_repo import SqliteRepo
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.utils import import_cleaning
 from app.utils.data_sources import read_from_link_source
 

@@ -42,7 +42,7 @@ from urllib.request import Request, urlopen
 import numpy as np
 import pandas as pd
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 
 #: Where the cleaned CSVs land - the same folder every other demo table
 #: is read from.

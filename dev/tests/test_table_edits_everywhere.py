@@ -12,7 +12,7 @@ from PySide6.QtWidgets import QInputDialog, QMessageBox
 import app.widgets.table_list as table_list_module
 from app.data.sqlite_repo import SqliteRepo
 from app.dialogs.table_editor_dialog import TableEditorDialog
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.widgets.table_list import TableListPanel
 
 FRAME = pd.DataFrame({"name": ["alpha", "beta", "gamma", "delta"], "value": [1.0, 2.0, 3.0, None]})

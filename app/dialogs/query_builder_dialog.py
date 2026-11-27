@@ -32,7 +32,7 @@ from PySide6.QtWidgets import (
 from app.data.sqlite_repo import SqliteRepo
 from app.dialogs.query_operations import FORMS, OperationForm
 from app.dialogs.two_panels_dialog_base import SettingsTableDialog
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.styles.style import (
     create_action_button,
     load_icon,

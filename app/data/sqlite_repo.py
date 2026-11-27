@@ -76,7 +76,7 @@ from app.data.select_sql import (
 )
 from app.data.series_frame import SeriesFrame
 from app.data.undo_store import UndoEntry, UndoStore
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.utils.config import get_constant, load_config
 
 # Series cache defaults, overridable from config.json under "series_cache".

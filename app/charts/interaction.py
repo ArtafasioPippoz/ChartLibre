@@ -22,7 +22,7 @@ import numpy as np
 
 from app.analysis import NUMERICAL_FAILURES
 from app.analysis.diagnostics import cell_means
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api.charts.base import (
     LEGEND_OPTIONS,
     BaseAxisRenderer,

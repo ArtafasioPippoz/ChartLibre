@@ -30,7 +30,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.scanners.class_discovery import discover_classes_merged
 from app.styles.style import (
     TitledCard,

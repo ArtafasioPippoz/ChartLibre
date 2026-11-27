@@ -19,7 +19,7 @@ import numpy as np
 from matplotlib.patches import Patch
 
 from app.charts.box import BoxAxisRenderer
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api.charts.base import BaseAxisRenderer, SeriesArtistTags, SeriesData
 
 # The three marker collections violinplot can return, and the option that asks

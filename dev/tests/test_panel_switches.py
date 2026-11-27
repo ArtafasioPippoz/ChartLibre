@@ -123,7 +123,7 @@ def test_fit_y_by_x_on_a_scree_plot_draws_without_an_empty_table(qapp, repo: Sql
     """One value per level of an ordinal X: Tukey has no pair to compare and returns a table with no columns -
     written, "CREATE TABLE t ()" failed and nothing was drawn."""
     from app.data_operations.fit_y_by_x_dialog import FitYByXDialog
-    from app.logs.logger import applogger
+    from app.utils.logger import applogger
 
     failures: list[str] = []
     monkeypatch.setattr(applogger, "exception", lambda message, *a, **k: failures.append(str(message)))

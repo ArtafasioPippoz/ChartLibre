@@ -24,7 +24,7 @@ from PySide6.QtGui import (
 )
 from PySide6.QtSvg import QSvgRenderer
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.styles.style.catalogue import ActionSpec, _catalog, action
 from app.styles.style.metrics import _IS_MACOS, _IS_WINDOWS
 

@@ -22,7 +22,7 @@ from typing import Any, ClassVar
 
 import numpy as np
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.scanners.plugin_family import PluginFamily
 from app.utils.config import USER_FUNCTIONS_DIR
 

@@ -31,7 +31,7 @@ from matplotlib.ticker import NullLocator
 from app.data.descriptors import AxisDescriptor, FigureDescriptor, SeriesDescriptor
 from app.data.series_frame import SeriesFrame
 from app.data.sqlite_repo import ROW_ID, SqliteRepo
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api.charts import (
     axis_options,
     broken_axis,

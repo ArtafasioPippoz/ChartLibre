@@ -51,7 +51,7 @@ from PySide6.QtWidgets import (
 from app.data.repo._common import SQL_GUARD_KEY, sql_guard_enabled
 from app.workpad.engine import WORKPAD_FILTER_KEY, workpad_filter_enabled
 from app.dialogs.two_panels_dialog_base import PanelDialog
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api.charts.render_figure import DEFAULT_MPL_STYLE_KEY
 from app.styles.style import (
     APP_APPEARANCES,

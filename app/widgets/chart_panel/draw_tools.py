@@ -25,7 +25,7 @@ from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import QInputDialog, QToolButton
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api.charts.path_geometry import (
     Node,
     build_path,

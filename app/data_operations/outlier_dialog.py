@@ -32,7 +32,7 @@ from app.analysis.outliers import (
 )
 from app.data.data_source import parse_roles, row_value
 from app.data.select_sql import has_projection_alias, sql_insert_select_expression
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api import reading_guide
 from app.plugin_api.data_operations.dialog_base import (
     DataOperationDialogBase,

@@ -40,7 +40,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.utils.config import get_section, set_section
 
 CONFIG_SECTION = "dialog_state"

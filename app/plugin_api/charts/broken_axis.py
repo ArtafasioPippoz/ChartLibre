@@ -18,7 +18,7 @@ from typing import Any
 import numpy as np
 from matplotlib.ticker import Locator, MaxNLocator
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 
 
 def parse_break(text: Any) -> tuple[float, float] | None:

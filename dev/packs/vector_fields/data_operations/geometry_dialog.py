@@ -56,7 +56,7 @@ from app.data.data_source import (
     resolve_role_column,
     row_value,
 )
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api import reading_guide
 from app.plugin_api.charts.grids import pivot_to_grid
 from app.plugin_api.data_operations.dialog_base import (

@@ -39,7 +39,7 @@ from PySide6.QtWidgets import (
 
 from app.data import column_metadata, sql_builders
 from app.data.sqlite_repo import SqliteRepo
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.styles.style import (
     CONTEXT_MENU_ICONS,
     MenuItem,

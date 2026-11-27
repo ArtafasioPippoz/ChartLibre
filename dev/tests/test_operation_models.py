@@ -19,7 +19,7 @@ from app.data_operations.interpolate_dialog import (
     MODEL_SCIPY_PCHIP,
     SeriesInterpolateDialog,
 )
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api.data_operations.dialog_base import DataOperationDialogBase
 from dev.tests._cases import check_all
 

@@ -27,7 +27,7 @@ from PySide6.QtWidgets import (
 from app.data.data_source import quote_identifier
 from app.data.repo.function_sql import function_names
 from app.data.sqlite_repo import ROW_ID
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api.charts.descriptor_grid import (
     descriptor_axis_count,
     descriptor_prepared_for_render,

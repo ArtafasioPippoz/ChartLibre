@@ -32,7 +32,7 @@ from app.ai.tools import AssistantTools
 from app.styles.style import create_action_button, stdSizeAndlayout
 from app.utils.background import run_in_background
 from app.utils.i18n import _
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.widgets.insert_helper import InsertHelper
 from app.widgets.nav_bar import NavPanel
 

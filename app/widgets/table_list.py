@@ -27,7 +27,7 @@ from app.data.sqlite_repo import DatabaseError, SqliteRepo
 from app.dialogs.operation_history_dialog import OperationHistoryDialog
 from app.dialogs.query_builder_dialog import QueryBuilderDialog
 from app.dialogs.table_editor_dialog import TableEditorDialog
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.styles.style import (
     CONTEXT_MENU_ICONS,
     MenuItem,

@@ -109,7 +109,7 @@ def draw(ax, xs: Any, ys: Any, marker: str, *, size_points: float | None, colour
     from matplotlib.lines import Line2D
     from matplotlib.offsetbox import AnnotationBbox, OffsetImage
 
-    from app.logs.logger import applogger
+    from app.utils.logger import applogger
 
     size = float(size_points or 0) or 12.0
     array = picture(marker, size, ax.figure.dpi, colour)
@@ -211,7 +211,7 @@ def draw_bars(ax, positions: Any, values: Any, thickness: float, *, name: str, u
     from matplotlib.lines import Line2D
     from matplotlib.patches import Rectangle
 
-    from app.logs.logger import applogger
+    from app.utils.logger import applogger
 
     marker = PREFIX + name
     array = picture(marker, 48.0, ax.figure.dpi, colour)

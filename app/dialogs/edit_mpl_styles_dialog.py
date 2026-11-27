@@ -41,7 +41,7 @@ import matplotlib as mpl
 import numpy as np
 
 from app.dialogs.two_panels_dialog_base import SettingsTableDialog
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.styles.style import (
     MARGIN_CARD,
     action_presentation,

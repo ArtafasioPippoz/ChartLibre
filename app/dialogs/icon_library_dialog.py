@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (
 )
 
 from app.dialogs.two_panels_dialog_base import PanelDialog
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.utils import icon_library
 from app.utils.i18n import _
 

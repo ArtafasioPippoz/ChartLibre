@@ -23,7 +23,7 @@ from functools import wraps
 from typing import Any, ClassVar
 
 from app.data.data_source import is_identifier, quote_identifier
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 
 
 def ensure_connection_wrapper(func):

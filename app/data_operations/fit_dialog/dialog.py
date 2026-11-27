@@ -59,7 +59,7 @@ from app.data_operations.fit_dialog.common import (
 from app.data_operations.sympy_store import catalog as stored_sympy_catalog
 from app.data_operations.sympy_store import functions_by_name
 from app.data_operations.sympy_store import make_model as make_stored_sympy_model
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api import reading_guide
 from app.plugin_api.data_operations.dialog_base import (
     DataOperationDialogBase,

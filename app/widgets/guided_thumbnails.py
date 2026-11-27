@@ -14,7 +14,7 @@ import pandas as pd
 from matplotlib.figure import Figure
 from PySide6.QtGui import QPixmap
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api.data_operations.guided_plan import COUNT, ChartIdea
 from app.utils.coercion import column_of, to_numbers
 

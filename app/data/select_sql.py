@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import re
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 
 
 def sql_insert_select_expression(sql_query: str, expression: str) -> str:

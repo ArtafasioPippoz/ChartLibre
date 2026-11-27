@@ -25,7 +25,7 @@ import pandas as pd
 
 from app.analysis import NUMERICAL_FAILURES
 from app.analysis.diagnostics import SurvivalCurve, kaplan_meier, log_rank
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api.charts.base import (
     LEGEND_OPTIONS,
     BaseAxisRenderer,

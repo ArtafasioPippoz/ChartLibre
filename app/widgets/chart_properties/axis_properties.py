@@ -36,7 +36,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api.charts import axis_options, secondary_axis
 from app.plugin_api.charts.render_figure import AXIS_SCALE_LABELS, SUPPORTED_AXIS_SCALES
 from app.plugin_api.charts.text_lines import display_text

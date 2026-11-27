@@ -24,7 +24,7 @@ import pytest
 os.environ["PYTHON_KEYRING_BACKEND"] = "keyring.backends.null.Keyring"
 os.environ["CHARTLIBRE_ALL_PACKS"] = "1"  # every pack loaded, whatever this machine's Preferences say (app.utils.packs)
 
-from app.logs.logger import AppLogger
+from app.utils.logger import AppLogger
 
 # The tests log to a file of their own. They shared the application's -
 # app/logs/chartlibre.log - so its Log window showed the errors the tests cause

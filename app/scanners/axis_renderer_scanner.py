@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.scanners.plugin_family import PluginFamily
 from app.utils.config import USER_CHARTS_DIR
 

@@ -77,7 +77,7 @@ class _OldPathFinder(importlib.abc.MetaPathFinder):
                     break
         if new_name is None:
             return None
-        from app.logs.logger import applogger
+        from app.utils.logger import applogger
 
         applogger.warning("%s moved to %s; update the import of this plugin.", fullname, new_name)
         return importlib.util.spec_from_loader(fullname, _Alias(new_name))

@@ -71,7 +71,7 @@ from app.dialogs.credits_dialog import CreditsDialog
 from app.dialogs.import_data_dialog import ImportDataDialog
 from app.dialogs.log_viewer_dialog import LogViewerDialog
 from app.dialogs.query_builder_dialog import QueryBuilderDialog
-from app.logs.logger import applogger, log_events
+from app.utils.logger import applogger, log_events
 from app.main_window.custom_title_bar import CustomTitleBar
 from app.plugin_api.charts import layout_presets
 from app.scanners.data_operation_scanner import import_class_from_file

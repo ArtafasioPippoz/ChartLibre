@@ -68,7 +68,7 @@ import pandas as pd
 
 from app.data.data_source import row_value
 from app.data.sqlite_repo import SqliteRepo
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api.data_operations.dialog_base import (
     ResultSeriesSpec,
     DataOperationDialogBase,

@@ -73,7 +73,7 @@ from PySide6.QtWidgets import QApplication, QWidget
 import app.main_window.main_window as main_window_module
 from app.data.demos import DEMO_PROJECTS, copy_demo_project
 from app.data.sqlite_repo import SqliteRepo
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 
 main_window_module.IS_MACOS = True
 

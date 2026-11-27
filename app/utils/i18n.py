@@ -33,7 +33,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 
 LOCALES_DIR: Path = Path(__file__).resolve().parent.parent / "locales"
 DOMAIN: str = "ChartLibre"

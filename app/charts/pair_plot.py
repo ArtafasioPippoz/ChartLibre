@@ -20,7 +20,7 @@ from typing import Any, ClassVar
 import numpy as np
 from matplotlib.lines import Line2D
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api.charts.base import (
     LEGEND_OPTIONS,
     BaseAxisRenderer,

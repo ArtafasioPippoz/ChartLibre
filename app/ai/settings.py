@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import os
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.utils.config import get_value, set_value
 
 #: What the assistant may do (Settings > Assistant): read and answer in the panel; that and run analyses;

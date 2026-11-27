@@ -19,7 +19,7 @@ from PySide6.QtCore import QEvent, QObject, QRect, QTimer
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QWidget
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 
 
 def fit_to_screen(window: QWidget, *, assumed_frame: tuple[int, int] = (0, 0)) -> bool:

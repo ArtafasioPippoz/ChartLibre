@@ -16,7 +16,7 @@ from PySide6.QtCore import Qt
 
 from app.data.sqlite_repo import SqliteRepo
 from app.dialogs.table_editor_dialog import TableEditorDialog
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 
 FRAME = pd.DataFrame(
     {

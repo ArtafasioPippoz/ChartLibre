@@ -50,7 +50,7 @@ from PySide6.QtWidgets import (
 
 from app.dialogs.settings_dialog import LANGUAGE_NAMES
 from app.dialogs.two_panels_dialog_base import SettingsTableDialog
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.styles.style import (
     create_action_button,
     load_icon,

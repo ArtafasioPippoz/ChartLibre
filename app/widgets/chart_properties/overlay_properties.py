@@ -38,7 +38,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api.charts import axis_options
 from app.plugin_api.charts.kwarg_spec import DEFAULT
 from app.styles.style import (

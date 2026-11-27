@@ -39,7 +39,7 @@ import pandas as pd
 
 from app.data.demos import DEMO_DIR, DEMO_PROJECTS, DemoProject, project_side_files
 from app.data.sqlite_repo import SqliteRepo
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api.charts import layout_presets
 
 #: The repository root: three levels above this file (dev/demo/build_demos.py).

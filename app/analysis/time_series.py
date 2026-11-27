@@ -33,7 +33,7 @@ import pandas as pd
 from numpy.typing import ArrayLike
 
 from app.analysis.randomness import all_diagnostics
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.utils.coercion import column_of, to_numbers
 
 ROW_ORDER = ""

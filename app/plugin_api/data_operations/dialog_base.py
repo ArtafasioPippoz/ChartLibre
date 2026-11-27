@@ -73,7 +73,7 @@ from app.analysis.sampling import sampling_frequency
 from app.data.data_source import parse_roles, resolve_role_column, row_value
 from app.data.repo.project import OPERATIONS_TABLE
 from app.data.sqlite_repo import DatabaseError, SqliteRepo
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api import reading_guide
 from app.plugin_api.charts.grids import pivot_to_grid
 from app.plugin_api.data_operations import next_steps

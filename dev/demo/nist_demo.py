@@ -22,7 +22,7 @@ import pandas as pd
 
 from app.data.demos import DEMO_DIR, DEMO_PROJECTS
 from app.data.sqlite_repo import SqliteRepo
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.utils import report_html
 from dev.demo.build_demos import FigureSpec, SeriesSpec, _create_figure
 from dev.tests import _nist_strd as nist

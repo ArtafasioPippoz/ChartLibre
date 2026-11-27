@@ -14,7 +14,7 @@ from typing import Any
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QHBoxLayout, QMenu, QPushButton, QWidget
 
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.styles.style import load_icon
 from app.utils.i18n import _
 

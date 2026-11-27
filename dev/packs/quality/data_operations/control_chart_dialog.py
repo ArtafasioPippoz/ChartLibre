@@ -80,7 +80,7 @@ from app.analysis.control_charts import (
 )
 from app.data.data_source import parse_roles, resolve_role_column, row_value
 from app.data.series_frame import SeriesFrame
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.plugin_api import reading_guide
 from app.plugin_api.data_operations.dialog_base import (
     DataOperationDialogBase,

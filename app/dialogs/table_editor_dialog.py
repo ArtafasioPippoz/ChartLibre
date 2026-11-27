@@ -51,7 +51,7 @@ from app.data.repo._common import _quote_ident
 from app.data.repo.project import CAST_TYPES
 from app.data.sqlite_repo import SqliteRepo
 from app.dialogs.two_panels_dialog_base import SettingsTableDialog
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.styles.style import (
     TitledCard,
     action_presentation,

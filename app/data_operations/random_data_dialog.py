@@ -37,7 +37,7 @@ from app.plugin_api.data_operations.parameter_spec import (
 )
 from app.plugin_api.data_operations.results import TableResult
 from app.utils import report_html
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.utils.i18n import _
 
 #: The charts of the Charts tab: the chart type, whether it starts ticked, the layouts that offer it.

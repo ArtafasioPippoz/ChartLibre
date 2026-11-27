@@ -25,7 +25,7 @@ from PySide6.QtWidgets import QFileDialog, QWidget
 
 from app import APP_NAME
 from app.data.sqlite_repo import DatabaseError, SqliteRepo
-from app.logs.logger import applogger
+from app.utils.logger import applogger
 from app.utils.config import get_last_database, remember_untitled_database
 from app.utils.i18n import _
 from app.utils.messages import show_message
