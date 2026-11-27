@@ -1,4 +1,4 @@
-"""The SymPy workpad's panel: commands typed and run, what they gave, the names defined (app.workpad.engine)."""
+"""The SymPy workpad's panel: commands typed and run, what they gave, the names defined (app.utils.workpad)."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (
 from app.utils.i18n import _
 from app.widgets.insert_helper import Function, InsertHelper
 from app.widgets.nav_bar import NavPanel
-from app.workpad.engine import UnsafeCommand, Workpad
+from app.utils.workpad import UnsafeCommand, Workpad
 
 _HELP = (
     "get(table, column) · get(table) · tables() · columns(table)<br>"

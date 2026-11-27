@@ -1070,7 +1070,7 @@ class MainWindow(QMainWindow):
         assistant_panel.project_changed.connect(self._on_assistant_changed)
         assistant_panel.settings_requested.connect(self._on_settings)
         assistant_panel.busy_changed.connect(self._on_assistant_busy)
-        # The SymPy workpad: commands on the project's tables (app.workpad).
+        # The SymPy workpad: commands on the project's tables (app.utils.workpad).
         workpad_panel = self._workpad_panel = WorkpadPanel(self, repo=lambda: self._repo, current_table=lambda: self._table_panel.current)
         workpad_panel.project_changed.connect(self._on_assistant_changed)
         # The SQL workpad moved to ChartLibre Developer (dev/developer/sql_workpad_dialog.py).

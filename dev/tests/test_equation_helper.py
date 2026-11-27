@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from app.workpad import equation_helper as helper
-from app.workpad.function_helper import BadFormula
+from app.utils import equation_helper as helper
+from app.utils.function_helper import BadFormula
 
 
 @pytest.mark.parametrize(("text", "kind"), [
@@ -35,7 +35,7 @@ def test_bad_text_is_refused() -> None:
 
 def test_the_commands_run(qapp, tmp_path) -> None:
     from app.data.sqlite_repo import SqliteRepo
-    from app.workpad.engine import Workpad
+    from app.utils.workpad import Workpad
 
     repo = SqliteRepo(db_path=tmp_path / "e.dhub")
     for text in ("x^3 - 2x = 1", "x + y = 3; x - y = 1", "y' + 2y = sin(x); y(0) = 1"):

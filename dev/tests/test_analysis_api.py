@@ -112,7 +112,7 @@ def test_the_history_becomes_a_script_and_runs_again(repo, tmp_path) -> None:
 
 
 def test_the_workpad_runs_a_settings_file(repo, tmp_path) -> None:
-    from app.workpad.engine import Workpad
+    from app.utils.workpad import Workpad
 
     path = tmp_path / "w.json"
     analysis_api.run_analysis(repo, "Are there differences?", "t",

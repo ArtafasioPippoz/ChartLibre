@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from app.workpad import function_helper as helper
+from app.utils import function_helper as helper
 
 
 def _keys(text: str, **kwargs) -> set[str]:
@@ -28,7 +28,7 @@ def test_unsafe_or_empty_text_is_refused() -> None:
 
 def test_the_commands_run_in_the_workpad(qapp, tmp_path) -> None:
     from app.data.sqlite_repo import SqliteRepo
-    from app.workpad.engine import Workpad
+    from app.utils.workpad import Workpad
 
     repo = SqliteRepo(db_path=tmp_path / "f.dhub")
     formula = helper.parse("x^3 - 2x + 1")

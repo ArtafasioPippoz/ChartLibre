@@ -18,7 +18,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from app.workpad.function_helper import ANALYSIS, CHART, BadFormula, Suggestion, _num
+from app.utils.function_helper import ANALYSIS, CHART, BadFormula, Suggestion, _num
 
 _UNSAFE_TEXT = re.compile(r"__|\b(import|eval|exec|compile|open|getattr|globals|locals|lambda)\b")
 _ORDER = re.compile(r"<=|>=|<|>")

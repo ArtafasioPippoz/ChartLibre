@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 
 from app.data.sqlite_repo import SqliteRepo
-from app.workpad.engine import UnsafeCommand, Workpad, check
+from app.utils.workpad import UnsafeCommand, Workpad, check
 
 
 @pytest.fixture
@@ -113,7 +113,7 @@ def r_has_report(pad: Workpad) -> bool:
 
 
 def test_the_filter_follows_preferences_unless_the_session_says_otherwise(repo, monkeypatch) -> None:
-    from app.workpad import engine
+    from app.utils import workpad as engine
 
     pad = Workpad(lambda: repo)
     monkeypatch.setattr(engine, "workpad_filter_enabled", lambda: False)

@@ -34,7 +34,7 @@ def test_a_series_analysis_is_run_recorded_and_written_as_a_call(project) -> Non
 
 
 def test_the_copied_code_runs_in_the_workpad(project) -> None:
-    from app.workpad.engine import Workpad
+    from app.utils.workpad import Workpad
 
     analysis_api.run_analysis(project, "Smoothing", "sig", {"x": ["t"], "y": ["a"]})
     code = analysis_api.history_code(project.operations())

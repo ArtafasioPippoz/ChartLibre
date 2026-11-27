@@ -34,7 +34,7 @@ def test_an_operation_is_copied_as_python_and_kept_as_a_function(qapp, tmp_path,
     from PySide6.QtWidgets import QApplication
 
     from app import analysis_api
-    from app.workpad.engine import Workpad
+    from app.utils.workpad import Workpad
 
     rng = np.random.default_rng(3)
     repo = SqliteRepo(db_path=tmp_path / "f.dhub")

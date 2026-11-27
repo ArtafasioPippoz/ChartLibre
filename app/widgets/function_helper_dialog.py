@@ -1,7 +1,7 @@
 """Function helper: a formula in, the analyses and charts that suit it out, as workpad commands.
 
 Opened from the SymPy workpad. The user types a formula, picks the variable and the interval, ticks what to
-ask of it, reads the commands that result and sends them to the workpad's command box (app.workpad.function_helper).
+ask of it, reads the commands that result and sends them to the workpad's command box (app.utils.function_helper).
 """
 
 from __future__ import annotations
@@ -24,8 +24,8 @@ from PySide6.QtWidgets import (
 )
 
 from app.utils.i18n import _
-from app.workpad import equation_helper, function_helper
-from app.workpad import function_helper as helper
+from app.utils import equation_helper, function_helper
+from app.utils import function_helper as helper
 
 
 class FunctionHelperDialog(QDialog):
