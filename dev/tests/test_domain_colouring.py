@@ -131,3 +131,36 @@ def test_a_pole_on_the_path_breaks_it_instead_of_joining_across_infinity() -> No
     frame = pd.DataFrame({"x": [-1.0, -0.5, 0.0, 0.5, 1.0], "y": [0.0] * 5})
     _path_renderer().render_axis(ax, [_series(frame)], {"function": "1/z", "arrows": 0, "mark_ends": False})
     assert len(ax.collections[0].get_segments()) == 2
+
+
+def _riemann_module():
+    spec = importlib.util.spec_from_file_location("riemann_under_test", PACK_CHART.with_name("riemann_surface.py"))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_the_square_root_surface_closes_after_two_turns_and_not_after_one() -> None:
+    m = _riemann_module()
+    X, Y, w = m.riemann_grid(m.POWER, 1, 2, 1, 1.0, radial=5, angular=16)
+    assert np.allclose(w**2, X + 1j * Y)                      # every point is a square root of its z
+    assert np.allclose(w[0], w[-1])                           # two turns: back on the first sheet
+    assert np.allclose(w[16], -w[0])                          # one turn: on the other sheet
+
+
+def test_log_climbs_two_pi_per_turn() -> None:
+    m = _riemann_module()
+    _, _, w = m.riemann_grid(m.LOG, 1, 1, 3, 1.0, radial=4, angular=12)
+    assert np.isclose(w.imag.max() - w.imag.min(), 3 * 2 * np.pi)
+    assert np.allclose(np.exp(w[:, -1]), np.exp(w[0, -1]) * np.exp(1j * (w[:, -1].imag - w[0, -1].imag)))
+
+
+def test_the_surface_is_drawn_on_a_3d_axes() -> None:
+    m = _riemann_module()
+    fig = Figure()
+    ax = fig.add_subplot(projection="3d")
+    m.RiemannSurfaceAxisRenderer().render_axis(ax, [_series(pd.DataFrame({"x": [0.0, 1.5], "y": [0.0, 2.0]}))],
+                                               {"denominator": 3, "angular": 20, "radial": 6})
+    assert len(ax.collections) == 1
+    assert ax.get_zlabel() == "Im w"
+    assert np.isclose(max(abs(v) for v in ax.get_xlim()), 2.5, rtol=0.2)

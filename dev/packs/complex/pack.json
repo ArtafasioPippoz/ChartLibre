@@ -2,7 +2,7 @@
   "id": "complex",
   "name": "Complex numbers",
   "version": "1.0.0",
-  "description": "Complex functions over the complex plane: Domain Colouring shows f(z) as colour, the argument as hue and the modulus as lightness, so zeros, poles and branch cuts can be seen; Complex Path follows a path z(t), or its image f(z(t)), coloured by t.",
+  "description": "Complex functions over the complex plane: Domain Colouring shows f(z) as colour, the argument as hue and the modulus as lightness, so zeros, poles and branch cuts can be seen; Complex Path follows a path z(t), or its image f(z(t)), coloured by t; Riemann Surface draws all the values of z^(p/q) or log z as one surface.",
   "author": "ChartLibre",
   "needs_app": "0.2.0",
   "packages": [],

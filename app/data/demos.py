@@ -735,6 +735,16 @@ DEMO_PROJECTS: tuple[DemoProject, ...] = (
         preview="Yield",
         category="Design of Experiments",
     ),
+    DemoProject(
+        "Complex numbers - domain colouring, paths and Riemann surfaces",
+        "Complex functions seen three ways, from the Complex numbers pack: domain colouring of a rational "
+        "function's zeros and poles, of an essential singularity and of values read from re and im "
+        "columns; paths and their images - the argument principle and a conformal map; and the Riemann "
+        "surfaces of the square root, the logarithm and z^(2/3). Exact by construction.",
+        ("complex_zeros_poles", "complex_essential", "complex_cubic_data", "complex_argument_principle",
+         "complex_conformal_exp", "complex_sqrt_surface", "complex_log_surface", "complex_cube_root_surface"),
+        preview="Zeros and poles",
+    ),
 )
 
 

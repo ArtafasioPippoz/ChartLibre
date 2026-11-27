@@ -49,6 +49,7 @@ SHOWCASE_CHART_TYPES: tuple[str, ...] = (
     "Stream Plot",
     "Domain Colouring",
     "Complex Path",
+    "Riemann Surface",
     "Triangular Mesh",
     "Triangular Color Mesh",
     "Scatter Plot (3D)",
@@ -783,6 +784,16 @@ def _showcase_definitions() -> list[dict[str, Any]]:
             "axis_options": {"title": "Stem Plot"},
             "series": [
                 ("impulses", "SELECT t AS x, v AS y FROM src_series LIMIT 40", {}),
+            ],
+        },
+        {
+            # The square root's two sheets, out to radius 2 (the corners of src_grid's square).
+            "chart_type": "Riemann Surface",
+            "name": "Riemann Surface showcase",
+            "labels": ("Re z", "Im z"),
+            "axis_options": {"title": "Riemann Surface", "projection": "3d"},
+            "series": [
+                ("region", "SELECT 2.0 AS x, 0.0 AS y", {}),
             ],
         },
         {

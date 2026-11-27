@@ -943,10 +943,49 @@ def _surface_bump_gradient_result() -> pd.DataFrame:
     })
 
 
+def _complex_region() -> pd.DataFrame:
+    """Two corners of the square [-2.5, 2.5]^2: the rows a function-drawing chart is told where to look by."""
+    return pd.DataFrame({"x": [-2.5, 2.5], "y": [-2.5, 2.5]})
+
+
+def _complex_cubic_values() -> pd.DataFrame:
+    """f(z) = z^3 - 1 computed at every point of a 121 x 121 grid, as re and im columns: the case of values
+    that come from elsewhere rather than from a typed function. Exact by construction."""
+    axis = np.linspace(-1.6, 1.6, 121)
+    xx, yy = np.meshgrid(axis, axis)
+    w = (xx + 1j * yy) ** 3 - 1
+    return pd.DataFrame({"x": xx.ravel(), "y": yy.ravel(), "re": w.real.ravel(), "im": w.imag.ravel()})
+
+
+def _complex_circles() -> pd.DataFrame:
+    """Two circles, t from 0 to 1: one around the zero z = 1 of z^2 - 1, one around both zeros."""
+    t = np.linspace(0.0, 1.0, 301)
+    rows = []
+    for name, centre, radius in (("around z = 1", 1.0, 0.6), ("around both zeros", 0.4, 1.7)):
+        z = centre + radius * np.exp(2j * np.pi * t)
+        rows.append(pd.DataFrame({"curve": name, "t": t, "x": z.real, "y": z.imag}))
+    return pd.concat(rows, ignore_index=True)
+
+
+def _complex_grid_lines() -> pd.DataFrame:
+    """Horizontal and vertical lines of the strip 0 <= Re z <= 1.5, |Im z| <= pi/2, t along each line."""
+    t = np.linspace(0.0, 1.0, 121)
+    rows = []
+    for k, y in enumerate(np.linspace(-np.pi / 2, np.pi / 2, 7)):
+        rows.append(pd.DataFrame({"line": f"Im z = {y:+.2f}", "t": t, "x": 1.5 * t, "y": y}))
+    for k, x in enumerate(np.linspace(0.0, 1.5, 6)):
+        rows.append(pd.DataFrame({"line": f"Re z = {x:.1f}", "t": t, "x": x, "y": np.pi * (t - 0.5)}))
+    return pd.concat(rows, ignore_index=True)
+
+
 #: Table name -> the function that loads it. A demo file writes only the
 #: tables its own figures read, which is what keeps a single-subject demo
 #: small enough to open and understand.
 TABLE_SOURCES: dict[str, Callable[[], pd.DataFrame]] = {
+    "complex_region": _complex_region,
+    "complex_cubic_values": _complex_cubic_values,
+    "complex_circles": _complex_circles,
+    "complex_grid_lines": _complex_grid_lines,
     "antibiotics": _antibiotics,
     "penguins": _penguins,
     "yeast": _yeast,
@@ -2459,6 +2498,78 @@ def _figure_specs() -> list[FigureSpec]:
                 ),
             ],
         ),
+        FigureSpec(
+            name="70 · Zeros and poles of a rational function",
+            key="complex_zeros_poles",
+            tables=("complex_region",),
+            queries=(),
+            chart_type="Domain Colouring",
+            title="Zeros and poles of a rational function",
+            x_label="Re z",
+            y_label="Im z",
+            axis_options={"function": "(z - 1) * (z + 1i)^2 / (z^3 + 2)", "modulus": "rings", "phase_lines": 12},
+            series=[SeriesSpec(name="Region", sql="SELECT x, y FROM complex_region", roles={"x": "x", "y": "y"}, style={})],
+        ),
+        FigureSpec(
+            name="71 · exp(1/z) - an essential singularity",
+            key="complex_essential",
+            tables=("complex_region",),
+            queries=(),
+            chart_type="Domain Colouring",
+            title="exp(1/z) - an essential singularity",
+            x_label="Re z",
+            y_label="Im z",
+            axis_options={"function": "exp(1/z)", "modulus": "rings", "phase_lines": 8, "resolution": 900},
+            series=[SeriesSpec(name="Region", sql="SELECT x / 5 AS x, y / 5 AS y FROM complex_region", roles={"x": "x", "y": "y"}, style={})],
+        ),
+        FigureSpec(
+            name="72 · z³ − 1 from re and im columns",
+            key="complex_cubic_data",
+            tables=("complex_cubic_values",),
+            queries=(),
+            chart_type="Domain Colouring",
+            title="z³ − 1 from re and im columns",
+            x_label="Re z",
+            y_label="Im z",
+            axis_options={"modulus": "rings"},
+            series=[SeriesSpec(name="z^3 - 1", sql="SELECT x, y, re, im FROM complex_cubic_values", roles={"x": "x", "y": "y", "re": "re", "im": "im"}, style={})],
+        ),
+        FigureSpec(
+            name="73 · √z - two sheets joined along the cut",
+            key="complex_sqrt_surface",
+            tables=("complex_region",),
+            queries=(),
+            chart_type="Riemann Surface",
+            title="√z - two sheets joined along the cut",
+            x_label="Re z",
+            y_label="Im z",
+            axis_options={"projection": "3d", "function": "power", "numerator": 1, "denominator": 2},
+            series=[SeriesSpec(name="Region", sql="SELECT 2.0 AS x, 0.0 AS y", roles={"x": "x", "y": "y"}, style={})],
+        ),
+        FigureSpec(
+            name="74 · log z - a helicoid, one turn per sheet",
+            key="complex_log_surface",
+            tables=("complex_region",),
+            queries=(),
+            chart_type="Riemann Surface",
+            title="log z - a helicoid, one turn per sheet",
+            x_label="Re z",
+            y_label="Im z",
+            axis_options={"projection": "3d", "function": "log", "sheets": 3, "cmap": "viridis"},
+            series=[SeriesSpec(name="Region", sql="SELECT 2.0 AS x, 0.0 AS y", roles={"x": "x", "y": "y"}, style={})],
+        ),
+        FigureSpec(
+            name="75 · z^(2/3) - three sheets, height Re w",
+            key="complex_cube_root_surface",
+            tables=("complex_region",),
+            queries=(),
+            chart_type="Riemann Surface",
+            title="z^(2/3) - three sheets, height Re w",
+            x_label="Re z",
+            y_label="Im z",
+            axis_options={"projection": "3d", "function": "power", "numerator": 2, "denominator": 3, "height": "real", "cmap": "coolwarm"},
+            series=[SeriesSpec(name="Region", sql="SELECT 2.0 AS x, 0.0 AS y", roles={"x": "x", "y": "y"}, style={})],
+        ),
     ]
 
 
@@ -2780,8 +2891,78 @@ def _multi_axis_figure_specs() -> list[MultiAxisFigureSpec]:
                 ),
             ],
         ),
+        MultiAxisFigureSpec(
+            name="76 · The argument principle - two circles and their images under z² − 1",
+            key="complex_argument_principle",
+            tables=("complex_circles",),
+            layout=layout_presets.GRID,
+            axes=[
+                AxisSpec(
+                    chart_type="Complex Path",
+                    title="z(t): two circles",
+                    x_label="Re z",
+                    y_label="Im z",
+                    axis_options={"grid": True},
+                    series=[
+                        SeriesSpec(name=name, sql=f"SELECT x, y, t FROM complex_circles WHERE curve = '{name}'",
+                                   roles={"x": "x", "y": "y", "t": "t"}, style={})
+                        for name in ("around z = 1", "around both zeros")
+                    ],
+                ),
+                AxisSpec(
+                    chart_type="Complex Path",
+                    title="f(z(t)) = z² − 1: once and twice around 0",
+                    x_label="Re f",
+                    y_label="Im f",
+                    axis_options={"grid": True, "function": "z^2 - 1", "colorbar": True},
+                    series=[
+                        SeriesSpec(name=name, sql=f"SELECT x, y, t FROM complex_circles WHERE curve = '{name}'",
+                                   roles={"x": "x", "y": "y", "t": "t"}, style={})
+                        for name in ("around z = 1", "around both zeros")
+                    ],
+                ),
+            ],
+        ),
+        MultiAxisFigureSpec(
+            name="77 · A conformal map - a grid and its image under exp z",
+            key="complex_conformal_exp",
+            tables=("complex_grid_lines",),
+            layout=layout_presets.GRID,
+            axes=[
+                AxisSpec(
+                    chart_type="Complex Path",
+                    title="A rectangle of lines in z",
+                    x_label="Re z",
+                    y_label="Im z",
+                    axis_options={"grid": True, "arrows": 0, "mark_ends": False, "cmap": "plasma"},
+                    series=[
+                        SeriesSpec(name=name, sql=f"SELECT x, y, t FROM complex_grid_lines WHERE line = '{name}'",
+                                   roles={"x": "x", "y": "y", "t": "t"}, style={})
+                        for name in _complex_grid_line_names()
+                    ],
+                ),
+                AxisSpec(
+                    chart_type="Complex Path",
+                    title="exp z: circles and rays, still at right angles",
+                    x_label="Re w",
+                    y_label="Im w",
+                    axis_options={"grid": True, "arrows": 0, "mark_ends": False, "cmap": "plasma",
+                                  "function": "exp(z)"},
+                    series=[
+                        SeriesSpec(name=name, sql=f"SELECT x, y, t FROM complex_grid_lines WHERE line = '{name}'",
+                                   roles={"x": "x", "y": "y", "t": "t"}, style={})
+                        for name in _complex_grid_line_names()
+                    ],
+                ),
+            ],
+        ),
         _ops_3d_showcase_spec(),
     ]
+
+
+def _complex_grid_line_names() -> list[str]:
+    """The lines of the conformal-map demo, in the order the table has them."""
+    return list(dict.fromkeys(_complex_grid_lines()["line"]))
 
 
 def _ops_3d_showcase_spec() -> MultiAxisFigureSpec:
