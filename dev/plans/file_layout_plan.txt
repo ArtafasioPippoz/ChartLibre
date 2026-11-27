@@ -97,3 +97,21 @@ Per ogni passo
 Risultato atteso
   app/:      28 -> 24 cartelle (22 col passo 7), circa 364 -> 350 file
   dev/tests: 2 -> 1 cartella, circa 306 -> 278 file
+
+Esito (2026-11-27)
+  Fatti: 0 (launcher Developer in dev/launchers), 1 (logger), 2 (styles),
+  3 (workpad: spostato in app/utils come tre moduli, perché equation_helper e
+  function_helper hanno funzioni con lo stesso nome), 4 (ai: assistant.py +
+  assistant_form.py, il form ha funzioni generiche usate per nome di modulo),
+  8 (legacy_basic/nist/surfaces in dev/tests: nomi di classe in comune),
+  9 (33 test piccoli in 9 file).
+  Non fatti, di proposito:
+  5 - ogni scanner ha il suo FAMILY e liste scoperte all'import: un modulo
+      unico cambierebbe quando avviene la scansione;
+  6 - user_functions e user_surface_functions sono due modelli per l'utente,
+      separati apposta;
+  7 - API dei pacchetti: in attesa di conferma dell'utente.
+  Misura: app/ 305 -> 301 file, 28 -> 24 cartelle; dev/tests 306 -> 282 file,
+  2 -> 1 cartella. Test: tutti passano tranne tre che falliscono già su
+  e9901c86 (test_overlay_columns, test_renderer_picker sul pacchetto Complex,
+  la stringa con i due punti in random_data_dialog.py).
