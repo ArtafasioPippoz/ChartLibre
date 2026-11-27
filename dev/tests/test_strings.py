@@ -45,7 +45,7 @@ ALLOWED = {
     "JMP documentation:", "Name of the new column:", "Hide rows where {column} {operator}:",
     "Select rows where {column} {operator}:", "Column names, separated by commas:",
     "The assistant wants to change the project:", "Password for {username}@{host}:",
-    "Template name (an existing name is replaced):",
+    "Template name (an existing name is replaced):", "Against the correlation asked for ({requested:g}):",
 }
 
 

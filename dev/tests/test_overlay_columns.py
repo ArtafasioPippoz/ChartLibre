@@ -21,7 +21,7 @@ def test_a_narrow_panel_shows_a_group_of_columns_at_a_time(qapp) -> None:
     assert groups.grouped() and table.horizontalScrollBarPolicy() == Qt.ScrollBarPolicy.ScrollBarAlwaysOff
     assert _shown(table) == ["X", "Y", "Type", "Text"] and not table.verticalHeader().isHidden()
     groups._chooser.button(1).click()
-    assert _shown(table) == ["Color", "Font", "Size"]
+    assert _shown(table) == ["Color", "Font", "Size", "Effect"]
     assert sum(table.columnWidth(i) for i in range(table.columnCount()) if not table.isColumnHidden(i)) <= table.width()
     groups._chooser.button(2).click()
     assert _shown(table) == ["Kwargs JSON"]
