@@ -1,13 +1,26 @@
-"""R-08 Column Info: a column's name, type and description - and the analyses taking it into account."""
+"""Tests of column info, one section per former file (base: the former test_column_info.py):
+
+* column_info_base: R-08 Column Info: a column's name, type and description - and the analyses taking it into account.
+* column_info_button: The Column Info button beside the Data title opens even before a cell has been chosen.
+* column_info_from_analyses: Column Info opens from an analysis' column list, and the analysis sees what it changed.
+"""
 from __future__ import annotations
+
+from pathlib import Path
+import time
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from app.data import column_metadata as cm
 from app.data.sqlite_repo import SqliteRepo
+from app.data_operations.fit_model_dialog import FitModelDialog
+from app.dialogs import column_info_dialog
+from app.main_window.main_window import MainWindow
 
 
+# --- column_info_base: R-08 Column Info: a column's name, type and description - and the analyses taking it into account.
 def _survey() -> pd.DataFrame:
     return pd.DataFrame({"sex": [1, 2, 1, 2, 1, 2], "score": [10.0, -999.0, 12.0, 14.0, -999.0, 9.0],
                          "grade": ["3", "4", "5", "3", "4", "5"]})
@@ -245,3 +258,90 @@ def test_blank_as_missing_leaves_numbers_and_mixed_values_alone() -> None:
     assert cm.blank_as_missing(pd.Series([1.0, np.nan])).isna().tolist() == [False, True]
     mixed = cm.blank_as_missing(pd.Series(["", 3, " x ", None], dtype=object))
     assert mixed.isna().tolist() == [True, False, False, True] and mixed[1] == 3
+
+
+# --- column_info_button: The Column Info button beside the Data title opens even before a cell has been chosen.
+def test_the_button_opens_the_first_column_when_no_cell_is_current(qapp, tmp_path, monkeypatch) -> None:
+    repo = SqliteRepo(db_path=tmp_path / "c.dhub")
+    repo.import_dataframe(pd.DataFrame({"x": [1, 2, 3], "y": [4, 5, 6]}), table_name="t", normalize_columns=False)
+    window = MainWindow(repo, tmp_path / "c.dhub")
+    try:
+        window.resize(1200, 800)
+        window.show()
+        window._select_navigation("tables")
+        end = time.monotonic() + 0.8
+        while time.monotonic() < end:
+            qapp.processEvents()
+            time.sleep(0.005)
+        opened: list[tuple] = []
+        monkeypatch.setattr(column_info_dialog.ColumnInfoDialog, "exec", lambda self: opened.append(self) or 0)
+        window._preview.column_info()
+        assert len(opened) == 1
+    finally:
+        window.close()
+
+
+def test_a_timestamp_column_is_a_date_in_the_header_as_in_column_info() -> None:
+    from app.widgets.table_preview import _type_code
+
+    assert {_type_code(kind) for kind in ("TIMESTAMP", "timestamp", "DATE", "DATETIME", "TIMESTAMP WITH TIME ZONE")} == {"DT"}
+    assert _type_code("TEXT") == "S" and _type_code("REAL") == "F"
+
+
+def test_export_is_a_button_of_the_data_title(qapp, tmp_path) -> None:
+    from PySide6.QtWidgets import QToolButton
+
+    repo = SqliteRepo(db_path=tmp_path / "e.dhub")
+    repo.import_dataframe(pd.DataFrame({"x": [1, 2]}), table_name="t", normalize_columns=False)
+    window = MainWindow(repo, tmp_path / "e.dhub")
+    try:
+        tips = [button.toolTip() for button in window.findChildren(QToolButton)]
+        assert any(tip.startswith("Export the selected cells") for tip in tips)
+    finally:
+        window.close()
+
+
+# --- column_info_from_analyses: Column Info opens from an analysis' column list, and the analysis sees what it changed.
+@pytest.fixture
+def repo(tmp_path: Path):
+    database = SqliteRepo(db_path=tmp_path / "ci.dhub")
+    database.import_dataframe(pd.DataFrame({"grade": [1, 2, 3, 1, 2], "y": [1.0, 2.0, 3.0, 4.0, 5.0]}),
+                              table_name="t", normalize_columns=False)
+    yield database
+    database.close()
+
+
+def test_choosing_column_info_on_a_column_asks_for_it(qapp, repo: SqliteRepo, monkeypatch: pytest.MonkeyPatch) -> None:
+    from app.dialogs import column_info_dialog
+
+    # The window's own handler opens the real dialog: declined here (a modal one would wait for a click).
+    monkeypatch.setattr(column_info_dialog.ColumnInfoDialog, "exec", lambda self: 0)
+    dialog = FitModelDialog(repo=repo, table="t")
+    asked: list[str] = []
+    try:
+        dialog.roles_widget.column_info_requested.connect(asked.append)
+        item = dialog.roles_widget._column_list.item(0)
+        dialog.roles_widget.request_column_info(item)
+        assert asked == [item.data(0x0100)]  # Qt.UserRole: the column's name
+        dialog.roles_widget.request_column_info(None)  # nothing under the pointer: nothing asked
+        assert len(asked) == 1
+    finally:
+        dialog.close()
+
+
+def test_the_analysis_reads_the_table_again_after_column_info(qapp, repo: SqliteRepo, monkeypatch: pytest.MonkeyPatch) -> None:
+    from app.dialogs import column_info_dialog
+
+    dialog = FitModelDialog(repo=repo, table="t")
+    try:
+        assert dialog.roles_widget.casting().kinds["grade"] != "nominal"
+
+        def accepted(self) -> int:  # the person fills the form and presses OK
+            cm.set_column_info(repo, "t", "grade", cm.ColumnInfo(kind="nominal"))
+            return 1
+
+        monkeypatch.setattr(column_info_dialog.ColumnInfoDialog, "exec", accepted)
+        dialog._open_column_info("grade")
+        assert dialog.roles_widget.casting().kinds["grade"] == "nominal"
+    finally:
+        dialog.close()

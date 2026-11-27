@@ -42,9 +42,9 @@ SLOW_TESTS = frozenset(
         "test_ui_small.py::test_a_new_plot_becomes_the_current_tab",
         "test_analysis_api.py::test_an_analysis_runs_and_hands_back_its_report",
         "test_multi_descriptor_render.py::test_render_multi_descriptor_multiple_figures",
-        "test_column_info_button.py::test_the_button_opens_the_first_column_when_no_cell_is_current",
+        "test_column_info.py::test_the_button_opens_the_first_column_when_no_cell_is_current",
         "test_geometry_hidden_rows.py::"
         "test_a_rotated_hide_filtered_series_is_written_as_valid_sql_and_drawn",
-        "test_developer_launchers.py::test_macos_app_has_executable_icon_and_plist",
+        "test_developer.py::test_macos_app_has_executable_icon_and_plist",
     }
 )
