@@ -103,6 +103,18 @@ def write_pins(python: Path, versions: dict[str, str]) -> list[str]:
     return changed
 
 
+def outdated(report: dict, before: dict[str, str]) -> list[tuple[str, str, str]]:
+    """(name, installed, latest) of each library pip's --report would install or upgrade, by name."""
+    rows = []
+    for item in report.get("install", []):
+        metadata = item.get("metadata", {})
+        name, latest = str(metadata.get("name", "")), str(metadata.get("version", ""))
+        current = before.get(name.lower().replace("_", "-"), before.get(name, "-"))
+        if name and current != latest:
+            rows.append((name, current, latest))
+    return sorted(rows, key=lambda row: row[0].lower())
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Upgrade ChartLibre's libraries to their latest releases.")
     parser.add_argument("--python", type=Path, default=None, help="the interpreter to upgrade (default: .venv)")
@@ -121,14 +133,23 @@ def main(argv: list[str] | None = None) -> int:
         constraints.write_text("\n".join(f"{name}{bound}" for name, bound in HOLD.items()), encoding="utf-8")
         command = [str(python), "-m", "pip", "install", "--upgrade", "--disable-pip-version-check",
                    "-r", str(requirements), "-c", str(constraints)]
+        report = Path(scratch) / "report.json"
         if args.dry_run:
-            command.append("--dry-run")
+            # Quiet, with the answer in pip's JSON report: the dozens of "Requirement already satisfied"
+            # lines buried the few libraries that are behind.
+            command += ["--dry-run", "--quiet", "--report", str(report)]
         print("Running:", " ".join(command[2:]))
         if subprocess.run(command).returncode:
             print("pip failed: nothing else was done.")
             return 1
-    if args.dry_run:
-        return 0
+        if args.dry_run:
+            behind = outdated(json.loads(report.read_text(encoding="utf-8")), before)
+            print("\nNot up to date:" if behind else "\nEvery library is up to date.")
+            for name, current, latest in behind:
+                print(f"  {name:28} {current:>12}  ->  {latest}")
+            for name, bound in HOLD.items():
+                print(f"  held: {name}{bound}")
+            return 0
 
     # A folder macOS syncs (Desktop, Documents) gets its new files flagged
     # hidden, and Qt then skips its own plugins - "Could not find the Qt
