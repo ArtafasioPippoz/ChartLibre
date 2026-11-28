@@ -69,14 +69,14 @@ DISTRIBUTIONS: tuple[str, ...] = ("normal", "best", *NONNORMAL)
 
 def best_distribution(values: np.ndarray) -> str:
     """The distribution with the lowest AIC among the normal and NONNORMAL (these for positive values only)."""
-    scores = {"normal": _aic(stats.norm, stats.norm.fit(values), values)}
+    scores: dict[str, float] = {"normal": _aic(stats.norm, stats.norm.fit(values), values)}
     if np.all(values > 0):
         for name, dist in NONNORMAL.items():
             try:
                 scores[name] = _aic(dist, dist.fit(values, floc=0), values)
             except (ValueError, RuntimeError, FloatingPointError):
                 continue
-    return min(scores, key=scores.get)
+    return min(scores, key=lambda name: scores[name])
 
 
 def _aic(dist: Any, params: tuple, values: np.ndarray) -> float:

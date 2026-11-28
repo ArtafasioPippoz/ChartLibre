@@ -922,6 +922,12 @@ msgstr "Bland-Altman"
 msgid "Bland-Altman agreement"
 msgstr "Bland-Altman-Vereinbarung"
 
+msgid "Bold, like JMP"
+msgstr "Fett, wie JMP"
+
+msgid "Bold: the series' own marker again, darker and with a heavy edge. Ring: a circle round the point. Highlight colour: the point filled with the selection colour."
+msgstr "Fett: Wieder der eigene Marker der Reihe, dunkler und mit einer dicken Umrandung. Ring: ein Kreis um den Punkt. Hervorhebungsfarbe: Der Punkt ist mit der Auswahlfarbe gefüllt."
+
 msgid "Boosted Tree: how much each tree corrects the ones before. Smaller needs more trees."
 msgstr "Boosted Tree: Wie viel jeder Baum die vorherigen korrigiert. Kleiner braucht mehr Bäume."
 
@@ -1761,6 +1767,9 @@ msgstr "Beschreibung"
 
 msgid "Descriptive statistics"
 msgstr "Beschreibende Statistiken"
+
+msgid "Deselect all"
+msgstr "Gesamte Auswahl aufheben"
 
 msgid "Design of Experiments"
 msgstr "Versuchsplanung"
@@ -2808,6 +2817,9 @@ msgstr "Höher oder gleich..."
 
 msgid "Higher than..."
 msgstr "Höher als..."
+
+msgid "Highlight colour"
+msgstr "Hervorhebungsfarbe"
 
 msgid "Highlight flagged"
 msgstr "Markiert"
@@ -3985,6 +3997,9 @@ msgstr "Keine Korrelationsmatrix vorhanden."
 msgid "No current figure selected."
 msgstr "Keine aktuelle Zahl ausgewählt."
 
+msgid "No demo matches the search"
+msgstr "Keine Demo entspricht der Suche"
+
 msgid "No effect"
 msgstr "Kein Effekt"
 
@@ -5041,6 +5056,9 @@ msgstr "Rechts"
 msgid "Right: every right row"
 msgstr "Rechts: jede rechte Zeile"
 
+msgid "Ring"
+msgstr "Ring"
+
 msgid "Ripple (dB)"
 msgstr "Welligkeit (dB)"
 
@@ -5362,6 +5380,9 @@ msgstr "Punktzahlen"
 msgid "Scree plot"
 msgstr "Scree-Plot"
 
+msgid "Search"
+msgstr "Suchen"
+
 msgid "Search analyses, operations, charts…"
 msgstr "Suchen Sie nach Analysen, Vorgängen, Diagrammen..."
 
@@ -5466,6 +5487,12 @@ msgstr "Wählen Sie die Zeile aus, die zuerst oben eingefügt werden soll."
 
 msgid "Select the rows to delete first."
 msgstr "Wählen Sie die Zeilen aus, die zuerst gelöscht werden sollen."
+
+msgid "Selected marker size"
+msgstr "Ausgewählte Markierungsgröße"
+
+msgid "Selected points"
+msgstr "Ausgewählte Punkte"
 
 msgid "Selection cleared."
 msgstr "Auswahl gelöscht."
@@ -6382,6 +6409,9 @@ msgstr "Die Suche ergab nichts besseres als die deklarierten Werte, die unverän
 msgid "The seed must not be negative"
 msgstr "Der Seed darf nicht negativ sein"
 
+msgid "The selected points' marker, as a percentage of the series' own (its diameter). Drawn the next time the chart is."
+msgstr "Der Marker der ausgewählten Punkte als Prozentsatz des Markers der Reihe (ihres Durchmessers). Wird beim nächsten Mal gezeichnet, wenn das Diagramm angezeigt wird."
+
 msgid "The series a chart draws."
 msgstr "Die Serie, die ein Diagramm zeichnet."
 
@@ -6738,6 +6768,9 @@ msgstr "Unbekannter Weg, um die Menge an Rauschen zu geben: {mode}"
 
 msgid "Unmark the selected rows"
 msgstr "Markierung der ausgewählten Zeilen aufheben"
+
+msgid "Unselect every selected point and row, in this chart and in the table."
+msgstr "Heben Sie die Auswahl aller ausgewählten Punkte und Zeilen in diesem Diagramm und in der Tabelle auf."
 
 msgid "Unsupported DOE model: {model}"
 msgstr "Nicht unterstütztes DOE-Modell: {model}"
@@ -8622,9 +8655,6 @@ msgstr "Sicherheit"
 
 msgid "Sampling rate"
 msgstr "Abtastrate"
-
-msgid "Search"
-msgstr "Suchen"
 
 msgid "Second cutoff, for a bandpass/bandstop response."
 msgstr "Zweiter Cutoff, für eine Bandpass-/Bandstop-Antwort."

@@ -922,6 +922,12 @@ msgstr "Bland-Altman"
 msgid "Bland-Altman agreement"
 msgstr "Accord Bland-Altman"
 
+msgid "Bold, like JMP"
+msgstr "Gras, comme JMP"
+
+msgid "Bold: the series' own marker again, darker and with a heavy edge. Ring: a circle round the point. Highlight colour: the point filled with the selection colour."
+msgstr "Gras : le marqueur propre à la série, à nouveau, plus foncé et avec un contour épais. Anneau : un cercle autour du point. Couleur de surbrillance : le point est rempli avec la couleur de sélection."
+
 msgid "Boosted Tree: how much each tree corrects the ones before. Smaller needs more trees."
 msgstr "Arbre boosté : dans quelle mesure chaque arbre corrige les précédents. Les plus petits ont besoin de plus d'arbres."
 
@@ -1761,6 +1767,9 @@ msgstr "Description"
 
 msgid "Descriptive statistics"
 msgstr "Statistiques descriptives"
+
+msgid "Deselect all"
+msgstr "Désélectionner tout"
 
 msgid "Design of Experiments"
 msgstr "Conception des expériences"
@@ -2808,6 +2817,9 @@ msgstr "Supérieur ou égal..."
 
 msgid "Higher than..."
 msgstr "Supérieur à..."
+
+msgid "Highlight colour"
+msgstr "Couleur de surbrillance"
 
 msgid "Highlight flagged"
 msgstr "Mise en surbrillance signalée"
@@ -3985,6 +3997,9 @@ msgstr "Aucune matrice de corrélation disponible."
 msgid "No current figure selected."
 msgstr "Aucune figure actuelle sélectionnée."
 
+msgid "No demo matches the search"
+msgstr "Aucune démo ne correspond à la recherche"
+
 msgid "No effect"
 msgstr "▁Aucun▁effet"
 
@@ -5041,6 +5056,9 @@ msgstr "Droite"
 msgid "Right: every right row"
 msgstr "Droite : chaque rangée droite"
 
+msgid "Ring"
+msgstr "Cercle"
+
 msgid "Ripple (dB)"
 msgstr "Ondulation (dB)"
 
@@ -5362,6 +5380,9 @@ msgstr "Scores"
 msgid "Scree plot"
 msgstr "Scree plot"
 
+msgid "Search"
+msgstr "Rechercher"
+
 msgid "Search analyses, operations, charts…"
 msgstr "Rechercher des analyses, des opérations, des graphiques…"
 
@@ -5466,6 +5487,12 @@ msgstr "Sélectionnez d'abord la ligne au-dessus de laquelle insérer."
 
 msgid "Select the rows to delete first."
 msgstr "Sélectionnez d'abord les lignes à supprimer."
+
+msgid "Selected marker size"
+msgstr "Taille du marqueur sélectionné"
+
+msgid "Selected points"
+msgstr "Points sélectionnés"
 
 msgid "Selection cleared."
 msgstr "Sélection effacée."
@@ -6382,6 +6409,9 @@ msgstr "La recherche n'a rien trouvé de mieux que les valeurs déclarées, qui 
 msgid "The seed must not be negative"
 msgstr "La graine ne▁doit▁pas▁être▁négative"
 
+msgid "The selected points' marker, as a percentage of the series' own (its diameter). Drawn the next time the chart is."
+msgstr "Le marqueur des points sélectionnés, en pourcentage de celui de la série (son diamètre). Dessiné la prochaine fois que le graphique le sera."
+
 msgid "The series a chart draws."
 msgstr "La▁série▁qu'un▁graphique▁dessine."
 
@@ -6738,6 +6768,9 @@ msgstr "▁Voie▁inconnue pour▁donner la▁quantité de▁bruit: {mode}"
 
 msgid "Unmark the selected rows"
 msgstr "Désélectionner les lignes sélectionnées"
+
+msgid "Unselect every selected point and row, in this chart and in the table."
+msgstr "Désélectionner tous les points et toutes les lignes sélectionnés, dans ce graphique et dans le tableau."
 
 msgid "Unsupported DOE model: {model}"
 msgstr "Modèle DOE non pris en charge : {model}"
@@ -8622,9 +8655,6 @@ msgstr "Sécurité"
 
 msgid "Sampling rate"
 msgstr "Fréquence d'échantillonnage"
-
-msgid "Search"
-msgstr "Rechercher"
 
 msgid "Second cutoff, for a bandpass/bandstop response."
 msgstr "Seconde coupure, pour une réponse passe-bande/coupe-bande."

@@ -103,18 +103,20 @@ def _numeric_differences(data: pd.DataFrame, measure: str, group: str) -> Answer
     if len(arrays) == 2:
         if normal:
             result = stats.ttest_ind(arrays[0], arrays[1], equal_var=False)
-            test, pvalue = "Welch t-test", float(result.pvalue)
+            test, pvalue = "Welch t-test", float(getattr(result, "pvalue"))
         else:
             result = stats.mannwhitneyu(arrays[0], arrays[1], alternative="two-sided")
-            test, pvalue = "Mann-Whitney U test", float(result.pvalue)
+            test, pvalue = "Mann-Whitney U test", float(getattr(result, "pvalue"))
         effect, effect_name = cohens_d(arrays[0], arrays[1]), "Cohen's d"
         size = _size(effect, 0.2, 0.5, 0.8)
     else:
         if normal:
             welch = welch_anova(arrays)
-            test, pvalue = "Welch ANOVA", float(welch[3]) if welch else float(stats.f_oneway(*arrays).pvalue)
+            # welch_anova returns a plain tuple, its p-value last; f_oneway a result with .pvalue.
+            pvalue = float(welch[3]) if welch else float(getattr(stats.f_oneway(*arrays), "pvalue"))
+            test = "Welch ANOVA"
         else:
-            test, pvalue = "Kruskal-Wallis test", float(stats.kruskal(*arrays).pvalue)
+            test, pvalue = "Kruskal-Wallis test", float(getattr(stats.kruskal(*arrays), "pvalue"))
         everything = np.concatenate(arrays)
         between = sum(len(v) * (np.mean(v) - everything.mean()) ** 2 for v in arrays)
         total = float(np.sum((everything - everything.mean()) ** 2))
@@ -137,7 +139,8 @@ def _numeric_differences(data: pd.DataFrame, measure: str, group: str) -> Answer
                           values))
         sentences.append(("The difference is {size}.", values))
         if len(names) > 2:
-            rows = [row for row in tukey_hsd(groups) if row.get("pvalue", 1.0) < ALPHA]
+            labelled = {str(name): values for name, values in groups.items()}
+            rows = [row for row in tukey_hsd(labelled) if row.get("pvalue", 1.0) < ALPHA]
             pairs = pd.DataFrame([{"Pair": row["pair"], "Difference": row["difference"], "p": row["pvalue"]}
                                   for row in rows])
             if not pairs.empty:
@@ -154,7 +157,7 @@ def _numeric_differences(data: pd.DataFrame, measure: str, group: str) -> Answer
         sentences.append(("The values are not normally distributed, so the test compares medians and ranks "
                           "rather than means.", values))
     if small:
-        sentences.append(("Left out, with fewer than two values: {names}.", {"names": ", ".join(small)}))
+        sentences.append(("Left out, with fewer than two values: {names}.", {"names": ", ".join(map(str, small))}))
     if summary["N"].min() < 5:
         sentences.append(("Some groups have fewer than five values: treat the answer with caution.", values))
     return Answer("Is there a difference between these groups?", verdict, sentences, test, pvalue, float(effect),
@@ -166,21 +169,21 @@ def _category_differences(data: pd.DataFrame, measure: str, group: str) -> Answe
     counts = table.to_numpy()
     expected = stats.contingency.expected_freq(counts)
     if counts.shape == (2, 2) and expected.min() < 5:
-        test, pvalue = "Fisher exact test", float(stats.fisher_exact(counts).pvalue)
+        test, pvalue = "Fisher exact test", float(getattr(stats.fisher_exact(counts), "pvalue"))
     else:
-        test, pvalue = "Chi-squared test", float(stats.chi2_contingency(counts, correction=False).pvalue)
-    chi2 = float(stats.chi2_contingency(counts, correction=False).statistic)
+        test, pvalue = "Chi-squared test", float(getattr(stats.chi2_contingency(counts, correction=False), "pvalue"))
+    chi2 = float(getattr(stats.chi2_contingency(counts, correction=False), "statistic"))
     n = float(counts.sum())
     k = min(counts.shape) - 1
     effect = math.sqrt(chi2 / (n * k)) if n and k else 0.0
     shares = table.div(table.sum(axis=1), axis=0)
-    top = shares.columns[np.argmax(table.sum(axis=0).to_numpy())]
+    top = shares.columns[int(np.argmax(table.sum(axis=0).to_numpy()))]
     most = shares[top].idxmax()
     least = shares[top].idxmin()
     summary = shares.reset_index().rename(columns={group: "Group"})
     summary.insert(1, "N", table.sum(axis=1).to_numpy())
     values = {"measure": measure, "group": group, "level": top, "high": most, "low": least,
-              "high_value": 100 * float(shares.loc[most, top]), "low_value": 100 * float(shares.loc[least, top]),
+              "high_value": 100 * float(shares.at[most, top]), "low_value": 100 * float(shares.at[least, top]),
               "p": pvalue, "size": _size(effect, 0.1, 0.3, 0.5), "test": test, "n": int(n),
               "groups": len(table.index)}
     if pvalue < ALPHA:

@@ -922,6 +922,12 @@ msgstr "Bland-Altman"
 msgid "Bland-Altman agreement"
 msgstr "Accordo Bland-Altman"
 
+msgid "Bold, like JMP"
+msgstr "Grassetto, come JMP"
+
+msgid "Bold: the series' own marker again, darker and with a heavy edge. Ring: a circle round the point. Highlight colour: the point filled with the selection colour."
+msgstr "Grassetto: ancora una volta il marcatore proprio della serie, più scuro e con un bordo spesso. Anello: un cerchio intorno al punto. Colore di evidenziazione: il punto riempito con il colore di selezione."
+
 msgid "Boosted Tree: how much each tree corrects the ones before. Smaller needs more trees."
 msgstr "Albero con boosting: quanto ogni albero corregge i precedenti. Più piccolo richiede più alberi."
 
@@ -1761,6 +1767,9 @@ msgstr "Descrizione"
 
 msgid "Descriptive statistics"
 msgstr "Statistiche descrittive"
+
+msgid "Deselect all"
+msgstr "Deseleziona tutto"
 
 msgid "Design of Experiments"
 msgstr "Disegno degli esperimenti"
@@ -2808,6 +2817,9 @@ msgstr "Maggiore o uguale..."
 
 msgid "Higher than..."
 msgstr "Maggiore di..."
+
+msgid "Highlight colour"
+msgstr "Colore di evidenziazione"
 
 msgid "Highlight flagged"
 msgstr "Evidenzia segnalati"
@@ -3985,6 +3997,9 @@ msgstr "Nessuna matrice di correlazione disponibile."
 msgid "No current figure selected."
 msgstr "Nessuna figura corrente selezionata."
 
+msgid "No demo matches the search"
+msgstr "Nessuna demo corrisponde alla ricerca"
+
 msgid "No effect"
 msgstr "Nessun effetto"
 
@@ -5041,6 +5056,9 @@ msgstr "Destra"
 msgid "Right: every right row"
 msgstr "Right: tutte le righe di destra"
 
+msgid "Ring"
+msgstr "Cerchio"
+
 msgid "Ripple (dB)"
 msgstr "Ripple (dB)"
 
@@ -5362,6 +5380,9 @@ msgstr "Punteggi"
 msgid "Scree plot"
 msgstr "Grafico scree"
 
+msgid "Search"
+msgstr "Cerca"
+
 msgid "Search analyses, operations, charts…"
 msgstr "Cerca analisi, operazioni, grafici…"
 
@@ -5466,6 +5487,12 @@ msgstr "Seleziona prima la riga sopra cui inserire."
 
 msgid "Select the rows to delete first."
 msgstr "Seleziona prima le righe da eliminare."
+
+msgid "Selected marker size"
+msgstr "Dimensione del marcatore selezionato"
+
+msgid "Selected points"
+msgstr "Punti selezionati"
 
 msgid "Selection cleared."
 msgstr "Selezione annullata."
@@ -6382,6 +6409,9 @@ msgstr "La ricerca non ha trovato niente di meglio dei valori dichiarati, che re
 msgid "The seed must not be negative"
 msgstr "Il seme non deve essere negativo"
 
+msgid "The selected points' marker, as a percentage of the series' own (its diameter). Drawn the next time the chart is."
+msgstr "Il marcatore dei punti selezionati, come percentuale di quello della serie (il suo diametro). Viene disegnato al successivo aggiornamento del grafico."
+
 msgid "The series a chart draws."
 msgstr "Le serie che un grafico disegna."
 
@@ -6738,6 +6768,9 @@ msgstr "Un modo sconosciuto per dare la quantità di rumore: {mode}"
 
 msgid "Unmark the selected rows"
 msgstr "Deseleziona le righe selezionate"
+
+msgid "Unselect every selected point and row, in this chart and in the table."
+msgstr "Deseleziona tutti i punti e le righe selezionati in questo grafico e nella tabella."
 
 msgid "Unsupported DOE model: {model}"
 msgstr "Modello DOE non supportato: {model}"
@@ -12048,9 +12081,6 @@ msgstr "R² entropico (addestramento)"
 
 msgid "Misclassification"
 msgstr "Errore di classificazione"
-
-msgid "Search"
-msgstr "Cerca"
 
 msgid "Guided analysis…"
 msgstr "Analisi guidata…"
