@@ -1,0 +1,28 @@
+# Two downloads from one repository.
+#
+# The users' download - GitHub's "Download ZIP", a release's source archive, git archive - is ChartLibre alone:
+# everything marked export-ignore below stays out of it. A developer clones the repository and has it all,
+# dev/ (tests, tools, packs' sources, ChartLibre Developer) included.
+# The same split as dev/tools/build_bundle.py's packages (wanted_file): keep the two lists alike.
+
+# For developers only. A folder marked export-ignore is not even looked into, so the way down to the two files
+# the application uses (dev/tools/launcher/chartlibre.png, docs/manual/user_manual.pdf) stays open: at each
+# level everything else is left out, that one folder or file kept.
+dev/* export-ignore
+dev/tools -export-ignore
+dev/tools/* export-ignore
+dev/tools/launcher -export-ignore
+dev/tools/launcher/* export-ignore
+dev/tools/launcher/chartlibre.png -export-ignore
+docs/* export-ignore
+docs/manual -export-ignore
+docs/manual/* export-ignore
+docs/manual/user_manual.pdf -export-ignore
+todo.txt export-ignore
+CONTRIBUTING.md export-ignore
+.github export-ignore
+.gitattributes export-ignore
+.gitignore export-ignore
+
+# The Windows launchers keep their CRLF line ends on every system.
+*.bat text eol=crlf

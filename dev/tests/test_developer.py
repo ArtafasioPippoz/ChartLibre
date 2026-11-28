@@ -115,3 +115,27 @@ def test_the_dialog_runs_a_select_on_the_picked_project(qapp, tmp_path) -> None:
     dialog.panel.run('SELECT a FROM "t" ORDER BY a')
     assert dialog.panel._result.rowCount() == 3
     dialog.done(0)
+
+
+def test_the_users_git_download_and_the_packages_leave_out_the_same_developer_files():
+    """.gitattributes (export-ignore: GitHub's Download ZIP, git archive) and build_bundle.wanted_file agree:
+    a user gets ChartLibre without dev/, whichever way; only README.md is in the source download alone."""
+    import subprocess
+
+    from dev.tools.build_bundle import wanted_file
+
+    root = Path(ml.PROJECT_DIR)
+    tracked = [p for p in subprocess.run(["git", "ls-files"], cwd=root, capture_output=True, text=True,
+                                         check=True).stdout.splitlines() if p]
+    # A folder marked export-ignore takes everything under it out: its files and folders are all asked about.
+    folders = {"/".join(p.split("/")[:i]) for p in tracked for i in range(1, p.count("/") + 1)}
+    asked = sorted(folders | set(tracked))
+    attrs = subprocess.run(["git", "check-attr", "export-ignore", "--stdin"], cwd=root, input="\n".join(asked),
+                           capture_output=True, text=True, check=True).stdout.splitlines()
+    ignored = {line.split(": export-ignore: ")[0] for line in attrs if line.endswith(": set")}
+    in_download = {p for p in tracked if not any(
+        "/".join(p.split("/")[:i]) in ignored for i in range(1, p.count("/") + 2))}
+    in_packages = {p for p in tracked if any(wanted_file(p, system) for system in ("macos", "windows", "linux"))}
+    assert in_download - in_packages <= {"README.md"}
+    assert in_packages - in_download == set()
+    assert not any(p.startswith("dev/") for p in in_download - {"dev/tools/launcher/chartlibre.png"})
