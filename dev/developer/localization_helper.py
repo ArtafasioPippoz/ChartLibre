@@ -567,9 +567,12 @@ class EditLocalizationDialog(SettingsTableDialog):
             return
         if not ask_before_auto_translate(self):
             return
+        # The packs first: they are small, and ChartLibre's own catalogue is the one that runs a service into
+        # its request limit - after it, every pack would be refused.
+        catalogues = [*range(1, self._catalogue_combo.count()), 0]
         self._all_queue = [
             (catalogue, language)
-            for catalogue in range(self._catalogue_combo.count())
+            for catalogue in catalogues
             for language in range(self._language_combo.count())
         ]
         self._all_total, self._all_filled, self._all_reasons = len(self._all_queue), 0, []
@@ -588,11 +591,18 @@ class EditLocalizationDialog(SettingsTableDialog):
                 return
         self._all_queue = None
         self._save_if_changed()
-        if self._all_reasons:
-            show_message(self, "dev.localization_auto_translate_partial",
-                         count=self._all_filled, reasons="; ".join(self._all_reasons))
+        self._say_how_it_went(self._all_filled, self._all_reasons)
+
+    def _say_how_it_went(self, filled: int, reasons: list[str]) -> None:
+        """A short word at the end - completed, or failed - with the details in the log, where a long list of
+        catalogues and services' refusals can be read without filling the screen."""
+        applogger.info("Automatic translation: %d translation(s) filled in.", filled)
+        if reasons:
+            for reason in reasons:
+                applogger.warning("Automatic translation: %s", reason)
+            show_message(self, "dev.localization_auto_translate_partial", count=filled)
         else:
-            show_message(self, "dev.localization_auto_translated", count=self._all_filled)
+            show_message(self, "dev.localization_auto_translated", count=filled)
 
     def _start_translation(self, *, ask: bool) -> bool:
         """Start the service on the empty translations of the table; False when there are none (said if *ask*)
@@ -726,13 +736,7 @@ class EditLocalizationDialog(SettingsTableDialog):
             self._save_if_changed()
             self._translate_next_language()
             return
-        if reasons:
-            show_message(
-                self, "dev.localization_auto_translate_partial",
-                count=filled, reasons="; ".join(reasons),
-            )
-        else:
-            show_message(self, "dev.localization_auto_translated", count=filled)
+        self._say_how_it_went(filled, reasons)
 
     @staticmethod
     def _run_reasons(run: machine_translation.TranslationRun) -> list[str]:
@@ -765,13 +769,17 @@ class EditLocalizationDialog(SettingsTableDialog):
 
     def _on_translation_failed(self, error: BaseException) -> None:
         self._translation_task = None
-        self._all_queue = None
         self._set_translating(False)
         self._reload_status_only()
         applogger.warning(
             "Automatic translation could not start: %s", error,
         )
-        show_message(self, "dev.validation_error", detail=str(error))
+        if self._all_queue is not None:  # one catalogue that could not start does not stop the others
+            self._all_reasons.append(f"{self._catalogue_combo.currentText()}, "
+                                     f"{self._language_combo.currentText()}: {error}")
+            self._translate_next_language()
+            return
+        show_message(self, "dev.localization_auto_translate_partial", count=0)
 
     def _reload_status_only(self) -> None:
         self._status_label.setText(

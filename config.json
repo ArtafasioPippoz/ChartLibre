@@ -1146,12 +1146,12 @@
     "dev.localization_auto_translated": {
       "level": "info",
       "title": "Edit Localization",
-      "text": "{count} translation(s) filled in - review them before saving."
+      "text": "Translation completed."
     },
     "dev.localization_auto_translate_partial": {
       "level": "warning",
       "title": "Edit Localization",
-      "text": "{count} translation(s) filled in - review them before saving.\n\nNote: {reasons}."
+      "text": "Translation failed. The details are in the log."
     },
     "import.clipboard_empty": {
       "level": "info",

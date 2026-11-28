@@ -156,3 +156,36 @@ def test_translate_all_languages_fills_and_saves_each(dialog, tmp_path: Path, mo
         assert saved["Pear"] == f"Pear-{code}"
         pack = i18n._parse_po(tmp_path / "packs" / "fruit" / "locales" / code / "pack.po")
         assert pack["Fruit"] == f"Fruit-{code}"
+
+
+def test_translate_all_does_the_packs_first_and_a_failure_does_not_stop_it(dialog, tmp_path: Path, monkeypatch,
+                                                                           qapp) -> None:
+    import threading
+
+    from app.utils import machine_translation as mt
+    from dev.developer import localization_helper as helper
+
+    order: list[tuple[str, str]] = []
+
+    def fake(missing, *, language, on_result, **_kw):
+        order.append((dialog._current_pack(), language))
+        if dialog._current_pack() == "fruit" and language == "de":
+            raise RuntimeError("the service is down")
+        for source in missing:
+            on_result(source, f"{source}-{language}")
+        return mt.TranslationRun()
+
+    monkeypatch.setattr(mt, "translate_all", fake)
+    monkeypatch.setattr(helper, "ask_before_auto_translate", lambda parent: True)
+    shown: list[str] = []
+    monkeypatch.setattr(helper, "show_message", lambda parent, key, **kw: shown.append((key, kw)))
+    dialog._on_translate_all_languages()
+    for _ in range(300):
+        qapp.processEvents()
+        if dialog._all_queue is None and dialog._translation_task is None:
+            break
+        threading.Event().wait(0.01)
+    assert order == [("fruit", "de"), ("fruit", "it"), ("", "de"), ("", "it")]
+    # The pack's Italian (3) and ChartLibre's Pear in two languages: done in spite of the failure, said shortly.
+    assert shown == [("dev.localization_auto_translate_partial", {"count": 5})]
+    assert i18n._parse_po(tmp_path / "packs" / "fruit" / "locales" / "it" / "pack.po")["Fruit"] == "Fruit-it"
