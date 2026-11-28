@@ -3,7 +3,7 @@
     python3 dev/tools/make_launcher.py        # into the project folder
     python3 dev/tools/make_launcher.py DIR    # somewhere else
     dev/tools/make_launchers.command          # the same, double-clicked on a Mac (the project's Python)
-    dev\tools\make_launchers.bat              # the same, double-clicked on Windows
+    dev/tools/make_launchers.bat              # the same, double-clicked on Windows
 
 ``ChartLibre.app`` (macOS), ``ChartLibre.bat``/``ChartLibre.exe`` (Windows)
 and ``ChartLibre.sh`` (Linux) find the folder they sit in, so the whole
