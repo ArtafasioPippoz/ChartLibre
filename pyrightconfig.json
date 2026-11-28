@@ -1,0 +1,10 @@
+// Pyright, the type checker, for developers (left out of the users' download and packages).
+//   NODE_OPTIONS=--max-old-space-size=8192 npx pyright --pythonpath .venv/bin/python3
+// "basic": most of what it reports is Optional access and the PySide/pandas stubs; look first at
+// reportUndefinedVariable, reportMissingImports and "not a known attribute of module".
+{
+  "include": ["app", "dev", "ChartLibre.py", "install.py"],
+  "exclude": ["**/__pycache__", "dev/test_results", "**/.*", "app/packages"],
+  "pythonVersion": "3.14",
+  "typeCheckingMode": "basic"
+}

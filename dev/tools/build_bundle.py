@@ -73,7 +73,7 @@ KEEP_FROM_DEV = ("dev/tools/launcher/chartlibre.png",)
 KEEP_FROM_DOCS = ("docs/manual/user_manual.pdf",)
 
 #: Tracked files that are notes for whoever develops ChartLibre, not for users.
-LEAVE_OUT = ("todo.txt", ".gitignore", ".gitattributes", "CONTRIBUTING.md", "bugs.pptx", "README.md")
+LEAVE_OUT = ("todo.txt", ".gitignore", ".gitattributes", "CONTRIBUTING.md", "pyrightconfig.json", "bugs.pptx", "README.md")
 
 #: Tracked folders that are the repository's, not the application's, and the
 #: editors' and assistants' own, should one ever be committed.

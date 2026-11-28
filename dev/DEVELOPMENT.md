@@ -931,6 +931,12 @@ the machine.
   SciPy's documented one-way ANOVA example and statsmodels for Welch's
   ANOVA, Tukey and OLS bands, scipy's `Rotation` for 3D rotations, and
   SQLite itself for the SQL Geometry writes.
+- Type checking: `pyrightconfig.json` (basic mode) at the project root, run with
+  `NODE_OPTIONS=--max-old-space-size=8192 npx pyright --pythonpath .venv/bin/python3`
+  (the default 2 GB of memory is not enough). Most of what it reports is
+  Optional access and the PySide/pandas stubs; the findings that are bugs are
+  reportUndefinedVariable, reportMissingImports and "not a known attribute
+  of module" - a module moved or renamed and an import left behind.
 - `tmp_db_path` / `test_results_dir` / `plots_dir` fixtures give each test an
   isolated `.dhub` path and a directory for saved plots
   (`CHARTLIBRE_TEST_ARTIFACTS` env var to redirect).
