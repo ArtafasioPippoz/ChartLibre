@@ -19,6 +19,7 @@ import pandas as pd
 from scipy.cluster import hierarchy, vq
 
 from app.utils.coercion import to_numeric_axis
+from app.utils.logger import applogger
 
 TOOL_WHITEN: str = "vq.whiten + kmeans2"
 TOOL_VQ: str = "vq.vq"
@@ -104,7 +105,9 @@ def run_with_timeout(
             f"Clustering exceeded the configured timeout of {timeout:.1f} seconds. "
             "The preview/apply operation was stopped."
         )
-        raise TimeoutError(message) from exc
+        failure = TimeoutError(message)
+        applogger.warning("%s", failure, exc_info=exc)
+        raise failure from exc
     finally:
         executor.shutdown(wait=False, cancel_futures=True)
 

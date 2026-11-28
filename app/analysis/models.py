@@ -29,6 +29,7 @@ import numpy as np
 import pandas as pd
 
 from app.utils.config import get_value, set_value
+from app.utils.logger import applogger
 
 CONTINUOUS, NOMINAL = "continuous", "nominal"
 #: user.json key: the fingerprints of the pickled models this computer runs.
@@ -297,7 +298,9 @@ def import_model(repo: Any, path: Any, name: str | None = None) -> str:
         kind, form, header = str(data["kind"]), str(data["form"]), dict(data["header"])
         mark = data[FILE_MARK]
     except Exception as error:
-        raise ModelError(f"{Path(path).name} is not a model file ({type(error).__name__}).") from error
+        failure = ModelError(f"{Path(path).name} is not a model file ({type(error).__name__}).")
+        applogger.warning("%s", failure, exc_info=error)
+        raise failure from error
     if mark != 1 or form not in (PORTABLE, PICKLED):
         raise ModelError(f"{Path(path).name} was written by a newer ChartLibre: it is not read.")
     fingerprint_ = fingerprint(kind, form, payload)

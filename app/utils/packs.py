@@ -269,7 +269,9 @@ def install(pack: Pack) -> None:
             source.rename(target)
     except (OSError, zipfile.BadZipFile) as exc:
         uninstall(pack.id)
-        raise PackError(f"It cannot be installed: {exc}") from exc
+        failure = PackError(f"It cannot be installed: {exc}")
+        applogger.warning("%s", failure, exc_info=exc)
+        raise failure from exc
     except PackError:
         uninstall(pack.id)
         raise

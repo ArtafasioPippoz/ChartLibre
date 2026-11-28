@@ -15,6 +15,7 @@ import time
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
 from typing import Any
+from app.utils.logger import applogger
 
 #: How long an analysis may run before the call gives up waiting.
 ANALYSIS_TIMEOUT_S = 600
@@ -369,7 +370,9 @@ def load_settings(path: Any) -> dict[str, Any]:
     try:
         settings = json.loads(Path(path).read_text(encoding="utf-8"))
     except (OSError, ValueError) as error:
-        raise AnalysisError(f"Cannot read {path}: {error}") from error
+        failure = AnalysisError(f"Cannot read {path}: {error}")
+        applogger.warning("%s", failure, exc_info=error)
+        raise failure from error
     if not isinstance(settings, dict) or settings.get("format") != SETTINGS_FORMAT:
         raise AnalysisError(f"{path} is not an analysis settings file.")
     if int(settings.get("version", 0)) > SETTINGS_VERSION:
@@ -827,7 +830,9 @@ class ModelHandle:
         try:
             self._model = models.load_model(repo, name)
         except (models.ModelError, models.UntrustedModel) as error:
-            raise AnalysisError(str(error)) from error
+            failure = AnalysisError(str(error))
+            applogger.warning("%s", failure, exc_info=error)
+            raise failure from error
 
     def export(self, path: Any) -> str:
         """Write the model to a file another project can import (Model.import_file); returns the path."""
@@ -842,7 +847,9 @@ class ModelHandle:
         try:
             self.name = models.rename_model(self._repo, self.name, new)
         except models.ModelError as error:
-            raise AnalysisError(str(error)) from error
+            failure = AnalysisError(str(error))
+            applogger.warning("%s", failure, exc_info=error)
+            raise failure from error
         return self.name
 
     def describe(self) -> dict[str, Any]:
@@ -862,7 +869,9 @@ class ModelHandle:
                 f"SELECT * FROM {_quote(find_table(self._repo, str(source)))}")
             prediction = self._model.predict(frame)
         except models.ModelError as error:
-            raise AnalysisError(str(error)) from error
+            failure = AnalysisError(str(error))
+            applogger.warning("%s", failure, exc_info=error)
+            raise failure from error
         table = prediction.table.copy()
         table.attrs["notes"] = list(prediction.notes)
         if into:

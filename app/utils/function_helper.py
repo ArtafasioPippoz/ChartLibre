@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from app.utils.logger import applogger
 
 #: What a suggestion is: something to compute and read, or something to draw.
 ANALYSIS, CHART = "analysis", "chart"
@@ -64,7 +65,9 @@ def parse(text: str) -> Formula:
     try:
         expression = parse_expr(text, transformations=transformations)
     except Exception as error:  # SyntaxError, TypeError, TokenError...
-        raise BadFormula(f"Cannot read it as a formula ({type(error).__name__})") from error
+        failure = BadFormula(f"Cannot read it as a formula ({type(error).__name__})")
+        applogger.warning("%s", failure, exc_info=error)
+        raise failure from error
     if not hasattr(expression, "free_symbols"):
         raise BadFormula("Not a formula")
     import sympy

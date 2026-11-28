@@ -363,7 +363,9 @@ class DOEExperimentDialog(SettingsTableDialog):
                 low = float(self._cell(self.factor_table, row, 1))
                 high = float(self._cell(self.factor_table, row, 2))
             except ValueError as exc:
-                raise ValueError(_("Factor '{name}' has invalid bounds.").format(name=name)) from exc
+                failure = ValueError(_("Factor '{name}' has invalid bounds.").format(name=name))
+                applogger.warning("%s", failure, exc_info=exc)
+                raise failure from exc
             if not np.isfinite(low) or not np.isfinite(high) or low >= high:
                 raise ValueError(_("Factor '{name}' requires finite Low < High.").format(name=name))
             used.add(key)

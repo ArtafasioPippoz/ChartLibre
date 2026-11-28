@@ -992,10 +992,14 @@ def read_web_url(
         )
     except urllib.error.URLError as exc:
         if isinstance(exc.reason, ssl.SSLCertVerificationError):
-            raise ValueError(_UNVERIFIED_CERTIFICATE) from exc
+            failure = ValueError(_UNVERIFIED_CERTIFICATE)
+            applogger.warning("%s", failure, exc_info=exc)
+            raise failure from exc
         raise
     except ssl.SSLCertVerificationError as exc:
-        raise ValueError(_UNVERIFIED_CERTIFICATE) from exc
+        failure = ValueError(_UNVERIFIED_CERTIFICATE)
+        applogger.warning("%s", failure, exc_info=exc)
+        raise failure from exc
 
     with response:
         content_type = response.headers.get_content_type()

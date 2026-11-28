@@ -365,7 +365,9 @@ class SeriesInterpolateDialog(DataOperationDialogBase):
         try:
             value = json.loads(text)
         except json.JSONDecodeError as exc:
-            raise ValueError(f"Invalid parameter JSON: {exc}") from exc
+            failure = ValueError(f"Invalid parameter JSON: {exc}")
+            applogger.warning("%s", failure, exc_info=exc)
+            raise failure from exc
         if not isinstance(value, dict):
             raise ValueError("Start parameters must be a JSON object.")
         return {str(k): float(v) for k, v in value.items()}

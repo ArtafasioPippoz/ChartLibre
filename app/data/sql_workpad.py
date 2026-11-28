@@ -27,6 +27,7 @@ from app.data.repo._common import (
     is_read_only_select,
     sql_guard_enabled,
 )
+from app.utils.logger import applogger
 
 MAX_ROWS = 10_000
 TIME_LIMIT = 15.0  # seconds a statement may run
@@ -184,7 +185,9 @@ class SqlSession:
             return columns, rows, f"{len(rows)} rows" + (f" (the first {MAX_ROWS})" if more else "") + "."
         except sqlite3.DatabaseError as error:
             if "interrupted" in str(error):
-                raise RefusedStatement(f"Stopped after {TIME_LIMIT:.0f} seconds.") from error
+                failure = RefusedStatement(f"Stopped after {TIME_LIMIT:.0f} seconds.")
+                applogger.warning("%s", failure, exc_info=error)
+                raise failure from error
             if "not authorized" in str(error):
                 raise RefusedStatement("Not allowed here: the application's own tables, ATTACH, PRAGMA "
                                        "settings and extensions are never changed from the workpad.") from error

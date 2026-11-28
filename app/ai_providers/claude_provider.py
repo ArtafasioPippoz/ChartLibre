@@ -26,6 +26,7 @@ from app.plugin_api.ai import (
     ToolSpec,
     Turn,
 )
+from app.utils.logger import applogger
 
 OPUS = "claude-opus-5-5"
 HAIKU = "claude-haiku-5-5"
@@ -113,7 +114,9 @@ class ClaudeSession(ChatSession):
                     raise
                 continue
             except anthropic.APIError as error:
-                raise RuntimeError(_readable(error)) from error
+                failure = RuntimeError(_readable(error))
+                applogger.warning("%s", failure, exc_info=error)
+                raise failure from error
             turn.input_tokens += int(response.usage.input_tokens or 0)
             turn.output_tokens += int(response.usage.output_tokens or 0)
             turn.model = str(response.model or model)

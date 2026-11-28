@@ -19,6 +19,7 @@ import re
 from dataclasses import dataclass
 
 from app.utils.function_helper import ANALYSIS, CHART, BadFormula, Suggestion, _num
+from app.utils.logger import applogger
 
 _UNSAFE_TEXT = re.compile(r"__|\b(import|eval|exec|compile|open|getattr|globals|locals|lambda)\b")
 _ORDER = re.compile(r"<=|>=|<|>")
@@ -81,7 +82,9 @@ def parse(text: str) -> Equations:
             return parse_expr(source, transformations=transformations,
                               local_dict={unknown: function} if function is not None else None)
         except Exception as error:
-            raise BadFormula(f"Cannot read '{source}' ({type(error).__name__})") from error
+            failure = BadFormula(f"Cannot read '{source}' ({type(error).__name__})")
+            applogger.warning("%s", failure, exc_info=error)
+            raise failure from error
 
     relations: list[object] = []
     conditions: list[str] = []

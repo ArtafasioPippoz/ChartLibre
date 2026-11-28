@@ -878,7 +878,9 @@ def two_way_anova(first: Any, second: Any, response: Any) -> dict[str, Any]:
             model = ols("y ~ C(a) * C(b)", data=frame).fit()
             table = anova_lm(model, typ=2)
     except NUMERICAL_FAILURES as exc:
-        raise ValueError(f"The two-way ANOVA could not be fitted: {exc}") from exc
+        failure = ValueError(f"The two-way ANOVA could not be fitted: {exc}")
+        applogger.warning("%s", failure, exc_info=exc)
+        raise failure from exc
 
     # Plain floats by source: the pandas scalars do not type as numbers.
     values: dict[Any, dict[Any, Any]] = table.astype(float).to_dict(orient="index")

@@ -17,6 +17,7 @@ import numpy as np
 from scipy import stats
 
 from app.analysis import NUMERICAL_FAILURES
+from app.utils.logger import applogger
 
 #: The reference distributions a probability plot offers: scipy names.
 PROBABILITY_DISTRIBUTIONS: tuple[str, ...] = (
@@ -76,7 +77,9 @@ def fit_reference(values: np.ndarray, distribution: str) -> tuple[Any, tuple[flo
             warnings.simplefilter("ignore")
             params = tuple(float(value) for value in family.fit(values))
     except NUMERICAL_FAILURES as exc:
-        raise ValueError(f"The {distribution} distribution could not be fitted: {exc}") from exc
+        failure = ValueError(f"The {distribution} distribution could not be fitted: {exc}")
+        applogger.warning("%s", failure, exc_info=exc)
+        raise failure from exc
     if not all(np.isfinite(params)):
         raise ValueError(f"The {distribution} distribution could not be fitted to this sample.")
     return family, params
@@ -325,7 +328,9 @@ def log_rank(groups: list[tuple[np.ndarray, np.ndarray]]) -> LogRank:
     try:
         statistic = float(reduced @ np.linalg.solve(covariance[:-1, :-1], reduced))
     except np.linalg.LinAlgError as exc:
-        raise ValueError("The groups have no events to compare.") from exc
+        failure = ValueError("The groups have no events to compare.")
+        applogger.warning("%s", failure, exc_info=exc)
+        raise failure from exc
     dof = k - 1
     return LogRank(statistic=statistic, dof=dof, pvalue=float(stats.chi2.sf(statistic, dof)))
 

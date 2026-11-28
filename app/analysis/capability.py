@@ -30,6 +30,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 from scipy import stats
+from app.utils.logger import applogger
 
 
 @dataclass(slots=True)
@@ -56,7 +57,9 @@ def parse_limit(text: object) -> float | None:
     try:
         return float(text)
     except ValueError as exc:
-        raise ValueError(f"'{text}' is not a number.") from exc
+        failure = ValueError(f"'{text}' is not a number.")
+        applogger.warning("%s", failure, exc_info=exc)
+        raise failure from exc
 
 
 #: The distributions the percentile method fits: name -> scipy distribution (positive values; loc fixed at 0).

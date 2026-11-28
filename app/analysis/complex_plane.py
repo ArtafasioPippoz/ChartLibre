@@ -19,6 +19,7 @@ from collections.abc import Callable
 
 import numpy as np
 from matplotlib.colors import hsv_to_rgb
+from app.utils.logger import applogger
 
 #: The functions an expression may call, by the names it may use.
 FUNCTIONS: dict[str, Callable[..., np.ndarray]] = {
@@ -52,7 +53,9 @@ def compile_function(expression: str) -> Callable[[np.ndarray], np.ndarray]:
     try:
         tree = ast.parse(text, mode="eval")
     except SyntaxError as error:
-        raise ValueError(f"The function cannot be read: {error.msg}.") from None
+        failure = ValueError(f"The function cannot be read: {error.msg}.")
+        applogger.warning("%s", failure)
+        raise failure from None
     for node in ast.walk(tree):
         if isinstance(node, _ALLOWED_NODES):
             continue

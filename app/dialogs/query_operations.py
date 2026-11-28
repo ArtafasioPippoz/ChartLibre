@@ -38,6 +38,7 @@ from app.data.sqlite_repo import ROW_ID, SqliteRepo
 from app.styles.style import apply_fusion_for_item_view_styling, stdSizeAndlayout
 from app.utils.config import get_constant
 from app.utils.i18n import _
+from app.utils.logger import applogger
 
 #: The most distinct values Recode lists.
 RECODE_LIMIT = get_constant("query_recode_values", 200)
@@ -468,7 +469,9 @@ class BinForm(OperationForm):
         try:
             numbers = [float(part) for part in edges]
         except ValueError as exc:
-            raise ValueError("The edges must be numbers separated by commas.") from exc
+            failure = ValueError("The edges must be numbers separated by commas.")
+            applogger.warning("%s", failure, exc_info=exc)
+            raise failure from exc
         cuts = sb.bin_edges(values.to_numpy(float), str(self.method.currentData()), self.count.value(), numbers)
         return sb.bin_column(table, self.columns(table), column, list(np.asarray(cuts, dtype=float)),
                              new_column=self.new_column.text().strip() or f"{column}_bin",

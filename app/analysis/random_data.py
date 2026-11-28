@@ -36,6 +36,7 @@ from scipy import stats
 
 from app.analysis.function_plot import SPACING_LINEAR, build_range
 from app.utils.i18n import _
+from app.utils.logger import applogger
 
 #: Most rows one table may have; a grid counts every X with every Y.
 MAX_ROWS = 1_000_000
@@ -319,16 +320,22 @@ def expression_function(text: str) -> Callable[[np.ndarray, np.ndarray], np.ndar
     try:
         tree = ast.parse(source, mode="eval")
     except SyntaxError as exc:
-        raise ValueError(_("The expression cannot be read: {problem}").format(problem=exc.msg)) from exc
+        failure = ValueError(_("The expression cannot be read: {problem}").format(problem=exc.msg))
+        applogger.warning("%s", failure, exc_info=exc)
+        raise failure from exc
 
     def check(x: np.ndarray, y: np.ndarray) -> np.ndarray:
         try:
             with np.errstate(all="ignore"):
                 value = np.asarray(_evaluate(tree, {"x": x, "y": y}), dtype=float)
         except RecursionError as exc:
-            raise ValueError(_("The expression is too deeply nested")) from exc
+            failure = ValueError(_("The expression is too deeply nested"))
+            applogger.warning("%s", failure, exc_info=exc)
+            raise failure from exc
         except TypeError as exc:
-            raise ValueError(_("A function was called with the wrong number of arguments")) from exc
+            failure = ValueError(_("A function was called with the wrong number of arguments"))
+            applogger.warning("%s", failure, exc_info=exc)
+            raise failure from exc
         return np.broadcast_to(value, x.shape).astype(float, copy=True)
 
     check(np.zeros(2), np.zeros(2))

@@ -794,7 +794,10 @@ class SeriesFunctionDialog(DataOperationDialogBase):
         y = np.asarray(func(x_values, *values), dtype=float)
         if y.ndim == 0: y = np.full_like(x_values, float(y), dtype=float)
         try: y = np.broadcast_to(y, x_values.shape).astype(float, copy=False)
-        except ValueError as exc: raise ValueError("Function result must be scalar or have the same shape as x.") from exc
+        except ValueError as exc:
+            failure = ValueError("Function result must be scalar or have the same shape as x.")
+            applogger.warning("%s", failure, exc_info=exc)
+            raise failure from exc
         finite = np.isfinite(x_values) & np.isfinite(y)
         metadata = {"spacing": x_grid.spacing, "range": f"{x_values[0]:g} .. {x_values[-1]:g}"}
         dropped = int((~finite).sum())

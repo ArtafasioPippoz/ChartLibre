@@ -53,6 +53,7 @@ from pathlib import Path
 from typing import Any
 
 from app.utils.data_sources import _web_fetch_ssl_context
+from app.utils.logger import applogger
 
 #: The services offered, as (key, name shown in the dialog).
 PROVIDERS: tuple[tuple[str, str], ...] = (
@@ -183,11 +184,17 @@ class DeepLTranslator:
             with self._open(request, timeout=30) as response:
                 answer = json.loads(response.read().decode("utf-8"))
         except urllib.error.HTTPError as exc:
-            raise RuntimeError(_deepl_refusal(exc.code)) from exc
+            failure = RuntimeError(_deepl_refusal(exc.code))
+            applogger.warning("%s", failure, exc_info=exc)
+            raise failure from exc
         except urllib.error.URLError as exc:
-            raise RuntimeError(f"DeepL could not be reached ({exc.reason})") from exc
+            failure = RuntimeError(f"DeepL could not be reached ({exc.reason})")
+            applogger.warning("%s", failure, exc_info=exc)
+            raise failure from exc
         except ValueError as exc:  # not JSON
-            raise RuntimeError("DeepL sent an answer that is not JSON") from exc
+            failure = RuntimeError("DeepL sent an answer that is not JSON")
+            applogger.warning("%s", failure, exc_info=exc)
+            raise failure from exc
         texts = [str(item.get("text", "")) for item in answer.get("translations", [])]
         if len(texts) != len(lines):
             raise RuntimeError("DeepL answered a different number of lines")
@@ -268,9 +275,13 @@ def argos_model(language: str, root: Path, *, opener: Callable[..., Any] | None 
             while chunk := response.read(1 << 20):
                 out.write(chunk)
     except urllib.error.URLError as exc:
-        raise RuntimeError(f"Argos Translate's model could not be downloaded ({getattr(exc, 'reason', exc)})") from exc
+        failure = RuntimeError(f"Argos Translate's model could not be downloaded ({getattr(exc, 'reason', exc)})")
+        applogger.warning("%s", failure, exc_info=exc)
+        raise failure from exc
     except (OSError, json.JSONDecodeError) as exc:
-        raise RuntimeError(f"Argos Translate's model could not be downloaded ({exc})") from exc
+        failure = RuntimeError(f"Argos Translate's model could not be downloaded ({exc})")
+        applogger.warning("%s", failure, exc_info=exc)
+        raise failure from exc
     try:
         _unpack_argos(archive, folder)
     finally:
@@ -304,7 +315,9 @@ def _unpack_argos(archive: Path, folder: Path) -> None:
         shutil.rmtree(folder, ignore_errors=True)
         staging.rename(folder)
     except zipfile.BadZipFile as exc:
-        raise RuntimeError("Argos Translate's model archive is damaged") from exc
+        failure = RuntimeError("Argos Translate's model archive is damaged")
+        applogger.warning("%s", failure, exc_info=exc)
+        raise failure from exc
     finally:
         shutil.rmtree(staging, ignore_errors=True)
 

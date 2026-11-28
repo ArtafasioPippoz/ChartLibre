@@ -37,6 +37,7 @@ from app.plugin_api.ai import (
     ToolSpec,
     Turn,
 )
+from app.utils.logger import applogger
 
 DEFAULT_ADDRESS = "http://localhost:11434"
 DEFAULT_MODEL = "llama3.1"
@@ -131,7 +132,9 @@ class OllamaSession(ChatSession):
                     if item.get("done_reason") == "length" and calls:
                         turn.stop = "too_long"
         except ProviderHTTPError as error:
-            raise RuntimeError(_readable(str(error), model)) from error
+            failure = RuntimeError(_readable(str(error), model))
+            applogger.warning("%s", failure, exc_info=error)
+            raise failure from error
         if cancel.is_set():
             turn.stop = "stopped"
             return turn
@@ -164,7 +167,9 @@ class OllamaSession(ChatSession):
         try:
             answer = post_json(self._url, payload, timeout=300)
         except ProviderHTTPError as error:
-            raise RuntimeError(_readable(str(error), model)) from error
+            failure = RuntimeError(_readable(str(error), model))
+            applogger.warning("%s", failure, exc_info=error)
+            raise failure from error
         return _arguments(str((answer.get("message") or {}).get("content") or "{}"))
 
     def say(self, *, model: str, text: str, on_text: Callable[[str], None], cancel: threading.Event) -> Turn:
@@ -182,7 +187,9 @@ class OllamaSession(ChatSession):
                     turn.input_tokens = int(item.get("prompt_eval_count") or 0)
                     turn.output_tokens = int(item.get("eval_count") or 0)
         except ProviderHTTPError as error:
-            raise RuntimeError(_readable(str(error), model)) from error
+            failure = RuntimeError(_readable(str(error), model))
+            applogger.warning("%s", failure, exc_info=error)
+            raise failure from error
         if cancel.is_set():
             turn.stop = "stopped"
         self._messages.append({"role": "assistant", "content": turn.text})

@@ -30,6 +30,7 @@ from app.utils.figure_metrics import (
     OPT_FIGURE_HEIGHT_CM,
     OPT_FIGURE_WIDTH_CM,
 )
+from app.utils.logger import applogger
 
 VERSION = 1
 SUFFIX = ".json"
@@ -165,7 +166,9 @@ def load(path: Path) -> dict[str, Any]:
     try:
         data = json.loads(Path(path).read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        raise ValueError(f"{Path(path).name} is not a template: {exc}") from exc
+        failure = ValueError(f"{Path(path).name} is not a template: {exc}")
+        applogger.warning("%s", failure, exc_info=exc)
+        raise failure from exc
     if not isinstance(data, dict) or "axes" not in data or int(data.get("version", 0)) > VERSION:
         raise ValueError(f"{Path(path).name} is not a template this version reads.")
     return data
