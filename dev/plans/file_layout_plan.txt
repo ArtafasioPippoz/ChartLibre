@@ -115,3 +115,6 @@ Esito (2026-11-27)
   2 -> 1 cartella. Test: tutti passano tranne tre che falliscono già su
   e9901c86 (test_overlay_columns, test_renderer_picker sul pacchetto Complex,
   la stringa con i due punti in random_data_dialog.py).
+
+  Poi (2026-11-28, scelta dell'utente): i launcher Developer stanno direttamente in dev/,
+  senza la cartella dev/launchers.

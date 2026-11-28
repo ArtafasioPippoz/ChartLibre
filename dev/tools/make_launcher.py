@@ -294,8 +294,8 @@ exit /b 1
 
 DEVELOPER_NAME = "ChartLibre Developer"
 DEVELOPER_SCRIPT = "dev/ChartLibreDeveloper.py"
-#: Where ChartLibre Developer's launchers go, under the project folder: inside dev/, so never in a user's package.
-DEVELOPER_LAUNCHERS = Path("dev") / "launchers"
+#: Where ChartLibre Developer's launchers go, under the project folder: dev/, so never in a user's package.
+DEVELOPER_LAUNCHERS = Path("dev")
 
 
 def make_macos_native(target: Path, script: str | None = None, root_levels: int = 4) -> bool:
@@ -389,11 +389,11 @@ def make_developer_macos_app(target_dir: Path) -> Path:
     macos.mkdir(parents=True)
     resources.mkdir(parents=True)
     # The executable is the native launcher itself, with the Developer's script compiled in; it expects the app
-    # at <folder>/dev/launchers/<name>.app. Without clang a small script starts python3 the same way.
+    # at <folder>/dev/<name>.app. Without clang a small script starts python3 the same way.
     executable = macos / DEVELOPER_NAME
-    if not make_macos_native(executable, DEVELOPER_SCRIPT, root_levels=6):
+    if not make_macos_native(executable, DEVELOPER_SCRIPT, root_levels=5):
         executable.write_text(
-            '#!/bin/bash\nHERE="$(cd "$(dirname "$0")/../../../../.." && pwd)"\n'
+            '#!/bin/bash\nHERE="$(cd "$(dirname "$0")/../../../.." && pwd)"\n'
             f'exec "$HERE/.python/bin/python3" "$HERE/{DEVELOPER_SCRIPT}" "$@"\n', encoding="utf-8")
     executable.chmod(0o755)
     if shutil.which("iconutil"):
@@ -431,8 +431,8 @@ def make_developer_macos_app(target_dir: Path) -> Path:
 
 #: The Windows launcher of ChartLibre Developer: the project's Python, no installer.
 DEVELOPER_WINDOWS_SCRIPT = r"""@echo off
-rem ChartLibre Developer launcher (dev/tools/make_launcher.py), in dev\launchers.
-cd /d "%~dp0..\.."
+rem ChartLibre Developer launcher (dev/tools/make_launcher.py), in dev.
+cd /d "%~dp0.."
 if exist ".python\pythonw.exe" (
   start "" ".python\pythonw.exe" "dev\ChartLibreDeveloper.py" %*
   exit /b 0

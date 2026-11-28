@@ -29,7 +29,7 @@
 #ifdef DEVELOPER_LAUNCHER
 #define TITLE L"ChartLibre Developer"
 #define SCRIPT_PATH L"\\dev\\ChartLibreDeveloper.py"
-#define ROOT_LEVELS 3  /* ChartLibre\dev\launchers\ChartLibre Developer.exe */
+#define ROOT_LEVELS 2  /* ChartLibre\dev\ChartLibre Developer.exe */
 #else
 #define TITLE L"ChartLibre"
 #define SCRIPT_PATH L"\\ChartLibre.py"
@@ -86,7 +86,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous, PWSTR arguments, int
         fail(L"ChartLibre could not find its own folder.");
         return 1;
     }
-    for (int level = 0; level < ROOT_LEVELS; ++level) {  /* drop \ChartLibre.exe (and dev\launchers) */
+    for (int level = 0; level < ROOT_LEVELS; ++level) {  /* drop \ChartLibre.exe (and \dev) */
         wchar_t *end = folder + wcslen(folder);
         while (end > folder && *end != L'\\') --end;
         *end = L'\0';

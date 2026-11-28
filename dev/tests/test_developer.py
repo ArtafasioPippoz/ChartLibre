@@ -77,7 +77,7 @@ def test_windows_bat_is_crlf_and_runs_the_developer_script(tmp_path):
     data = ml.make_developer_windows_launcher(tmp_path).read_bytes()
     assert b"\r\n" in data and b"\n" not in data.replace(b"\r\n", b"")
     assert b"dev\\ChartLibreDeveloper.py" in data
-    assert b'cd /d "%~dp0..\\.."' in data  # it sits in dev\launchers
+    assert b'cd /d "%~dp0.."' in data  # it sits in dev
 
 
 def test_macos_app_has_executable_icon_and_plist(tmp_path):

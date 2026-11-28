@@ -28,7 +28,7 @@
 #endif
 
 /* How many components above the executable the ChartLibre folder is: 4 for ChartLibre/<name>.app/Contents/MacOS/x,
- * 6 for ChartLibre Developer's, which sits in dev/launchers/ (-DROOT_LEVELS=6). */
+ * 5 for ChartLibre Developer's, which sits in dev/ (-DROOT_LEVELS=5). */
 #ifndef ROOT_LEVELS
 #define ROOT_LEVELS 4
 #endif
@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
     char exe[PATH_MAX], root[PATH_MAX], runtime[PATH_MAX], python[PATH_MAX], script[PATH_MAX], pattern[PATH_MAX];
     uint32_t size = sizeof exe;
     if (_NSGetExecutablePath(exe, &size) != 0 || realpath(exe, root) == NULL) return 1;
-    up(root, ROOT_LEVELS); /* ChartLibre[/dev/launchers]/<name>.app/Contents/MacOS/x -> ChartLibre */
+    up(root, ROOT_LEVELS); /* ChartLibre[/dev]/<name>.app/Contents/MacOS/x -> ChartLibre */
     snprintf(runtime, sizeof runtime, "%s/.python", root);
     snprintf(python, sizeof python, "%s/bin/python3", runtime);
     snprintf(script, sizeof script, "%s/" LAUNCH_SCRIPT, root);

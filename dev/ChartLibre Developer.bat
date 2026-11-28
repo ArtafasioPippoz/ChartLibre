@@ -1,6 +1,6 @@
 @echo off
-rem ChartLibre Developer launcher (dev/tools/make_launcher.py), in dev\launchers.
-cd /d "%~dp0..\.."
+rem ChartLibre Developer launcher (dev/tools/make_launcher.py), in dev.
+cd /d "%~dp0.."
 if exist ".python\pythonw.exe" (
   start "" ".python\pythonw.exe" "dev\ChartLibreDeveloper.py" %*
   exit /b 0
